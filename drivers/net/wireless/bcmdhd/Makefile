@@ -8,8 +8,12 @@ DHDCFLAGS = -Wall -Wstrict-prototypes -Dlinux -DBCMDRIVER                     \
 	-DCUSTOMER_HW2 -DNEW_COMPAT_WIRELESS -DWIFI_ACT_FRAME                 \
 	-DARP_OFFLOAD_SUPPORT -DKEEP_ALIVE -DCSCAN -DPKT_FILTER_SUPPORT	      \
 	-DEMBEDDED_PLATFORM -DENABLE_INSMOD_NO_FW_LOAD -DPNO_SUPPORT          \
-	-DEXAMPLE_TABLE 						      \
+	-DEXAMPLE_TABLE 		                                      \
 	-Idrivers/net/wireless/bcmdhd -Idrivers/net/wireless/bcmdhd/include
+
+ifeq ($(CONFIG_BCMDHD_WIFI_CONTROL_FUNC),y)
+DHDCFLAGS += -DCONFIG_WIFI_CONTROL_FUNC
+endif
 
 DHDOFILES = aiutils.o bcmsdh_sdmmc_linux.o dhd_linux.o siutils.o bcmutils.o   \
 	dhd_linux_sched.o bcmwifi.o dhd_sdio.o bcmevent.o dhd_bta.o           \
