@@ -4111,7 +4111,9 @@ static struct wireless_dev *wl_alloc_wdev(struct device *sdiofunc_dev)
 	wdev->wiphy->flags |= WIPHY_FLAG_NETNS_OK |
 		WIPHY_FLAG_4ADDR_AP |
 		WIPHY_FLAG_4ADDR_STATION;
-
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 2, 0)
+	wdev->wiphy->flags |= WIPHY_FLAG_SUPPORTS_FW_ROAM;
+#endif
 	WL_DBG(("Registering custom regulatory)\n"));
 	wdev->wiphy->flags |= WIPHY_FLAG_CUSTOM_REGULATORY;
 	wiphy_apply_custom_regulatory(wdev->wiphy, &brcm_regdom);
