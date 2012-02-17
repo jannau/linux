@@ -35,6 +35,7 @@ struct input_dev;
  * sound/core/jack.c.
  */
 enum snd_jack_types {
+	SND_JACK_NO_TYPE_SPECIFIED = 0x0000,
 	SND_JACK_HEADPHONE	= 0x0001,
 	SND_JACK_MICROPHONE	= 0x0002,
 	SND_JACK_HEADSET	= SND_JACK_HEADPHONE | SND_JACK_MICROPHONE,
@@ -47,6 +48,9 @@ enum snd_jack_types {
 	SND_JACK_BTN_0		= 0x4000,
 	SND_JACK_BTN_1		= 0x2000,
 	SND_JACK_BTN_2		= 0x1000,
+	SND_JACK_BTN_3		= 0x0800,
+	SND_JACK_BTN_4		= 0x0400,
+	SND_JACK_BTN_5		= 0x0200,
 };
 
 struct snd_jack {
@@ -55,7 +59,7 @@ struct snd_jack {
 	int type;
 	const char *id;
 	char name[100];
-	unsigned int key[3];   /* Keep in sync with definitions above */
+	unsigned int key[6];   /* Keep in sync with definitions above */
 	void *private_data;
 	void (*private_free)(struct snd_jack *);
 };

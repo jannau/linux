@@ -238,7 +238,21 @@ __v7_setup:
 2:	ldr	r10, =0x00000c09		@ Cortex-A9 primary part number
 	teq	r0, r10
 	bne	3f
-#ifdef CONFIG_ARM_ERRATA_742230
+#ifndef CONFIG_TRUSTED_FOUNDATIONS
+    /* c15,c0,0: read and write in Secure privileged modes, read only in Non-secure state. */
+	cmp	r6, #0x10			@ power ctrl reg added r1p0
+	mrcge	p15, 0, r10, c15, c0, 0		@ read power control register
+	orrge	r10, r10, #1			@ enable dynamic clock gating
+	mcrge	p15, 0, r10, c15, c0, 0		@ write power control register
+#ifdef CONFIG_ARM_ERRATA_720791
+	teq	r5, #0x00100000			@ only present in r1p*
+	mrceq	p15, 0, r10, c15, c0, 2		@ read "chicken power ctrl" reg
+	orreq	r10, r10, #0x30			@ disable core clk gate on
+	mcreq	p15, 0, r10, c15, c0, 2		@ instr-side waits
+#endif
+#endif
+
+#if defined(CONFIG_ARM_ERRATA_742230) && !defined(CONFIG_TRUSTED_FOUNDATIONS)
 	cmp	r6, #0x22			@ only present up to r2p2
 	mrcle	p15, 0, r10, c15, c0, 1		@ read diagnostic register
 	orrle	r10, r10, #1 << 4		@ set bit #4
@@ -302,8 +316,12 @@ __v7_setup:
 	 *   NS1 = PRRR[19] = 1		- normal shareable property
 	 *   NOS = PRRR[24+n] = 1	- not outer shareable
 	 */
-	ldr	r5, =0xff0a81a8			@ PRRR
-	ldr	r6, =0x40e040e0			@ NMRR
+	ldr	r5, =0xff0a89a8			@ PRRR
+#ifdef CONFIG_SMP
+	ldr	r6, =0xc0e0c4e0			@ NMRR
+#else
+	ldr	r6, =0x40e044e0
+#endif
 	mcr	p15, 0, r5, c10, c2, 0		@ write PRRR
 	mcr	p15, 0, r6, c10, c2, 1		@ write NMRR
 #endif

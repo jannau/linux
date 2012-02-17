@@ -25,6 +25,12 @@
 #include <linux/mfd/wm8994/pdata.h>
 #include <linux/mfd/wm8994/registers.h>
 
+#if defined(CONFIG_ARCH_TEGRA)
+#include <linux/gpio.h>
+
+#define GPIO_WM8994_LDO_EN	122 /* TEGRA_GPIO_PP2 */
+#endif /* defined(CONFIG_ARCH_TEGRA) */
+
 static int wm8994_read(struct wm8994 *wm8994, unsigned short reg,
 		       int bytes, void *dest)
 {
@@ -65,6 +71,11 @@ int wm8994_reg_read(struct wm8994 *wm8994, unsigned short reg)
 
 	mutex_unlock(&wm8994->io_lock);
 
+#if 1
+	dev_vdbg(wm8994->dev, "wm8994_reg_read ADRESS is %x, VALUE is %x\n", reg, val);
+#else
+	printk("wm8994_reg_read ADRESS is %x, VALUE is %x\n", reg, val);
+#endif
 	if (ret < 0)
 		return ret;
 	else
@@ -127,6 +138,12 @@ int wm8994_reg_write(struct wm8994 *wm8994, unsigned short reg,
 	int ret;
 
 	mutex_lock(&wm8994->io_lock);
+
+#if 1
+	dev_vdbg(wm8994->dev, "wm8994_reg_write ADRESS is %x, VALUE is %x\n", reg, val);
+#else
+	printk("wm8994_reg_write ADRESS is %x, VALUE is %x\n", reg, val);
+#endif
 
 	ret = wm8994_write(wm8994, reg, 2, &val);
 
@@ -210,6 +227,18 @@ static struct mfd_cell wm8994_devs[] = {
  */
 static const char *wm8994_main_supplies[] = {
 	"DBVDD",
+	"DCVDD",
+	"AVDD1",
+	"AVDD2",
+	"CPVDD",
+	"SPKVDD1",
+	"SPKVDD2",
+};
+
+static const char *wm8958_main_supplies[] = {
+	"DBVDD1",
+	"DBVDD2",
+	"DBVDD3",
 	"DCVDD",
 	"AVDD1",
 	"AVDD2",
@@ -305,13 +334,35 @@ static int wm8994_ldo_in_use(struct wm8994_pdata *pdata, int ldo)
 /*
  * Instantiate the generic non-control parts of the device.
  */
-static int wm8994_device_init(struct wm8994 *wm8994, unsigned long id, int irq)
+static int wm8994_device_init(struct wm8994 *wm8994, int irq)
 {
 	struct wm8994_pdata *pdata = wm8994->dev->platform_data;
+	const char *devname;
 	int ret, i;
 
 	mutex_init(&wm8994->io_lock);
 	dev_set_drvdata(wm8994->dev, wm8994);
+
+#if defined(CONFIG_ARCH_TEGRA)
+	ret = gpio_request(GPIO_WM8994_LDO_EN, "wm8994_ldo");
+	if (ret < 0) {
+		printk(KERN_ERR "Can't request gpio%d for wm8994_ldo: %d\n",
+			GPIO_WM8994_LDO_EN, ret);
+		goto err;
+	}
+
+	tegra_gpio_enable(GPIO_WM8994_LDO_EN);
+
+	ret = gpio_direction_output(GPIO_WM8994_LDO_EN, 1);
+	if (ret < 0) {
+		printk(KERN_ERR "Can't set gpio%d direction to output: %d\n",
+			GPIO_WM8994_LDO_EN, ret);
+		goto err;
+	}
+
+	gpio_set_value(GPIO_WM8994_LDO_EN, 1);
+	msleep(20);
+#endif /* defined(CONFIG_ARCH_TEGRA) */
 
 	/* Add the on-chip regulators first for bootstrapping */
 	ret = mfd_add_devices(wm8994->dev, -1,
@@ -323,6 +374,18 @@ static int wm8994_device_init(struct wm8994 *wm8994, unsigned long id, int irq)
 		goto err;
 	}
 
+	switch (wm8994->type) {
+	case WM8994:
+		wm8994->num_supplies = ARRAY_SIZE(wm8994_main_supplies);
+		break;
+	case WM8958:
+		wm8994->num_supplies = ARRAY_SIZE(wm8958_main_supplies);
+		break;
+	default:
+		BUG();
+		return -EINVAL;
+	}
+
 	wm8994->supplies = kzalloc(sizeof(struct regulator_bulk_data) *
 				   ARRAY_SIZE(wm8994_main_supplies),
 				   GFP_KERNEL);
@@ -331,8 +394,19 @@ static int wm8994_device_init(struct wm8994 *wm8994, unsigned long id, int irq)
 		goto err;
 	}
 
-	for (i = 0; i < ARRAY_SIZE(wm8994_main_supplies); i++)
-		wm8994->supplies[i].supply = wm8994_main_supplies[i];
+	switch (wm8994->type) {
+	case WM8994:
+		for (i = 0; i < ARRAY_SIZE(wm8994_main_supplies); i++)
+			wm8994->supplies[i].supply = wm8994_main_supplies[i];
+		break;
+	case WM8958:
+		for (i = 0; i < ARRAY_SIZE(wm8958_main_supplies); i++)
+			wm8994->supplies[i].supply = wm8958_main_supplies[i];
+		break;
+	default:
+		BUG();
+		return -EINVAL;
+	}
 
 	ret = regulator_bulk_get(wm8994->dev, ARRAY_SIZE(wm8994_main_supplies),
 				 wm8994->supplies);
@@ -350,10 +424,37 @@ static int wm8994_device_init(struct wm8994 *wm8994, unsigned long id, int irq)
 
 	ret = wm8994_reg_read(wm8994, WM8994_SOFTWARE_RESET);
 	if (ret < 0) {
-		dev_err(wm8994->dev, "Failed to read ID register\n");
+		dev_err(wm8994->dev, "1st : Failed to read ID register\n");
+		msleep(10);
+	}
+
+	ret = wm8994_reg_read(wm8994, WM8994_SOFTWARE_RESET);
+	if (ret < 0) {
+		dev_err(wm8994->dev, "2nd : Failed to read ID register\n");
+		msleep(10);
+	}
+
+	ret = wm8994_reg_read(wm8994, WM8994_SOFTWARE_RESET);
+	if (ret < 0) {
+		dev_err(wm8994->dev, "3rd : Failed to read ID register\n");
 		goto err_enable;
 	}
-	if (ret != 0x8994) {
+	switch (ret) {
+	case 0x8994:
+		devname = "WM8994";
+		if (wm8994->type != WM8994)
+			dev_warn(wm8994->dev, "Device registered as type %d\n",
+				 wm8994->type);
+		wm8994->type = WM8994;
+		break;
+	case 0x8958:
+		devname = "WM8958";
+		if (wm8994->type != WM8958)
+			dev_warn(wm8994->dev, "Device registered as type %d\n",
+				 wm8994->type);
+		wm8994->type = WM8958;
+		break;
+	default:
 		dev_err(wm8994->dev, "Device is not a WM8994, ID is %x\n",
 			ret);
 		ret = -EINVAL;
@@ -370,14 +471,16 @@ static int wm8994_device_init(struct wm8994 *wm8994, unsigned long id, int irq)
 	switch (ret) {
 	case 0:
 	case 1:
-		dev_warn(wm8994->dev, "revision %c not fully supported\n",
-			'A' + ret);
+		if (wm8994->type == WM8994)
+			dev_warn(wm8994->dev,
+				 "revision %c not fully supported\n",
+				 'A' + ret);
 		break;
 	default:
-		dev_info(wm8994->dev, "revision %c\n", 'A' + ret);
 		break;
 	}
 
+	dev_info(wm8994->dev, "%s revision %c\n", devname, 'A' + ret);
 
 	if (pdata) {
 		wm8994->irq_base = pdata->irq_base;
@@ -392,6 +495,8 @@ static int wm8994_device_init(struct wm8994 *wm8994, unsigned long id, int irq)
 			}
 		}
 	}
+		wm8994_set_bits(wm8994, WM8994_GPIO_1,
+				0xf,0x1);
 
 	/* In some system designs where the regulators are not in use,
 	 * we can achieve a small reduction in leakage currents by
@@ -497,8 +602,10 @@ static int wm8994_i2c_probe(struct i2c_client *i2c,
 	struct wm8994 *wm8994;
 
 	wm8994 = kzalloc(sizeof(struct wm8994), GFP_KERNEL);
-	if (wm8994 == NULL)
+	if (wm8994 == NULL) {
+		kfree(i2c);
 		return -ENOMEM;
+	}
 
 	i2c_set_clientdata(i2c, wm8994);
 	wm8994->dev = &i2c->dev;
@@ -506,14 +613,19 @@ static int wm8994_i2c_probe(struct i2c_client *i2c,
 	wm8994->read_dev = wm8994_i2c_read_device;
 	wm8994->write_dev = wm8994_i2c_write_device;
 	wm8994->irq = i2c->irq;
+	wm8994->type = id->driver_data;
 
-	return wm8994_device_init(wm8994, id->driver_data, i2c->irq);
+	return wm8994_device_init(wm8994, i2c->irq);
 }
 
 static int wm8994_i2c_remove(struct i2c_client *i2c)
 {
 	struct wm8994 *wm8994 = i2c_get_clientdata(i2c);
 
+#if defined(CONFIG_ARCH_TEGRA)
+	tegra_gpio_disable(GPIO_WM8994_LDO_EN);
+	gpio_free(GPIO_WM8994_LDO_EN);
+#endif /* defined(CONFIG_ARCH_TEGRA) */
 	wm8994_device_exit(wm8994);
 
 	return 0;
@@ -522,11 +634,29 @@ static int wm8994_i2c_remove(struct i2c_client *i2c)
 #ifdef CONFIG_PM
 static int wm8994_i2c_suspend(struct i2c_client *i2c, pm_message_t state)
 {
+#if defined(CONFIG_ARCH_TEGRA)
+	tegra_gpio_enable(GPIO_WM8994_LDO_EN);
+	gpio_set_value(GPIO_WM8994_LDO_EN, 0);
+#endif /* defined(CONFIG_ARCH_TEGRA) */
 	return wm8994_device_suspend(&i2c->dev);
 }
 
 static int wm8994_i2c_resume(struct i2c_client *i2c)
 {
+#if defined(CONFIG_ARCH_TEGRA)
+	int ret;
+
+	tegra_gpio_enable(GPIO_WM8994_LDO_EN);
+	ret = gpio_direction_output(GPIO_WM8994_LDO_EN, 1);
+	if (ret < 0) {
+		printk(KERN_ERR "Can't set gpio direction to output %d: %d\n",
+			GPIO_WM8994_LDO_EN, ret);
+		return ret;
+	}
+
+	gpio_set_value(GPIO_WM8994_LDO_EN, 1);
+	msleep(10);
+#endif /* defined(CONFIG_ARCH_TEGRA) */
 	return wm8994_device_resume(&i2c->dev);
 }
 #else
@@ -535,7 +665,8 @@ static int wm8994_i2c_resume(struct i2c_client *i2c)
 #endif
 
 static const struct i2c_device_id wm8994_i2c_id[] = {
-	{ "wm8994", 0 },
+	{ "wm8994", WM8994 },
+	{ "wm8958", WM8958 },
 	{ }
 };
 MODULE_DEVICE_TABLE(i2c, wm8994_i2c_id);

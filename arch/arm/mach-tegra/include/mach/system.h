@@ -23,17 +23,37 @@
 
 #include <mach/hardware.h>
 #include <mach/iomap.h>
+#ifdef CONFIG_MACH_STARTABLET
+#include <linux/delay.h>
+#endif
+
+extern void (*tegra_reset)(char mode, const char *cmd);
 
 static inline void arch_idle(void)
 {
 }
 
+static inline void tegra_assert_system_reset(void)
+{
+	void __iomem *reset = IO_ADDRESS(TEGRA_PMC_BASE + 0x00);
+	u32 reg;
+
+	reg = readl(reset);
+	reg |= 0x10;
+	//writel(reg, reset);
+	udelay(10);
+	writel_relaxed(reg, reset);
+
+}
+
 static inline void arch_reset(char mode, const char *cmd)
 {
-	void __iomem *reset = IO_ADDRESS(TEGRA_CLK_RESET_BASE + 0x04);
-	u32 reg = readl(reset);
-	reg |= 0x04;
-	writel(reg, reset);
+	if (tegra_reset)
+		tegra_reset(mode, cmd);
+	else
+		tegra_assert_system_reset();
+
+	do { } while (1);
 }
 
 #endif

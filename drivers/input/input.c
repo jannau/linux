@@ -1507,7 +1507,10 @@ static int input_dev_resume(struct device *dev)
 	 * to be still pressed when we resume.
 	 */
 	spin_lock_irq(&input_dev->event_lock);
-	input_dev_release_keys(input_dev);
+#ifdef CONFIG_MACH_STARTABLET
+	if (0 != strcmp("powerkey", input_dev->name))   // skip only for powerkey
+#endif
+		input_dev_release_keys(input_dev);
 	spin_unlock_irq(&input_dev->event_lock);
 
 	mutex_unlock(&input_dev->mutex);

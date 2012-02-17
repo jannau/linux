@@ -542,6 +542,14 @@ config SERIAL_S5PV210
 	help
 	  Serial port support for Samsung's S5P Family of SoC's
 
+config SERIAL_TEGRA
+	boolean "High speed serial support for NVIDIA Tegra SoCs"
+	depends on ARCH_TEGRA && TEGRA_SYSTEM_DMA
+	select SERIAL_CORE
+	help
+	  Support for the on-chip UARTs on NVIDIA Tegra SoC, providing
+	  /dev/ttyHSx, where x is determined by the number of UARTs on the
+	  platform
 
 config SERIAL_MAX3100
 	tristate "MAX3100 support"
@@ -1386,6 +1394,14 @@ config SERIAL_MSM_CONSOLE
 	bool "MSM serial console support"
 	depends on SERIAL_MSM=y
 	select SERIAL_CORE_CONSOLE
+
+config SERIAL_BCM_BT_LPM
+	tristate "Broadcom Bluetooth Low Power Mode"
+	depends on SERIAL_TEGRA
+	select SERIAL_CORE
+	default n
+	help
+	  Select this module for Broadcom Bluetooth low power management.
 
 config SERIAL_NETX
 	tristate "NetX serial port support"

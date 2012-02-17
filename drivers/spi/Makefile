@@ -8,7 +8,7 @@ endif
 
 # small core, mostly translating board-specific
 # config declarations into driver model code
-obj-$(CONFIG_SPI_MASTER)		+= spi.o
+obj-y		+= spi.o
 
 # SPI master controller drivers (bus)
 obj-$(CONFIG_SPI_ATMEL)			+= atmel_spi.o
@@ -39,6 +39,7 @@ obj-$(CONFIG_SPI_PPC4xx)		+= spi_ppc4xx.o
 obj-$(CONFIG_SPI_S3C24XX_GPIO)		+= spi_s3c24xx_gpio.o
 obj-$(CONFIG_SPI_S3C24XX)		+= spi_s3c24xx_hw.o
 obj-$(CONFIG_SPI_S3C64XX)		+= spi_s3c64xx.o
+obj-$(CONFIG_SPI_TEGRA)			+= spi_tegra.o
 obj-$(CONFIG_SPI_TXX9)			+= spi_txx9.o
 obj-$(CONFIG_SPI_XILINX)		+= xilinx_spi.o
 obj-$(CONFIG_SPI_XILINX_OF)		+= xilinx_spi_of.o
@@ -60,6 +61,7 @@ obj-$(CONFIG_SPI_TLE62X0)	+= tle62x0.o
 # 	... add above this line ...
 
 # SPI slave controller drivers (upstream link)
+obj-$(CONFIG_SPI_SLAVE_TEGRA)	+= spi_tegra_slave.o
 # 	... add above this line ...
 
 # SPI slave drivers (protocol for that link)

@@ -57,9 +57,79 @@ static const char *isa_modes[] = {
 
 extern void setup_mm_for_reboot(char mode);
 
+#ifdef CONFIG_MACH_STARTABLET
+extern void tegra_dvfs_disable_core_cpu(void);
+#endif
+
 static volatile int hlt_counter;
 
 #include <mach/system.h>
+
+#ifdef CONFIG_MACH_STARTABLET
+static void star_emergency_restart(int timeout)
+{
+
+#define TEGRA_TMR1_BASE         0x60005000
+#define TEGRA_CLK_RESET_BASE    0x60006000
+
+#define WDT_TIMEOUT 100
+
+#define CLK_RST_CONTROLLER_RST_SOURCE_0 0
+#define TIMER_TMR_PTV_0  0
+
+
+#define WDT_SOURCE CLK_RST_CONTROLLER_RST_SOURCE_0
+#define WDT_TIMER  TIMER_TMR_PTV_0
+
+
+#define TIMER_PTV 0x00
+#define TIMER_EN	(1 << 31)
+#define TIMER_PERIODIC	(1 << 30)
+
+#define WDT_EN		(1 << 5)
+#define WDT_SEL_TMR1	(0 << 4)
+#define WDT_SYS_RST	(1 << 2)
+
+	void __iomem *rst_reg_base = IO_ADDRESS(TEGRA_CLK_RESET_BASE);
+
+#define rst_writel(value, reg) \
+	__raw_writel(value, (u32)rst_reg_base + (reg))
+#define rst_readl(reg) \
+	__raw_readl((u32)rst_reg_base + (reg))
+
+	void __iomem *tmr_reg_base = IO_ADDRESS(TEGRA_TMR1_BASE);
+
+#define tmr_writel(value, reg) \
+	__raw_writel(value, (u32)tmr_reg_base + (reg))
+#define tmr_readl(reg) \
+	__raw_readl((u32)tmr_reg_base + (reg))
+
+
+	u32 ptv,src;
+	u32 val;
+
+	printk("%s : timeout = %d sec\n",__func__, timeout);
+	ptv = tmr_readl(TIMER_PTV);
+	src = rst_readl(WDT_SOURCE);
+
+	rst_writel(0, WDT_SOURCE);
+
+	if (ptv & TIMER_EN) {
+		printk("%s :PVT is valid\n",__func__);
+		ptv = timeout * 1000000ul;
+		ptv |= (TIMER_EN | TIMER_PERIODIC);
+		tmr_writel(ptv, TIMER_PTV);
+	}
+	rst_writel(src, WDT_SOURCE);
+
+	val = timeout* 1000000ul;
+	val |= (TIMER_EN | TIMER_PERIODIC);
+	tmr_writel(val, TIMER_PTV);
+
+	val = WDT_EN | WDT_SEL_TMR1 | WDT_SYS_RST;
+	rst_writel(val, WDT_SOURCE);
+}
+#endif
 
 void disable_hlt(void)
 {
@@ -92,10 +162,6 @@ __setup("hlt", hlt_setup);
 
 void arm_machine_restart(char mode, const char *cmd)
 {
-	/* Disable interrupts first */
-	local_irq_disable();
-	local_fiq_disable();
-
 	/*
 	 * Tell the mm system that we are going to reboot -
 	 * we may need it to insert some 1:1 mappings so that
@@ -140,12 +206,13 @@ EXPORT_SYMBOL_GPL(arm_pm_restart);
  * This is our default idle handler.  We need to disable
  * interrupts here to ensure we don't miss a wakeup call.
  */
-static void default_idle(void)
+void default_idle(void)
 {
 	if (!need_resched())
 		arch_idle();
 	local_irq_enable();
 }
+EXPORT_SYMBOL(default_idle);
 
 void (*pm_idle)(void) = default_idle;
 EXPORT_SYMBOL(pm_idle);
@@ -195,6 +262,19 @@ void cpu_idle(void)
 	}
 }
 
+#if defined(CONFIG_ARCH_HAS_CPU_IDLE_WAIT)
+static void do_nothing(void *unused)
+{
+}
+
+void cpu_idle_wait(void)
+{
+	smp_mb();
+	smp_call_function(do_nothing, NULL, 1);
+}
+#endif
+
+
 static char reboot_mode = 'h';
 
 int __init reboot_setup(char *str)
@@ -207,6 +287,9 @@ __setup("reboot=", reboot_setup);
 
 void machine_shutdown(void)
 {
+#ifdef CONFIG_MACH_STARTABLET
+	tegra_dvfs_disable_core_cpu();
+#endif
 #ifdef CONFIG_SMP
 	smp_send_stop();
 #endif
@@ -227,8 +310,86 @@ void machine_power_off(void)
 
 void machine_restart(char *cmd)
 {
+#ifdef CONFIG_MACH_STARTABLET
+	star_emergency_restart(20);
+#endif
+	/* Disable interrupts first */
+	local_irq_disable();
+	local_fiq_disable();
+
 	machine_shutdown();
 	arm_pm_restart(reboot_mode, cmd);
+}
+
+/*
+ * dump a block of kernel memory from around the given address
+ */
+static void show_data(unsigned long addr, int nbytes, const char *name)
+{
+	int	i, j;
+	int	nlines;
+	u32	*p;
+
+	/*
+	 * don't attempt to dump non-kernel addresses or
+	 * values that are probably just small negative numbers
+	 */
+	if (addr < PAGE_OFFSET || addr > -256UL)
+		return;
+
+	printk("\n%s: %#lx:\n", name, addr);
+
+	/*
+	 * round address down to a 32 bit boundary
+	 * and always dump a multiple of 32 bytes
+	 */
+	p = (u32 *)(addr & ~(sizeof(u32) - 1));
+	nbytes += (addr & (sizeof(u32) - 1));
+	nlines = (nbytes + 31) / 32;
+
+
+	for (i = 0; i < nlines; i++) {
+		/*
+		 * just display low 16 bits of address to keep
+		 * each line of the dump < 80 characters
+		 */
+		printk("%04lx ", (unsigned long)p & 0xffff);
+		for (j = 0; j < 8; j++) {
+			u32	data;
+			if (probe_kernel_address(p, data)) {
+				printk(" ********");
+			} else {
+				printk(" %08x", data);
+			}
+			++p;
+		}
+		printk("\n");
+	}
+}
+
+static void show_extra_register_data(struct pt_regs *regs, int nbytes)
+{
+	mm_segment_t fs;
+
+	fs = get_fs();
+	set_fs(KERNEL_DS);
+	show_data(regs->ARM_pc - nbytes, nbytes * 2, "PC");
+	show_data(regs->ARM_lr - nbytes, nbytes * 2, "LR");
+	show_data(regs->ARM_sp - nbytes, nbytes * 2, "SP");
+	show_data(regs->ARM_ip - nbytes, nbytes * 2, "IP");
+	show_data(regs->ARM_fp - nbytes, nbytes * 2, "FP");
+	show_data(regs->ARM_r0 - nbytes, nbytes * 2, "R0");
+	show_data(regs->ARM_r1 - nbytes, nbytes * 2, "R1");
+	show_data(regs->ARM_r2 - nbytes, nbytes * 2, "R2");
+	show_data(regs->ARM_r3 - nbytes, nbytes * 2, "R3");
+	show_data(regs->ARM_r4 - nbytes, nbytes * 2, "R4");
+	show_data(regs->ARM_r5 - nbytes, nbytes * 2, "R5");
+	show_data(regs->ARM_r6 - nbytes, nbytes * 2, "R6");
+	show_data(regs->ARM_r7 - nbytes, nbytes * 2, "R7");
+	show_data(regs->ARM_r8 - nbytes, nbytes * 2, "R8");
+	show_data(regs->ARM_r9 - nbytes, nbytes * 2, "R9");
+	show_data(regs->ARM_r10 - nbytes, nbytes * 2, "R10");
+	set_fs(fs);
 }
 
 void __show_regs(struct pt_regs *regs)
@@ -290,6 +451,8 @@ void __show_regs(struct pt_regs *regs)
 		printk("Control: %08x%s\n", ctrl, buf);
 	}
 #endif
+
+	show_extra_register_data(regs, 128);
 }
 
 void show_regs(struct pt_regs * regs)

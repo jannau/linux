@@ -303,6 +303,16 @@ config MFD_MAX8998
 	  accessing the device, additional drivers must be enabled in order
 	  to use the functionality of the device.
 
+config MFD_MAX8907C
+	tristate "Maxim Semiconductor MAX8907C PMIC Support"
+	select MFD_CORE
+	depends on I2C
+	help
+	  Say yes here to support for Maxim Semiconductor MAX8907C. This is
+	  a Power Management IC. This driver provies common support for
+	  accessing the device, additional drivers must be enabled in order
+	  to use the functionality of the device.
+
 config MFD_WM8400
 	tristate "Support Wolfson Microelectronics WM8400"
 	select MFD_CORE
@@ -542,8 +552,8 @@ config MFD_JZ4740_ADC
 	  This driver is necessary for jz4740-battery and jz4740-hwmon driver.
 
 config MFD_TPS6586X
-	tristate "TPS6586x Power Management chips"
-	depends on I2C && GPIOLIB
+	bool "TPS6586x Power Management chips"
+	depends on I2C && GPIOLIB && GENERIC_HARDIRQS
 	select MFD_CORE
 	help
 	  If you say yes here you get support for the TPS6586X series of

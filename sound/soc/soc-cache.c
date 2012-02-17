@@ -19,8 +19,15 @@ static unsigned int snd_soc_4_12_read(struct snd_soc_codec *codec,
 				     unsigned int reg)
 {
 	u16 *cache = codec->reg_cache;
-	if (reg >= codec->reg_cache_size)
-		return -1;
+
+	if (reg >= codec->reg_cache_size ||
+		snd_soc_codec_volatile_register(codec, reg)) {
+			if (codec->cache_only)
+				return -1;
+
+			return codec->hw_read(codec, reg);
+	}
+
 	return cache[reg];
 }
 
@@ -31,13 +38,12 @@ static int snd_soc_4_12_write(struct snd_soc_codec *codec, unsigned int reg,
 	u8 data[2];
 	int ret;
 
-	BUG_ON(codec->volatile_register);
-
 	data[0] = (reg << 4) | ((value >> 8) & 0x000f);
 	data[1] = value & 0x00ff;
 
-	if (reg < codec->reg_cache_size)
-		cache[reg] = value;
+	if (!snd_soc_codec_volatile_register(codec, reg) &&
+		reg < codec->reg_cache_size)
+			cache[reg] = value;
 
 	if (codec->cache_only) {
 		codec->cache_sync = 1;
@@ -89,8 +95,15 @@ static unsigned int snd_soc_7_9_read(struct snd_soc_codec *codec,
 				     unsigned int reg)
 {
 	u16 *cache = codec->reg_cache;
-	if (reg >= codec->reg_cache_size)
-		return -1;
+
+	if (reg >= codec->reg_cache_size ||
+		snd_soc_codec_volatile_register(codec, reg)) {
+			if (codec->cache_only)
+				return -1;
+
+			return codec->hw_read(codec, reg);
+	}
+
 	return cache[reg];
 }
 
@@ -101,13 +114,12 @@ static int snd_soc_7_9_write(struct snd_soc_codec *codec, unsigned int reg,
 	u8 data[2];
 	int ret;
 
-	BUG_ON(codec->volatile_register);
-
 	data[0] = (reg << 1) | ((value >> 8) & 0x0001);
 	data[1] = value & 0x00ff;
 
-	if (reg < codec->reg_cache_size)
-		cache[reg] = value;
+	if (!snd_soc_codec_volatile_register(codec, reg) &&
+		reg < codec->reg_cache_size)
+			cache[reg] = value;
 
 	if (codec->cache_only) {
 		codec->cache_sync = 1;
@@ -161,14 +173,13 @@ static int snd_soc_8_8_write(struct snd_soc_codec *codec, unsigned int reg,
 	u8 *cache = codec->reg_cache;
 	u8 data[2];
 
-	BUG_ON(codec->volatile_register);
-
 	reg &= 0xff;
 	data[0] = reg;
 	data[1] = value & 0xff;
 
-	if (reg < codec->reg_cache_size)
-		cache[reg] = value;
+	if (!snd_soc_codec_volatile_register(codec, reg) &&
+		reg < codec->reg_cache_size)
+			cache[reg] = value;
 
 	if (codec->cache_only) {
 		codec->cache_sync = 1;
@@ -187,9 +198,16 @@ static unsigned int snd_soc_8_8_read(struct snd_soc_codec *codec,
 				     unsigned int reg)
 {
 	u8 *cache = codec->reg_cache;
+
 	reg &= 0xff;
-	if (reg >= codec->reg_cache_size)
-		return -1;
+	if (reg >= codec->reg_cache_size ||
+		snd_soc_codec_volatile_register(codec, reg)) {
+			if (codec->cache_only)
+				return -1;
+
+			return codec->hw_read(codec, reg);
+	}
+
 	return cache[reg];
 }
 
@@ -228,7 +246,7 @@ static unsigned int snd_soc_8_16_read(struct snd_soc_codec *codec,
 	if (reg >= codec->reg_cache_size ||
 	    snd_soc_codec_volatile_register(codec, reg)) {
 		if (codec->cache_only)
-			return -EINVAL;
+			return -1;
 
 		return codec->hw_read(codec, reg);
 	} else {
@@ -344,8 +362,14 @@ static unsigned int snd_soc_16_8_read(struct snd_soc_codec *codec,
 	u8 *cache = codec->reg_cache;
 
 	reg &= 0xff;
-	if (reg >= codec->reg_cache_size)
-		return -1;
+	if (reg >= codec->reg_cache_size ||
+		snd_soc_codec_volatile_register(codec, reg)) {
+			if (codec->cache_only)
+				return -1;
+
+			return codec->hw_read(codec, reg);
+	}
+
 	return cache[reg];
 }
 
@@ -356,15 +380,14 @@ static int snd_soc_16_8_write(struct snd_soc_codec *codec, unsigned int reg,
 	u8 data[3];
 	int ret;
 
-	BUG_ON(codec->volatile_register);
-
 	data[0] = (reg >> 8) & 0xff;
 	data[1] = reg & 0xff;
 	data[2] = value;
 
 	reg &= 0xff;
-	if (reg < codec->reg_cache_size)
-		cache[reg] = value;
+	if (!snd_soc_codec_volatile_register(codec, reg) &&
+		reg < codec->reg_cache_size)
+			cache[reg] = value;
 
 	if (codec->cache_only) {
 		codec->cache_sync = 1;
@@ -455,7 +478,7 @@ static unsigned int snd_soc_16_16_read(struct snd_soc_codec *codec,
 	if (reg >= codec->reg_cache_size ||
 	    snd_soc_codec_volatile_register(codec, reg)) {
 		if (codec->cache_only)
-			return -EINVAL;
+			return -1;
 
 		return codec->hw_read(codec, reg);
 	}
@@ -475,8 +498,9 @@ static int snd_soc_16_16_write(struct snd_soc_codec *codec, unsigned int reg,
 	data[2] = (value >> 8) & 0xff;
 	data[3] = value & 0xff;
 
-	if (reg < codec->reg_cache_size)
-		cache[reg] = value;
+	if (!snd_soc_codec_volatile_register(codec, reg) &&
+		reg < codec->reg_cache_size)
+			cache[reg] = value;
 
 	if (codec->cache_only) {
 		codec->cache_sync = 1;
@@ -585,11 +609,19 @@ int snd_soc_codec_set_cache_io(struct snd_soc_codec *codec,
 #endif
 		if (io_types[i].i2c_read)
 			codec->hw_read = io_types[i].i2c_read;
+
+		codec->control_data = container_of(codec->dev,
+						   struct i2c_client,
+						   dev);
 		break;
 
 	case SND_SOC_SPI:
 		if (io_types[i].spi_write)
 			codec->hw_write = io_types[i].spi_write;
+
+		codec->control_data = container_of(codec->dev,
+						   struct spi_device,
+						   dev);
 		break;
 	}
 

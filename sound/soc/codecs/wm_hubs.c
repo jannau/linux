@@ -25,6 +25,7 @@
 #include <sound/soc-dapm.h>
 #include <sound/initval.h>
 #include <sound/tlv.h>
+#include <linux/mfd/wm8994/registers.h>
 
 #include "wm8993.h"
 #include "wm_hubs.h"
@@ -52,7 +53,7 @@ static const char *speaker_ref_text[] = {
 };
 
 static const struct soc_enum speaker_ref =
-	SOC_ENUM_SINGLE(WM8993_SPEAKER_MIXER, 8, 2, speaker_ref_text);
+	SOC_ENUM_SINGLE(WM8993_SPKMIXL_ATTENUATION, 8, 2, speaker_ref_text);
 
 static const char *speaker_mode_text[] = {
 	"Class D",
@@ -94,6 +95,18 @@ static void calibrate_dc_servo(struct snd_soc_codec *codec)
 	struct wm_hubs_data *hubs = snd_soc_codec_get_drvdata(codec);
 	u16 reg, reg_l, reg_r, dcs_cfg;
 
+	/* If we're using a digital only path and have a previously
+	 * callibrated DC servo offset stored then use that. */
+	if (hubs->class_w && hubs->class_w_dcs) {
+		dev_dbg(codec->dev, "Using cached DC servo offset %x\n",
+			hubs->class_w_dcs);
+		snd_soc_write(codec, WM8993_DC_SERVO_3, hubs->class_w_dcs);
+		wait_for_dc_servo(codec,
+				  WM8993_DCS_TRIG_DAC_WR_0 |
+				  WM8993_DCS_TRIG_DAC_WR_1);
+		return;
+	}
+
 	/* Set for 32 series updates */
 	snd_soc_update_bits(codec, WM8993_DC_SERVO_1,
 			    WM8993_DCS_SERIES_NO_01_MASK,
@@ -101,11 +114,34 @@ static void calibrate_dc_servo(struct snd_soc_codec *codec)
 	wait_for_dc_servo(codec,
 			  WM8993_DCS_TRIG_SERIES_0 | WM8993_DCS_TRIG_SERIES_1);
 
+	/* Different chips in the family support different readback
+	 * methods.
+	 */
+	switch (hubs->dcs_readback_mode) {
+	case 0:
+		reg_l = snd_soc_read(codec, WM8993_DC_SERVO_READBACK_1)
+			& WM8993_DCS_INTEG_CHAN_0_MASK;;
+		reg_r = snd_soc_read(codec, WM8993_DC_SERVO_READBACK_2)
+			& WM8993_DCS_INTEG_CHAN_1_MASK;
+		break;
+	case 1:
+		reg = snd_soc_read(codec, WM8993_DC_SERVO_3);
+		reg_l = (reg & WM8993_DCS_DAC_WR_VAL_1_MASK)
+			>> WM8993_DCS_DAC_WR_VAL_1_SHIFT;
+		reg_r = reg & WM8993_DCS_DAC_WR_VAL_0_MASK;
+		break;
+	default:
+		WARN(1, "Unknown DCS readback method");
+		break;
+	}
+
+	dev_dbg(codec->dev, "DCS input: %x %x\n", reg_l, reg_r);
+
 	/* Apply correction to DC servo result */
 	if (hubs->dcs_codes) {
 		dev_dbg(codec->dev, "Applying %d code DC servo correction\n",
 			hubs->dcs_codes);
-
+#if 1
 		/* Different chips in the family support different
 		 * readback methods.
 		 */
@@ -123,11 +159,12 @@ static void calibrate_dc_servo(struct snd_soc_codec *codec)
 			reg_r = reg & WM8993_DCS_DAC_WR_VAL_0_MASK;
 			break;
 		default:
-			WARN(1, "Unknown DCS readback method");
+			WARN(1, "Unknown DCS readback method\n");
 			break;
 		}
 
 		dev_dbg(codec->dev, "DCS input: %x %x\n", reg_l, reg_r);
+#endif
 
 		/* HPOUT1L */
 		if (reg_l + hubs->dcs_codes > 0 &&
@@ -148,7 +185,15 @@ static void calibrate_dc_servo(struct snd_soc_codec *codec)
 		wait_for_dc_servo(codec,
 				  WM8993_DCS_TRIG_DAC_WR_0 |
 				  WM8993_DCS_TRIG_DAC_WR_1);
+	} else {
+		dcs_cfg = reg_l << WM8993_DCS_DAC_WR_VAL_1_SHIFT;
+		dcs_cfg |= reg_r;
 	}
+
+	/* Save the callibrated offset if we're in class W mode and
+	 * therefore don't have any analogue signal mixed in. */
+	if (hubs->class_w)
+		hubs->class_w_dcs = dcs_cfg;
 }
 
 /*
@@ -162,6 +207,9 @@ static int wm8993_put_dc_servo(struct snd_kcontrol *kcontrol,
 	int ret;
 
 	ret = snd_soc_put_volsw_2r(kcontrol, ucontrol);
+
+	/* Updating the analogue gains invalidates the DC servo cache */
+	hubs->class_w_dcs = 0;
 
 	/* If we're applying an offset correction then updating the
 	 * callibration would be likely to introduce further offsets. */
@@ -273,6 +321,8 @@ SOC_SINGLE_TLV("SPKL IN1LP Volume", WM8993_SPKMIXL_ATTENUATION,
 	       4, 1, 1, wm_hubs_spkmix_tlv),
 SOC_SINGLE_TLV("SPKL Output Volume", WM8993_SPKMIXL_ATTENUATION,
 	       3, 1, 1, wm_hubs_spkmix_tlv),
+SOC_SINGLE_TLV("SPKL VOL Volume", WM8993_SPKMIXL_ATTENUATION,
+	       0, 3, 0, wm_hubs_spkmix_tlv),
 
 SOC_SINGLE_TLV("SPKR Input Volume", WM8993_SPKMIXR_ATTENUATION,
 	       5, 1, 1, wm_hubs_spkmix_tlv),
@@ -280,13 +330,34 @@ SOC_SINGLE_TLV("SPKR IN1RP Volume", WM8993_SPKMIXR_ATTENUATION,
 	       4, 1, 1, wm_hubs_spkmix_tlv),
 SOC_SINGLE_TLV("SPKR Output Volume", WM8993_SPKMIXR_ATTENUATION,
 	       3, 1, 1, wm_hubs_spkmix_tlv),
+SOC_SINGLE_TLV("SPKR VOL Volume", WM8993_SPKMIXR_ATTENUATION,
+	       0, 3, 0, wm_hubs_spkmix_tlv),
+
+SOC_SINGLE_TLV("AIF1Loop", WM8994_AIF1_CONTROL_2,
+	       0, 1, 0, wm_hubs_spkmix_tlv),
+#if 1
+SOC_SINGLE_TLV("IN1RVol", WM8993_RIGHT_LINE_INPUT_1_2_VOLUME,
+		0, 31, 0, wm_hubs_spkmix_tlv),
+SOC_SINGLE_TLV("IN1LVol", WM8993_LEFT_LINE_INPUT_1_2_VOLUME,
+		0, 31, 0, wm_hubs_spkmix_tlv),
+#endif
 
 SOC_DOUBLE_R_TLV("Speaker Mixer Volume",
 		 WM8993_SPKMIXL_ATTENUATION, WM8993_SPKMIXR_ATTENUATION,
 		 0, 3, 1, spkmixout_tlv),
+
+#if 0
 SOC_DOUBLE_R_TLV("Speaker Volume",
 		 WM8993_SPEAKER_VOLUME_LEFT, WM8993_SPEAKER_VOLUME_RIGHT,
 		 0, 63, 0, outpga_tlv),
+#else
+SOC_SINGLE_TLV("Speaker Volume L", WM8993_SPEAKER_VOLUME_LEFT,
+		 0, 63, 0, outpga_tlv),
+
+SOC_SINGLE_TLV("Speaker Volume R", WM8993_SPEAKER_VOLUME_RIGHT,
+		 0, 63, 0, outpga_tlv),
+#endif
+
 SOC_DOUBLE_R("Speaker Switch",
 	     WM8993_SPEAKER_VOLUME_LEFT, WM8993_SPEAKER_VOLUME_RIGHT,
 	     6, 1, 0),
@@ -585,7 +656,7 @@ SND_SOC_DAPM_MIXER("Right Output Mixer", WM8993_POWER_MANAGEMENT_3, 4, 0,
 SND_SOC_DAPM_PGA("Left Output PGA", WM8993_POWER_MANAGEMENT_3, 7, 0, NULL, 0),
 SND_SOC_DAPM_PGA("Right Output PGA", WM8993_POWER_MANAGEMENT_3, 6, 0, NULL, 0),
 
-SND_SOC_DAPM_SUPPLY("Headphone Supply", SND_SOC_NOPM, 0, 0, hp_supply_event, 
+SND_SOC_DAPM_SUPPLY("Headphone Supply", SND_SOC_NOPM, 0, 0, hp_supply_event,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_PRE_PMD),
 SND_SOC_DAPM_PGA_E("Headphone PGA", SND_SOC_NOPM, 0, 0,
 		   NULL, 0,
@@ -645,10 +716,10 @@ SND_SOC_DAPM_OUTPUT("LINEOUT2N"),
 };
 
 static const struct snd_soc_dapm_route analogue_routes[] = {
-	{ "IN1L PGA", "IN1LP Switch", "IN1LP" },
+//	{ "IN1L PGA", "IN1LP Switch", "IN1LP" },
 	{ "IN1L PGA", "IN1LN Switch", "IN1LN" },
 
-	{ "IN1R PGA", "IN1RP Switch", "IN1RP" },
+//	{ "IN1R PGA", "IN1RP Switch", "IN1RP" },
 	{ "IN1R PGA", "IN1RN Switch", "IN1RN" },
 
 	{ "IN2L PGA", "IN2LP Switch", "IN2LP:VXRN" },
@@ -801,17 +872,21 @@ int wm_hubs_add_analogue_controls(struct snd_soc_codec *codec)
 	snd_soc_update_bits(codec, WM8993_RIGHT_LINE_INPUT_3_4_VOLUME,
 			    WM8993_IN2_VU, WM8993_IN2_VU);
 
+	snd_soc_update_bits(codec, WM8993_SPEAKER_VOLUME_LEFT,
+			    WM8993_SPKOUT_VU, WM8993_SPKOUT_VU);
 	snd_soc_update_bits(codec, WM8993_SPEAKER_VOLUME_RIGHT,
 			    WM8993_SPKOUT_VU, WM8993_SPKOUT_VU);
 
 	snd_soc_update_bits(codec, WM8993_LEFT_OUTPUT_VOLUME,
-			    WM8993_HPOUT1L_ZC, WM8993_HPOUT1L_ZC);
+			    WM8993_HPOUT1_VU | WM8993_HPOUT1L_ZC,
+			    WM8993_HPOUT1_VU | WM8993_HPOUT1L_ZC);
 	snd_soc_update_bits(codec, WM8993_RIGHT_OUTPUT_VOLUME,
 			    WM8993_HPOUT1_VU | WM8993_HPOUT1R_ZC,
 			    WM8993_HPOUT1_VU | WM8993_HPOUT1R_ZC);
 
 	snd_soc_update_bits(codec, WM8993_LEFT_OPGA_VOLUME,
-			    WM8993_MIXOUTL_ZC, WM8993_MIXOUTL_ZC);
+			    WM8993_MIXOUTL_ZC | WM8993_MIXOUT_VU,
+			    WM8993_MIXOUTL_ZC | WM8993_MIXOUT_VU);
 	snd_soc_update_bits(codec, WM8993_RIGHT_OPGA_VOLUME,
 			    WM8993_MIXOUTR_ZC | WM8993_MIXOUT_VU,
 			    WM8993_MIXOUTR_ZC | WM8993_MIXOUT_VU);
