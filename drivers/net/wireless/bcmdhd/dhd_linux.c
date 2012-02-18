@@ -2922,6 +2922,39 @@ dhd_concurrent_fw(dhd_pub_t *dhd)
 }
 #endif 
 
+#if defined(USE_KEEP_ALIVE)
+int
+dhd_enable_keepalive(dhd_pub_t *dhd, uint32 period)
+{
+        int buf_len;
+        int str_len = 10;
+        char buf[256];
+
+        wl_keep_alive_pkt_t keep_alive_pkt;
+        wl_keep_alive_pkt_t *pkt;
+
+        memset(buf, 0, sizeof(buf));
+
+        memcpy(buf, "keep_alive", str_len);
+        buf[str_len] = 0;
+
+        pkt = (wl_keep_alive_pkt_t *) (buf + str_len + 1);
+        keep_alive_pkt.period_msec = period;
+        keep_alive_pkt.len_bytes = 0;
+        buf_len = str_len + 1 + sizeof(wl_keep_alive_pkt_t);
+        memcpy((char *)pkt, &keep_alive_pkt, WL_KEEP_ALIVE_FIXED_LEN);
+
+        if (0 == period) {
+                DHD_TRACE(("Disable Keep Alive\n"));
+        }
+        else {
+                DHD_TRACE(("Enable Keep Alive\n"));
+        }
+
+        return dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, buf, buf_len, TRUE, 0);
+}
+#endif /* USE_KEEP_ALIVE */
+
 int
 dhd_preinit_ioctls(dhd_pub_t *dhd)
 {
@@ -3114,6 +3147,17 @@ dhd_preinit_ioctls(dhd_pub_t *dhd)
 			__FUNCTION__, res));
 	}
 #endif /* defined(KEEP_ALIVE) */
+
+#if defined(USE_KEEP_ALIVE)
+        DHD_ERROR(("%s: KEEP Alive time is 45s \n", __FUNCTION__));
+        ret = dhd_enable_keepalive(dhd, 45000); /* 45 sec */
+
+        if (ret) {
+                DHD_ERROR(("%s: Keepalive setting failure, error=%d\n", __FUNCTION__, ret));
+                /* For MFG mode */
+                ret = 0;
+        }
+#endif
 
 	/* Read event_msgs mask */
 	bcm_mkiovar("event_msgs", eventmask, WL_EVENTING_MASK_LEN, iovbuf, sizeof(iovbuf));

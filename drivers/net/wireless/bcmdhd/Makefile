@@ -6,13 +6,19 @@ DHDCFLAGS = -Wall -Wstrict-prototypes -Dlinux -DBCMDRIVER                     \
 	-DSDIO_ISR_THREAD -DMMC_SDIO_ABORT -DBCMSDIO -DBCMLXSDMMC             \
 	-DBCMPLATFORM_BUS -DWLP2P                                             \
 	-DCUSTOMER_HW2 -DNEW_COMPAT_WIRELESS -DWIFI_ACT_FRAME                 \
-	-DARP_OFFLOAD_SUPPORT -DKEEP_ALIVE -DCSCAN -DPKT_FILTER_SUPPORT	      \
+	-DARP_OFFLOAD_SUPPORT -DCSCAN -DPKT_FILTER_SUPPORT	              \
 	-DEMBEDDED_PLATFORM -DENABLE_INSMOD_NO_FW_LOAD -DPNO_SUPPORT          \
 	-DEXAMPLE_TABLE 		                                      \
 	-Idrivers/net/wireless/bcmdhd -Idrivers/net/wireless/bcmdhd/include
 
 ifeq ($(CONFIG_BCMDHD_WIFI_CONTROL_FUNC),y)
 DHDCFLAGS += -DCONFIG_WIFI_CONTROL_FUNC
+endif
+
+ifneq ($(CONFIG_BCMDHD_BCM4330B1_FW),y)
+DHDCFLAGS += -DKEEP_ALIVE
+else
+DHDCFLAGS += -DUSE_KEEP_ALIVE
 endif
 
 DHDOFILES = aiutils.o bcmsdh_sdmmc_linux.o dhd_linux.o siutils.o bcmutils.o   \

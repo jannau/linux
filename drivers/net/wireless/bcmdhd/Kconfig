@@ -45,3 +45,10 @@ config DHD_USE_STATIC_BUF
 	default n
 	---help---
 	  Use memory preallocated in platform
+
+config BCMDHD_BCM4330B1_FW
+	bool "Use this when using B1 firmware"
+	depends on BCMDHD
+	default n
+	---help---
+	  Use this when using B1 firmware
