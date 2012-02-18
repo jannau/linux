@@ -20,6 +20,9 @@ struct genl_multicast_group {
 	u32			id;
 };
 
+struct genl_ops;
+struct genl_info;
+
 /**
  * struct genl_family - generic netlink family
  * @id: protocol family idenfitier
@@ -41,6 +44,12 @@ struct genl_family {
 	unsigned int		version;
 	unsigned int		maxattr;
 	bool			netnsok;
+	int			(*pre_doit)(struct genl_ops *ops,
+				struct sk_buff *skb,
+				struct genl_info *info);
+	void			(*post_doit)(struct genl_ops *ops,
+				struct sk_buff *skb,
+				struct genl_info *info);
 	struct nlattr **	attrbuf;	/* private */
 	struct list_head	ops_list;	/* private */
 	struct list_head	family_list;	/* private */
@@ -66,6 +75,7 @@ struct genl_info {
 #ifdef CONFIG_NET_NS
 	struct net *		_net;
 #endif
+	void *			user_ptr[2];
 };
 
 static inline struct net *genl_info_net(struct genl_info *info)
@@ -90,6 +100,7 @@ static inline void genl_info_net_set(struct genl_info *info, struct net *net)
  */
 struct genl_ops {
 	u8			cmd;
+	u8			internal_flags;
 	unsigned int		flags;
 	const struct nla_policy	*policy;
 	int		       (*doit)(struct sk_buff *skb,

@@ -54,6 +54,8 @@ struct regulatory_request {
 	enum nl80211_reg_initiator initiator;
 	char alpha2[2];
 	bool intersect;
+	bool processed;
+	u32 country_ie_checksum;
 	enum environment_cap country_ie_env;
 	struct list_head list;
 };
