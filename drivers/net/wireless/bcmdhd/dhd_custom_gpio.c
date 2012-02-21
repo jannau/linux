@@ -38,6 +38,11 @@
 #include <mach/gpio.h>
 #include <mach/hardware.h>
 #endif
+#ifdef CONFIG_MACH_STARTABLET
+#include <mach/gpio.h>
+#include <mach/hardware.h>
+#include "../mach-tegra/gpio-names.h"
+#endif
 
 #define POWER_OFF	0
 #define POWER_ON	1
@@ -45,10 +50,10 @@
 #define WL_ERROR(x) printf x
 #define WL_TRACE(x)
 
-#ifdef CONFIG_MACH_SAMSUNG_VARIATION_TEGRA
+#if defined(CONFIG_MACH_SAMSUNG_VARIATION_TEGRA) || defined(CONFIG_MACH_STARTABLET)
 extern void nvidia_wlan_poweroff(int off, int flag);
 extern void nvidia_wlan_poweron(int on, int flag);
-#endif /* CONFIG_MACH_SAMSUNG_VARIATION_TEGRA */
+#endif /* CONFIG_MACH_SAMSUNG_VARIATION_TEGRA  || CONFIG_MACH_STARTABLET */
 
 #ifdef CUSTOMER_HW
 extern  void bcm_wlan_power_off(int);
@@ -145,7 +150,7 @@ dhd_customer_gpio_wlan_ctrl(int onoff)
 		case WLAN_RESET_OFF:
 			WL_TRACE(("%s: call customer specific GPIO to insert WLAN RESET\n",
 				__FUNCTION__));
-#ifdef CONFIG_MACH_SAMSUNG_VARIATION_TEGRA
+#if defined(CONFIG_MACH_SAMSUNG_VARIATION_TEGRA) || defined(CONFIG_MACH_STARTABLET)
 			nvidia_wlan_poweroff (POWER_OFF, 2);
 #endif
 			WL_ERROR(("=========== WLAN placed in RESET ========\n"));
@@ -154,7 +159,7 @@ dhd_customer_gpio_wlan_ctrl(int onoff)
 		case WLAN_RESET_ON:
 			WL_TRACE(("%s: callc customer specific GPIO to remove WLAN RESET\n",
 				__FUNCTION__));
-#ifdef CONFIG_MACH_SAMSUNG_VARIATION_TEGRA
+#if defined(CONFIG_MACH_SAMSUNG_VARIATION_TEGRA) || defined(CONFIG_MACH_STARTABLET)
 			nvidia_wlan_poweron (POWER_ON, 2);
 #endif
 			WL_ERROR(("=========== WLAN going back to live  ========\n"));
@@ -163,7 +168,7 @@ dhd_customer_gpio_wlan_ctrl(int onoff)
 		case WLAN_POWER_OFF:
 			WL_TRACE(("%s: call customer specific GPIO to turn off WL_REG_ON\n",
 				__FUNCTION__));
-#ifdef CONFIG_MACH_SAMSUNG_VARIATION_TEGRA
+#if defined(CONFIG_MACH_SAMSUNG_VARIATION_TEGRA) || defined(CONFIG_MACH_STARTABLET)
 			nvidia_wlan_poweroff (POWER_OFF, 1);
 #endif
 		break;
@@ -171,7 +176,7 @@ dhd_customer_gpio_wlan_ctrl(int onoff)
 		case WLAN_POWER_ON:
 			WL_TRACE(("%s: call customer specific GPIO to turn on WL_REG_ON\n",
 				__FUNCTION__));
-#ifdef CONFIG_MACH_SAMSUNG_VARIATION_TEGRA
+#if defined(CONFIG_MACH_SAMSUNG_VARIATION_TEGRA) || defined(CONFIG_MACH_STARTABLET)
 			nvidia_wlan_poweron (POWER_ON, 1);
 #endif
 		break;

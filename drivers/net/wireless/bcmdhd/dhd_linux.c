@@ -2737,7 +2737,7 @@ dhd_attach(osl_t *osh, struct dhd_bus *bus, uint bus_hdrlen)
 	register_pm_notifier(&dhd_sleep_pm_notifier);
 #endif /*  (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27)) && defined(CONFIG_PM_SLEEP) */
 
-#if (defined(CONFIG_MACH_SAMSUNG_VARIATION_TEGRA) || defined(CONFIG_MACH_N1)) && defined(CONFIG_HAS_WAKELOCK)
+#if (defined(CONFIG_MACH_SAMSUNG_VARIATION_TEGRA) || defined(CONFIG_MACH_STARTABLET) || defined(CONFIG_MACH_N1)) && defined(CONFIG_HAS_WAKELOCK)
 	//wake_lock_init(&dhd->pub.wow_wakelock, WAKE_LOCK_SUSPEND, "wow_wake_lock");
 #endif
 
@@ -3668,7 +3668,7 @@ void dhd_detach(dhd_pub_t *dhdp)
 				free_netdev(ifp->net);
 				ifp->net = NULL;
 			}
-#ifdef CONFIG_MACH_SAMSUNG_VARIATION_TEGRA
+#if defined(CONFIG_MACH_SAMSUNG_VARIATION_TEGRA) || defined(CONFIG_MACH_STARTABLET)
 		mdelay(50);
 #endif
 			MFREE(dhd->pub.osh, ifp, sizeof(*ifp));
@@ -3690,7 +3690,7 @@ void dhd_detach(dhd_pub_t *dhdp)
 			PROC_STOP(&dhd->thr_wdt_ctl);
 		}
 
-#ifdef CONFIG_MACH_SAMSUNG_VARIATION_TEGRA
+#if defined(CONFIG_MACH_SAMSUNG_VARIATION_TEGRA) || defined(CONFIG_MACH_STARTABLET)
 		mdelay(50);
 #endif
 		
