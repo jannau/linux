@@ -1,0 +1,119 @@
+
+menu "LGE STAR Tablet Device Drivers"
+
+config STARTABLET_MUIC
+    bool "Star Tablet Muic Driver"
+    default y
+    depends on MACH_STARTABLET
+    help
+     Support for muic driver.
+
+config STARTABLET_RFKILL
+    bool "Star Tablet RFKill Driver"
+    default y
+    depends on MACH_STARTABLET && RFKILL_INPUT
+    help
+     Support for rfkill driver.
+
+config STARTABLET_XMM6160
+	bool "Star Tablet with CP xmm6160"
+    default n
+    depends on MACH_STARTABLET
+    help
+     Support for dummy config for xmm6160.
+
+config STARTABLET_GPS
+    bool "Star Tablet GPS Driver"
+    default y
+    depends on MACH_STARTABLET
+    help
+     Support for GPS driver.
+
+config STARTABLET_GPS_BCM4751
+	bool "Star Tablet GPS BCM4751"
+	default n
+    depends on STARTABLET_GPS && MACH_STARTABLET
+    help
+     Support for GPS driver for xmm6160 only.
+
+config STARTABLET_HEADSET_DET
+        bool "Star Headset Detection Driver"
+        default n
+        depends on MACH_STARTABLET
+        help
+         Suport for headset detection driver.
+
+config STAR_RIL
+    bool "Star RIL Driver"
+    default y
+    depends on MACH_STARTABLET
+    help
+     Suport for IFX MUX & SPI.
+
+config SPI_MDM6600
+	tristate "SPI MDM6600 from Qualcomm"
+	depends on MACH_STARTABLET
+	help
+	Enable this driver to support MDM6600 Modem
+
+config RINETWORK_DRIVER
+	bool "Raw ip network driver"
+	default y
+	depends on MACH_STARTABLET
+	help
+	  Support for raw ip network driver.
+
+config STARTABLET_ECHO
+    bool "Star Tablet Echo Cancel Driver"
+    default n
+    depends on MACH_STARTABLET
+    help
+     Support for echo cancel driver.
+
+config STARTABLET_BATTERY
+    bool "Star Tablet Battery Driver"
+    default n
+    depends on MACH_STARTABLET
+    help
+     Support for battery driver.
+
+config STARTABLET_TOUCHKEY
+    bool "Star Tablet TOUCHKEY Driver"
+    default y
+    depends on MACH_STARTABLET && MACH_STARTABLET_REV_A1
+    help
+     Support for TOUCHKEY driver.
+
+config STARTABLET_MISC
+    bool "Star Tablet MISC Driver"
+    default n
+    depends on MACH_STARTABLET
+    help
+     Support for MISC driver.
+
+config STARTABLET_ALS
+    bool "Star Tablet ALS Driver"
+    default n
+    depends on MACH_STARTABLET
+    help
+     Support for ALS driver.
+
+config STARTABLET_CAMERA_FLASH
+        bool "Star Camera Flash LED Test"
+        default y
+        depends on MACH_STARTABLET
+        help
+         Suport for Camera flash LED Q-test.
+
+config TOUCHSCREEN_ATMEL_MAXTOUCH
+	tristate "Atmel maXTouch based touchscreen: I2C Interface"
+	depends on I2C
+	default y
+	help
+	   To compile this driver as a module, choose M here: the
+	   module will be called atmel_tsadcc.
+
+
+source "drivers/net/wireless/bcm4329.lge/Kconfig"
+
+endmenu
