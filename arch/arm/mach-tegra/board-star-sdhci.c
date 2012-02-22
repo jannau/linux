@@ -16,7 +16,9 @@
 
 #include <linux/resource.h>
 #include <linux/platform_device.h>
+#include <linux/clk.h>
 #include <linux/delay.h>
+#include <linux/err.h>
 #include <linux/gpio.h>
 
 #include <asm/mach-types.h>
@@ -26,6 +28,8 @@
 #include <mach/pinmux.h>
 #include <mach/gpio-names.h>
 #include <mach/hardware.h>
+
+static struct clk *wifi_32k_clk;
 
 const char *tegra_partition_list = NULL;
 static int __init tegrapart_setup(char *options)
@@ -207,6 +211,52 @@ static int tegra_get_partition_info_by_name(
     }
     return -1;
 }
+void startablet_wlan_gpio_enable(void)
+{
+	unsigned wlan_gpio = 0;
+
+        wifi_32k_clk = clk_get_sys(NULL, "blink");
+        if (IS_ERR(wifi_32k_clk)) {
+                printk(KERN_DEBUG "%s: unable to get blink clock\n",
+                                __func__);
+                return;
+        }
+
+        printk(KERN_DEBUG "--------------------------------------\n");
+        printk(KERN_DEBUG "wlan power on OK\n");
+
+	if (get_hw_rev() <= REV_1_2)
+		wlan_gpio = TEGRA_GPIO_PQ5;
+	else
+		wlan_gpio = TEGRA_GPIO_PU2;
+
+        gpio_set_value(wlan_gpio, 1);
+        mdelay(100);
+        clk_enable(wifi_32k_clk);
+
+        printk(KERN_DEBUG "wlan get value (%d)\n", gpio_get_value(wlan_gpio));
+}
+EXPORT_SYMBOL(startablet_wlan_gpio_enable);
+
+void startablet_wlan_gpio_disable(void)
+{
+	unsigned wlan_gpio = 0;
+
+        printk(KERN_DEBUG "-------------------------------------\n");
+        printk(KERN_DEBUG "wlan power off OK\n");
+
+	if (get_hw_rev() <= REV_1_2)
+		wlan_gpio = TEGRA_GPIO_PQ5;
+	else
+		wlan_gpio = TEGRA_GPIO_PU2;
+
+        gpio_set_value(wlan_gpio, 0);
+        mdelay(100);
+        clk_disable(wifi_32k_clk);
+        printk(KERN_DEBUG "wlan get value (%d)\n", gpio_get_value(wlan_gpio));
+
+}
+EXPORT_SYMBOL(startablet_wlan_gpio_disable);
 
 int __init star_sdhci_init(void)
 {
