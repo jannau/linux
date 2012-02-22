@@ -35,6 +35,7 @@ void nvidia_wlan_poweron(int on, int flag)
                 tegra_sdhci_force_presence_change();
 #endif
 #ifdef CONFIG_MACH_STARTABLET
+		/* printk(KERN_CRIT "%s: on: %d, flag: %d\n", __func__, on, flag); */
 		/* Always turn on 32k clock */
 		/* wifi_32k_clk = clk_get_sys(NULL, "blink"); */
 		/* if (IS_ERR(wifi_32k_clk)) { */
@@ -51,12 +52,13 @@ void nvidia_wlan_poweron(int on, int flag)
 			gpio_set_value(TEGRA_GPIO_PU2, 1);
 		}
 		mdelay(150);
-        } else if (flag == 2) {
-		if (get_hw_rev() <= REV_1_2)
-			gpio_set_value(TEGRA_GPIO_PQ5, 1);
-		else
-			gpio_set_value(TEGRA_GPIO_PU2, 1);
-		mdelay(150);
+        /* } else if (flag == 2) { */
+	/* 	printk(KERN_CRIT "%s: on: %d, flag: %d\n", __func__, on, flag); */
+	/* 	if (get_hw_rev() <= REV_1_2) */
+	/* 		gpio_set_value(TEGRA_GPIO_PQ5, 1); */
+	/* 	else */
+	/* 		gpio_set_value(TEGRA_GPIO_PU2, 1); */
+	/* 	mdelay(150); */
 #endif
 	} else
 		OSL_DELAY(150);
@@ -70,6 +72,7 @@ void nvidia_wlan_poweroff(int off, int flag)
                 tegra_sdhci_force_presence_change();
 #endif
 #ifdef CONFIG_MACH_STARTABLET
+		/* printk(KERN_CRIT "%s: off: %d, flag: %d\n", __func__, off, flag); */
 		if (get_hw_rev() <= REV_1_2) {
 			gpio_set_value(TEGRA_GPIO_PQ5, 0);
 			if (interrupt_en_flag == 1) {
@@ -88,17 +91,18 @@ void nvidia_wlan_poweroff(int off, int flag)
 		/* always turn on 32k clock */
 		/* clk_disable(wifi_32k_clk); */
 		mdelay(150);
-        } else if (flag == 2) {
-		if (get_hw_rev() <= REV_1_2) {
-			disable_irq(gpio_to_irq(TEGRA_GPIO_PQ5));       //by sjpark 11-03-10
-			gpio_set_value(TEGRA_GPIO_PQ5, 0);
-			interrupt_en_flag = 1;          //by sjpark 11-03-11
-		} else {
-			disable_irq(gpio_to_irq(TEGRA_GPIO_PU2));       //by sjpark 11-03-10
-			gpio_set_value(TEGRA_GPIO_PU2, 0);
-			interrupt_en_flag = 1;          //by sjpark 11-03-11
-		}
-		mdelay(150);
+        /* } else if (flag == 2) { */
+	/* 	printk(KERN_CRIT "%s: off: %d, flag: %d\n", __func__, off, flag); */
+	/* 	if (get_hw_rev() <= REV_1_2) { */
+	/* 		disable_irq(gpio_to_irq(TEGRA_GPIO_PQ5));       //by sjpark 11-03-10 */
+	/* 		gpio_set_value(TEGRA_GPIO_PQ5, 0); */
+	/* 		interrupt_en_flag = 1;          //by sjpark 11-03-11 */
+	/* 	} else { */
+	/* 		disable_irq(gpio_to_irq(TEGRA_GPIO_PU2));       //by sjpark 11-03-10 */
+	/* 		gpio_set_value(TEGRA_GPIO_PU2, 0); */
+	/* 		interrupt_en_flag = 1;          //by sjpark 11-03-11 */
+	/* 	} */
+	/* 	mdelay(150); */
 #endif
         } else
 		pr_info("nvidia_wlan_poweroff ==== skip\n");
