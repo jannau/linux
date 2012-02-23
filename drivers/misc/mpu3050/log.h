@@ -49,6 +49,7 @@ extern "C" {
  * You can modify this (for example with "#define MPL_LOG_NDEBUG 0"
  * at the top of your source file) to change that behavior.
  */
+#define MPL_LOGV    // comment this out to enable VERBOSE level logging
 #ifndef MPL_LOG_NDEBUG
 #ifdef NDEBUG
 #define MPL_LOG_NDEBUG 1
@@ -99,6 +100,7 @@ extern "C" {
 /*
  * Simplified macro to send a verbose log message using the current MPL_LOG_TAG.
  */
+#define MPL_LOGV
 #ifndef MPL_LOGV
 #if MPL_LOG_NDEBUG
 #define MPL_LOGV(fmt, ...)						\
@@ -112,7 +114,7 @@ extern "C" {
 #endif
 
 #ifndef CONDITION
-#define CONDITION(cond)     ((cond) != 0)
+#define CONDITION(cond)     ((cond)!=0)
 #endif
 
 #ifndef MPL_LOGV_IF
