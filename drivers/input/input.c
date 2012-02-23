@@ -1603,6 +1603,9 @@ static int input_dev_resume(struct device *dev)
 	struct input_dev *input_dev = to_input_dev(dev);
 
 	input_reset_device(input_dev);
+#ifdef CONFIG_MACH_STARTABLET
+	if (0 != strcmp("powerkey", input_dev->name))   // skip only for powerkey
+#endif
 
 	return 0;
 }
