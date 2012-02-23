@@ -40,6 +40,7 @@ module_param_named(debug_mask, debug_mask, int, S_IRUGO | S_IWUSR | S_IWGRP);
 #define WAKE_LOCK_AUTO_EXPIRE            (1U << 10)
 #define WAKE_LOCK_PREVENTING_SUSPEND     (1U << 11)
 
+static void print_active_locks(int type);
 static DEFINE_SPINLOCK(list_lock);
 static LIST_HEAD(inactive_locks);
 static struct list_head active_wake_locks[WAKE_LOCK_TYPE_COUNT];
@@ -128,6 +129,9 @@ static int wakelock_stats_show(struct seq_file *m, void *unused)
 	int type;
 
 	spin_lock_irqsave(&list_lock, irqflags);
+	// add log to print wakelock status
+	print_active_locks(WAKE_LOCK_SUSPEND);
+	print_active_locks(WAKE_LOCK_IDLE);
 
 	ret = seq_puts(m, "name\tcount\texpire_count\twake_count\tactive_since"
 			"\ttotal_time\tsleep_time\tmax_time\tlast_change\n");
