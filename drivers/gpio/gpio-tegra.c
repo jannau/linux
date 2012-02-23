@@ -264,6 +264,12 @@ static int tegra_gpio_irq_set_type(struct irq_data *d, unsigned int type)
 	int val;
 	unsigned long flags;
 
+	//WBT 196337
+	if (bank == NULL) {
+		printk("[%s] Failed to retrieve irq\n", __FUNCTION__);
+		return -EINVAL;
+	}
+
 	switch (type & IRQ_TYPE_SENSE_MASK) {
 	case IRQ_TYPE_EDGE_RISING:
 		lvl_type = GPIO_INT_LVL_EDGE_RISING;
