@@ -25,11 +25,15 @@
 
 #include <mach/hardware.h>
 #include <mach/iomap.h>
+#ifdef CONFIG_MACH_STARTABLET
+#include <linux/delay.h>
+#endif
 
 extern void (*arch_reset)(char mode, const char *cmd);
 
 static inline void arch_idle(void)
 {
 }
+
 
 #endif
