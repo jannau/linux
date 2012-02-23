@@ -5,7 +5,15 @@
  * 'tty.h' defines some structures used by tty_io.c and some defines.
  */
 
-#define NR_LDISCS		30
+//20100421, es.lee RIL code from firenze
+#if !defined(CONFIG_STAR_RIL)
+#define NR_LDISCS		19 
+#else
+/* LGE_KERNEL_MUX START */
+/* #define NR_LDISCS		19 */
+#define NR_LDISCS		22 
+/* LGE_KERNEL_MUX END */ 
+#endif
 
 /* line disciplines */
 #define N_TTY		0
@@ -28,9 +36,11 @@
 #define N_GIGASET_M101	16	/* Siemens Gigaset M101 serial DECT adapter */
 #define N_SLCAN		17	/* Serial / USB serial CAN Adaptors */
 #define N_PPS		18	/* Pulse per Second */
-#define N_V253		19	/* Codec control over voice modem */
-#define N_CAIF		20      /* CAIF protocol for talking to modems */
-#define N_GSM0710	21	/* GSM 0710 Mux */
+#define N_SHARED	19	/* for TI BT/FM/GPS combo devices*/
+/* LGE_KERNEL_MUX START */
+#define N_TS0710        20      /* Gsm0710 multiplexer */
+/* LGE_KERNEL_MUX END */
+#define N_RIN              21
 #define N_TI_WL		22	/* for TI's WL BT, FM, GPS combo chips */
 #define N_TRACESINK	23	/* Trace data routing for MIPI P1149.7 */
 #define N_TRACEROUTER	24	/* Trace data routing for MIPI P1149.7 */
