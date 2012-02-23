@@ -1851,6 +1851,8 @@ static inline void rfcomm_process_rx(struct rfcomm_session *s)
 
 	BT_DBG("session %p state %ld qlen %d", s, s->state, skb_queue_len(&sk->sk_receive_queue));
 
+	rfcomm_session_hold(s);
+
 	/* Get data directly from socket receive queue without copying it. */
 	while ((skb = skb_dequeue(&sk->sk_receive_queue))) {
 		skb_orphan(skb);
@@ -1860,6 +1862,8 @@ static inline void rfcomm_process_rx(struct rfcomm_session *s)
 	if (sk->sk_state == BT_CLOSED)
 		rfcomm_session_close(s, sk->sk_err);
 }
+
+	rfcomm_session_put(s);
 
 static inline void rfcomm_accept_connection(struct rfcomm_session *s)
 {
