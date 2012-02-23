@@ -26,7 +26,6 @@
 #include <linux/delay.h>
 #include <linux/highmem.h>
 #include <linux/memblock.h>
-#include <linux/bitops.h>
 #include <linux/sched.h>
 
 #include <asm/hardware/cache-l2x0.h>
@@ -46,8 +45,13 @@
 #include "pm.h"
 #include "reset.h"
 
+#if defined(CONFIG_STARTABLET_REBOOT_REASON)
+#include "nv_data.h"
+#endif
+
 #define MC_SECURITY_CFG2	0x7c
 
+#define LASTKMSG_BUFFER_ON	1
 #define AHB_ARBITRATION_PRIORITY_CTRL		0x4
 #define   AHB_PRIORITY_WEIGHT(x)	(((x) & 0x7) << 29)
 #define   PRIORITY_SELECT_USB	BIT(6)
@@ -86,6 +90,10 @@ unsigned long tegra_carveout_start;
 unsigned long tegra_carveout_size;
 unsigned long tegra_vpr_start;
 unsigned long tegra_vpr_size;
+#if LASTKMSG_BUFFER_ON
+unsigned long star_kmsg_buf_start;
+unsigned long star_kmsg_buf_size;
+#endif
 unsigned long tegra_lp0_vec_start;
 unsigned long tegra_lp0_vec_size;
 bool tegra_lp0_vec_relocate;
@@ -425,6 +433,13 @@ static void tegra_pm_flush_console(void)
 static void tegra_pm_restart(char mode, const char *cmd)
 {
 	tegra_pm_flush_console();
+
+#if defined(CONFIG_STARTABLET_REBOOT_REASON)
+	if (cmd)
+		if ( write_rr_into_nv(cmd) )
+			printk(KERN_ERR "%s: Fail to write reboot reason!!!%d-%s\n", __func__, mode, cmd);
+#endif
+
 	arm_machine_restart(mode, cmd);
 }
 
@@ -785,6 +800,16 @@ void __init tegra_reserve(unsigned long carveout_size, unsigned long fb_size,
 	}
 
 	if (fb2_size) {
+#if LASTKMSG_BUFFER_ON
+	star_kmsg_buf_start = memblock_end_of_DRAM() - SZ_2M;
+	if (memblock_remove(star_kmsg_buf_start, SZ_2M))
+		pr_err("Failed to remove panic message buffer %08lx@%08lx from memory "
+			"map\n",
+			star_kmsg_buf_start, SZ_2M);
+	else
+		star_kmsg_buf_size = SZ_2M;
+#endif
+
 		tegra_fb2_start = memblock_end_of_DRAM() - fb2_size;
 		if (memblock_remove(tegra_fb2_start, fb2_size)) {
 			pr_err("Failed to remove second framebuffer "
@@ -813,6 +838,11 @@ void __init tegra_reserve(unsigned long carveout_size, unsigned long fb_size,
 
 	if (tegra_fb2_size && tegra_fb2_start < tegra_grhost_aperture)
 		tegra_grhost_aperture = tegra_fb2_start;
+
+#if LASTKMSG_BUFFER_ON
+	if (star_kmsg_buf_size && star_kmsg_buf_start < tegra_grhost_aperture)
+		tegra_grhost_aperture = star_kmsg_buf_start;
+#endif
 
 	if (tegra_carveout_size && tegra_carveout_start < tegra_grhost_aperture)
 		tegra_grhost_aperture = tegra_carveout_start;
@@ -879,6 +909,9 @@ void __init tegra_reserve(unsigned long carveout_size, unsigned long fb_size,
 		"2nd Framebuffer:        %08lx - %08lx\n"
 		"Carveout:               %08lx - %08lx\n"
 		"Vpr:                    %08lx - %08lx\n",
+#if LASTKMSG_BUFFER_ON
+		"last_kmsg bufer:    %08lx - %08lx\n"
+#endif
 		tegra_lp0_vec_start,
 		tegra_lp0_vec_size ?
 			tegra_lp0_vec_start + tegra_lp0_vec_size - 1 : 0,
@@ -891,6 +924,10 @@ void __init tegra_reserve(unsigned long carveout_size, unsigned long fb_size,
 		tegra_fb2_start,
 		tegra_fb2_size ?
 			tegra_fb2_start + tegra_fb2_size - 1 : 0,
+#if LASTKMSG_BUFFER_ON
+		star_kmsg_buf_start,
+		star_kmsg_buf_start + star_kmsg_buf_size -1,
+#endif
 		tegra_carveout_start,
 		tegra_carveout_size ?
 			tegra_carveout_start + tegra_carveout_size - 1 : 0,
