@@ -38,6 +38,7 @@
 #include <mach/dc.h>
 #include <mach/fb.h>
 #include <linux/nvhost.h>
+#include <mach/hardware.h>
 #include <mach/hdmi-audio.h>
 
 #include <video/tegrafb.h>
@@ -48,6 +49,20 @@
 #include "hdmi.h"
 #include "edid.h"
 #include "nvhdcp.h"
+
+#if defined (CONFIG_MACH_STARTABLET)
+#include <linux/proc_fs.h>
+#include <linux/uaccess.h>
+#include <asm/setup.h>
+#include <linux/syscalls.h>
+#include <asm/system.h>
+#include <mach/gpio-names.h>
+#define star_panel_enb		TEGRA_GPIO_PH2
+#endif
+
+#if defined (CONFIG_MACH_STARTABLET)
+extern void set_v3_3(int);
+#endif
 
 /* datasheet claims this will always be 216MHz */
 #define HDMI_AUDIOCLK_FREQ		216000000
@@ -73,7 +88,10 @@ struct tegra_dc_hdmi_data {
 	struct tegra_edid_hdmi_eld		eld;
 	struct tegra_nvhdcp		*nvhdcp;
 	struct delayed_work		work;
-
+#if defined (CONFIG_MACH_STARTABLET)
+	struct delayed_work		nhpd_work;
+	struct delayed_work		hpd_polling_work;
+#endif
 	struct resource			*base_res;
 	void __iomem			*base;
 	struct clk			*clk;
@@ -814,6 +832,9 @@ static bool tegra_dc_hdmi_detect(struct tegra_dc *dc)
 	struct tegra_dc_hdmi_data *hdmi = tegra_dc_get_outdata(dc);
 	struct fb_monspecs specs;
 	int err;
+#if defined (CONFIG_MACH_STARTABLET)
+	int i;
+#endif
 
 	if (!tegra_dc_hdmi_hpd(dc))
 		goto fail;
@@ -833,6 +854,7 @@ static bool tegra_dc_hdmi_detect(struct tegra_dc *dc)
 
 	tegra_dc_hdmi_detect_config(dc, &specs);
 
+	dev_info(&dc->ndev->dev, "hdmi set switch 1\n");
 	return true;
 
 fail:
@@ -841,6 +863,27 @@ fail:
 	switch_set_state(&hdmi->hpd_switch, 0);
 #endif
 	tegra_nvhdcp_set_plug(hdmi->nvhdcp, 0);
+	dev_info(&dc->ndev->dev, "hdmi set switch 0\n");
+
+#if defined (CONFIG_MACH_STARTABLET)
+	/* disable all windows not to display any garbage content to hdmi */
+	mutex_lock(&dc->lock);
+	if(dc->enabled) {
+		tegra_dc_writel(dc, WRITE_MUX_ASSEMBLY | READ_MUX_ASSEMBLY,
+					DC_CMD_STATE_ACCESS);
+		for(i = 0; i < 3; i++) {
+			tegra_dc_writel(dc, WINDOW_A_SELECT << i,
+					DC_CMD_DISPLAY_WINDOW_HEADER);
+			tegra_dc_writel(dc, 0, DC_WIN_WIN_OPTIONS);
+		}
+		tegra_dc_writel(dc, (WIN_A_ACT_REQ | WIN_B_ACT_REQ |
+				WIN_C_ACT_REQ) << 8, DC_CMD_STATE_CONTROL);
+		tegra_dc_writel(dc, (WIN_A_ACT_REQ | WIN_B_ACT_REQ |
+				WIN_C_ACT_REQ), DC_CMD_STATE_CONTROL);
+	}
+	mutex_unlock(&dc->lock);
+#endif
+
 	return false;
 }
 
@@ -853,6 +896,11 @@ static void tegra_dc_hdmi_detect_worker(struct work_struct *work)
 
 	tegra_dc_enable(dc);
 	msleep(5);
+#if defined (CONFIG_MACH_STARTABLET)
+	/* don't need to check hdmi because hdmi will be down before suspend */
+	if (hdmi->suspended)
+		return;
+#endif
 	if (!tegra_dc_hdmi_detect(dc)) {
 		tegra_dc_disable(dc);
 		tegra_fb_update_monspecs(dc->fb, NULL, NULL);
@@ -889,11 +937,23 @@ static void tegra_dc_hdmi_suspend(struct tegra_dc *dc)
 	unsigned long flags;
 
 	tegra_nvhdcp_suspend(hdmi->nvhdcp);
+
 	spin_lock_irqsave(&hdmi->suspend_lock, flags);
 	hdmi->suspended = true;
 	spin_unlock_irqrestore(&hdmi->suspend_lock, flags);
+
+#if defined (CONFIG_MACH_STARTABLET)
+	/* wait until any pending hpd polling wq items finish their jobs */
+//	cancel_delayed_work_sync(&hdmi->hpd_polling_work);
+	if (get_hw_rev() >= REV_F)
+		gpio_set_value(star_panel_enb, 0);
+	switch_set_state(&hdmi->hpd_switch, 0);
+	dev_info(&dc->ndev->dev, "hdmi set switch 0\n");
+#endif
 }
 
+#if !defined (CONFIG_MACH_STARTABLET)
+/* hdmi uses late resume function */
 static void tegra_dc_hdmi_resume(struct tegra_dc *dc)
 {
 	struct tegra_dc_hdmi_data *hdmi = tegra_dc_get_outdata(dc);
@@ -910,8 +970,56 @@ static void tegra_dc_hdmi_resume(struct tegra_dc *dc)
 				   msecs_to_jiffies(30));
 
 	spin_unlock_irqrestore(&hdmi->suspend_lock, flags);
-	tegra_nvhdcp_resume(hdmi->nvhdcp);
 }
+#endif
+
+#if defined (CONFIG_MACH_STARTABLET)
+/* non hot plug detect worker */
+static void hdmi_nhpd_worker(struct work_struct *work)
+{
+	int fd;
+	mm_segment_t old_fs;
+	struct tegra_dc *dc = tegra_dc_get_dc(1);
+	struct tegra_dc_hdmi_data *hdmi = tegra_dc_get_outdata(dc);
+
+	old_fs = get_fs();
+	set_fs(KERNEL_DS);
+	fd = sys_open("/dev/fboot", O_RDONLY, 0666);
+	sys_close(fd);
+	set_fs(old_fs);
+
+	if ( fd < 0) {
+		schedule_delayed_work(&hdmi->nhpd_work, msecs_to_jiffies(500));
+	} else {
+		if(!dc->enabled && hdmi->hpd_switch.state) {
+			hdmi->hpd_switch.state = 0;
+			switch_set_state(&hdmi->hpd_switch, 1);
+			dev_info(&dc->ndev->dev, "hdmi set switch 1\n");
+		}
+	}
+}
+/* used for polling hpd state 'cause hpd irq isn't available in early suspend */
+static void hdmi_hpd_polling_worker (struct work_struct *work)
+{
+	struct tegra_dc *dc = tegra_dc_get_dc(1);
+	struct tegra_dc_hdmi_data *hdmi = tegra_dc_get_outdata(dc);
+	int v;
+	if (hdmi->suspended) return;
+
+	set_v3_3(1);
+	v = tegra_dc_hdmi_hpd(dc);
+	set_v3_3(0);
+
+	if (hdmi->hpd_switch.state != v) {
+		set_v3_3(1);
+		if (tegra_dc_hdmi_detect(dc))
+			tegra_dc_enable(dc);
+		set_v3_3(0);
+	}
+
+	schedule_delayed_work(&hdmi->hpd_polling_work, msecs_to_jiffies(2000));
+}
+#endif
 
 static ssize_t underscan_show(struct device *dev,
 				struct device_attribute *attr, char *buf)
@@ -1043,6 +1151,11 @@ static int tegra_dc_hdmi_init(struct tegra_dc *dc)
 
 	INIT_DELAYED_WORK(&hdmi->work, tegra_dc_hdmi_detect_worker);
 
+#if defined (CONFIG_MACH_STARTABLET)
+	INIT_DELAYED_WORK(&hdmi->hpd_polling_work, hdmi_hpd_polling_worker);
+	INIT_DELAYED_WORK(&hdmi->nhpd_work, hdmi_nhpd_worker);
+	schedule_delayed_work(&hdmi->nhpd_work, msecs_to_jiffies(500));
+#endif
 	hdmi->dc = dc;
 	hdmi->base = base;
 	hdmi->base_res = base_res;
@@ -1814,7 +1927,9 @@ struct tegra_dc_out_ops tegra_dc_hdmi_ops = {
 	.disable = tegra_dc_hdmi_disable,
 	.detect = tegra_dc_hdmi_detect,
 	.suspend = tegra_dc_hdmi_suspend,
+#if !defined (CONFIG_MACH_STARTABLET)
 	.resume = tegra_dc_hdmi_resume,
+#endif
 };
 
 struct tegra_dc_edid *tegra_dc_get_edid(struct tegra_dc *dc)
@@ -1836,3 +1951,58 @@ void tegra_dc_put_edid(struct tegra_dc_edid *edid)
 	tegra_edid_put_data(edid);
 }
 EXPORT_SYMBOL(tegra_dc_put_edid);
+
+
+#if defined (CONFIG_MACH_STARTABLET)
+/* this is called in early suspend function */
+void tegra_panel_hdmi_earlysuspend(void)
+{
+	struct tegra_dc *dc = tegra_dc_get_dc(1);
+	struct tegra_dc_hdmi_data *hdmi = tegra_dc_get_outdata(dc);
+
+	int i = 0;
+	/* disable all windows not to display any garbage content to hdmi */
+	mutex_lock(&dc->lock);
+	if(dc->enabled) {
+		tegra_dc_writel(dc, WRITE_MUX_ASSEMBLY | READ_MUX_ASSEMBLY,
+					DC_CMD_STATE_ACCESS);
+		for(i = 0; i < 3; i++) {
+			tegra_dc_writel(dc, WINDOW_A_SELECT << i,
+					DC_CMD_DISPLAY_WINDOW_HEADER);
+			tegra_dc_writel(dc, 0, DC_WIN_WIN_OPTIONS);
+		}
+		tegra_dc_writel(dc, (WIN_A_ACT_REQ | WIN_B_ACT_REQ |
+				WIN_C_ACT_REQ) << 8, DC_CMD_STATE_CONTROL);
+		tegra_dc_writel(dc, (WIN_A_ACT_REQ | WIN_B_ACT_REQ |
+				WIN_C_ACT_REQ), DC_CMD_STATE_CONTROL);
+	}
+	mutex_unlock(&dc->lock);
+
+	schedule_delayed_work(&hdmi->hpd_polling_work, msecs_to_jiffies(500));
+}
+
+/* this is called in late resume function */
+void tegra_panel_hdmi_detect(void)
+{
+	unsigned long flags;
+	struct tegra_dc *dc = tegra_dc_get_dc(1);
+	struct tegra_dc_hdmi_data *hdmi = tegra_dc_get_outdata(dc);
+
+	hdmi->suspended = false;
+
+	enable_irq(gpio_to_irq(dc->out->hotplug_gpio));
+
+	spin_lock_irqsave(&hdmi->suspend_lock, flags);
+	schedule_delayed_work(&hdmi->work, msecs_to_jiffies(0));
+	spin_unlock_irqrestore(&hdmi->suspend_lock, flags);
+}
+
+void tegra_panel_cancel_early_work(void)
+{
+	struct tegra_dc *dc = tegra_dc_get_dc(1);
+	struct tegra_dc_hdmi_data *hdmi = tegra_dc_get_outdata(dc);
+
+	cancel_delayed_work_sync(&hdmi->hpd_polling_work);
+}
+
+#endif
