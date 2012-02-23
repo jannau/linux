@@ -471,6 +471,8 @@
 #define DC_WINBUF_ADDR_V_OFFSET_NS		0x809
 #define DC_WINBUF_UFLOW_STATUS			0x80a
 
+#define LM1_PERIOD_SHIFT                18
+#define LM1_CLK_DIVIDER_SHIFT           4
 /* direct versions of DC_WINBUF_UFLOW_STATUS */
 #define DC_WINBUF_AD_UFLOW_STATUS		0xbca
 #define DC_WINBUF_BD_UFLOW_STATUS		0xdca
