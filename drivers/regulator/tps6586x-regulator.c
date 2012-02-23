@@ -54,6 +54,20 @@
 #define TPS6586X_SMODE1		0x47
 #define TPS6586X_SMODE2		0x48
 
+#define TPS6586X_INVALID	0xFE // Not a register. But assign value
+#define TPS6586X_SUPPLY_INVALID	0xFE // Not a register. But assign value
+
+/* SM0/1 slew rate settings */
+#define TPS6586X_SMSL_INSTANTLY	0x0
+#define TPS6586X_SMSL_0_11	0x1	/* mV/us */
+#define TPS6586X_SMSL_0_22	0x2
+#define TPS6586X_SMSL_0_44	0x3
+#define TPS6586X_SMSL_0_88	0x4
+#define TPS6586X_SMSL_1_76	0x5
+#define TPS6586X_SMSL_3_52	0x6
+#define TPS6586X_SMSL_7_04	0x7
+#define TPS6586X_SMSL_MASK	0x7
+
 struct tps6586x_regulator {
 	struct regulator_desc desc;
 
@@ -94,6 +108,10 @@ static int __tps6586x_ldo_set_voltage(struct device *parent,
 
 	for (val = 0; val < ri->desc.n_voltages; val++) {
 		uV = ri->voltages[val] * 1000;
+
+		/* LDO0 has minimal voltage 1.2 rather than 1.25 */
+		if (ri->desc.id == TPS6586X_ID_LDO_0 && val == 0)
+			uV -= 50 * 1000;
 
 		/* use the first in-range value */
 		if (min_uV <= uV && uV <= max_uV) {
@@ -186,6 +204,107 @@ static int tps6586x_regulator_is_enabled(struct regulator_dev *rdev)
 
 	return !!(reg_val & (1 << ri->enable_bit[0]));
 }
+static int tps6586x_dummy_get_voltage(struct regulator_dev *rdev)
+{
+	/* TODO: */
+	return 1250;
+}
+static int tps6586x_dummy_set_voltage(struct regulator_dev *rdev,
+				    int min_uV, int max_uV)
+{
+	/* TODO: */
+	return 0;
+}
+static int tps6586x_dummy_is_enabled(struct regulator_dev *rdev)
+{
+	/* TODO: */
+	return 1;
+}
+static int tps6586x_dummy_enable(struct regulator_dev *rdev)
+{
+    // rail is always enabled :)
+    return 0;
+}
+
+static int tps6586x_dummy_disable(struct regulator_dev *rdev)
+{
+	/* TODO: */
+	return 0;
+}
+#ifdef  LGE_LOAD_SWITCH
+static int tps6586x_lds_get_voltage(struct regulator_dev *rdev)
+{
+	struct tps6586x_regulator *ri = rdev_get_drvdata(rdev);
+	//struct device *parent = to_tps6586x_dev(rdev);
+	int ret;
+
+    ret = gpio_request(ri->volt_shift, "Load Switch");
+    if (ret)
+    {
+        printk(KERN_ERR "[Load Switch] %s() Fail to request GPIO (%d)\n", 
+            __func__, ri->volt_shift);
+        return ret;
+    }
+
+    ret = gpio_get_value(ri->volt_shift);
+    gpio_free(ri->volt_shift);
+
+	return ret * 1000;
+}
+
+static int tps6586x_lds_set_voltage(struct regulator_dev *rdev,
+				    int min_uV, int max_uV)
+{
+	struct tps6586x_regulator *ri = rdev_get_drvdata(rdev);
+	struct device *parent = to_tps6586x_dev(rdev);
+	int ret;
+
+    ret = gpio_request(ri->volt_shift, "Load Switch");
+    if (ret)
+    {
+        printk(KERN_ERR "[Load Switch] %s() Fail to request GPIO (%d)\n", 
+            __func__, ri->volt_shift);
+        return ret;
+    }
+
+    gpio_set_value(ri->volt_shift, !!(ri->volt_nbits));
+    gpio_free(ri->volt_shift);
+
+	return 0;
+}
+
+static int tps6586x_lds_is_enabled(struct regulator_dev *rdev)
+{
+    // Load Switch is always enabled :)
+	return 1;
+}
+
+static int tps6586x_lds_enable(struct regulator_dev *rdev)
+{
+    // Load Switch is always enabled :)
+    return 0;
+}
+
+static int tps6586x_lds_disable(struct regulator_dev *rdev)
+{
+	struct tps6586x_regulator *ri = rdev_get_drvdata(rdev);
+	//struct device *parent = to_tps6586x_dev(rdev);
+	int ret;
+
+    ret = gpio_request(ri->volt_shift, "Load Switch");
+    if (ret)
+    {
+        printk(KERN_ERR "[DC Switch] %s() Fail to request GPIO (%d)\n", 
+            __func__, ri->volt_shift);
+        return ret;
+    }
+
+    gpio_set_value(ri->volt_shift, 0);
+    gpio_free(ri->volt_shift);
+
+    return 0;
+}
+#endif
 
 static int tps6586x_regulator_enable_time(struct regulator_dev *rdev)
 {
@@ -213,13 +332,29 @@ static struct regulator_ops tps6586x_regulator_dvm_ops = {
 	.enable = tps6586x_regulator_enable,
 	.disable = tps6586x_regulator_disable,
 };
+static struct regulator_ops tps6586x_regulator_dummy_ops = {
+	.list_voltage = tps6586x_ldo_list_voltage,
+	.get_voltage = tps6586x_dummy_get_voltage,
+	.set_voltage = tps6586x_dummy_set_voltage,
+
+	.is_enabled = tps6586x_dummy_is_enabled,
+	.enable = tps6586x_dummy_enable,
+	.disable = tps6586x_dummy_disable,
+};
+#ifdef  LGE_LOAD_SWITCH
+static struct regulator_ops tps6586x_regulator_lds_ops = {  // FIXME!! change for gpio DCS
+	.list_voltage = tps6586x_ldo_list_voltage,
+	.get_voltage = tps6586x_lds_get_voltage,
+	.set_voltage = tps6586x_lds_set_voltage,
+
+	.is_enabled = tps6586x_lds_is_enabled,
+	.enable = tps6586x_lds_enable,
+	.disable = tps6586x_lds_disable,
+};
+#endif
 
 static int tps6586x_ldo_voltages[] = {
 	1250, 1500, 1800, 2500, 2700, 2850, 3100, 3300,
-};
-
-static int tps6586x_ldo0_voltages[] = {
-	1200, 1500, 1800, 2500, 2700, 2850, 3100, 3300,
 };
 
 static int tps6586x_ldo4_voltages[] = {
@@ -242,6 +377,12 @@ static int tps6586x_dvm_voltages[] = {
 	1125, 1150, 1175, 1200, 1225, 1250, 1275, 1300,
 	1325, 1350, 1375, 1400, 1425, 1450, 1475, 1500,
 };
+
+#ifdef  LGE_LOAD_SWITCH
+static int tps6586x_lds_voltages[] = {
+	1800, 3300, 5000,
+};
+#endif
 
 #define TPS6586X_REGULATOR(_id, vdata, _ops, vreg, shift, nbits,	\
 			   ereg0, ebit0, ereg1, ebit1, en_time)		\
@@ -282,8 +423,21 @@ static int tps6586x_dvm_voltages[] = {
 	TPS6586X_REGULATOR_DVM_GOREG(goreg, gobit)			\
 }
 
+#define TPS6586X_DUMMY(_id, vdata, vreg, shift, nbits,			\
+		     ereg0, ebit0, ereg1, ebit1, en_time)		\
+{	\
+	TPS6586X_REGULATOR(_id, vdata, dummy_ops, INVALID, 0, 0,	\
+			   _INVALID, NULL, _INVALID, NULL, en_time)	\
+}
+
+#ifdef  LGE_LOAD_SWITCH
+#define TPS6586X_LDS(_id, vdata, gpio_nr, active_high)		\
+	TPS6586X_REGULATOR(_id, vdata, lds_ops, INVALID, gpio_nr, active_high,	\
+			   _INVALID, NULL, _INVALID, NULL, NULL, NULL)
+#endif
+
 static struct tps6586x_regulator tps6586x_regulator[] = {
-	TPS6586X_LDO(LDO_0, ldo0, SUPPLYV1, 5, 3, ENC, 0, END, 0, 4000),
+	TPS6586X_LDO(LDO_0, ldo, SUPPLYV1, 5, 3, ENC, 0, END, 0, 4000),
 	TPS6586X_LDO(LDO_1, dvm, SUPPLYV1, 0, 5, ENC, 1, END, 1, 4000),
 	TPS6586X_LDO(LDO_3, ldo, SUPPLYV4, 0, 3, ENC, 2, END, 2, 3000),
 	TPS6586X_LDO(LDO_5, ldo, SUPPLYV6, 0, 3, ENE, 6, ENE, 6, 3000),
@@ -298,6 +452,19 @@ static struct tps6586x_regulator tps6586x_regulator[] = {
 	TPS6586X_DVM(SM_0, dvm, SM0V1, 0, 5, ENA, 1, ENB, 1, VCC1, 2, 4000),
 	TPS6586X_DVM(SM_1, dvm, SM1V1, 0, 5, ENA, 0, ENB, 0, VCC1, 0, 4000),
 	TPS6586X_DVM(LDO_4, ldo4, LDO4V1, 0, 5, ENC, 3, END, 3, VCC1, 6, 15000),
+
+	TPS6586X_LDO(SOC_OFF, ldo, INVALID, 0, 0, ENE, 3, ENE, 3, 4000),
+	TPS6586X_DUMMY(DUMMY, ldo, INVALID, 0, 0, _INVALID, 0, _INVALID, 0, 4000),
+#ifdef  LGE_LOAD_SWITCH
+	TPS6586X_LDS(LDS_USB_HOST, lds, TEGRA_GPIO_PH0, 1),
+	TPS6586X_LDS(LDS_USB3, lds, TEGRA_GPIO_PH1, 1), // only for Rev.C
+	TPS6586X_LDS(LDS_3V3, lds, TEGRA_GPIO_PH2, 1),
+	TPS6586X_LDS(LDS_TOUCH, lds, TEGRA_GPIO_PK4, 1),
+	TPS6586X_LDS(LDS_GYRO, lds, TEGRA_GPIO_PV5, 1), // only for Rev.C
+	TPS6586X_LDS(LDS_5V0_REVC, lds, TEGRA_GPIO_PK5, 1), // only for Rev.C
+	TPS6586X_LDS(LDS_5V0, lds, TEGRA_GPIO_PX7, 1),
+	TPS6586X_LDS(LDS_3V3_ALWAYS, lds, TEGRA_GPIO_PS7, 1), // Added at Rev.F
+#endif // LGE_LOAD_SWITCH
 };
 
 /*
@@ -310,6 +477,16 @@ static inline int tps6586x_regulator_preinit(struct device *parent,
 {
 	uint8_t val1, val2;
 	int ret;
+
+	/* To prevent voltage negative overshoot, set slew rate to 3.52mV/us
+	 * from 7.04mV/us. Because voltage negative overshoot was occured
+	 * on some devices. */
+	if (ri->desc.id == TPS6586X_ID_SM_1) {
+		ret = tps6586x_update(parent, TPS6586X_SM1SL,
+				      TPS6586X_SMSL_1_76, TPS6586X_SMSL_MASK);
+		if (ret)
+			return ret;
+	}
 
 	if (ri->enable_reg[0] == ri->enable_reg[1] &&
 	    ri->enable_bit[0] == ri->enable_bit[1])
@@ -339,40 +516,6 @@ static inline int tps6586x_regulator_preinit(struct device *parent,
 
 	return tps6586x_clr_bits(parent, ri->enable_reg[1],
 				 1 << ri->enable_bit[1]);
-}
-
-static inline int tps6586x_regulator_set_pwm_mode(struct platform_device *pdev)
-{
-	struct device *parent = pdev->dev.parent;
-	struct regulator_init_data *p = pdev->dev.platform_data;
-	struct tps6586x_settings *setting = p->driver_data;
-	int ret = 0;
-	uint8_t mask;
-
-	if (setting == NULL)
-		return 0;
-
-	switch (pdev->id) {
-	case TPS6586X_ID_SM_0:
-		mask = 1 << SM0_PWM_BIT;
-		break;
-	case TPS6586X_ID_SM_1:
-		mask = 1 << SM1_PWM_BIT;
-		break;
-	case TPS6586X_ID_SM_2:
-		mask = 1 << SM2_PWM_BIT;
-		break;
-	default:
-		/* not all regulators have PWM/PFM option */
-		return 0;
-	}
-
-	if (setting->sm_pwm_mode == PWM_ONLY)
-		ret = tps6586x_set_bits(parent, TPS6586X_SMODE1, mask);
-	else if (setting->sm_pwm_mode == AUTO_PWM_PFM)
-		ret = tps6586x_clr_bits(parent, TPS6586X_SMODE1, mask);
-
-	return ret;
 }
 
 static inline int tps6586x_regulator_set_slew_rate(struct platform_device *pdev)
@@ -445,7 +588,7 @@ static int __devinit tps6586x_regulator_probe(struct platform_device *pdev)
 	if (err)
 		return err;
 
-	return tps6586x_regulator_set_pwm_mode(pdev);
+	return 0;
 }
 
 static int __devexit tps6586x_regulator_remove(struct platform_device *pdev)
