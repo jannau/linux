@@ -116,6 +116,7 @@ obj-$(CONFIG_VLYNQ)		+= vlynq/
 obj-$(CONFIG_STAGING)		+= staging/
 obj-y				+= platform/
 obj-y				+= ieee802154/
+obj-$(CONFIG_MACH_STARTABLET)   += startablet/
 #common clk code
 obj-y				+= clk/
 
