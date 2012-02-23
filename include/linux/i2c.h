@@ -589,4 +589,12 @@ union i2c_smbus_data {
 #define I2C_SMBUS_BLOCK_PROC_CALL   7		/* SMBus 2.0 */
 #define I2C_SMBUS_I2C_BLOCK_DATA    8
 
+//andy.choi@lge.com START
+#define DEVICE_I2C_ADDRESS_SIZE_1BYTE	0
+#define DEVICE_I2C_ADDRESS_SIZE_2BYTE	1
+extern s32 i2c_read_block_data(struct i2c_client *client, u8 addr_flags, u8 len, u16 RegAddr, u8 *RegValues);
+extern s32 i2c_write_block_data(struct i2c_client *client, u8 addr_flags, u8 len, u16 RegAddr, u8 *RegValues);
+
+//andy.choi@lge.com END
+
 #endif /* _LINUX_I2C_H */
