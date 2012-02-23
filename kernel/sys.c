@@ -53,6 +53,15 @@
 #include <asm/io.h>
 #include <asm/unistd.h>
 
+#ifdef CONFIG_MACH_STARTABLET
+#include <linux/delay.h>
+#include <linux/gpio.h>
+#include <linux/suspend.h>
+#include <linux/freezer.h>
+#include <mach/gpio-names.h>
+#include <mach/hardware.h>
+#endif
+
 #ifndef SET_UNALIGN_CTL
 # define SET_UNALIGN_CTL(a,b)	(-EINVAL)
 #endif
@@ -397,6 +406,206 @@ void kernel_halt(void)
 
 EXPORT_SYMBOL_GPL(kernel_halt);
 
+#ifdef CONFIG_MACH_STARTABLET
+#define STATE_ACTIVE   0
+#define STATE_INACTIVE 1
+#define STATE_AC_ONLINE 1
+#define STATE_USB_HOST 1
+
+#define star_bl_enb           TEGRA_GPIO_PS6
+#define star_lvds_shutdown    TEGRA_GPIO_PB2
+#define star_panel_enb        TEGRA_GPIO_PH2
+
+#define GPIO_3V3_ALWAYS  TEGRA_GPIO_PS7
+#define GPIO_5V0_EN      TEGRA_GPIO_PX7
+#define GPIO_5V0_HDMI_EN TEGRA_GPIO_PI7
+
+#define GPIO_AC_DETECT        TEGRA_GPIO_PU5
+#define GPIO_USB_DETECT_N     TEGRA_GPIO_PQ6
+#define GPIO_USB1_ID_INT      TEGRA_GPIO_PI4
+#define GPIO_POWERKEY         TEGRA_GPIO_PV2
+
+#define POWERKEY_ACTIVE_LOW 0
+
+typedef enum
+{
+    charger_offline,
+    charger_ac_online,
+    charger_usb_online,
+    //charger_backup_battery,
+    charger_max
+} max17040_charge_line;
+
+static void charger_status(max17040_charge_line* pstatus)
+{
+    int pin_value_ac = STATE_INACTIVE;
+    int pin_value_usb = STATE_INACTIVE;
+    int pin_value_usb_host = STATE_INACTIVE;
+
+    pin_value_ac = gpio_get_value(GPIO_AC_DETECT);
+    pin_value_usb = gpio_get_value(GPIO_USB_DETECT_N);
+    pin_value_usb_host = gpio_get_value(GPIO_USB1_ID_INT);
+
+    if ((get_hw_rev() >= REV_G && STATE_AC_ONLINE == pin_value_ac)
+        || (get_hw_rev() < REV_G && STATE_ACTIVE == pin_value_ac))
+    {
+        *pstatus = charger_ac_online;
+    }
+    else if (STATE_ACTIVE == pin_value_usb)
+    {
+        if (STATE_USB_HOST == pin_value_usb_host)
+        {
+            *pstatus = charger_offline;
+        }
+        else
+        {
+            *pstatus = charger_usb_online;
+        }
+    }
+    else
+    {
+        *pstatus = charger_offline;
+    }
+    //printk(KERN_INFO "%s: charger-%d\n", __func__, *pstatus);
+}
+
+static uint get_powerkey_status(void)
+{
+    uint pinValue;
+
+    pinValue = (gpio_get_value(GPIO_POWERKEY) ? 1 : 0) ^ POWERKEY_ACTIVE_LOW;
+
+    return pinValue;
+}
+
+#define TIMEOUT	(20 * HZ)
+
+static inline int freezeable(struct task_struct * p)
+{
+	if ((p == current) ||
+	    (p->flags & PF_NOFREEZE) ||
+	    (p->exit_state != 0))
+		return 0;
+	return 1;
+}
+
+static int try_to_freeze_tasks(bool sig_only)
+{
+	struct task_struct *g, *p;
+	unsigned long end_time;
+	unsigned int todo;
+	bool wq_busy = false;
+	//struct timeval start, end;
+	//u64 elapsed_csecs64;
+	//unsigned int elapsed_csecs;
+	unsigned int wakeup = 0;
+
+	//do_gettimeofday(&start);
+
+	end_time = jiffies + TIMEOUT;
+
+	if (!sig_only)
+		freeze_workqueues_begin();
+
+	while (true) {
+		todo = 0;
+		read_lock(&tasklist_lock);
+		do_each_thread(g, p) {
+			if (frozen(p) || !freezeable(p))
+				continue;
+
+			if (!freeze_task(p, sig_only))
+				continue;
+
+			/*
+			 * Now that we've done set_freeze_flag, don't
+			 * perturb a task in TASK_STOPPED or TASK_TRACED.
+			 * It is "frozen enough".  If the task does wake
+			 * up, it will immediately call try_to_freeze.
+			 */
+			if (!task_is_stopped_or_traced(p) &&
+			    !freezer_should_skip(p))
+				todo++;
+		} while_each_thread(g, p);
+		read_unlock(&tasklist_lock);
+
+		if (!sig_only) {
+			wq_busy = freeze_workqueues_busy();
+			todo += wq_busy;
+		}
+
+		if (todo /* && has_wake_lock(WAKE_LOCK_SUSPEND)*/) {
+			printk(KERN_ERR "Freezing aborted by %s\n", p->comm);
+			wakeup = 1;
+			//break;
+		}
+		if (!todo || time_after(jiffies, end_time))
+			break;
+
+		/*
+		 * We need to retry, but first give the freezing tasks some
+		 * time to enter the regrigerator.
+		 */
+		msleep(10);
+	}
+}
+
+static void power_off_charging(void)
+{
+	max17040_charge_line charger;
+	int prev_powerkey = get_powerkey_status();
+	int powerkey;
+	int error;
+
+	//printk(KERN_INFO "%s()\n", __func__);
+
+	charger_status(&charger);
+
+	// if no charger(TA/USB), power off
+	if (charger_offline == charger)
+	{
+		printk(KERN_INFO "%s() no charger. go power off.\n", __func__);
+		return;
+	}
+	printk("Freezing user space processes ... ");
+	error = try_to_freeze_tasks(true);
+	printk("done.\n");
+
+	printk("Freezing remaining freezable tasks ... ");
+	error = try_to_freeze_tasks(false);
+	printk("done.");
+
+	// if charger is connected
+	while (1)
+	{
+		gpio_set_value(star_bl_enb, 0);
+		gpio_set_value(star_lvds_shutdown, 0);
+		if (get_hw_rev() >= REV_F) {
+			gpio_set_value(star_panel_enb, 0);
+		}
+		gpio_set_value(GPIO_5V0_HDMI_EN, 0);
+
+		mdelay(500);
+		powerkey = get_powerkey_status();
+		if (prev_powerkey && powerkey)  // if powerkey is long pressed, reboot system
+		{
+			printk(KERN_INFO "%s() restart by long powerkey. (%d, %d)\n", __func__, prev_powerkey, powerkey);
+			kernel_restart(NULL);
+			printk(KERN_INFO "%s() restart by long powerkey\n", __func__);  // this line will not called
+		}
+		prev_powerkey = powerkey;
+
+		charger_status(&charger);
+		// if charger(TA/USB) is removed, power off
+		if (charger_offline == charger)
+		{
+			printk(KERN_INFO "%s() charger removed. go power off.\n", __func__);
+			return;
+		}
+	}
+}
+#endif
+
 /**
  *	kernel_power_off - power_off the system
  *
@@ -409,6 +618,9 @@ void kernel_power_off(void)
 		pm_power_off_prepare();
 	disable_nonboot_cpus();
 	syscore_shutdown();
+#ifdef CONFIG_MACH_STARTABLET
+	power_off_charging();
+#endif
 	printk(KERN_EMERG "Power down.\n");
 	kmsg_dump(KMSG_DUMP_POWEROFF);
 	machine_power_off();
