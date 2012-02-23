@@ -2,6 +2,7 @@
  * arch/arm/mach-tegra/include/mach/usb_phy.h
  *
  * Copyright (C) 2010 Google, Inc.
+ * Copyright (C) 2011 NVIDIA Corporation.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -17,10 +18,9 @@
 #ifndef __MACH_USB_PHY_H
 #define __MACH_USB_PHY_H
 
-#include <linux/platform_device.h>
 #include <linux/clk.h>
-
-#define USB_PHY_MAX_CONTEXT_REGS 10
+#include <linux/regulator/consumer.h>
+#include <linux/usb/otg.h>
 #include <linux/platform_data/tegra_usb.h>
 
 struct tegra_utmip_config {
@@ -95,7 +95,6 @@ struct tegra_xtal_freq;
 
 struct tegra_usb_phy {
 	int instance;
-	int freq_sel;
 	const struct tegra_xtal_freq *freq;
 	void __iomem *regs;
 	void __iomem *pad_regs;
@@ -125,13 +124,13 @@ struct tegra_usb_phy *tegra_usb_phy_open(int instance, void __iomem *regs,
 			void *config, enum tegra_usb_phy_mode phy_mode,
 			enum tegra_usb_phy_type usb_phy_type);
 
-int tegra_usb_phy_power_on(struct tegra_usb_phy *phy);
+int tegra_usb_phy_power_on(struct tegra_usb_phy *phy, bool is_dpd);
 
-int tegra_usb_phy_clk_disable(struct tegra_usb_phy *phy);
+void tegra_usb_phy_clk_disable(struct tegra_usb_phy *phy);
 
-int tegra_usb_phy_clk_enable(struct tegra_usb_phy *phy);
+void tegra_usb_phy_clk_enable(struct tegra_usb_phy *phy);
 
-int tegra_usb_phy_power_off(struct tegra_usb_phy *phy);
+void tegra_usb_phy_power_off(struct tegra_usb_phy *phy, bool is_dpd);
 
 void tegra_usb_phy_postsuspend(struct tegra_usb_phy *phy, bool is_dpd);
 
@@ -139,7 +138,6 @@ void tegra_usb_phy_preresume(struct tegra_usb_phy *phy, bool is_dpd);
 
 void tegra_usb_phy_postresume(struct tegra_usb_phy *phy, bool is_dpd);
 
-int tegra_ehci_phy_restore_start(struct tegra_usb_phy *phy,
 void tegra_ehci_pre_reset(struct tegra_usb_phy *phy, bool is_dpd);
 
 void tegra_ehci_post_reset(struct tegra_usb_phy *phy, bool is_dpd);
@@ -147,9 +145,9 @@ void tegra_ehci_post_reset(struct tegra_usb_phy *phy, bool is_dpd);
 void tegra_ehci_phy_restore_start(struct tegra_usb_phy *phy,
 				 enum tegra_usb_phy_port_speed port_speed);
 
-int tegra_ehci_phy_restore_end(struct tegra_usb_phy *phy);
+void tegra_ehci_phy_restore_end(struct tegra_usb_phy *phy);
 
-int tegra_usb_phy_close(struct tegra_usb_phy *phy);
+void tegra_usb_phy_close(struct tegra_usb_phy *phy);
 
 int tegra_usb_phy_bus_connect(struct tegra_usb_phy *phy);
 
