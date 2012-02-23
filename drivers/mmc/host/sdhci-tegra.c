@@ -31,6 +31,9 @@
 #include <mach/io_dpd.h>
 
 #include "sdhci-pltfm.h"
+#include <mach/hardware.h>
+#include <mach/gpio-names.h>
+
 
 #define SDHCI_VENDOR_CLOCK_CNTRL	0x100
 #define SDHCI_VENDOR_CLOCK_CNTRL_SDMMC_CLK	0x1
