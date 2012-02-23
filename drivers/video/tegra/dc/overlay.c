@@ -193,6 +193,10 @@ static int tegra_overlay_set_windowattr(struct tegra_overlay_info *overlay,
 		"%s:application window height(%d) exceeds display height(%d)\n",
 		dev_name(&win->dc->ndev->dev), win->out_y + win->out_h, yres);
 
+#if 1
+	/*This is for unmatched-resolution display and now it has sideeffects.*/
+	/*Temporarily, it's blocked*/
+
 	if (((win->out_x + win->out_w) > xres) && (win->out_x < xres)) {
 		long new_w = xres - win->out_x;
 		u64 in_w = win->w.full * new_w;
@@ -207,6 +211,7 @@ static int tegra_overlay_set_windowattr(struct tegra_overlay_info *overlay,
 		win->h.full = lower_32_bits(in_h);
 	        win->out_h = new_h;
 	}
+#endif
 
 	win->z = flip_win->attr.z;
 	win->cur_handle = flip_win->handle;
