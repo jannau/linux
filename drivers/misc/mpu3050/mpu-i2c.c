@@ -31,8 +31,8 @@
 #include "mpu.h"
 
 int sensor_i2c_write(struct i2c_adapter *i2c_adap,
-		     unsigned char address,
-		     unsigned int len, unsigned char const *data)
+		unsigned char address,
+		unsigned int len, unsigned char const *data)
 {
 	struct i2c_msg msgs[1];
 	int res;
@@ -41,7 +41,7 @@ int sensor_i2c_write(struct i2c_adapter *i2c_adap,
 		return -EINVAL;
 
 	msgs[0].addr = address;
-	msgs[0].flags = 0;	/* write */
+	msgs[0].flags = 0;/* write */
 	msgs[0].buf = (unsigned char *) data;
 	msgs[0].len = len;
 
@@ -53,8 +53,8 @@ int sensor_i2c_write(struct i2c_adapter *i2c_adap,
 }
 
 int sensor_i2c_write_register(struct i2c_adapter *i2c_adap,
-			      unsigned char address,
-			      unsigned char reg, unsigned char value)
+			unsigned char address,
+			unsigned char reg, unsigned char value)
 {
 	unsigned char data[2];
 
@@ -64,9 +64,9 @@ int sensor_i2c_write_register(struct i2c_adapter *i2c_adap,
 }
 
 int sensor_i2c_read(struct i2c_adapter *i2c_adap,
-		    unsigned char address,
-		    unsigned char reg,
-		    unsigned int len, unsigned char *data)
+		unsigned char address,
+		unsigned char reg,
+		unsigned int len, unsigned char *data)
 {
 	struct i2c_msg msgs[2];
 	int res;
@@ -75,7 +75,7 @@ int sensor_i2c_read(struct i2c_adapter *i2c_adap,
 		return -EINVAL;
 
 	msgs[0].addr = address;
-	msgs[0].flags = 0;	/* write */
+	msgs[0].flags = 0;/* write */
 	msgs[0].buf = &reg;
 	msgs[0].len = 1;
 
@@ -92,9 +92,9 @@ int sensor_i2c_read(struct i2c_adapter *i2c_adap,
 }
 
 int mpu_memory_read(struct i2c_adapter *i2c_adap,
-		    unsigned char mpu_addr,
-		    unsigned short mem_addr,
-		    unsigned int len, unsigned char *data)
+		unsigned char mpu_addr,
+		unsigned short mem_addr,
+		unsigned int len, unsigned char *data)
 {
 	unsigned char bank[2];
 	unsigned char addr[2];
@@ -143,9 +143,9 @@ int mpu_memory_read(struct i2c_adapter *i2c_adap,
 }
 
 int mpu_memory_write(struct i2c_adapter *i2c_adap,
-		     unsigned char mpu_addr,
-		     unsigned short mem_addr,
-		     unsigned int len, unsigned char const *data)
+		unsigned char mpu_addr,
+		unsigned short mem_addr,
+		unsigned int len, unsigned char const *data)
 {
 	unsigned char bank[2];
 	unsigned char addr[2];
@@ -183,14 +183,9 @@ int mpu_memory_write(struct i2c_adapter *i2c_adap,
 	msgs[2].flags = 0;
 	msgs[2].buf = (unsigned char *) buf;
 	msgs[2].len = len + 1;
-
 	ret = i2c_transfer(i2c_adap, msgs, 3);
 	if (ret != 3)
 		return ret;
 	else
 		return 0;
 }
-
-/**
- *  @}
- */
