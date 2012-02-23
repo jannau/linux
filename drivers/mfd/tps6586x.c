@@ -105,6 +105,7 @@ struct tps6586x {
 	u8			mask_cache[5];
 	u8			mask_reg[5];
 };
+struct device* tps6586x_dev;
 
 static inline int __tps6586x_read(struct i2c_client *client,
 				  int reg, uint8_t *val)
@@ -188,6 +189,32 @@ int tps6586x_reads(struct device *dev, int reg, int len, uint8_t *val)
 	return __tps6586x_reads(to_i2c_client(dev), reg, len, val);
 }
 EXPORT_SYMBOL_GPL(tps6586x_reads);
+
+int tps6586x_write32(struct device *dev, int reg, uint32_t val32)
+{
+	uint8_t val[4];
+
+	val[0] = (uint8_t)((val32 >> 24) & 0xFF);
+	val[1] = (uint8_t)((val32 >> 16) & 0xFF);
+	val[2] = (uint8_t)((val32 >>  8) & 0xFF);
+	val[3] = (uint8_t)(val32 & 0xFF);
+
+	return __tps6586x_writes(to_i2c_client(dev), reg, 4, val);
+}
+EXPORT_SYMBOL_GPL(tps6586x_write32);
+
+int tps6586x_read32(struct device *dev, int reg, uint32_t *val32)
+{
+	uint8_t val[4];
+	int ret;
+
+	ret =  __tps6586x_reads(to_i2c_client(dev), reg, 4, val);
+
+	*val32 = (val[0] << 24) | (val[1] << 16) | (val[2] << 8) | val[3];
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(tps6586x_read32);
 
 int tps6586x_set_bits(struct device *dev, int reg, uint8_t bit_mask)
 {
@@ -354,6 +381,10 @@ static void tps6586x_irq_lock(struct irq_data *data)
 {
 	struct tps6586x *tps6586x = irq_data_get_irq_chip_data(data);
 
+	// WBT 196430
+	if (WARN_ON(!tps6586x))
+		return;
+
 	mutex_lock(&tps6586x->irq_lock);
 }
 
@@ -362,6 +393,10 @@ static void tps6586x_irq_enable(struct irq_data *irq_data)
 	struct tps6586x *tps6586x = irq_data_get_irq_chip_data(irq_data);
 	unsigned int __irq = irq_data->irq - tps6586x->irq_base;
 	const struct tps6586x_irq_data *data = &tps6586x_irqs[__irq];
+
+	// WBT 196431
+	if (WARN_ON(!tps6586x))
+		return;
 
 	tps6586x->mask_reg[data->mask_reg] &= ~data->mask_mask;
 	tps6586x->irq_en |= (1 << __irq);
@@ -374,6 +409,10 @@ static void tps6586x_irq_disable(struct irq_data *irq_data)
 	unsigned int __irq = irq_data->irq - tps6586x->irq_base;
 	const struct tps6586x_irq_data *data = &tps6586x_irqs[__irq];
 
+	// WBT 196432
+	if (WARN_ON(!tps6586x))
+		return;
+
 	tps6586x->mask_reg[data->mask_reg] |= data->mask_mask;
 	tps6586x->irq_en &= ~(1 << __irq);
 }
@@ -382,6 +421,9 @@ static void tps6586x_irq_sync_unlock(struct irq_data *data)
 {
 	struct tps6586x *tps6586x = irq_data_get_irq_chip_data(data);
 	int i;
+
+	if (WARN_ON(!tps6586x))
+		return;
 
 	for (i = 0; i < ARRAY_SIZE(tps6586x->mask_reg); i++) {
 		if (tps6586x->mask_reg[i] != tps6586x->mask_cache[i]) {
@@ -517,13 +559,15 @@ static int __devinit tps6586x_i2c_probe(struct i2c_client *client,
 		return -ENOTSUPP;
 	}
 
+#ifndef CONFIG_MACH_STARTABLET // LG Star Tablet's chip ID is changing...
 	ret = i2c_smbus_read_byte_data(client, TPS6586X_VERSIONCRC);
 	if (ret < 0) {
 		dev_err(&client->dev, "Chip ID read failed: %d\n", ret);
 		return -EIO;
 	}
-
 	dev_info(&client->dev, "VERSIONCRC is %02x\n", ret);
+
+#endif
 
 	tps6586x = kzalloc(sizeof(struct tps6586x), GFP_KERNEL);
 	if (tps6586x == NULL)
@@ -559,7 +603,11 @@ static int __devinit tps6586x_i2c_probe(struct i2c_client *client,
 	if (pdata->use_power_off && !pm_power_off)
 		pm_power_off = tps6586x_power_off;
 
-	tps6586x_i2c_client = client;
+	tps6586x_dev = tps6586x->dev;
+	//tps6586x_set_led_onoff_time(600,900);
+	//tps6586x_set_led(Led_Green, 30);
+
+	tps6586x_i2c_client = client; // nVida Update 2010.12.22
 
 	return 0;
 
@@ -575,6 +623,7 @@ err_gpio_init:
 		free_irq(client->irq, tps6586x);
 err_irq_init:
 	kfree(tps6586x);
+	tps6586x_dev = NULL;
 	return ret;
 }
 
@@ -599,6 +648,18 @@ static int __devexit tps6586x_i2c_remove(struct i2c_client *client)
 	return 0;
 }
 
+static int tps6586x_suspend(struct i2c_client *client, pm_message_t mesg)
+{
+	disable_irq(client->irq);
+	return 0;
+}
+
+static int tps6586x_resume(struct i2c_client *client)
+{
+	enable_irq(client->irq);
+	return 0;
+}
+
 static const struct i2c_device_id tps6586x_id_table[] = {
 	{ "tps6586x", 0 },
 	{ },
@@ -613,6 +674,10 @@ static struct i2c_driver tps6586x_driver = {
 	.probe		= tps6586x_i2c_probe,
 	.remove		= __devexit_p(tps6586x_i2c_remove),
 	.id_table	= tps6586x_id_table,
+#ifdef CONFIG_PM
+	.suspend	= tps6586x_suspend,
+	.resume		= tps6586x_resume,
+#endif
 };
 
 static int __init tps6586x_init(void)
