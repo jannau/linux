@@ -58,9 +58,76 @@ static const char *isa_modes[] = {
 
 extern void setup_mm_for_reboot(char mode);
 
+#ifdef CONFIG_MACH_STARTABLET
+extern void tegra_dvfs_disable_core_cpu(void);
+#endif
+
 static volatile int hlt_counter;
 
 #include <mach/system.h>
+
+#define TEGRA_TMR1_BASE         0x60005000
+#define TEGRA_CLK_RESET_BASE    0x60006000
+
+#define WDT_TIMEOUT 100
+
+#define CLK_RST_CONTROLLER_RST_SOURCE_0 0
+#define TIMER_TMR_PTV_0  0
+
+
+#define WDT_SOURCE CLK_RST_CONTROLLER_RST_SOURCE_0
+#define WDT_TIMER  TIMER_TMR_PTV_0
+
+
+#define TIMER_PTV 0x00
+#define TIMER_EN	(1 << 31)
+#define TIMER_PERIODIC	(1 << 30)
+
+#define WDT_EN		(1 << 5)
+#define WDT_SEL_TMR1	(0 << 4)
+#define WDT_SYS_RST	(1 << 2)
+
+#define rst_writel(value, reg) \
+	__raw_writel(value, (u32)rst_reg_base + (reg))
+#define rst_readl(reg) \
+	__raw_readl((u32)rst_reg_base + (reg))
+
+#define tmr_writel(value, reg) \
+	__raw_writel(value, (u32)tmr_reg_base + (reg))
+#define tmr_readl(reg) \
+	__raw_readl((u32)tmr_reg_base + (reg))
+
+#ifdef CONFIG_MACH_STARTABLET
+static void star_emergency_restart(int timeout)
+{
+	void __iomem *rst_reg_base = IO_ADDRESS(TEGRA_CLK_RESET_BASE);
+	void __iomem *tmr_reg_base = IO_ADDRESS(TEGRA_TMR1_BASE);
+
+	u32 ptv,src;
+	u32 val;
+
+	printk("%s : timeout = %d sec\n",__func__, timeout);
+	ptv = tmr_readl(TIMER_PTV);
+	src = rst_readl(WDT_SOURCE);
+
+	rst_writel(0, WDT_SOURCE);
+
+	if (ptv & TIMER_EN) {
+		printk("%s :PVT is valid\n",__func__);
+		ptv = timeout * 1000000ul;
+		ptv |= (TIMER_EN | TIMER_PERIODIC);
+		tmr_writel(ptv, TIMER_PTV);
+	}
+	rst_writel(src, WDT_SOURCE);
+
+	val = timeout* 1000000ul;
+	val |= (TIMER_EN | TIMER_PERIODIC);
+	tmr_writel(val, TIMER_PTV);
+
+	val = WDT_EN | WDT_SEL_TMR1 | WDT_SYS_RST;
+	rst_writel(val, WDT_SOURCE);
+}
+#endif
 
 void disable_hlt(void)
 {
@@ -227,6 +294,9 @@ __setup("reboot=", reboot_setup);
 
 void machine_shutdown(void)
 {
+#ifdef CONFIG_MACH_STARTABLET
+	tegra_dvfs_disable_core_cpu();
+#endif
 #ifdef CONFIG_SMP
 	smp_send_stop();
 #endif
@@ -247,6 +317,9 @@ void machine_power_off(void)
 
 void machine_restart(char *cmd)
 {
+#ifdef CONFIG_MACH_STARTABLET
+	star_emergency_restart(20);
+#endif
 	machine_shutdown();
 	arm_pm_restart(reboot_mode, cmd);
 }
