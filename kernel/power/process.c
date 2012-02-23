@@ -84,6 +84,7 @@ static int try_to_freeze_tasks(bool sig_only)
 		}
 
 		if (todo && has_wake_lock(WAKE_LOCK_SUSPEND)) {
+			printk(KERN_ERR "Freezing aborted by %s\n", p->comm);
 			wakeup = 1;
 			break;
 		}
