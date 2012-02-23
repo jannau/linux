@@ -24,6 +24,7 @@
 #include <sound/soc.h>
 #include <sound/initval.h>
 #include <sound/tlv.h>
+#include <linux/mfd/wm8994/registers.h>
 
 #include "wm8993.h"
 #include "wm_hubs.h"
