@@ -1,21 +1,13 @@
 /*
  $License:
     Copyright (C) 2010 InvenSense Corporation, All Rights Reserved.
-
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  $
+ $
  */
+/******************************************************************************
+ *
+ * $Id: mltypes.h 4666 2011-02-03 02:45:20Z mcaramello $
+ *
+ *****************************************************************************/
 
 /**
  *  @defgroup MLERROR
@@ -89,17 +81,16 @@
 ---------------------------*/
 
 /**
- *  @struct tMLError mltypes.h "mltypes"
- *  @brief  The MPL Error Code return type.
+ * @struct tMLError The MPL Error Code return type.
  *
- *  @code
+ * @code
  *      typedef unsigned char tMLError;
- *  @endcode
+ * @endcode
  */
 typedef unsigned char tMLError;
 
-#if defined(LINUX) || defined(__KERNEL__)
-typedef unsigned int HANDLE;
+#if defined(LINUX) || defined (__KERNEL__)
+typedef unsigned int       HANDLE;
 #endif
 
 #ifdef __KERNEL__
@@ -128,7 +119,7 @@ typedef int_fast8_t bool;
 #define FALSE 0
 #endif
 
-/* Dimension of an array */
+// Dimension of an array
 #ifndef DIM
 #define DIM(array) (sizeof(array)/sizeof((array)[0]))
 #endif
