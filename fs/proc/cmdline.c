@@ -27,3 +27,28 @@ static int __init proc_cmdline_init(void)
 	return 0;
 }
 module_init(proc_cmdline_init);
+
+static int key_proc_show(struct seq_file *m, void *v)
+{
+	seq_printf(m, "%s\n", saved_default_key);
+	return 0;
+}
+
+static int key_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, key_proc_show, NULL);
+}
+
+static const struct file_operations key_proc_fops = {
+	.open		= key_proc_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
+
+static int __init proc_key_init(void)
+{
+	proc_create("key", 0, NULL, &key_proc_fops);
+	return 0;
+}
+module_init(proc_key_init);
