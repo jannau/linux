@@ -62,21 +62,38 @@ static int dapm_up_seq[] = {
 	[snd_soc_dapm_dac] = 6,
 	[snd_soc_dapm_mixer] = 7,
 	[snd_soc_dapm_mixer_named_ctl] = 7,
+#if 0 /* Wolfson Mark patch */
 	[snd_soc_dapm_pga] = 8,
 	[snd_soc_dapm_adc] = 9,
 	[snd_soc_dapm_out_drv] = 10,
 	[snd_soc_dapm_hp] = 10,
 	[snd_soc_dapm_spk] = 10,
 	[snd_soc_dapm_post] = 11,
+#else
+	[snd_soc_dapm_adc] = 8,
+	[snd_soc_dapm_late_supply] = 9,
+	[snd_soc_dapm_pga] = 10,
+	[snd_soc_dapm_hp] = 11,
+	[snd_soc_dapm_spk] = 11,
+	[snd_soc_dapm_post] = 12,
+#endif
 };
 
 static int dapm_down_seq[] = {
 	[snd_soc_dapm_pre] = 0,
+#if 0 /* Wolfson Mark patch */
 	[snd_soc_dapm_adc] = 1,
 	[snd_soc_dapm_hp] = 2,
 	[snd_soc_dapm_spk] = 2,
 	[snd_soc_dapm_out_drv] = 2,
 	[snd_soc_dapm_pga] = 4,
+#else
+	[snd_soc_dapm_hp] = 1,
+	[snd_soc_dapm_spk] = 1,
+	[snd_soc_dapm_pga] = 2,
+	[snd_soc_dapm_late_supply] = 3,
+	[snd_soc_dapm_adc] = 4,
+#endif
 	[snd_soc_dapm_mixer_named_ctl] = 5,
 	[snd_soc_dapm_mixer] = 5,
 	[snd_soc_dapm_dac] = 6,
@@ -326,6 +343,7 @@ static void dapm_set_path_status(struct snd_soc_dapm_widget *w,
 	case snd_soc_dapm_micbias:
 	case snd_soc_dapm_vmid:
 	case snd_soc_dapm_supply:
+	case snd_soc_dapm_late_supply:
 	case snd_soc_dapm_aif_in:
 	case snd_soc_dapm_aif_out:
 		p->connect = 1;
@@ -644,6 +662,8 @@ static int is_connected_output_ep(struct snd_soc_dapm_widget *widget)
 	struct snd_soc_dapm_path *path;
 	int con = 0;
 
+	if (widget->id == snd_soc_dapm_late_supply)
+		return 0;
 	if (widget->id == snd_soc_dapm_supply)
 		return 0;
 
@@ -692,6 +712,8 @@ static int is_connected_input_ep(struct snd_soc_dapm_widget *widget)
 	struct snd_soc_dapm_path *path;
 	int con = 0;
 
+	if (widget->id == snd_soc_dapm_late_supply)
+		return 0;
 	if (widget->id == snd_soc_dapm_supply)
 		return 0;
 
@@ -1594,6 +1616,7 @@ static ssize_t dapm_widget_show(struct device *dev,
 		case snd_soc_dapm_mixer:
 		case snd_soc_dapm_mixer_named_ctl:
 		case snd_soc_dapm_supply:
+		case snd_soc_dapm_late_supply:
 			if (w->name)
 				count += sprintf(buf + count, "%s: %s\n",
 					w->name, w->power ? "On":"Off");
@@ -1823,6 +1846,7 @@ static int snd_soc_dapm_add_route(struct snd_soc_dapm_context *dapm,
 	case snd_soc_dapm_pre:
 	case snd_soc_dapm_post:
 	case snd_soc_dapm_supply:
+	case snd_soc_dapm_late_supply:
 	case snd_soc_dapm_aif_in:
 	case snd_soc_dapm_aif_out:
 		list_add(&path->list, &dapm->card->paths);
@@ -2036,6 +2060,7 @@ int snd_soc_dapm_new_widgets(struct snd_soc_dapm_context *dapm)
 			w->power_check = dapm_generic_check_power;
 			break;
 		case snd_soc_dapm_supply:
+		case snd_soc_dapm_late_supply:
 			w->power_check = dapm_supply_check_power;
 		case snd_soc_dapm_vmid:
 		case snd_soc_dapm_pre:
