@@ -355,3 +355,14 @@ void __init tegra_soc_init_dvfs(void)
 	if (tegra_dvfs_cpu_disabled)
 		tegra_dvfs_rail_disable(&tegra2_dvfs_rail_vdd_cpu);
 }
+
+void tegra_dvfs_disable_core_cpu(void)
+{
+	printk("tegra_dvfs: disable core & cpu dvfs\n");
+	tegra_dvfs_core_disabled = false;
+	tegra_dvfs_cpu_disabled = false;
+
+	tegra_dvfs_rail_disable(&tegra2_dvfs_rail_vdd_core);
+	tegra_dvfs_rail_disable(&tegra2_dvfs_rail_vdd_cpu);
+}
+EXPORT_SYMBOL(tegra_dvfs_disable_core_cpu);
