@@ -29,10 +29,12 @@
 #include <linux/gpio.h>
 #include <linux/device.h>
 #include <linux/nct1008.h>
+#include <linux/kernel.h>
 #include <linux/delay.h>
 #include <linux/regulator/consumer.h>
 
 #define DRIVER_NAME "nct1008"
+#define DEBUG_TMEP_HWMON    // print temp at irq
 
 /* Register Addresses */
 #define LOCAL_TEMP_RD			0x00
@@ -543,6 +545,9 @@ static void nct1008_work_func(struct work_struct *work)
 						work);
 	int err = 0;
 	int intr_status = i2c_smbus_read_byte_data(data->client, STATUS_RD);
+#ifdef DEBUG_TMEP_HWMON
+	u8 value = 0;
+#endif
 
 	if (intr_status < 0) {
 		dev_err(&data->client->dev, "%s, line=%d, i2c read error=%d\n",
@@ -574,11 +579,24 @@ static void nct1008_work_func(struct work_struct *work)
 			err);
 	else
 		pr_debug("%s: done\n", __func__);
+#ifdef DEBUG_TMEP_HWMON
+	value = i2c_smbus_read_byte_data(data->client, EXT_HI_TEMP_RD);
+	if (data < 0) {
+		dev_err(&data->client->dev, "%s: failed to read "
+			"ext_temperature\n", __func__);
+		return;
+	}
+
+	printk("hwmon: nct1008 ext temp %d'C\n", value);
+#endif
 }
 
 static irqreturn_t nct1008_irq(int irq, void *dev_id)
 {
 	struct nct1008_data *data = dev_id;
+
+	printk("nct1008_irq \n");
+
 
 	schedule_work(&data->work);
 	return IRQ_HANDLED;
@@ -967,6 +985,8 @@ static int __devexit nct1008_remove(struct i2c_client *client)
 static int nct1008_suspend(struct i2c_client *client, pm_message_t state)
 {
 	int err;
+	printk("nct1008_suspend \n");
+
 
 	disable_irq(client->irq);
 	err = nct1008_disable(client);
@@ -977,6 +997,9 @@ static int nct1008_resume(struct i2c_client *client)
 {
 	struct nct1008_data *data = i2c_get_clientdata(client);
 	int err;
+
+	printk("nct1008_resume \n");
+	nct1008_configure_sensor(data);	/* sensor reconfigure  */
 
 	err = nct1008_enable(client);
 	if (err < 0) {
