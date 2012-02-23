@@ -5,6 +5,10 @@
 #define SM1_PWM_BIT 1
 #define SM2_PWM_BIT 2
 
+#ifdef CONFIG_MACH_STARTABLET
+//#define LGE_LOAD_SWITCH
+#endif
+
 enum {
 	TPS6586X_ID_SM_0,
 	TPS6586X_ID_SM_1,
@@ -20,6 +24,18 @@ enum {
 	TPS6586X_ID_LDO_8,
 	TPS6586X_ID_LDO_9,
 	TPS6586X_ID_LDO_RTC,
+
+	TPS6586X_ID_SOC_OFF,
+#ifdef  LGE_LOAD_SWITCH
+	TPS6586X_ID_LDS_USB_HOST,
+	TPS6586X_ID_LDS_USB3,
+	TPS6586X_ID_LDS_3V3,
+	TPS6586X_ID_LDS_TOUCH,
+	TPS6586X_ID_LDS_GYRO,
+	TPS6586X_ID_LDS_5V0,
+	TPS6586X_ID_LDS_3V3_ALWAYS,
+#endif
+	TPS6586X_ID_DUMMY,
 };
 
 enum {
@@ -116,6 +132,13 @@ struct tps6586x_platform_data {
 	bool use_power_off;
 };
 
+typedef enum {
+    ANLG_1 = 0x0,
+    ANLG_2 = 0x1,
+    ANLG_3 = 0x2,
+    ANLG_MAX
+} adc_channel;
+
 /*
  * NOTE: the functions below are not intended for use outside
  * of the TPS6586X sub-device drivers
@@ -124,9 +147,30 @@ extern int tps6586x_write(struct device *dev, int reg, uint8_t val);
 extern int tps6586x_writes(struct device *dev, int reg, int len, uint8_t *val);
 extern int tps6586x_read(struct device *dev, int reg, uint8_t *val);
 extern int tps6586x_reads(struct device *dev, int reg, int len, uint8_t *val);
+extern int tps6586x_write32(struct device *dev, int reg, uint32_t val32);
+extern int tps6586x_read32(struct device *dev, int reg, uint32_t *val32);
 extern int tps6586x_set_bits(struct device *dev, int reg, uint8_t bit_mask);
 extern int tps6586x_clr_bits(struct device *dev, int reg, uint8_t bit_mask);
 extern int tps6586x_update(struct device *dev, int reg, uint8_t val,
 			   uint8_t mask);
+
+/* ADC */
+extern int tps6586x_battery_temperature(void);
+extern int tps6586x_adc_read_battery_voltage(int *volt);
+extern int tps6586x_adc_read(adc_channel adc_ch, int *volt);
+#ifdef CONFIG_MACH_STARTABLET
+//extern int tps6586x_save_hwrev(void);  // check hw rev at bootloader only
+#endif
+
+/* LED */
+extern int tps6586x_set_led(unsigned int color); // color=0x00RRGGBB
+extern int tps6586x_set_led_onoff_time(unsigned int on_time_ms, unsigned int off_time_ms);
+extern bool tps6586x_led_check(void);
+
+/* RTC */
+extern int tps6586x_rtc_count_read(uint32_t* count);
+extern int tps6586x_rtc_count_write(uint32_t count);
+extern int tps6586x_rtc_alarm_count_read(uint32_t* count);
+extern int tps6586x_rtc_alarm_count_write(uint32_t count);
 
 #endif /*__LINUX_MFD_TPS6586X_H */
