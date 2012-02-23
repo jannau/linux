@@ -147,6 +147,15 @@ obj-${CONFIG_MACH_WHISTLER}             += board-whistler-kbc.o
 obj-${CONFIG_MACH_WHISTLER}             += board-whistler-baseband.o
 obj-${CONFIG_MACH_WHISTLER}             += board-whistler-memory.o
 
+obj-${CONFIG_MACH_STARTABLET}           += board-star.o
+obj-${CONFIG_MACH_STARTABLET}           += board-star-pinmux.o
+obj-${CONFIG_MACH_STARTABLET}           += board-star-panel.o
+obj-${CONFIG_MACH_STARTABLET}           += board-star-sdhci.o
+obj-${CONFIG_MACH_STARTABLET}           += board-star-power.o
+obj-${CONFIG_MACH_STARTABLET}           += board-star-memory.o
+obj-y					+= pwm.o
+obj-$(CONFIG_STARTABLET_REBOOT_REASON)	+= nv_data.o
+
 obj-${CONFIG_MACH_CARDHU}               += board-cardhu.o
 obj-${CONFIG_MACH_CARDHU}               += board-cardhu-kbc.o
 obj-${CONFIG_MACH_CARDHU}               += board-cardhu-panel.o
