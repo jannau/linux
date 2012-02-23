@@ -2117,12 +2117,120 @@ s32 i2c_smbus_xfer(struct i2c_adapter *adapter, u16 addr, unsigned short flags,
 		}
 		i2c_unlock_adapter(adapter);
 	} else
-		res = i2c_smbus_xfer_emulated(adapter, addr, flags, read_write,
+		res = i2c_smbus_xfer_emulated(adapter,addr,flags,read_write,
 					      command, protocol, data);
 
 	return res;
 }
 EXPORT_SYMBOL(i2c_smbus_xfer);
+
+/*Additional I2C API to support random size of read operation
+@client
+@flags : indicates the size of device I2C address is 1 byte or 2
+@len : the number of bytes to read
+@RegAddr : The start register address
+@RegValue : The Buffer the result is stored
+*/
+s32 i2c_read_block_data(struct i2c_client *client, u8 addr_flags, u8 len, u16 RegAddr, u8 *RegValues)
+{
+	s32 Ret;	//Buffers to hold tx and rx data
+	u8 msgbuffer_tx[I2C_SMBUS_BLOCK_MAX+3];
+	u8 msgbuffer_rx[I2C_SMBUS_BLOCK_MAX+2];
+
+	//Number of transactions to be made
+	//num = 1 if it's WRITE operation
+	//num = 2 if it's READ operation
+	int num = 2;
+
+	//Definitions of messages to be transacted
+	//i2c_msg.len signifies the number of bytes to be transmitted without STOP condition
+	struct i2c_msg msg[2] = {
+		{client->addr, client->flags, 0, msgbuffer_tx},
+		{client->addr, client->flags|I2C_M_RD, len, msgbuffer_rx}
+	};
+
+	//Check whether requested length is greater than I2C_SMBUS_BLOCK_MAX
+	if (len > I2C_SMBUS_BLOCK_MAX)
+		len = I2C_SMBUS_BLOCK_MAX;
+
+
+	if (addr_flags == DEVICE_I2C_ADDRESS_SIZE_1BYTE) {
+		msg[0].len = 1;
+		msgbuffer_tx[0] = RegAddr & 0xFF;
+	}
+	else {
+		msg[0].len = 2;
+		msgbuffer_tx[0] = (RegAddr >> 8) & 0xFF;
+		msgbuffer_tx[1] = RegAddr & 0xFF;
+	}
+
+
+	//Register address of 2 bytes is stored in msgbuffer_tx
+	//msgbuffer_tx[0] : MSB of address
+	//msgbuffer_tx[1] : LSB of address
+
+	Ret = i2c_transfer(client->adapter, msg, num);
+	//Error handling
+	if (Ret < 0)	{
+		printk("[%s] status <0 \n", __FUNCTION__);
+		return Ret;
+	}
+
+	memcpy(RegValues, &msgbuffer_rx[0], len);
+
+	return Ret;
+
+}
+EXPORT_SYMBOL(i2c_read_block_data);
+
+s32 i2c_write_block_data(struct i2c_client *client, u8 addr_flags, u8 len, u16 RegAddr, u8 *RegValues)
+{
+	s32 Ret;	//Buffers to hold tx and rx data
+	u8 msgbuffer_tx[I2C_SMBUS_BLOCK_MAX+3];
+
+	//Number of transactions to be made
+	//num = 1 if it's WRITE operation
+	//num = 2 if it's READ operation
+	int num = 1;
+
+	//Definitions of messages to be transacted
+	//i2c_msg.len signifies the number of bytes to be transmitted without STOP condition
+	struct i2c_msg msg = {
+		.addr = client->addr,
+		.flags = client->flags,
+		.len = 0,
+		.buf = msgbuffer_tx
+	};
+
+	//Check whether requested length is greater than I2C_SMBUS_BLOCK_MAX
+	if (len > I2C_SMBUS_BLOCK_MAX)
+		len = I2C_SMBUS_BLOCK_MAX;
+
+
+	if (addr_flags == DEVICE_I2C_ADDRESS_SIZE_1BYTE) {
+		msg.len = len + 1;	//# of bytes to send + address
+		msgbuffer_tx[0] = RegAddr & 0xFF;
+		memcpy(&msgbuffer_tx[1], RegValues, len);		//data starts from msgbuffer_tx[1]
+	}
+	else {
+		msg.len = len + 2;	//# of bytes to send + address of 2 bytes
+		msgbuffer_tx[0] = (RegAddr >> 8) & 0xFF;
+		msgbuffer_tx[1] = RegAddr & 0xFF;
+		memcpy(&msgbuffer_tx[2], RegValues, len);		//data starts from msgbuffer_tx[2]
+	}
+
+	Ret = i2c_transfer(client->adapter, &msg, num);
+	//Error handling
+	if (Ret < 0)	{
+		printk("[%s] status <0 \n", __FUNCTION__);
+		return Ret;
+	}
+
+	return Ret;
+
+}
+EXPORT_SYMBOL(i2c_write_block_data);
+
 
 MODULE_AUTHOR("Simon G. Vogl <simon@tk.uni-linz.ac.at>");
 MODULE_DESCRIPTION("I2C-Bus main module");
