@@ -123,6 +123,8 @@ extern void softirq_init(void);
 char __initdata boot_command_line[COMMAND_LINE_SIZE];
 /* Untouched saved command line (eg. for /proc) */
 char *saved_command_line;
+/* Untouched saved default key (eg. for /proc) */
+char *saved_default_key;
 /* Command line for parameter parsing */
 static char *static_command_line;
 
@@ -338,6 +340,16 @@ static inline void smp_prepare_cpus(unsigned int maxcpus) { }
  */
 static void __init setup_command_line(char *command_line)
 {
+	char tmp[2048]={0,};
+	char *ptr;
+
+	saved_default_key = alloc_bootmem(429);
+	strcpy (tmp, boot_command_line);
+	strncpy(saved_default_key, tmp+5, 428);
+	ptr = strstr(tmp, "nvmem=");
+	memset(boot_command_line,0,strlen(boot_command_line));
+	strcpy(boot_command_line, ptr);
+
 	saved_command_line = alloc_bootmem(strlen (boot_command_line)+1);
 	static_command_line = alloc_bootmem(strlen (command_line)+1);
 	strcpy (saved_command_line, boot_command_line);
