@@ -20,15 +20,14 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
-#include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/stat.h>
-#include <linux/irq.h>
 #include <linux/gpio.h>
 #include <linux/signal.h>
 #include <linux/miscdevice.h>
@@ -49,15 +48,19 @@
 #include <linux/wait.h>
 #include <linux/uaccess.h>
 #include <linux/io.h>
+#include <linux/input.h>
+#include <linux/delay.h>
 
-#include "mpuirq.h"
-#include "slaveirq.h"
 #include "mlsl.h"
 #include "mpu-i2c.h"
 #include "mldl_cfg.h"
 #include "mpu.h"
+#include "gyro_accel.h"
 
-#define MPU3050_EARLY_SUSPEND_IN_DRIVER 0
+#define MPU_NAME "mpu"
+#define MPU_SLAVE_ADDR (0x68)
+#define ACC_SLAVE_ADDR (0x19)
+#define DEFAULT_DELAY 200
 
 /* Platform data for the MPU */
 struct mpu_private_data {
