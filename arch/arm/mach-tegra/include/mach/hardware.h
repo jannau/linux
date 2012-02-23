@@ -51,4 +51,30 @@ enum tegra_revision {
 enum tegra_chipid tegra_get_chipid(void);
 enum tegra_revision tegra_get_revision(void);
 
+typedef enum
+{
+    REV_A = 0,
+    REV_C,
+    REV_E,
+    REV_F,
+    REV_G,
+    REV_H,
+    REV_I,
+    REV_1_0,
+    REV_1_1,
+    REV_1_2,
+    REV_1_3,
+    REV_UNKNOWN,  // If fail to get rev, the device might be handled as latest version
+} hw_rev;
+
+hw_rev get_hw_rev(void);
+
+/*
+ * Check if modem connected
+ * return value
+ *   1 : modem connected
+ *   0 : modem is not connected
+ */
+int is_modem_connected(void);
+
 #endif
