@@ -1563,6 +1563,32 @@ struct nvhost_device nvavp_device = {
 	.num_resources  = ARRAY_SIZE(tegra_nvavp_resources),
 };
 
+static u64 tegra_uart_dma_mask = DMA_BIT_MASK(32);
+static struct plat_serial8250_port tegra_hsuart0_platform_data[] = {
+	{
+		.membase	= IO_ADDRESS(TEGRA_UARTB_BASE),
+		.mapbase	= TEGRA_UARTB_BASE,
+		.irq		= INT_UARTB,
+		.flags		= UPF_BOOT_AUTOCONF,
+		.iotype		= UPIO_MEM,
+		.regshift	= 2,
+		.uartclk	= 216000000,
+	}, {
+		.flags		= 0
+	}
+};
+
+struct platform_device tegra_hsuart0 = {
+	.name = "tegra_uart",
+	.id = 1,
+	.dev = {
+		.platform_data = tegra_hsuart0_platform_data,
+		.coherent_dma_mask = ~0,
+		.dma_mask = &tegra_uart_dma_mask,
+	},
+};
+
+
 static struct resource tegra_avp_resources[] = {
 	[0] = {
 		.start	= INT_SHR_SEM_INBOX_IBF,
@@ -1582,6 +1608,19 @@ struct platform_device tegra_avp_device = {
 		.platform_data		= &tegra_avp_pdata,
 	},
 };
+
+/*
+***************************************************************************************************
+*                                       Bluetooth Devices
+***************************************************************************************************
+*/
+struct platform_device bcm_bt_lpm = {
+	.name   = "bcm_bt_lpm",
+	.id     = -1,
+	.dev    = {
+	},
+};
+
 
 static struct resource tegra_aes_resources[] = {
 	{
