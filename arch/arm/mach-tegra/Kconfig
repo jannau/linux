@@ -64,7 +64,8 @@ config TEGRA_PCI
 	help
 	  Adds PCIe Host controller driver for tegra based systems
 
-comment "Tegra board type"
+choice
+	prompt "Select Tegra-based product"
 
 config MACH_HARMONY
        bool "Harmony board"
@@ -130,6 +131,22 @@ config MACH_WHISTLER
        select MACH_HAS_SND_SOC_TEGRA_TLV320AIC326X if SND_SOC
        help
          Support for NVIDIA Whistler development platform
+
+config MACH_STARTABLET
+       bool "STARTABLET board"
+       help
+         Support for LG-E999 platform
+
+endchoice
+
+if MACH_STARTABLET
+config STARTABLET_REBOOT_REASON
+        bool "Enable to write reboot reason into NV area"
+        depends on MACH_STARTABLET
+        help
+          Enable to write reboot reason into NV area
+
+endif
 
 config MACH_ARUBA
        bool "Aruba board"
