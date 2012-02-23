@@ -113,7 +113,4 @@ config TOUCHSCREEN_ATMEL_MAXTOUCH
 	   To compile this driver as a module, choose M here: the
 	   module will be called atmel_tsadcc.
 
-
-source "drivers/net/wireless/bcm4329.lge/Kconfig"
-
 endmenu
