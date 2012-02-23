@@ -44,6 +44,16 @@
 #define DVFS_RAIL_STATS_RANGE   ((DVFS_RAIL_STATS_TOP_BIN - 1) * \
 				 DVFS_RAIL_STATS_BIN / DVFS_RAIL_STATS_SCALE)
 
+/* SM0/1 slew rate settings */
+#define TPS6586X_SMSL_1_110_NS      110  // 0x1     /* mV/us */
+#define TPS6586X_SMSL_2_220_NS      220  // 0x2
+#define TPS6586X_SMSL_3_440_NS      440  // 0x3
+#define TPS6586X_SMSL_4_880_NS      880  // 0x4
+#define TPS6586X_SMSL_5_1760_NS     1760 // 0x5
+#define TPS6586X_SMSL_6_3520_NS     3520 // 0x6
+#define TPS6586X_SMSL_7_7040_NS     7040 // 0x7
+#define TPS6586X_START_UP_TIME_US   210
+
 static LIST_HEAD(dvfs_rail_list);
 static DEFINE_MUTEX(dvfs_lock);
 static DEFINE_MUTEX(rail_disable_lock);
@@ -172,6 +182,7 @@ static int dvfs_rail_set_voltage(struct dvfs_rail *rail, int millivolts)
 	int i;
 	int steps;
 	bool jmp_to_zero;
+	int ramp_delay = 0;
 
 	if (!rail->reg) {
 		if (millivolts == rail->millivolts)
@@ -188,6 +199,15 @@ static int dvfs_rail_set_voltage(struct dvfs_rail *rail, int millivolts)
 			((millivolts == 0) || (rail->millivolts == 0));
 	steps = jmp_to_zero ? 1 :
 		DIV_ROUND_UP(abs(millivolts - rail->millivolts), rail->step);
+
+	/* caculate ramp delay time for vdd_cpu */
+	if (0 == strcmp(rail->reg_id, "vdd_cpu"))
+	{
+		if (millivolts > rail->millivolts)
+			ramp_delay = DIV_ROUND_UP((millivolts - rail->millivolts) * 1000, TPS6586X_SMSL_5_1760_NS)
+						+ TPS6586X_START_UP_TIME_US;
+	}
+
 
 	for (i = 0; i < steps; i++) {
 		if (!jmp_to_zero &&
@@ -233,6 +253,10 @@ static int dvfs_rail_set_voltage(struct dvfs_rail *rail, int millivolts)
 				goto out;
 		}
 	}
+
+	/* wait until dvfs rail becoming stabilized */
+	if (ramp_delay > 0)
+		udelay(ramp_delay);
 
 	if (unlikely(rail->millivolts != millivolts)) {
 		pr_err("%s: rail didn't reach target %d in %d steps (%d)\n",
