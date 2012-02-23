@@ -1418,13 +1418,6 @@ static void tegra2_cdev_clk_set_parent(struct clk *c)
 /* cdev1 and cdev2 (dap_mclk1 and dap_mclk2) ops */
 static void tegra2_cdev_clk_init(struct clk *c)
 {
-	const struct clk_mux_sel *sel;
-
-	/* Find max rate from inputs */
-	for (sel = c->inputs; sel->input != NULL; sel++) {
-		c->max_rate = max(sel->input->max_rate, c->max_rate);
-	}
-
 	/* We could un-tristate the cdev1 or cdev2 pingroup here; this is
 	 * currently done in the pinmux code. */
 	c->state = ON;
@@ -1439,12 +1432,6 @@ static void tegra2_cdev_clk_init(struct clk *c)
 static int tegra2_cdev_clk_enable(struct clk *c)
 {
 	BUG_ON(!c->u.periph.clk_num);
-
-	if (!c->parent) {
-		/* Set parent from inputs */
-		tegra2_cdev_clk_set_parent(c);
-		clk_enable(c->parent);
-	}
 
 	clk_writel(PERIPH_CLK_TO_ENB_BIT(c),
 		CLK_OUT_ENB_SET + PERIPH_CLK_TO_ENB_SET_REG(c));
@@ -2012,6 +1999,28 @@ static struct clk tegra_clk_d = {
 	},
 };
 
+/* dap_mclk1, belongs to the cdev1 pingroup. */
+static struct clk tegra_dev1_clk = {
+	.name      = "clk_dev1",
+	.ops       = &tegra_cdev_clk_ops,
+	.rate      = 26000000,
+	.max_rate  = 26000000,
+	.u.periph  = {
+		.clk_num = 94,
+	},
+};
+
+/* dap_mclk2, belongs to the cdev2 pingroup. */
+static struct clk tegra_dev2_clk = {
+	.name      = "clk_dev2",
+	.ops       = &tegra_cdev_clk_ops,
+	.rate      = 26000000,
+	.max_rate  = 26000000,
+	.u.periph  = {
+		.clk_num   = 93,
+	},
+};
+
 /* initialized before peripheral clocks */
 static struct clk_mux_sel mux_audio_sync_clk[8+1];
 static const struct audio_sources {
@@ -2357,10 +2366,20 @@ struct clk tegra_list_periph_clks[] = {
 	PERIPH_CLK("spi",	"spi",			NULL,	43,	0x114,	0x31E,	40000000,  mux_pllp_pllc_pllm_clkm,	MUX | DIV_U71 | PERIPH_ON_APB),
 	PERIPH_CLK("xio",	"xio",			NULL,	45,	0x120,	0x31E,	150000000, mux_pllp_pllc_pllm_clkm,	MUX | DIV_U71),
 	PERIPH_CLK("twc",	"twc",			NULL,	16,	0x12c,	0x31E,	150000000, mux_pllp_pllc_pllm_clkm,	MUX | DIV_U71 | PERIPH_ON_APB),
+
+//clock setting for spi1 and spi2 port
+#ifdef CONFIG_SPI_SLAVE_TEGRA
+	PERIPH_CLK("sbc1",	"tegra_spi_slave.0",		NULL,	41,	0x134,	0x31E, 160000000, mux_pllp_pllc_pllm_clkm,	MUX | DIV_U71),
+	PERIPH_CLK("sbc2",	"tegra_spi_slave.1",		NULL,	44,	0x118,	0x31E, 160000000, mux_pllp_pllc_pllm_clkm,	MUX | DIV_U71),
+	PERIPH_CLK("sbc3",	"tegra_spi_slave.2",		NULL,	46,	0x11c,	0x31E, 160000000, mux_pllp_pllc_pllm_clkm,	MUX | DIV_U71),
+	PERIPH_CLK("sbc4",	"tegra_spi_slave.3",		NULL,	68,	0x1b4,	0x31E, 160000000, mux_pllp_pllc_pllm_clkm,	MUX | DIV_U71),
+#else /* CONFIG_SPI_SLAVE_TEGRA */
 	PERIPH_CLK("sbc1",	"spi_tegra.0",		NULL,	41,	0x134,	0x31E,	160000000, mux_pllp_pllc_pllm_clkm,	MUX | DIV_U71 | PERIPH_ON_APB),
 	PERIPH_CLK("sbc2",	"spi_tegra.1",		NULL,	44,	0x118,	0x31E,	160000000, mux_pllp_pllc_pllm_clkm,	MUX | DIV_U71 | PERIPH_ON_APB),
 	PERIPH_CLK("sbc3",	"spi_tegra.2",		NULL,	46,	0x11c,	0x31E,	160000000, mux_pllp_pllc_pllm_clkm,	MUX | DIV_U71 | PERIPH_ON_APB),
 	PERIPH_CLK("sbc4",	"spi_tegra.3",		NULL,	68,	0x1b4,	0x31E,	160000000, mux_pllp_pllc_pllm_clkm,	MUX | DIV_U71 | PERIPH_ON_APB),
+#endif /* CONFIG_SPI_SLAVE_TEGRA */
+
 	PERIPH_CLK("ide",	"ide",			NULL,	25,	0x144,	0x31E,	100000000, mux_pllp_pllc_pllm_clkm,	MUX | DIV_U71), /* requires min voltage */
 	PERIPH_CLK("ndflash",	"tegra_nand",		NULL,	13,	0x160,	0x31E,	164000000, mux_pllp_pllc_pllm_clkm,	MUX | DIV_U71), /* scales with voltage */
 	PERIPH_CLK("vfir",	"vfir",			NULL,	7,	0x168,	0x31E,	72000000,  mux_pllp_pllc_pllm_clkm,	MUX | DIV_U71 | PERIPH_ON_APB),
