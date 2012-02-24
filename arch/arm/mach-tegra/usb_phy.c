@@ -2,6 +2,7 @@
  * arch/arm/mach-tegra/usb_phy.c
  *
  * Copyright (C) 2010 Google, Inc.
+ * Copyright (C) 2010 - 2011 NVIDIA Corporation
  *
  * Author:
  *	Erik Gilling <konkers@google.com>
@@ -20,33 +21,39 @@
 
 #include <linux/resource.h>
 #include <linux/delay.h>
+#include <linux/interrupt.h>
 #include <linux/slab.h>
 #include <linux/err.h>
 #include <linux/platform_device.h>
 #include <linux/io.h>
 #include <linux/gpio.h>
+#include <linux/usb/otg.h>
+#include <linux/usb/ulpi.h>
 #include <asm/mach-types.h>
 #include <mach/usb_phy.h>
 #include <mach/iomap.h>
 #include <mach/pinmux.h>
 #include "gpio-names.h"
 #include <mach/hardware.h>
+#include "fuse.h"
+
 
 #ifdef CONFIG_ARCH_TEGRA_2x_SOC
+#define USB_USBCMD		0x140
+#define   USB_USBCMD_RS		(1 << 0)
 
 #define USB_USBSTS		0x144
 #define   USB_USBSTS_PCI	(1 << 2)
+#define   USB_USBSTS_HCH	(1 << 12)
+
+#define USB_TXFILLTUNING        0x164
+#define USB_FIFO_TXFILL_THRES(x)   (((x) & 0x1f) << 16)
+#define USB_FIFO_TXFILL_MASK    0x1f0000
 
 #define ULPI_VIEWPORT		0x170
 #define   ULPI_WAKEUP		(1 << 31)
 #define   ULPI_RUN		(1 << 30)
 #define   ULPI_RD_WR		(1 << 29)
-#define   ULPI_RD_RW_WRITE	(1 << 29)
-#define   ULPI_RD_RW_READ	(0 << 29)
-#define   ULPI_PORT(x)		(((x) & 0x7) << 24)
-#define   ULPI_ADDR(x)		(((x) & 0xff) << 16)
-#define   ULPI_DATA_RD(x)	(((x) & 0xff) << 8)
-#define   ULPI_DATA_WR(x)	(((x) & 0xff) << 0)
 
 #define USB_PORTSC1		0x184
 #define   USB_PORTSC1_PTS(x)	(((x) & 0x3) << 30)
@@ -57,6 +64,7 @@
 #define   USB_PORTSC1_WKCN	(1 << 20)
 #define   USB_PORTSC1_PTC(x)	(((x) & 0xf) << 16)
 #define   USB_PORTSC1_PP	(1 << 12)
+#define   USB_PORTSC1_LS(x)	(((x) & 0x3) << 10)
 #define   USB_PORTSC1_SUSP	(1 << 7)
 #define   USB_PORTSC1_PE	(1 << 2)
 #define   USB_PORTSC1_CCS	(1 << 0)
@@ -67,9 +75,11 @@
 #define   USB_SUSP_CLR		(1 << 5)
 #define   USB_CLKEN             (1 << 6)
 #define   USB_PHY_CLK_VALID	(1 << 7)
-#define   UTMIP_RESET			(1 << 11)
-#define   UHSIC_RESET			(1 << 11)
-#define   UTMIP_PHY_ENABLE		(1 << 12)
+#define   USB_PHY_CLK_VALID_INT_ENB    (1 << 9)
+#define   UTMIP_RESET		(1 << 11)
+#define   UHSIC_RESET		(1 << 11)
+#define   UTMIP_PHY_ENABLE	(1 << 12)
+#define   UHSIC_PHY_ENABLE	(1 << 12)
 #define   ULPI_PHY_ENABLE	(1 << 13)
 #define   USB_SUSP_SET		(1 << 14)
 #define   USB_WAKEUP_DEBOUNCE_COUNT(x)	(((x) & 0x7) << 16)
@@ -100,6 +110,7 @@
 #define   UTMIP_FORCE_PD_POWERDOWN		(1 << 14)
 #define   UTMIP_FORCE_PD2_POWERDOWN		(1 << 16)
 #define   UTMIP_FORCE_PDZI_POWERDOWN		(1 << 18)
+#define   UTMIP_XCVR_LSBIAS_SEL			(1 << 21)
 #define   UTMIP_XCVR_SETUP_MSB(x)		(((x) & 0x7) << 22)
 #define   UTMIP_XCVR_HSSLEW_MSB(x)		(((x) & 0x7f) << 25)
 
@@ -143,6 +154,48 @@
 
 #define UTMIP_BIAS_CFG1		0x83c
 #define   UTMIP_BIAS_PDTRK_COUNT(x)	(((x) & 0x1f) << 3)
+
+#define UHSIC_PLL_CFG1				0x804
+#define   UHSIC_XTAL_FREQ_COUNT(x)		(((x) & 0xfff) << 0)
+#define   UHSIC_PLLU_ENABLE_DLY_COUNT(x)	(((x) & 0x1f) << 14)
+
+#define UHSIC_HSRX_CFG0				0x808
+#define   UHSIC_ELASTIC_UNDERRUN_LIMIT(x)	(((x) & 0x1f) << 2)
+#define   UHSIC_ELASTIC_OVERRUN_LIMIT(x)	(((x) & 0x1f) << 8)
+#define   UHSIC_IDLE_WAIT(x)			(((x) & 0x1f) << 13)
+
+#define UHSIC_HSRX_CFG1				0x80c
+#define   UHSIC_HS_SYNC_START_DLY(x)		(((x) & 0x1f) << 1)
+
+#define UHSIC_TX_CFG0				0x810
+#define   UHSIC_HS_POSTAMBLE_OUTPUT_ENABLE	(1 << 6)
+
+#define UHSIC_MISC_CFG0				0x814
+#define   UHSIC_SUSPEND_EXIT_ON_EDGE		(1 << 7)
+#define   UHSIC_DETECT_SHORT_CONNECT		(1 << 8)
+#define   UHSIC_FORCE_XCVR_MODE			(1 << 15)
+
+#define UHSIC_MISC_CFG1				0X818
+#define   UHSIC_PLLU_STABLE_COUNT(x)		(((x) & 0xfff) << 2)
+
+#define UHSIC_PADS_CFG0				0x81c
+#define   UHSIC_TX_RTUNEN			0xf000
+#define   UHSIC_TX_RTUNE(x)			(((x) & 0xf) << 12)
+
+#define UHSIC_PADS_CFG1				0x820
+#define   UHSIC_PD_BG				(1 << 2)
+#define   UHSIC_PD_TX				(1 << 3)
+#define   UHSIC_PD_TRK				(1 << 4)
+#define   UHSIC_PD_RX				(1 << 5)
+#define   UHSIC_PD_ZI				(1 << 6)
+#define   UHSIC_RX_SEL				(1 << 7)
+#define   UHSIC_RPD_DATA			(1 << 9)
+#define   UHSIC_RPD_STROBE			(1 << 10)
+#define   UHSIC_RPU_DATA			(1 << 11)
+#define   UHSIC_RPU_STROBE			(1 << 12)
+
+#define UHSIC_STAT_CFG0				0x828
+#define   UHSIC_CONNECT_DETECT			(1 << 0)
 
 
 #else
@@ -522,6 +575,8 @@ static u32 utmip_rctrl_val, utmip_tctrl_val;
 #define UHSIC_CMD_CFG0				0x824
 #define   UHSIC_PRETEND_CONNECT_DETECT		(1 << 5)
 
+#define UHSIC_SPARE_CFG0			0x82c
+
 /* These values (in milli second) are taken from the battery charging spec */
 #define TDP_SRC_ON_MS	 100
 #define TDPSRC_CON_MS	 40
@@ -531,26 +586,84 @@ static u32 utmip_rctrl_val, utmip_tctrl_val;
 static DEFINE_SPINLOCK(utmip_pad_lock);
 static int utmip_pad_count;
 
-static const int udc_freq_table[] = {
-	12000000,
-	13000000,
-	19200000,
-	26000000,
+struct tegra_xtal_freq {
+	int freq;
+	u8 enable_delay;
+	u8 stable_count;
+	u8 active_delay;
+	u16 xtal_freq_count;
+	u16 debounce;
+	u8 pdtrk_count;
 };
 
-static const u8 udc_delay_table[][4] = {
-	/* ENABLE_DLY, STABLE_CNT, ACTIVE_DLY, XTAL_FREQ_CNT */
-	{0x02,         0x2F,       0x04,       0x76}, /* 12 MHz */
-	{0x02,         0x33,       0x05,       0x7F}, /* 13 MHz */
-	{0x03,         0x4B,       0x06,       0xBB}, /* 19.2 MHz */
-	{0x04,         0x66,       0x09,       0xFE}, /* 26 Mhz */
+static const struct tegra_xtal_freq tegra_freq_table[] = {
+	{
+		.freq = 12000000,
+		.enable_delay = 0x02,
+		.stable_count = 0x2F,
+		.active_delay = 0x04,
+		.xtal_freq_count = 0x76,
+		.debounce = 0x7530,
+		.pdtrk_count = 5,
+	},
+	{
+		.freq = 13000000,
+		.enable_delay = 0x02,
+		.stable_count = 0x33,
+		.active_delay = 0x05,
+		.xtal_freq_count = 0x7F,
+		.debounce = 0x7EF4,
+		.pdtrk_count = 5,
+	},
+	{
+		.freq = 19200000,
+		.enable_delay = 0x03,
+		.stable_count = 0x4B,
+		.active_delay = 0x06,
+		.xtal_freq_count = 0xBB,
+		.debounce = 0xBB80,
+		.pdtrk_count = 7,
+	},
+	{
+		.freq = 26000000,
+		.enable_delay = 0x04,
+		.stable_count = 0x66,
+		.active_delay = 0x09,
+		.xtal_freq_count = 0xFE,
+		.debounce = 0xFDE8,
+		.pdtrk_count = 9,
+	},
 };
 
-static const u16 udc_debounce_table[] = {
-	0x7530, /* 12 MHz */
-	0x7EF4, /* 13 MHz */
-	0xBB80, /* 19.2 MHz */
-	0xFDE8, /* 26 MHz */
+static const struct tegra_xtal_freq tegra_uhsic_freq_table[] = {
+	{
+		.freq = 12000000,
+		.enable_delay = 0x02,
+		.stable_count = 0x2F,
+		.active_delay = 0x0,
+		.xtal_freq_count = 0x1CA,
+	},
+	{
+		.freq = 13000000,
+		.enable_delay = 0x02,
+		.stable_count = 0x33,
+		.active_delay = 0x0,
+		.xtal_freq_count = 0x1F0,
+	},
+	{
+		.freq = 19200000,
+		.enable_delay = 0x03,
+		.stable_count = 0x4B,
+		.active_delay = 0x0,
+		.xtal_freq_count = 0x2DD,
+	},
+	{
+		.freq = 26000000,
+		.enable_delay = 0x04,
+		.stable_count = 0x66,
+		.active_delay = 0x0,
+		.xtal_freq_count = 0x3E0,
+	},
 };
 
 static struct tegra_utmip_config utmip_default[] = {
@@ -578,9 +691,6 @@ static struct tegra_utmip_config utmip_default[] = {
 	},
 };
 
-#if defined(CONFIG_MACH_STARTABLET)
-unsigned int gpio_usb_host_en = TEGRA_GPIO_PP1;
-#endif
 struct usb_phy_plat_data usb_phy_data[] = {
 	{ 0, 0, -1, NULL},
 	{ 0, 0, -1, NULL},
@@ -640,21 +750,21 @@ static int utmip_pad_power_on(struct tegra_usb_phy *phy)
 	return 0;
 }
 
-static int utmip_pad_power_off(struct tegra_usb_phy *phy)
+static int utmip_pad_power_off(struct tegra_usb_phy *phy, bool is_dpd)
 {
 	unsigned long val, flags;
 	void __iomem *base = phy->pad_regs;
 
 	if (!utmip_pad_count) {
 		pr_err("%s: utmip pad already powered off\n", __func__);
-		return -1;
+		return -EINVAL;
 	}
 
 	clk_enable(phy->pad_clk);
 
 	spin_lock_irqsave(&utmip_pad_lock, flags);
 
-	if (--utmip_pad_count == 0) {
+	if (--utmip_pad_count == 0 && is_dpd) {
 		val = readl(base + UTMIP_BIAS_CFG0);
 		val |= UTMIP_OTGPD | UTMIP_BIASPD;
 #ifndef CONFIG_ARCH_TEGRA_2x_SOC
@@ -1045,25 +1155,6 @@ static int utmi_phy_power_on(struct tegra_usb_phy *phy, bool is_dpd)
 		val &= ~USB_SUSP_SET;
 		writel(val, base + USB_SUSP_CTRL);
 #endif
-		if (phy->mode == TEGRA_USB_PHY_MODE_HOST) {
-#if defined(CONFIG_MACH_STARTABLET)
-			gpio_direction_output(gpio_usb_host_en, 1);
-#else
-			gpio_status = gpio_request(TEGRA_GPIO_PD0,"VBUS_BUS");
-			if (gpio_status < 0) {
-				printk("VBUS_USB1 request GPIO FAILED\n");
-				WARN_ON(1);
-			}
-			tegra_gpio_enable(TEGRA_GPIO_PD0);
-			gpio_status = gpio_direction_output(TEGRA_GPIO_PD0, 1);
-			if (gpio_status < 0) {
-				printk("VBUS_USB1 request GPIO DIRECTION FAILED \n");
-				WARN_ON(1);
-			}
-			gpio_set_value(TEGRA_GPIO_PD0, 1);
-			tegra_pinmux_set_tristate(TEGRA_PINGROUP_SLXK, TEGRA_TRI_NORMAL);
-#endif
-		}
 	}
 
 	utmi_phy_clk_enable(phy);
@@ -1255,16 +1346,6 @@ static int utmi_phy_power_off(struct tegra_usb_phy *phy, bool is_dpd)
 	if (phy->mode == TEGRA_USB_PHY_MODE_HOST)
 		utmip_setup_pmc_wake_detect(phy);
 #endif
-
-#if defined(CONFIG_MACH_STARTABLET)
-
-		gpio_direction_output(gpio_usb_host_en, 0);
-#else
-		gpio_free(TEGRA_GPIO_PD0);
-		tegra_pinmux_set_tristate(TEGRA_PINGROUP_SLXK, TEGRA_TRI_TRISTATE);
-#endif
-	}
-
 	if (phy->mode == TEGRA_USB_PHY_MODE_DEVICE) {
 		val = readl(base + USB_SUSP_CTRL);
 		val &= ~USB_WAKEUP_DEBOUNCE_COUNT(~0);
@@ -1974,7 +2055,7 @@ static int null_phy_power_on(struct tegra_usb_phy *phy, bool is_dpd)
 	val = readl(base + ULPIS2S_CTRL);
 	val |= ULPIS2S_ENA;
 	val |= ULPIS2S_SUPPORT_DISCONNECT;
-	val |= ULPIS2S_SPARE((phy->mode == TEGRA_USB_PHY_MODE_HOST)? 3:1);
+	val |= ULPIS2S_SPARE((phy->mode == TEGRA_USB_PHY_MODE_HOST) ? 3 : 1);
 	val |= ULPIS2S_PLLU_MASTER_BLASTER60;
 	writel(val, base + ULPIS2S_CTRL);
 
@@ -2247,7 +2328,6 @@ struct tegra_usb_phy *tegra_usb_phy_open(int instance, void __iomem *regs,
 	struct tegra_usb_phy *phy;
 	struct tegra_ulpi_config *ulpi_config;
 	unsigned long parent_rate;
-	int freq_sel;
 	int i;
 	int err;
 #ifndef CONFIG_ARCH_TEGRA_2x_SOC
