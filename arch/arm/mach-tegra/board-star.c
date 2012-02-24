@@ -33,10 +33,6 @@
 #include <linux/gpio_keys.h>
 #include <linux/input.h>
 #include <linux/tegra_usb.h>
-#include <linux/usb/android_composite.h>
-#ifdef CONFIG_USB_ANDROID_ACCESSORY
-#include <linux/usb/f_accessory.h>
-#endif
 #include <linux/memblock.h>
 #include <mach/clk.h>
 #include <mach/iomap.h>
@@ -157,147 +153,9 @@ static __initdata struct tegra_clk_init_table star_clk_init_table[] = {
 	{ NULL,		NULL,		0,		0},
 };
 
-
-#ifdef CONFIG_USB_ANDROID_LGE_GADGET
-static char *usb_functions_lge_mobile_modem_driver[] = { "lge_acm", "lge_serial" };
-
-/* USB mode changed by enabling/disabling adb or rndis function */
-static char *usb_functions_lge_mtp_driver[] = { "mtp" };
-static char *usb_functions_lge_android_mtp_adb_driver[] = { "mtp", "adb" };
-
-static char *usb_functions_lge_android_modem_mtp_adb_driver[] = { "lge_android_acm", "lge_android_serial", "mtp", "adb" };
-static char *usb_functions_lge_android_modem_mtp_driver[] = { "lge_android_acm", "lge_android_serial", "mtp" };
-
-#ifdef CONFIG_USB_ANDROID_RNDIS
-static char *usb_functions_lge_androidnet_adb_driver[] = { "lge_android_acm", "lge_android_serial", "rndis", "adb" };
-static char *usb_functions_lge_androidnet_driver[] = { "lge_android_acm", "lge_android_serial", "rndis" };
-#endif
-
-#ifdef CONFIG_USB_ANDROID_ACCESSORY
-static char *usb_functions_accessory[] = { "accessory" };
-static char *usb_functions_accessory_adb[] = { "accessory", "adb" };
-#endif
-
-static char *usb_functions_lge_android_driver_all[] = {
-	"lge_android_acm",
-	"lge_android_serial",
-#ifdef CONFIG_USB_ANDROID_RNDIS
-	"rndis",
-#endif
-	"mtp",
-#ifdef CONFIG_USB_ANDROID_ACCESSORY
-	"accessory",
-#endif
-	"adb"
-};
-
-static struct android_usb_product usb_products[] = {
-	{
-		.vendor_id      = 0x1004,
-		.product_id     = 0x61D5,
-		.num_functions  = ARRAY_SIZE(usb_functions_lge_mtp_driver),
-		.functions      = usb_functions_lge_mtp_driver,
-	},
-	{
-		.vendor_id      = 0x1004,
-		.product_id     = 0x61F9,
-		.num_functions  = ARRAY_SIZE(usb_functions_lge_android_mtp_adb_driver),
-		.functions      = usb_functions_lge_android_mtp_adb_driver,
-	},
-#ifdef CONFIG_USB_ANDROID_RNDIS
-	{
-		.vendor_id      = 0x1004,
-		.product_id     = 0x61FE,
-		.num_functions  = ARRAY_SIZE(usb_functions_lge_androidnet_adb_driver),
-		.functions      = usb_functions_lge_androidnet_adb_driver,
-	},
-	{
-		.vendor_id      = 0x1004,
-		.product_id     = 0x61FE,
-		.num_functions  = ARRAY_SIZE(usb_functions_lge_androidnet_driver),
-		.functions      = usb_functions_lge_androidnet_driver,
-	},
-#endif
-#ifdef CONFIG_USB_ANDROID_ACCESSORY
-	{
-		.vendor_id	= USB_ACCESSORY_VENDOR_ID,
-		.product_id	= USB_ACCESSORY_PRODUCT_ID,
-		.num_functions	= ARRAY_SIZE(usb_functions_accessory),
-		.functions	= usb_functions_accessory,
-	},
-	{
-		.vendor_id	= USB_ACCESSORY_VENDOR_ID,
-		.product_id	= USB_ACCESSORY_ADB_PRODUCT_ID,
-		.num_functions	= ARRAY_SIZE(usb_functions_accessory_adb),
-		.functions	= usb_functions_accessory_adb,
-	},
-#endif
-};
-
-/* standard android USB platform data */
-static struct android_usb_platform_data andusb_plat = {
-	.vendor_id                      = 0x1004,
-	.product_id                     = 0x61D5,
-	.manufacturer_name      = "LG Electronics, Inc.",
-	.product_name               = "LG Android USB Device",
-	.num_products = ARRAY_SIZE(usb_products),
-	.products = usb_products,
-	.num_functions = ARRAY_SIZE(usb_functions_lge_android_driver_all),
-	.functions = usb_functions_lge_android_driver_all,
-};
-#else
-static char *usb_functions[] = { "usb_mass_storage" };
-static char *usb_functions_adb[] = { "usb_mass_storage", "adb" };
-
-static struct android_usb_product usb_products[] = {
-	{
-		.product_id     = 0xDEAD,
-		.num_functions  = ARRAY_SIZE(usb_functions),
-		.functions      = usb_functions,
-	},
-	{
-		.product_id     = 0x7100,
-		.num_functions  = ARRAY_SIZE(usb_functions_adb),
-		.functions      = usb_functions_adb,
-	},
-};
-
-/* standard android USB platform data */
-static struct android_usb_platform_data andusb_plat = {
-	.vendor_id                      = 0x0955,
-	.product_id                     = 0x7000,
-	.manufacturer_name      = "NVIDIA Corporation",
-	.product_name               = "ADB Composite Device",
-	.num_products = ARRAY_SIZE(usb_products),
-	.products = usb_products,
-	.num_functions = ARRAY_SIZE(usb_functions_adb),
-	.functions = usb_functions_adb,
-};
-#endif
-
 int muic_path = 0;
 int muic_status = 0x0B;
 
-#define USB_SERIAL_LENGTH 20
-static int __init tegra_usb_serial_setup(char *line)
-{
-       static char usb_serial_buf[USB_SERIAL_LENGTH];
-
-       andusb_plat.serial_number = usb_serial_buf;
-
-	strlcpy(andusb_plat.serial_number, line, USB_SERIAL_LENGTH);
-	return 1;
-}
-
-__setup("usb_serial=", tegra_usb_serial_setup);
-
-static struct platform_device androidusb_device = {
-	.name   = "android_usb",
-	.id     = -1,
-	.dev    = {
-		.platform_data  = &andusb_plat,
-	},
-};
 /*
 ***************************************************************************************************
 *                                       I2C platform_data
@@ -687,7 +545,6 @@ static struct platform_device star_ram_console_device = {
 #endif
 
 static struct platform_device *star_devices[] __initdata = {
-	&androidusb_device,
 	&debug_uart,
 	&tegra_uartc_device,
 //	&tegra_hsuart2,
@@ -702,7 +559,6 @@ static struct platform_device *star_devices[] __initdata = {
 	&tegra_spi_device4,
 #endif
 
-	&androidums_device,
 	&tegra_gart_device,
 	&tegra_aes_device,
 	&star_keys_device,
@@ -896,23 +752,6 @@ static void __init tegra_star_init(void)
 	tegra_i2s_device2.dev.platform_data = &tegra_audio_pdata[1];
 	tegra_spdif_device.dev.platform_data = &tegra_spdif_pdata;
 	tegra_das_device.dev.platform_data = &tegra_das_pdata;
-#ifdef CONFIG_USB_ANDROID_LGE_GADGET
-	if (factory_download_cable_detected()) {
-		andusb_plat.product_id = 0x6000;
-		andusb_plat.functions = usb_functions_lge_mobile_modem_driver;
-		andusb_plat.num_functions = ARRAY_SIZE(usb_functions_lge_mobile_modem_driver);
-	} else {
-		if(usb_modem_mode == 1) {
-			andusb_plat.product_id = 0x61F2;
-			usb_products[0].product_id = 0x61F2;
-			usb_products[0].num_functions = ARRAY_SIZE(usb_functions_lge_android_modem_mtp_driver);
-			usb_products[0].functions = usb_functions_lge_android_modem_mtp_driver;
-			usb_products[1].product_id = 0x61F1;
-			usb_products[1].num_functions = ARRAY_SIZE(usb_functions_lge_android_modem_mtp_adb_driver);
-			usb_products[1].functions = usb_functions_lge_android_modem_mtp_adb_driver;
-		}
-	}
-#endif
 
 	if (strstr(boot_command_line, "ttyS0")!=NULL) {
 		star_devices[1] = &debug_uart;
