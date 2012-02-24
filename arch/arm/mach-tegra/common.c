@@ -907,11 +907,11 @@ void __init tegra_reserve(unsigned long carveout_size, unsigned long fb_size,
 		"Bootloader framebuffer: %08lx - %08lx\n"
 		"Framebuffer:            %08lx - %08lx\n"
 		"2nd Framebuffer:        %08lx - %08lx\n"
+#if LASTKMSG_BUFFER_ON
+		"last_kmsg bufer:        %08lx - %08lx\n"
+#endif
 		"Carveout:               %08lx - %08lx\n"
 		"Vpr:                    %08lx - %08lx\n",
-#if LASTKMSG_BUFFER_ON
-		"last_kmsg bufer:    %08lx - %08lx\n"
-#endif
 		tegra_lp0_vec_start,
 		tegra_lp0_vec_size ?
 			tegra_lp0_vec_start + tegra_lp0_vec_size - 1 : 0,
