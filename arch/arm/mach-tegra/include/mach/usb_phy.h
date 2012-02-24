@@ -139,6 +139,7 @@ void tegra_usb_phy_preresume(struct tegra_usb_phy *phy, bool is_dpd);
 
 void tegra_usb_phy_postresume(struct tegra_usb_phy *phy, bool is_dpd);
 
+int tegra_ehci_phy_restore_start(struct tegra_usb_phy *phy,
 void tegra_ehci_pre_reset(struct tegra_usb_phy *phy, bool is_dpd);
 
 void tegra_ehci_post_reset(struct tegra_usb_phy *phy, bool is_dpd);
@@ -160,7 +161,7 @@ bool tegra_usb_phy_is_device_connected(struct tegra_usb_phy *phy);
 
 bool tegra_usb_phy_charger_detect(struct tegra_usb_phy *phy);
 
-int tegra_usb_phy_init(struct usb_phy_plat_data *pdata, int size);
+int __init tegra_usb_phy_init(struct usb_phy_plat_data *pdata, int size);
 
 bool tegra_usb_phy_is_remotewake_detected(struct tegra_usb_phy *phy);
 
