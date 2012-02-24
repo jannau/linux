@@ -70,7 +70,6 @@ static volatile int hlt_counter;
 #ifdef CONFIG_SMP
 void arch_trigger_all_cpu_backtrace(void)
 {
-{
 	smp_send_all_cpu_backtrace();
 }
 #else
@@ -79,10 +78,6 @@ void arch_trigger_all_cpu_backtrace(void)
 	dump_stack();
 }
 #endif
-
-#ifdef CONFIG_MACH_STARTABLET
-static void star_emergency_restart(int timeout)
-{
 
 #define TEGRA_TMR1_BASE         0x60005000
 #define TEGRA_CLK_RESET_BASE    0x60006000
@@ -105,20 +100,21 @@ static void star_emergency_restart(int timeout)
 #define WDT_SEL_TMR1	(0 << 4)
 #define WDT_SYS_RST	(1 << 2)
 
-	void __iomem *rst_reg_base = IO_ADDRESS(TEGRA_CLK_RESET_BASE);
-
 #define rst_writel(value, reg) \
 	__raw_writel(value, (u32)rst_reg_base + (reg))
 #define rst_readl(reg) \
 	__raw_readl((u32)rst_reg_base + (reg))
-
-	void __iomem *tmr_reg_base = IO_ADDRESS(TEGRA_TMR1_BASE);
 
 #define tmr_writel(value, reg) \
 	__raw_writel(value, (u32)tmr_reg_base + (reg))
 #define tmr_readl(reg) \
 	__raw_readl((u32)tmr_reg_base + (reg))
 
+#ifdef CONFIG_MACH_STARTABLET
+static void star_emergency_restart(int timeout)
+{
+	void __iomem *rst_reg_base = IO_ADDRESS(TEGRA_CLK_RESET_BASE);
+	void __iomem *tmr_reg_base = IO_ADDRESS(TEGRA_TMR1_BASE);
 
 	u32 ptv,src;
 	u32 val;
