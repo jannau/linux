@@ -124,20 +124,6 @@ fail:
 *                                       Startablet specific devices
 ***************************************************************************************************
 */
-static struct usb_mass_storage_platform_data andums_plat = {
-    .vendor = "LGE",
-    .product = "Star Tablet",
-    .release = 0x1,
-    .nluns = 1,
-};
-
-static struct platform_device androidums_device = {
-	.name   = "usb_mass_storage",
-	.id     = -1,
-	.dev    = {
-		.platform_data  = &andums_plat,
-	},
-};
 
 extern void tegra_throttling_enable(bool enable);
 
