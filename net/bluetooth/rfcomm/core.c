@@ -1863,8 +1863,6 @@ static inline void rfcomm_process_rx(struct rfcomm_session *s)
 		rfcomm_session_close(s, sk->sk_err);
 }
 
-	rfcomm_session_put(s);
-
 static inline void rfcomm_accept_connection(struct rfcomm_session *s)
 {
 	struct socket *sock = s->sock, *nsock;
