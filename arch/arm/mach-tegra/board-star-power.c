@@ -20,7 +20,7 @@
 #include <linux/mfd/tps6586x.h>
 #include <linux/gpio.h>
 #include <linux/err.h>
-#include <mach/suspend.h>
+#include <asm/suspend.h>
 #include <linux/io.h>
 
 #include <mach/iomap.h>
@@ -29,7 +29,7 @@
 
 #include "gpio-names.h"
 #include "fuse.h"
-#include "power.h"
+#include "pm.h"
 #include "wakeups-t2.h"
 #include "board.h"
 
