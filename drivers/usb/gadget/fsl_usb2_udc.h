@@ -719,8 +719,8 @@ struct platform_device;
 int fsl_udc_clk_init(struct platform_device *pdev);
 void fsl_udc_clk_finalize(struct platform_device *pdev);
 void fsl_udc_clk_release(void);
-void fsl_udc_clk_suspend(void);
-void fsl_udc_clk_resume(void);
+void fsl_udc_clk_suspend(bool is_dpd);
+void fsl_udc_clk_resume(bool is_dpd);
 void fsl_udc_clk_enable(void);
 void fsl_udc_clk_disable(void);
 bool fsl_udc_charger_detect(void);
@@ -735,10 +735,10 @@ static inline void fsl_udc_clk_finalize(struct platform_device *pdev)
 static inline void fsl_udc_clk_release(void)
 {
 }
-static inline void fsl_udc_clk_suspend(void)
+static inline void fsl_udc_clk_suspend(bool is_dpd)
 {
 }
-static inline void fsl_udc_clk_resume(void)
+static inline void fsl_udc_clk_resume(bool is_dpd)
 {
 }
 void fsl_udc_clk_enable(void)
