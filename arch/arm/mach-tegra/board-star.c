@@ -730,7 +730,6 @@ static void star_nct1008_init(void)
 
 static void __init tegra_star_init(void)
 {
-	tegra_common_init();
 	tegra_clk_init_from_table(star_clk_init_table);
 	star_pinmux_init();
 
@@ -811,6 +810,7 @@ MACHINE_START(STARTABLET, "startablet")
       .boot_params  = 0x00000100,
       .phys_io        = IO_APB_PHYS,
       .io_pg_offst    = ((IO_APB_VIRT) >> 18) & 0xfffc,
+      .init_early     = tegra_init_early,
       .init_irq       = tegra_init_irq,
       .init_machine   = tegra_star_init,
       .map_io         = star_map_io,
