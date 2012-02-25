@@ -26,9 +26,6 @@ struct tegra_sdhci_platform_data {
 	int power_gpio;
 	int is_8bit;
 	unsigned int max_clk_limit;
-#ifdef CONFIG_EMBEDDED_MMC_START_OFFSET
-	unsigned int startoffset;
-#endif
 	unsigned int tap_delay;
 	struct mmc_platform_data mmc_data;
 	int is_always_on;
