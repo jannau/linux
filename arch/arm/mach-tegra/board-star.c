@@ -55,7 +55,7 @@
 #include <linux/i2c-gpio.h>
 #include <linux/tegra_audio.h>
 #include <mach/gpio-names.h>
-#include <mach/suspend.h>
+#include <asm/suspend.h>
 #include <mach/hardware.h>
 #include <asm/setup.h>
 #include <mach/tegra_das.h>
@@ -66,7 +66,7 @@
 #include "devices.h"
 #include "gpio-names.h"
 #include "fuse.h"
-#include "power.h"
+#include "sleep.h"
 #include "wakeups-t2.h"
 
 #if defined (CONFIG_MACH_STARTABLET)
