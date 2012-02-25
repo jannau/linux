@@ -244,7 +244,7 @@ static int __init led_init(void)
 {
 	int err;
 	printk(KERN_INFO "[%s]\n",__FUNCTION__);
-	init_MUTEX(&star_led_sem);
+	sema_init(&star_led_sem, 1);
 
 	err = platform_driver_register(&led_driver);
 	return 0;
