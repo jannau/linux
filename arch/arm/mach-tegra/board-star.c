@@ -75,6 +75,8 @@
 #endif
 
 #define CARVEOUT_320MB	1	// 1: 320MB, 0: 256MB (default)
+#define CARVEOUT_352MB  0
+#define CARVEOUT_384MB  0
 
 static struct plat_serial8250_port debug_uart_platform_data[] = {
 	{
