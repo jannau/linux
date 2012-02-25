@@ -15,7 +15,7 @@ config WEXT_SPY
 
 config WEXT_PRIV
 	def_bool y
-	depends on WEXT_CORE
+	depends on WEXT_CORE && WIRELESS_EXT
 #	bool
 
 config CFG80211
