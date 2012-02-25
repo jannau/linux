@@ -1611,7 +1611,7 @@ param_check_ok:
 		printk(KERN_INFO "maXTouch driver init spinlock\n");
 
 	init_waitqueue_head(&mxt->msg_queue);
-	init_MUTEX(&mxt->msg_sem);
+	sema_init(&mxt->msg_sem, 1);
 
 	spin_lock_init(&mxt->lock);
 

@@ -69,13 +69,13 @@ struct watcher_struct {
     int open_count;
 };
 static struct watcher_struct watcher;
-static DECLARE_MUTEX(watcher_sema);
+static DEFINE_SEMAPHORE(watcher_sema);
 
 #ifdef LGE_FEATURE_CP_HALT_DETECTION
 static struct watcher_struct reporter;
 static int is_reset_requested = 0;
 
-static DECLARE_MUTEX(reporter_sema);
+static DEFINE_SEMAPHORE(reporter_sema);
 
 extern void modem_reset(void);
 static void do_cp_reset_internal(struct work_struct *work)
