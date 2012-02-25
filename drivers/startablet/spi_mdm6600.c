@@ -30,7 +30,6 @@
 #include <linux/errno.h>
 #include <linux/mutex.h>
 #include <linux/slab.h>
-#include <linux/smp_lock.h>
 #include <asm/uaccess.h>
 #include <linux/irq.h>
 #include <mach/gpio.h>
@@ -47,6 +46,7 @@
 #include <linux/hrtimer.h>
 #include <linux/delay.h>
 #include <linux/err.h>
+#include <linux/gpio.h>
 
 #ifdef CONFIG_HAS_WAKELOCK
 #include <linux/wakelock.h>
