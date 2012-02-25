@@ -442,10 +442,10 @@ static int __init misc_probe(struct platform_device *pdev)
 		printk(KERN_ERR "%s: Failed: request_irq for mdm_reset_irq!!! (err:%d)\n", __func__, err);
 	}
 
-	err = set_irq_wake(s_misc.mdm_reset_irq, !!is_modem_connected());
+	err = irq_set_irq_wake(s_misc.mdm_reset_irq, !!is_modem_connected());
 	if(err)
 	{
-		printk(KERN_ERR "%s: Failed: set_irq_wake for mdm_reset_irq!!! (err:%d)\n", __func__, err);
+		printk(KERN_ERR "%s: Failed: irq_set_irq_wake for mdm_reset_irq!!! (err:%d)\n", __func__, err);
 	}
 
 #else
@@ -463,10 +463,10 @@ static int __init misc_probe(struct platform_device *pdev)
 		printk(KERN_ERR "%s: Failed: request_irq for ifx_trapped_irq!!! (err:%d)\n", __func__, err);
 	}
 
-	err = set_irq_wake(s_misc.ifx_trap_irq, !!is_modem_connected());
+	err = irq_set_irq_wake(s_misc.ifx_trap_irq, !!is_modem_connected());
 	if(err)
 	{
-		printk(KERN_ERR "%s: Failed: set_irq_wake for ifx_reset_irq!!! (err:%d)\n", __func__, err);
+		printk(KERN_ERR "%s: Failed: irq_set_irq_wake for ifx_reset_irq!!! (err:%d)\n", __func__, err);
 	}
 
 	ifx_trap_wq = create_singlethread_workqueue("ifx_trap");

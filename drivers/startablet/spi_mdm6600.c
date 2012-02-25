@@ -781,7 +781,7 @@ mdm_spi_probe(struct spi_device *spi)
 		status = request_irq(spi->irq, mdm_spi_handle_mrdy_irq,  IRQF_TRIGGER_RISING, spi->dev.driver->name, spi_data);
 
 		// set irq_wake only when modem is connected
-		set_irq_wake(spi->irq, !!is_modem_connected());
+		irq_set_irq_wake(spi->irq, !!is_modem_connected());
 
 		// set the SPI2_MRDY gpio pin as an ap_suspend_state gpio pin  for checking the suspend state of the ap
 		gpio_request(SPI2_MRDY, "ap_suspend_state");
@@ -994,7 +994,7 @@ static int mdm_spi_suspend(struct spi_device *spi, pm_message_t mesg)
 
     //if modem is removed, disable ap wakeup
 	if (!is_modem_connected())
-		set_irq_wake(spi->irq, 0);
+		irq_set_irq_wake(spi->irq, 0);
 
 	return 0;
 }
