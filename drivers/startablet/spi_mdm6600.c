@@ -248,8 +248,8 @@ extern void disable_mdm_irq(void);
 static enum hrtimer_restart spi_timeout_cb_func(struct hrtimer *timer)
 {
     struct spi_device *temp_spi = (struct spi_device *)global_spi;
-	TTYSPI_DEBUG_PRINT("%s called ...........................................................\n", __func__);
-    spi_tegra_abort_transfer(temp_spi);
+    TTYSPI_DEBUG_PRINT("%s called ...........................................................\n", __func__);
+    //spi_tegra_abort_transfer(temp_spi);
     return HRTIMER_NORESTART;
 }
 
@@ -935,7 +935,7 @@ static void modem_reset(void)
 #endif
 // LGE_UPDATE_E CP Reset & Response halt Recovery
 
-static int mdm_spi_shutdown(struct spi_device *spi)
+static void mdm_spi_shutdown(struct spi_device *spi)
 {
 	int retry = 3; // retry count
 	//TTYSPI_DEBUG_PRINT("%s()\n", __func__);
@@ -947,7 +947,7 @@ static int mdm_spi_shutdown(struct spi_device *spi)
 
 	// if modem is not connected, return
 	if (!is_modem_connected())
-		return 0;
+		return;
 
 	// power down modem by gpio
 	disable_mdm_irq();
@@ -957,7 +957,6 @@ static int mdm_spi_shutdown(struct spi_device *spi)
 		modem_reset();
 		mdelay(6000); // wait until CP reboot
 	}
-	return 0;
 }
 
 #ifdef CONFIG_PM
