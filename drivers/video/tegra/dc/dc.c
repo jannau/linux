@@ -1871,7 +1871,19 @@ void tegra_dc_config_bl(struct tegra_dc *dc, int which, unsigned int period, uns
 }
 EXPORT_SYMBOL(tegra_dc_config_bl);
 
+void tegra_dc_update_bl(struct tegra_dc *dc, int intensity)
+{
 
+	if(!dc->enabled) {
+		dev_dbg(&dc->ndev->dev, "%s called during dc disalbed \n", __func__);
+		return;
+	}
+
+	/* WAR for tegra2 bug for duty cycle */
+	intensity = intensity >> 1;
+	tegra_dc_writel(dc, intensity, DC_COM_PM1_DUTY_CYCLE);
+}
+EXPORT_SYMBOL(tegra_dc_update_bl);
 
 void tegra_dc_set_out_pin_polars(struct tegra_dc *dc,
 				const struct tegra_dc_out_pin *pins,
