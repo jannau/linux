@@ -238,15 +238,15 @@ static struct tegra_suspend_platform_data star_suspend = {
        .suspend_mode = TEGRA_SUSPEND_LP0,
        .core_timer = 0x7e7e,
        .core_off_timer = 0x7f,
-       .separate_req = true,
+       /* .separate_req = true, */
        .corereq_high = false,
        .sysclkreq_high = true,
-       .wake_enb = STAR_WAKE_POWER_KEY_HIGH
-               | STAR_WAKE_WLAN_HOST_WAKEUP
-               | STAR_WAKE_AC_DET_ANY | STAR_WAKE_USB_DET_ANY | STAR_WAKE_CPU_RTC_ALARM,
-       .wake_high = STAR_WAKE_POWER_KEY_HIGH | STAR_WAKE_CPU_RTC_ALARM,
-       .wake_low = STAR_WAKE_WLAN_HOST_WAKEUP,
-       .wake_any = STAR_WAKE_AC_DET_ANY | STAR_WAKE_USB_DET_ANY,
+       /* .wake_enb = STAR_WAKE_POWER_KEY_HIGH */
+       /*         | STAR_WAKE_WLAN_HOST_WAKEUP */
+       /*         | STAR_WAKE_AC_DET_ANY | STAR_WAKE_USB_DET_ANY | STAR_WAKE_CPU_RTC_ALARM, */
+       /* .wake_high = STAR_WAKE_POWER_KEY_HIGH | STAR_WAKE_CPU_RTC_ALARM, */
+       /* .wake_low = STAR_WAKE_WLAN_HOST_WAKEUP, */
+       /* .wake_any = STAR_WAKE_AC_DET_ANY | STAR_WAKE_USB_DET_ANY, */
 };
 
 int __init star_regulator_init(void)
