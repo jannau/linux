@@ -68,8 +68,6 @@ static struct resource sdhci_resource4[] = {
 };
 
 static struct tegra_sdhci_platform_data tegra_sdhci_platform_data1 = {
-	.clk_id = NULL,
-	.force_hs = 0,
 	.cd_gpio = TEGRA_GPIO_PU2,
 /* LGE_CHANGE_START, [jisung.yang@lge.com], 2010-11-22, <star smartphone patch> */
 	.is_always_on = 1,
@@ -77,8 +75,6 @@ static struct tegra_sdhci_platform_data tegra_sdhci_platform_data1 = {
 };
 
 static struct tegra_sdhci_platform_data tegra_sdhci_platform_data4 = {
-	.clk_id = NULL,
-	.force_hs = 0,
 	.cd_gpio = -1,
 };
 
