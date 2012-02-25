@@ -435,7 +435,9 @@ struct tegra_dc_win {
 #define TEGRA_WIN_FLAG_ENABLED		(1 << 0)
 #define TEGRA_WIN_FLAG_BLEND_PREMULT	(1 << 1)
 #define TEGRA_WIN_FLAG_BLEND_COVERAGE	(1 << 2)
-#define TEGRA_WIN_FLAG_TILED		(1 << 3)
+#define TEGRA_WIN_FLAG_INVERT_H		(1 << 3)
+#define TEGRA_WIN_FLAG_INVERT_V		(1 << 4)
+#define TEGRA_WIN_FLAG_TILED		(1 << 5)
 #define TEGRA_WIN_FLAG_H_FILTER		(1 << 6)
 #define TEGRA_WIN_FLAG_V_FILTER		(1 << 7)
 
@@ -522,8 +524,22 @@ unsigned tegra_dc_get_out_max_pixclock(const struct tegra_dc *dc);
 #define LM1 1
 void tegra_dc_config_bl(struct tegra_dc *dc, int which, unsigned int period, unsigned int clk_div, unsigned int clk_select);
 void tegra_dc_update_bl(struct tegra_dc *dc, int intensity);
+
+/* PM0 and PM1 signal control */
+#define TEGRA_PWM_PM0 0
+#define TEGRA_PWM_PM1 1
+
+struct tegra_dc_pwm_params {
+	int which_pwm;
 	void (*switch_to_sfio)(int);
 	int gpio_conf_to_sfio;
+	unsigned int period;
+	unsigned int clk_div;
+	unsigned int clk_select;
+	unsigned int duty_cycle;
+};
+
+void tegra_dc_config_pwm(struct tegra_dc *dc, struct tegra_dc_pwm_params *cfg);
 
 int tegra_dsi_send_panel_short_cmd(struct tegra_dc *dc, u8 *pdata, u8 data_len);
 void tegra_dc_host_trigger(struct tegra_dc *dc);
