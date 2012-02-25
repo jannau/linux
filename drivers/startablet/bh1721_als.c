@@ -753,7 +753,7 @@ static int bh1721_drv_probe(struct i2c_client *i2c_clnt,
 		goto err3;
 	}
 
-	init_MUTEX(&the_data.als_sem);
+	sema_init(&the_data.als_sem, 1);
 
 	the_data.resmode = DFLT_RESMODE;
 	the_data.resol = DFLT_RESOL;
