@@ -865,8 +865,6 @@ void __init tegra_star_reserve(void)
 
 MACHINE_START(STARTABLET, "startablet")
       .boot_params  = 0x00000100,
-      .phys_io        = IO_APB_PHYS,
-      .io_pg_offst    = ((IO_APB_VIRT) >> 18) & 0xfffc,
       .init_early     = tegra_init_early,
       .init_irq       = tegra_init_irq,
       .init_machine   = tegra_star_init,
