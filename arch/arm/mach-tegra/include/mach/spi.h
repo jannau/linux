@@ -36,7 +36,7 @@ typedef int	(*callback)(void *client_data);
  * @client_data: Data to be passed in callback
  * Context: can not sleep
  */
-int spi_tegra_register_callback(struct spi_device *spi,callback func,void *client_data);
-void spi_tegra_abort_transfer(struct spi_device *spi);
+int spi_tegra_register_callback(struct spi_device *spi, callback func,
+	void *client_data);
 
 #endif
