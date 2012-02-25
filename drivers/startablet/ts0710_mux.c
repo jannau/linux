@@ -191,7 +191,7 @@ struct spi_data_send_struct {
     int size;
 };
 
-static spinlock_t frame_nodes_lock = SPIN_LOCK_UNLOCKED;
+DEFINE_SPINLOCK(frame_nodes_lock);
 static unsigned long lock_flag ;
 static struct spi_data_send_struct frame_node[MAX_WAITING_FRAMES];
 static struct spi_data_send_struct *frame_to_send[TS0710MAX_PRIORITY_NUMBER];

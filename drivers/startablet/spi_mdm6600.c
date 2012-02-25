@@ -233,7 +233,7 @@ struct spi_data_send_struct {
 static struct spi_data_send_struct *spi_data_send_pending = NULL;
 static int queue_first_time = 1;
 
-static spinlock_t spi_nodes_lock = SPIN_LOCK_UNLOCKED;
+DEFINE_SPINLOCK(spi_nodes_lock);
 static unsigned long spi_lock_flag;
 static atomic_t next_transfer_flag = ATOMIC_INIT(0);
 //static int timeout_count = 0;
