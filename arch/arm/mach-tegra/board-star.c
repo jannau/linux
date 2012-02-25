@@ -345,11 +345,111 @@ static struct platform_device stereocam_i2c_gpio_controller = {
 	  .platform_data = &stereocam_i2c_gpio_data,
 	},
 };
+
+#define MPU_ACCEL_BUS_NUM	1
+#define MPU_ACCEL_IRQ_GPIO	0
+#define MPU_GYRO_BUS_NUM	1
+#define MPU_GYRO_IRQ_GPIO	TEGRA_GPIO_PZ4
+#define MPU_GYRO_NAME		"mpu3050"
+#define MPU_COMPASS_BUS_NUM	1
+#define MPU_COMPASS_IRQ_GPIO	TEGRA_GPIO_PN5
+
+static struct ext_slave_platform_data mpu_accel_data = {
+	.address		= STAR_I2C_DEVICE_ADDR_ACCELEROMETER,
+	.irq			= 0,
+	.adapt_num		= MPU_ACCEL_BUS_NUM,
+	.bus			= EXT_SLAVE_BUS_SECONDARY,
+	.orientation		= {
+		0, 1, 0,
+		-1, 0, 0,
+		0, 0, 1
+	},
+};
+
+static struct ext_slave_platform_data mpu_compass_data = {
+	.address		= STAR_I2C_DEVICE_ADDR_COMPASS,
+	.irq			= 0,
+	.adapt_num		= MPU_COMPASS_BUS_NUM,
+	.bus			= EXT_SLAVE_BUS_PRIMARY,
+	.orientation		= {
+		0, -1,  0,
+		-1,  0,  0,
+		0,  0, -1
+	},
+};
+
+static struct i2c_board_info __initdata inv_mpu_i2c2_board_info[] = {
+	{
+		I2C_BOARD_INFO("lis331dlh", STAR_I2C_DEVICE_ADDR_ACCELEROMETER),
+#if     MPU_ACCEL_IRQ_GPIO
+		.irq = TEGRA_GPIO_TO_IRQ(MPU_ACCEL_IRQ_GPIO),
+#endif
+		.platform_data = &mpu_accel_data,
+	},
+};
+
+static struct i2c_board_info __initdata inv_mpu_i2c4_board_info[] = {
+	{
+		I2C_BOARD_INFO("ami304", STAR_I2C_DEVICE_ADDR_COMPASS),
+#if     MPU_COMPASS_IRQ_GPIO
+                .irq = TEGRA_GPIO_TO_IRQ(MPU_COMPASS_IRQ_GPIO),
+#endif
+                .platform_data = &mpu_compass_data,
+        },
+};
+
+static void mpuirq_init(void)
+{
+	int ret = 0;
+
+	pr_info("*** MPU START *** mpuirq_init...\n");
+
+#if	MPU_ACCEL_IRQ_GPIO
+	/* ACCEL-IRQ assignment */
+	tegra_gpio_enable(MPU_ACCEL_IRQ_GPIO);
+	ret = gpio_request(MPU_ACCEL_IRQ_GPIO, MPU_ACCEL_NAME);
+	if (ret < 0) {
+		pr_err("%s: gpio_request failed %d\n", __func__, ret);
+		return;
+	}
+
+	ret = gpio_direction_input(MPU_ACCEL_IRQ_GPIO);
+	if (ret < 0) {
+		pr_err("%s: gpio_direction_input failed %d\n", __func__, ret);
+		gpio_free(MPU_ACCEL_IRQ_GPIO);
+		return;
+	}
+#endif
+
+	/* MPU-IRQ assignment */
+	tegra_gpio_enable(MPU_GYRO_IRQ_GPIO);
+	ret = gpio_request(MPU_GYRO_IRQ_GPIO, MPU_GYRO_NAME);
+	if (ret < 0) {
+		pr_err("%s: gpio_request failed %d\n", __func__, ret);
+		return;
+	}
+
+	ret = gpio_direction_input(MPU_GYRO_IRQ_GPIO);
+	if (ret < 0) {
+		pr_err("%s: gpio_direction_input failed %d\n", __func__, ret);
+		gpio_free(MPU_GYRO_IRQ_GPIO);
+		return;
+	}
+	pr_info("*** MPU END *** mpuirq_init...\n");
+
+	i2c_register_board_info(MPU_GYRO_BUS_NUM, inv_mpu_i2c2_board_info,
+		ARRAY_SIZE(inv_mpu_i2c2_board_info));
+	i2c_register_board_info(MPU_COMPASS_BUS_NUM, inv_mpu_i2c4_board_info,
+		ARRAY_SIZE(inv_mpu_i2c4_board_info));
+}
+
 // #4
 static void star_i2c_init(void)
 {
-	hw_rev board_rev=0;
-	board_rev = get_hw_rev();
+	hw_rev board_rev = get_hw_rev();
+
+	mpuirq_init();
+
 	tegra_i2c_device1.dev.platform_data = &star_i2c1_platform_data;
 	tegra_i2c_device2.dev.platform_data = &star_i2c2_platform_data;
 	tegra_i2c_device3.dev.platform_data = &star_i2c3_platform_data;
