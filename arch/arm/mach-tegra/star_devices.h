@@ -1,9 +1,11 @@
 
 #include <linux/proc_fs.h>
+#include <linux/switch.h>
 
 #include <mach/hardware.h>
 
 #include <linux/mpu.h>
+#include <linux/mpu3050.h>
 
 #include "gpio-names.h"
 /*
