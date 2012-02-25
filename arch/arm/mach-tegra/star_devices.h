@@ -216,35 +216,7 @@ struct platform_device tegra_displaytest =
     .id   = -1,
 };
 
-static struct mpu3050_platform_data mpu3050_data = {
-#if 0
-    .int_config  = 0x10,
-    .orientation={0,1,0,
-		  -1,0,0,
-		  0,0,1},
-    .level_shifter = 0,
-    .accel = {
-        .get_slave_descr = lis331dlh_get_slave_descr,
-        .adapt_num   = 1,  //gen2
-        .bus         = EXT_SLAVE_BUS_SECONDARY,
-        .address     = 0x19,
-	.orientation = {
-			-1, 0, 0,
-			0, -1, 0,
-			0, 0, 1 },
-			},
-	.compass = {
-		.get_slave_descr	= ami304_get_slave_descr,
-		.adapt_num		= 1,	//bus number 3 on ventana
-		.bus			= EXT_SLAVE_BUS_PRIMARY,
-		.address		= 0x0E,
-	.orientation = {
-			-1, 0, 0,
-			0, 1, 0,
-			0, 0, -1 },
-    },
-};
-#else
+static struct mpu_platform_data mpu3050_data = {
 	.int_config  = 0x10,
 	.orientation = {
 		1,0,0,
@@ -252,31 +224,8 @@ static struct mpu3050_platform_data mpu3050_data = {
 		0,0,1
 	},
 	.level_shifter = 1,
-	.accel = {
-		.get_slave_descr	= lis331dlh_get_slave_descr,
-		.adapt_num		= 1,  //gen2
-		.bus			= EXT_SLAVE_BUS_SECONDARY,
-		.address		= 0x19,
-		.orientation = {
-			 0, 1, 0,
-			-1, 0, 0,
-			 0, 0, 1
-		},
-	},
-	 .compass = {
-		.get_slave_descr = ami304_get_slave_descr,
-		.adapt_num	 = 1,			 //bus number 3 on ventana
-		.bus		 = EXT_SLAVE_BUS_PRIMARY,
-		.address	 = 0x0E,
-		.orientation = {
-			 0, -1,  0,
-			-1,  0,  0,
-			 0,  0, -1
-		},
-	},
 };
 
-#endif
 
 /*
 ***************************************************************************************************
