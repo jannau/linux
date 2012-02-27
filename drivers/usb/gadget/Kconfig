@@ -836,6 +836,7 @@ config USB_ANDROID_LGE_GADGET
 	depends on USB_ANDROID
 	help
 	  Provides additional function for LGE android gadget driver.
+
 config USB_CDC_COMPOSITE
 	tristate "CDC Composite Device (Ethernet and ACM)"
 	depends on NET
