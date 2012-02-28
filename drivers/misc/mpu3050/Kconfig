@@ -1,23 +1,31 @@
 
 menu "Motion Sensors Support"
 
-config SENSORS_MPU3050
-    bool "MPU3050 Gyroscope Driver"
+choice
+    tristate "Motion Processing Unit"
     depends on I2C
+    optional
+
+config MPU_SENSORS_MPU3050
+    tristate "MPU3050"
     help
       If you say yes here you get support for the MPU3050 Gyroscope driver
       This driver can also be built as a module.  If so, the module
       will be called mpu3050.
 
-config SENSORS_MPU3050_DEBUG
-    bool "MPU3050 debug"
-    depends on SENSORS_MPU3050
+config MPU_SENSORS_MPU6000
+    tristate "MPU6000"
     help
-      If you say yes here you get extra debug messages from the MPU3050
-      and other slave sensors.
+      If you say yes here you get support for the MPU6000 Gyroscope driver
+      This driver can also be built as a module.  If so, the module
+      will be called mpu6000.
+
+endchoice
 
 choice
     prompt "Accelerometer Type"
+    depends on MPU_SENSORS_MPU3050
+    optional
     default SENSORS_LIS331DLH
 
 config SENSORS_ACCELEROMETER_NONE
@@ -45,7 +53,7 @@ config SENSORS_KXSD9
     help
       This enables support for the Kionix KXSD9 accelerometer
 
-config SENSORS_KXTF9
+config MPU_SENSORS_KXTF9
     bool "Kionix KXTF9"
     help
       This enables support for the Kionix KXFT9 accelerometer
@@ -73,7 +81,14 @@ endchoice
 
 choice
     prompt "Compass Type"
+    depends on MPU_SENSORS_MPU6000 || MPU_SENSORS_MPU3050
+    optional
     default SENSORS_AMI304
+
+config MPU_SENSORS_AK8975
+    bool "AKM ak8975"
+    help
+      This enables support for the AKM ak8975 compass
 
 config SENSORS_COMPASS_NONE
     bool "NONE"
@@ -111,6 +126,21 @@ config SENSORS_YAS529
       This enables support for the Yamaha yas529 compass
 
 endchoice
+
+config MPU_SENSORS_TIMERIRQ
+    tristate "Timer IRQ"
+    help
+    If you say yes here you get access to the timerirq device handle which
+    can be used to select on. This can be used instead of IRQ's, sleeping,
+    or timer threads. Reading from this device returns the same type of
+    information as reading from the MPU and slave IRQ's.
+
+config MPU_SENSORS_DEBUG
+    bool "MPU debug"
+    depends on MPU_SENSORS_MPU3050 || MPU_SENSORS_MPU6000 || MPU_SENSORS_TIMERIRQ
+    help
+      If you say yes here you get extra debug messages from the MPU3050
+      and other slave sensors.
 
 endmenu
 
