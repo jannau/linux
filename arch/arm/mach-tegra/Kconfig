@@ -65,8 +65,7 @@ config TEGRA_PCI
 	help
 	  Adds PCIe Host controller driver for tegra based systems
 
-choice
-	prompt "Select Tegra-based product"
+comment "Tegra board type"
 
 config MACH_HARMONY
        bool "Harmony board"
@@ -137,8 +136,6 @@ config MACH_STARTABLET
        bool "STARTABLET board"
        help
          Support for LG-E999 platform
-
-endchoice
 
 if MACH_STARTABLET
 config STARTABLET_REBOOT_REASON
