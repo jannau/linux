@@ -1834,57 +1834,6 @@ tegra_dc_config_pwm(struct tegra_dc *dc, struct tegra_dc_pwm_params *cfg)
 }
 EXPORT_SYMBOL(tegra_dc_config_pwm);
 
-void tegra_dc_config_bl(struct tegra_dc *dc, int which, unsigned int period, unsigned int clk_div, unsigned int clk_select)
-{
-	unsigned int ctrl = 0;
-
-	if(!dc->enabled) {
-		dev_dbg(&dc->ndev->dev, "%s called during dc disalbed \n", __func__);
-		return;
-	}
-
-	switch(which) {
-		case LM1:
-			// set tristate
-			tegra_pinmux_set_tristate(TEGRA_PINGROUP_LM1, TEGRA_TRI_NORMAL);
-
-			// output select for PM1
-			tegra_dc_writel(dc, 0x2230, DC_COM_PIN_OUTPUT_SELECT5);
-
-			/* >>1 is WAR for tegra2 for period */
-			period = ((period & 0xFC) >> 2) >> 1;
-
-			ctrl = period << LM1_PERIOD_SHIFT;
-
-			/* WAR for tegra2 for clk divider*/
-			clk_div = (clk_div << 1) + 1;
-			ctrl = ctrl | (clk_div << LM1_CLK_DIVIDER_SHIFT);
-
-			/* Select line clk */
-			ctrl = ctrl | clk_select;
-
-			tegra_dc_writel(dc, ctrl, DC_COM_PM1_CONTROL);
-			break;
-		default:
-			dev_err(&dc->ndev->dev, "Error\n");
-	}
-}
-EXPORT_SYMBOL(tegra_dc_config_bl);
-
-void tegra_dc_update_bl(struct tegra_dc *dc, int intensity)
-{
-
-	if(!dc->enabled) {
-		dev_dbg(&dc->ndev->dev, "%s called during dc disalbed \n", __func__);
-		return;
-	}
-
-	/* WAR for tegra2 bug for duty cycle */
-	intensity = intensity >> 1;
-	tegra_dc_writel(dc, intensity, DC_COM_PM1_DUTY_CYCLE);
-}
-EXPORT_SYMBOL(tegra_dc_update_bl);
-
 void tegra_dc_set_out_pin_polars(struct tegra_dc *dc,
 				const struct tegra_dc_out_pin *pins,
 				const unsigned int n_pins)
