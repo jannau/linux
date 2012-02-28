@@ -32,14 +32,6 @@
 #define MPUIRQ_GET_IRQ_TIME          _IOR(MPU_IOCTL, 0x42, struct timeval)
 #define MPUIRQ_SET_FREQUENCY_DIVIDER _IOW(MPU_IOCTL, 0x43, unsigned long)
 
-struct mpuirq_data {
-	int interruptcount;
-	unsigned long long irqtime;
-	int data_type;
-	int data_size;
-	void *data;
-};
-
 #ifdef __KERNEL__
 
 void mpuirq_exit(void);
