@@ -239,13 +239,6 @@ config BACKLIGHT_TEGRA_PWM
 	  If you have a pwm backlight adjustable by the DC PM0 or PM1 signal
 	  control on tegra, say Y to enable this driver.
 
-config BACKLIGHT_TEGRA_LM1
-	bool "Tegra LM1 based backlight driver"
-	depends on ARCH_TEGRA_2x_SOC && TEGRA_DC
-	help
-	  If you have a backlight adjustable by LM1 pin on tegra2, say Y
-	  to enable this driver.
-	  
 config BACKLIGHT_DA903X
 	tristate "Backlight Driver for DA9030/DA9034 using WLED"
 	depends on PMIC_DA903X
