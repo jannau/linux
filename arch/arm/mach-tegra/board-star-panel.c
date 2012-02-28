@@ -26,13 +26,13 @@
 #include <linux/platform_device.h>
 #include <linux/earlysuspend.h>
 #include <linux/pwm_backlight.h>
+#include <linux/tegra_pwm_bl.h>
 #include <linux/nvhost.h>
 #include <mach/nvmap.h>
 #include <mach/irqs.h>
 #include <mach/iomap.h>
 #include <mach/dc.h>
 #include <mach/fb.h>
-#include <mach/tegra_lm1_bl.h>
 #include <mach/hardware.h>
 
 #include "devices.h"
@@ -59,17 +59,27 @@ DEFINE_MUTEX(v3_3_control);
 static struct regulator *star_hdmi_reg = NULL;
 static struct regulator *star_hdmi_pll = NULL;
 
-static struct platform_tegra_lm1_backlight_data star_backlight_data = {
-    .lm1_id = 0,
+/*
+ * In case which_pwm is TEGRA_PWM_PM0,
+ * gpio_conf_to_sfio should be TEGRA_GPIO_PW0: set LCD_CS1_N pin to SFIO
+ * In case which_pwm is TEGRA_PWM_PM1,
+ * gpio_conf_to_sfio should be TEGRA_GPIO_PW1: set LCD_M1 pin to SFIO
+ */
+static struct platform_tegra_pwm_backlight_data star_backlight_data = {
+    .which_dc = 0,
+    .which_pwm = TEGRA_PWM_PM1,
     .max_brightness = 255,
     .dft_brightness = 84,
-    .period = 0xFF,
-    .clk_div = 1,
+    .gpio_conf_to_sfio	= TEGRA_GPIO_PW1,
+    .switch_to_sfio	= &tegra_gpio_disable,
+    .period		= 0x1F,
+    .clk_div		= 3,
     .clk_select = 2,
 };
 
 static struct platform_device star_backlight_device = {
-    .name   = "tegralm1bl",
+    .name   = "tegra-pwm-bl",
+    .id	    = -1,
     .dev    = {
         .platform_data = &star_backlight_data,
     },
