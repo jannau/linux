@@ -33,8 +33,6 @@
 #include <mach/usb_phy.h>
 #include <mach/iomap.h>
 #include <mach/pinmux.h>
-#include "gpio-names.h"
-#include <mach/hardware.h>
 #include "fuse.h"
 
 
@@ -166,9 +164,6 @@
 
 #define UHSIC_HSRX_CFG1				0x80c
 #define   UHSIC_HS_SYNC_START_DLY(x)		(((x) & 0x1f) << 1)
-
-#define UHSIC_TX_CFG0				0x810
-#define   UHSIC_HS_POSTAMBLE_OUTPUT_ENABLE	(1 << 6)
 
 #define UHSIC_MISC_CFG0				0x814
 #define   UHSIC_SUSPEND_EXIT_ON_EDGE		(1 << 7)
