@@ -17,7 +17,7 @@ EXTRA_CFLAGS += -DLGE_FEATURE_CP_HALT_DETECTION
 ## LGE_UPDATE_E CP Reset & Response halt Recovery
 obj-$(CONFIG_STAR_RIL) += ts0710_mux.o
 obj-$(CONFIG_STAR_RIL) += cpwatcher.o
-obj-$(CONFIG_SPI_TEGRA) += ifx_n721_spi.o
+#obj-$(CONFIG_SPI_TEGRA) += ifx_n721_spi.o
 obj-$(CONFIG_SPI_MDM6600) += spi_mdm6600.o
 obj-$(CONFIG_RINETWORK_DRIVER) += rindrv.o
 
