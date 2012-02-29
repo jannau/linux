@@ -45,6 +45,12 @@ config MPU_SENSORS_MMC314X
 	  Specifying more that one compass in the board file will result
 	  in runtime errors.
 
+config SENSORS_AMI304
+    tristate "Aichi Steel ami304"
+    help
+      This enables support for the Aichi Steel ami304 compass
+
+
 config MPU_SENSORS_AMI30X
 	tristate "Aichi Steel ami30X"
 	help
