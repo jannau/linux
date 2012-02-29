@@ -20,7 +20,7 @@
 #include <linux/mfd/tps6586x.h>
 #include <linux/gpio.h>
 #include <linux/err.h>
-#include <asm/suspend.h>
+#include <linux/suspend.h>
 #include <linux/io.h>
 
 #include <mach/iomap.h>

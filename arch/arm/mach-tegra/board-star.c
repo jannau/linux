@@ -55,7 +55,7 @@
 #include <linux/i2c-gpio.h>
 #include <linux/tegra_audio.h>
 #include <mach/gpio-names.h>
-#include <asm/suspend.h>
+#include <linux/suspend.h>
 #include <mach/hardware.h>
 #include <asm/setup.h>
 #include <mach/tegra_das.h>
