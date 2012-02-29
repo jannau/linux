@@ -75,20 +75,3 @@ obj-$(CONFIG_USB_G_NOKIA)	+= g_nokia.o
 obj-$(CONFIG_USB_G_WEBCAM)	+= g_webcam.o
 obj-$(CONFIG_USB_G_NCM)		+= g_ncm.o
 obj-$(CONFIG_USB_G_ANDROID)	+= g_android.o
-ifeq ($(CONFIG_USB_ANDROID_LGE_GADGET),y)
-obj-$(CONFIG_USB_ANDROID)	+= lge_android.o
-obj-$(CONFIG_USB_ANDROID_ACM)	+= f_lge_android_acm.o f_lge_acm.o u_serial.o f_lge_android_serial.o f_lge_serial.o
-obj-$(CONFIG_USB_ANDROID_ADB)	+= f_adb.o
-obj-$(CONFIG_USB_ANDROID_MTP)	+= f_mtp.o
-obj-$(CONFIG_USB_ANDROID_RNDIS)	+= f_lge_android_ecm.o u_ether.o
-obj-$(CONFIG_USB_ANDROID_ACCESSORY) += f_accessory.o
-else
-obj-$(CONFIG_USB_ANDROID)	+= android.o
-obj-$(CONFIG_USB_ANDROID_ACM)	+= f_acm.o u_serial.o
-obj-$(CONFIG_USB_ANDROID_ADB)	+= f_adb.o
-obj-$(CONFIG_USB_ANDROID_MASS_STORAGE)	+= f_mass_storage.o
-obj-$(CONFIG_USB_ANDROID_MTP)	+= f_mtp.o
-obj-$(CONFIG_USB_ANDROID_RNDIS)	+= f_rndis.o u_ether.o
-obj-$(CONFIG_USB_ANDROID_ACCESSORY) += f_accessory.o
-endif
-
