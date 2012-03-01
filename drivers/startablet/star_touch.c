@@ -54,7 +54,7 @@
 #include "star_touch.h"
 
 //static int debug = DEBUG_TRACE;
-static int debug = DEBUG_INFO;
+static int debug = 0;//DEBUG_INFO;
 
 static int TOUCH_INT;
 static int TOUCH_MAIN_PWR;
@@ -602,6 +602,8 @@ static void mxt_worker(struct work_struct *work)
 			REPORT_MT(i, fingerinfo[i].x, fingerinfo[i].y, fingerinfo[i].pressure,
 					  fingerinfo[i].size_id, fingerinfo[i].size_id ? 1 : 0);
 
+
+			if (debug >= DEBUG_VERBOSE) {
 			if(status[i] & MXT_MSGB_T9_PRESS)
 				printk("Touch Press - [%2d] (%4d, %4d)\n", i+1, fingerinfo[i].x,fingerinfo[i].y);
 
@@ -610,6 +612,7 @@ static void mxt_worker(struct work_struct *work)
 
 			if(status[i] & MXT_MSGB_T9_SUPPRESS)
 				printk("Touch Suppress - [%2d] (%4d, %4d)\n", i+1, fingerinfo[i].x,fingerinfo[i].y);
+			}
 
 			if ( fingerinfo[i].pressure == 0 )
 				fingerinfo[i].pressure= -1;
