@@ -221,6 +221,8 @@ static struct tegra_dc_out star_disp1_out = {
 
 	.enable		= star_panel_enable,
 	.disable	= star_panel_disable,
+
+	.parent_clk	= "emc",
 };
 
 static struct tegra_dc_out star_disp2_out = {
