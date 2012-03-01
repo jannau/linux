@@ -54,7 +54,6 @@
 #include <linux/nct1008.h>
 #include <linux/i2c-gpio.h>
 #include <linux/tegra_audio.h>
-#include <mach/tegra_lm1_bl.h>
 #include <mach/gpio-names.h>
 #include <linux/suspend.h>
 #include <mach/hardware.h>
