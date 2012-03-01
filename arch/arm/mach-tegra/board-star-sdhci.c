@@ -37,13 +37,15 @@
 	SDIO1 for WIFI, instance: 2
 */
 
-//#define STARTABLET_WLAN_PWR1	TEGRA_GPIO_PQ5
-//#define STARTABLET_WLAN_PWR2	TEGRA_GPIO_PU2
+#define STARTABLET_WLAN_PWR1	TEGRA_GPIO_PQ5
+#define STARTABLET_WLAN_PWR2	TEGRA_GPIO_PU2
 
+#define STARTABLET_WLAN_RST	TEGRA_GPIO_PN6
 
-#define STARTABLET_WLAN_RST1	TEGRA_GPIO_PQ5
-#define STARTABLET_WLAN_RST2	TEGRA_GPIO_PU2
-//#define STARTABLET_WLAN_WOW	TEGRA_GPIO_PS0
+#define STARTABLET_WLAN_WOW	TEGRA_GPIO_PN3
+
+#define BCM4329_GPIO_WL_REGON		TEGRA_GPIO_PC5
+#define BCM4329_GPIO_WL_HOSTWAKEUP	TEGRA_GPIO_PN3
 
 static void (*wifi_status_cb)(int card_present, void *dev_id);
 static void *wifi_status_cb_devid;
@@ -63,8 +65,8 @@ static struct wifi_platform_data startablet_wifi_control = {
 static struct resource wifi_resource[] = {
 	[0] = {
 		.name  = "bcm4329_wlan_irq",
-		.start = TEGRA_GPIO_TO_IRQ(TEGRA_GPIO_PS0),
-		.end   = TEGRA_GPIO_TO_IRQ(TEGRA_GPIO_PS0),
+		.start = TEGRA_GPIO_TO_IRQ(STARTABLET_WLAN_WOW),
+		.end   = TEGRA_GPIO_TO_IRQ(STARTABLET_WLAN_WOW),
 		.flags = IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHLEVEL | IORESOURCE_IRQ_SHAREABLE,
 	},
 };
@@ -72,7 +74,7 @@ static struct resource wifi_resource[] = {
 static struct platform_device startablet_wifi_device = {
 	.name		= "bcm4329_wlan",
 	.id		= 1,
-	.num_resources  = 1,
+	.num_resources	= 1,
 	.resource	= wifi_resource,
 	.dev		= {
 		.platform_data = &startablet_wifi_control,
@@ -126,8 +128,7 @@ static struct tegra_sdhci_platform_data tegra_sdhci_platform_data0 = {
 		.embedded_sdio = &embedded_sdio_data0,
 		.built_in = 1,
 	},
-	/* .cd_gpio = TEGRA_GPIO_PU2, */
-	.cd_gpio = -1,
+	.cd_gpio = -1 /* TEGRA_GPIO_PQ5 */,
 	.wp_gpio = -1,
 	.power_gpio = -1,
 	.is_always_on = 1,
@@ -188,12 +189,13 @@ static int startablet_wifi_power(int on)
 {
 	pr_debug("%s: %d\n", __func__, on);
 
-	//gpio_set_value(STARTABLET_WLAN_PWR, on);
-	mdelay(100);
+	if (!on)
+		return 0;
+
 	if (get_hw_rev() <= REV_1_2)
-		gpio_set_value(STARTABLET_WLAN_RST1, on);
+		gpio_set_value(STARTABLET_WLAN_PWR1, on);
 	else
-		gpio_set_value(STARTABLET_WLAN_RST2, on);
+		gpio_set_value(STARTABLET_WLAN_PWR2, on);
 	mdelay(200);
 
 	if (on)
@@ -207,6 +209,11 @@ static int startablet_wifi_power(int on)
 static int startablet_wifi_reset(int on)
 {
 	pr_debug("%s: do nothing\n", __func__);
+	if (get_hw_rev() <= REV_1_2)
+		gpio_set_value(STARTABLET_WLAN_PWR1, on);
+	else
+		gpio_set_value(STARTABLET_WLAN_PWR2, on);
+	mdelay(200);
 	return 0;
 }
 
@@ -219,21 +226,20 @@ static int __init startablet_wifi_init(void)
 	}
 
 	if (get_hw_rev() <= REV_1_2) {
-	//gpio_request(STARTABLET_WLAN_PWR, "wlan_power");
-		gpio_request(STARTABLET_WLAN_RST1, "wlan_rst");
-	//gpio_request(STARTABLET_WLAN_WOW, "bcmsdh_sdmmc");
-
-	//tegra_gpio_enable(STARTABLET_WLAN_PWR);
-		tegra_gpio_enable(STARTABLET_WLAN_RST1);
-	//tegra_gpio_enable(STARTABLET_WLAN_WOW);
-
-	//gpio_direction_output(STARTABLET_WLAN_PWR, 0);
-		gpio_direction_output(STARTABLET_WLAN_RST1, 0);
+		gpio_request(STARTABLET_WLAN_PWR1, "wlan_power");
+		tegra_gpio_enable(STARTABLET_WLAN_PWR1);
+		gpio_direction_output(STARTABLET_WLAN_PWR1, 0);
 	} else {
-		gpio_request(STARTABLET_WLAN_RST2, "wlan_rst");
-		tegra_gpio_enable(STARTABLET_WLAN_RST2);
-		gpio_direction_output(STARTABLET_WLAN_RST2, 0);
+		gpio_request(STARTABLET_WLAN_PWR2, "wlan_power");
+		tegra_gpio_enable(STARTABLET_WLAN_PWR2);
+		gpio_direction_output(STARTABLET_WLAN_PWR2, 0);
 	}
+	gpio_request(STARTABLET_WLAN_RST, "wlan_rst");
+	tegra_gpio_enable(STARTABLET_WLAN_RST);
+	gpio_direction_output(STARTABLET_WLAN_RST, 0);
+
+	gpio_request(STARTABLET_WLAN_WOW, "bcmsdh_sdmmc");
+	tegra_gpio_enable(STARTABLET_WLAN_WOW);
 
 	platform_device_register(&startablet_wifi_device);
 
@@ -246,10 +252,10 @@ int __init star_sdhci_init(void)
 {
 	/* tegra_gpio_enable(tegra_sdhci_platform_data3.power_gpio); */
 
-	startablet_wifi_init();
-
 	platform_device_register(&tegra_sdhci_device3);
 	platform_device_register(&tegra_sdhci_device0);
+
+	startablet_wifi_init();
 
 	return 0;
 }
