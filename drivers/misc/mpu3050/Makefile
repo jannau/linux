@@ -137,3 +137,4 @@ EXTRA_CFLAGS += -DM_HW
 endif
 
 obj-$(CONFIG_MPU_SENSORS_TIMERIRQ)+= timerirq.o
+
