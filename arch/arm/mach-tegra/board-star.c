@@ -729,26 +729,7 @@ static void star_usb_init(void)
 	tegra_otg_device.dev.platform_data = &tegra_otg_pdata;
 	platform_device_register(&tegra_otg_device);
 #endif
-
-#if !defined (CONFIG_MACH_STARTABLET)
-	tegra_ehci3_device.dev.platform_data=&tegra_ehci_pdata[2];
-	platform_device_register(&tegra_ehci3_device);
-#endif
 }
-
-#ifdef CONFIG_USB_ANDROID_LGE_GADGET
-int usb_modem_mode = 0;
-
-static int __init usb_mode_setup(char *line)
-{
-	if (sscanf(line, "%1d", &usb_modem_mode) != 1) {
-		usb_modem_mode = 0;
-	}
-	return 1;
-}
-
-__setup("usb_mode=", usb_mode_setup);
-#endif
 
 static int __init star_muic_path_setup(char *line)
 {
@@ -760,16 +741,6 @@ static int __init star_muic_path_setup(char *line)
 }
 
 __setup("muic_path=", star_muic_path_setup);
-
-#ifdef CONFIG_USB_ANDROID_LGE_GADGET
-int factory_download_cable_detected(void)
-{
-	if ((muic_status & 0x0f) == 0x0A) {
-		return 1;
-	}
-	return 0;
-}
-#endif
 
 static void __init star_power_off_init(void)
 {
