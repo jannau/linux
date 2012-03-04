@@ -44,6 +44,8 @@
 #define BATTERY_CUSTOM_MODEL    // for 6400mAh Battery
 //#define USE_USB_CHARGING  // Use usb charging at power-supply event
 
+#undef USE_USB_DETECT
+
 #define GPIO_CHARGE_ENABLE_N  TEGRA_GPIO_PR0
 #define GPIO_USB_SUSPEND      TEGRA_GPIO_PS3
 #define GPIO_CHARGE_STATUS_N  TEGRA_GPIO_PQ3
@@ -1159,10 +1161,12 @@ static void charger_control(bool main_chg, bool usb_chg)
 	else
 		gpio_set_value(GPIO_CHARGE_ENABLE_N, 1);
 
+#ifdef USE_USB_DETECT
 	if (usb_chg)
 		gpio_set_value(GPIO_USB_SUSPEND, 0);
 	else
 		gpio_set_value(GPIO_USB_SUSPEND, 1);
+#endif
 }
 
 static void charger_status(max17040_charge_line* pstatus, int set_charger)
@@ -1173,7 +1177,9 @@ static void charger_status(max17040_charge_line* pstatus, int set_charger)
     static max17040_charge_line charger_line = charger_offline;
 
     pin_value_ac = gpio_get_value(GPIO_AC_DETECT);
+#ifdef USE_USB_DETECT
     pin_value_usb = gpio_get_value(GPIO_USB_DETECT_N);
+#endif
     pin_value_usb_host = gpio_get_value(GPIO_USB1_ID_INT);
 
     if ((get_hw_rev() >= REV_G && STATE_AC_ONLINE == pin_value_ac)
@@ -1393,16 +1399,20 @@ static int __devinit star_battery_probe(struct i2c_client *client, const struct 
     /*------ Set GPIO configration for charger ------*/
     tegra_gpio_enable(GPIO_CHARGE_ENABLE_N);
     gpio_request_one(GPIO_CHARGE_ENABLE_N, GPIOF_OUT_INIT_HIGH, "charge_enable_n");
+#ifdef USE_USB_DETECT
     tegra_gpio_enable(GPIO_USB_SUSPEND);
     gpio_request_one(GPIO_USB_SUSPEND, GPIOF_OUT_INIT_LOW, "usb_suspend");
+#endif
     tegra_gpio_enable(GPIO_CHARGE_STATUS_N);
     gpio_request_one(GPIO_CHARGE_STATUS_N, GPIOF_IN, "charge_status_n");
     tegra_gpio_enable(GPIO_CHARGE_FAULT_N);
     gpio_request_one(GPIO_CHARGE_FAULT_N, GPIOF_IN, "charge_fault_n");
     tegra_gpio_enable(GPIO_AC_DETECT);
     gpio_request_one(GPIO_AC_DETECT, GPIOF_IN, "charge_ac_detect");
+#ifdef USE_USB_DETECT
     tegra_gpio_enable(GPIO_USB_DETECT_N);
     gpio_request_one(GPIO_USB_DETECT_N, GPIOF_IN, "charge_usb_detect_n");
+#endif
 
     //THM_VTG_SEL Gpio control for Thermal ADC reference votlage selection.
     tegra_gpio_enable(GPIO_THM_VTG_SEL);
@@ -1415,18 +1425,22 @@ static int __devinit star_battery_probe(struct i2c_client *client, const struct 
         printk(KERN_ERR "[BAT] interrupt registeration fail! (err:%d)\n", error);
         goto err_request_irq_fail;
     }
+#ifdef USE_USB_DETECT
     error = request_irq(gpio_to_irq(GPIO_USB_DETECT_N), charger_interrupt_handler,
-        (IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING), "usb_detect", (void*)&batt_dev);
+        (IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING | IRQF_SHARED), "usb_detect", batt_dev);
     if (error) {
         printk(KERN_ERR "[BAT] interrupt registeration fail! (err:%d)\n", error);
         goto err_request_irq_fail;
     }
+#endif
 
     return 0;
 
 err_request_irq_fail:
     free_irq(gpio_to_irq(GPIO_AC_DETECT), batt_dev);
+#ifdef USE_USB_DETECT
     free_irq(gpio_to_irq(GPIO_USB_DETECT_N), batt_dev);
+#endif
 //Cleanup:
     if (batt_dev) {
         kfree(batt_dev);
@@ -1463,7 +1477,9 @@ static int star_battery_remove(struct i2c_client *client)
         batt_test = NULL;
     }
     free_irq(gpio_to_irq(GPIO_AC_DETECT), batt_dev);
+#ifdef USE_USB_DETECT
     free_irq(gpio_to_irq(GPIO_USB_DETECT_N), batt_dev);
+#endif
 
     return 0;
 }
@@ -1474,7 +1490,9 @@ static int star_battery_shutdown(struct i2c_client *client)
     del_timer_sync(&(batt_dev->battery_poll_timer));
 
     disable_irq(gpio_to_irq(GPIO_AC_DETECT));
+#ifdef USE_USB_DETECT
     disable_irq(gpio_to_irq(GPIO_USB_DETECT_N));
+#endif
 
     return 0;
 }
