@@ -40,7 +40,8 @@ config SPI_DEBUG
 #
 
 config SPI_MASTER
-	boolean "SPI Master Support"
+#	boolean "SPI Master Support"
+	boolean
 	default SPI
 	help
 	  If your system has an master-capable SPI controller (which
@@ -442,23 +443,5 @@ config SPI_TLE62X0
 endif # SPI_MASTER
 
 # (slave support would go here)
-config SPI_SLAVE
-	boolean "SPI Slave Support"
-	help
-	  If your system has an slave-capable SPI controller , you can enable that
-	  controller and the protocol drivers for the SPI master chips that are connected.
-
-if SPI_SLAVE
-
-comment "SPI Slave Controller Drivers"
-
-config SPI_SLAVE_TEGRA
-	boolean "SPI slave driver for NVIDIA Tegra SoCs"
-	depends on ARCH_TEGRA
-	select TEGRA_SYSTEM_DMA
-	help
-	  Enables the integrated SPI controllers as slave on NVIDIA Tegra SoCs
-
-endif # SPI_SLAVE
 
 endif # SPI
