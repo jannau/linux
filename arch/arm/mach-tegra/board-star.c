@@ -1,5 +1,5 @@
 /*
- * arch/arm/mach-tegra/board-ventana.c
+ * arch/arm/mach-tegra/board-star.c
  *
  * Copyright (c) 2010, NVIDIA Corporation.
  *
