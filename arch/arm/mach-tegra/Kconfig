@@ -134,6 +134,8 @@ config MACH_WHISTLER
 
 config MACH_STARTABLET
        bool "STARTABLET board"
+       depends on ARCH_TEGRA_2x_SOC
+       select MACH_HAS_SND_SOC_TEGRA_WM8994 if SND_SOC
        help
          Support for LG-E999 platform
 
