@@ -54,11 +54,10 @@
 #include <linux/nct1008.h>
 #include <linux/i2c-gpio.h>
 #include <linux/tegra_audio.h>
-#include <mach/gpio-names.h>
 #include <linux/suspend.h>
 #include <mach/hardware.h>
 #include <asm/setup.h>
-#include <mach/tegra_das.h>
+#include <mach/tegra_wm8994_pdata.h>
 
 #include "board.h"
 #include "clock.h"
@@ -200,6 +199,22 @@ static struct tegra_i2c_platform_data star_dvc_platform_data = {
 	.is_dvc		= true,
 };
 
+static struct tegra_wm8994_platform_data star_audio_pdata = {
+	/* .gpio_spkr_en		= TEGRA_GPIO_SPKR_EN, */
+	/* .gpio_hp_det		= TEGRA_GPIO_HP_DET, */
+	.gpio_hp_mute		= -1,
+	/* .gpio_int_mic_en	= TEGRA_GPIO_INT_MIC_EN, */
+	/* .gpio_ext_mic_en	= TEGRA_GPIO_EXT_MIC_EN, */
+};
+
+static struct platform_device star_audio_device = {
+	.name	= "tegra-snd-wm8994",
+	.id	= 0,
+	.dev	= {
+		.platform_data  = &star_audio_pdata,
+	},
+};
+
 static struct tegra_audio_platform_data tegra_audio_pdata[] = {
 	/* For I2S1 */
 	[0] = {
@@ -234,82 +249,6 @@ static struct tegra_audio_platform_data tegra_audio_pdata[] = {
 		.bit_size	= I2S_BIT_SIZE_16,
 		.i2s_bus_width = 32,
 		.dsp_bus_width = 16,
-	}
-};
-
-static struct tegra_das_platform_data tegra_das_pdata = {
-	.tegra_dap_port_info_table = {
-		[0] = {
-			.dac_port = tegra_das_port_none,
-			.codec_type = tegra_audio_codec_type_none,
-			.device_property = {
-				.num_channels = 0,
-				.bits_per_sample = 0,
-				.rate = 0,
-				.dac_dap_data_comm_format = 0,
-			},
-		},
-		/* I2S1 <--> DAC1 <--> DAP1 <--> Hifi Codec */
-		[1] = {
-			.dac_port = tegra_das_port_i2s1,
-			.codec_type = tegra_audio_codec_type_hifi,
-			.device_property = {
-				.num_channels = 2,
-				.bits_per_sample = 16,
-				.rate = 44100,
-				.dac_dap_data_comm_format = dac_dap_data_format_i2s,
-			},
-		},
-		[2] = {
-			.dac_port = tegra_das_port_none,
-			.codec_type = tegra_audio_codec_type_none,
-			.device_property = {
-				.num_channels = 0,
-				.bits_per_sample = 0,
-				.rate = 0,
-				.dac_dap_data_comm_format = 0,
-			},
-		},
-		[3] = {
-			.dac_port = tegra_das_port_none,
-			.codec_type = tegra_audio_codec_type_none,
-			.device_property = {
-				.num_channels = 0,
-				.bits_per_sample = 0,
-				.rate = 0,
-				.dac_dap_data_comm_format = 0,
-			},
-		},
-		[4] = {
-			/* I2S2 <--> DAC2 <--> DAP4 <--> Bluetooth */
-			.dac_port = tegra_das_port_i2s2,
-			.codec_type = tegra_audio_codec_type_bluetooth,
-			.device_property = {
-				.num_channels = 1,
-				.bits_per_sample = 16,
-				.rate = 8000,
-				.dac_dap_data_comm_format = dac_dap_data_format_pcm,
-			},
-		},
-	},
-
-	.tegra_das_con_table = {
-		[0] = {
-			.con_id = tegra_das_port_con_id_hifi,
-			.num_entries = 2,
-			.con_line = {
-				[0] = {tegra_das_port_i2s1, tegra_das_port_dap1, true},
-				[1] = {tegra_das_port_dap1, tegra_das_port_i2s1, false},
-			},
-		},
-		[1] = {
-			.con_id = tegra_das_port_con_id_bt_codec,
-			.num_entries = 2,
-			.con_line = {
-				[0] = {tegra_das_port_i2s2, tegra_das_port_dap4, true},
-				[1] = {tegra_das_port_dap4, tegra_das_port_i2s2, false},
-			},
-		},
 	}
 };
 
@@ -669,9 +608,16 @@ static struct platform_device *star_devices[] __initdata = {
 	//&tegra_rtc_device,
 	&bcm_bt_lpm,
 	&tegra_camera,
+/* standard tegra audio devices */
 	&tegra_i2s_device1,
 	&tegra_i2s_device2,
-        &tegra_spdif_device,
+	&tegra_spdif_device,
+	&tegra_das_device,
+	&spdif_dit_device,
+	&bluetooth_dit_device,
+	&tegra_pcm_device,
+	&star_audio_device,
+/* end of standard tegra audio devices */
 	&tegra_avp_device,
 	&tegra_echo,
 	&tegra_displaytest,
@@ -679,7 +625,6 @@ static struct platform_device *star_devices[] __initdata = {
 #ifdef CONFIG_STARTABLET_GPS_BCM4751
 	&tegra_uartd_device, //jayeong.im@lge.com 2010-11-30 star_gps_init
 #endif
-	&tegra_das_device,
 #if defined(CONFIG_ANDROID_RAM_CONSOLE)
 	&star_ram_console_device,
 #endif
@@ -778,7 +723,6 @@ static void __init tegra_star_init(void)
 	tegra_i2s_device1.dev.platform_data = &tegra_audio_pdata[0];
 	tegra_i2s_device2.dev.platform_data = &tegra_audio_pdata[1];
 	tegra_spdif_device.dev.platform_data = &tegra_spdif_pdata;
-	tegra_das_device.dev.platform_data = &tegra_das_pdata;
 
 	if (strstr(boot_command_line, "ttyS0")!=NULL) {
 		star_devices[1] = &debug_uart;
