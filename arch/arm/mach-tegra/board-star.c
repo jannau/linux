@@ -749,11 +749,6 @@ static void __init tegra_star_init(void)
 	star_nct1008_init();//Thermal IC enable
 }
 
-void __init star_map_io(void)
-{
-	tegra_map_common_io();
-}
-
 int __init tegra_star_protected_aperture_init(void)
 {
     tegra_protected_aperture_init(tegra_grhost_aperture);
@@ -783,7 +778,7 @@ MACHINE_START(STARTABLET, "startablet")
       .init_early     = tegra_init_early,
       .init_irq       = tegra_init_irq,
       .init_machine   = tegra_star_init,
-      .map_io         = star_map_io,
+      .map_io         = tegra_map_common_io,
       .reserve        = tegra_star_reserve,
       .timer          = &tegra_timer,
 MACHINE_END
