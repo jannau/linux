@@ -42,10 +42,7 @@
 
 #define STARTABLET_WLAN_RST	TEGRA_GPIO_PN6
 
-#define STARTABLET_WLAN_WOW	TEGRA_GPIO_PN3
-
-#define BCM4329_GPIO_WL_REGON		TEGRA_GPIO_PC5
-#define BCM4329_GPIO_WL_HOSTWAKEUP	TEGRA_GPIO_PN3
+#define STARTABLET_WLAN_WOW	TEGRA_GPIO_PY6
 
 static void (*wifi_status_cb)(int card_present, void *dev_id);
 static void *wifi_status_cb_devid;
@@ -240,6 +237,7 @@ static int __init startablet_wifi_init(void)
 
 	gpio_request(STARTABLET_WLAN_WOW, "bcmsdh_sdmmc");
 	tegra_gpio_enable(STARTABLET_WLAN_WOW);
+	gpio_direction_input(STARTABLET_WLAN_WOW);
 
 	platform_device_register(&startablet_wifi_device);
 
