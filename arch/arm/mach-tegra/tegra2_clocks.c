@@ -1418,6 +1418,13 @@ static void tegra2_cdev_clk_set_parent(struct clk *c)
 /* cdev1 and cdev2 (dap_mclk1 and dap_mclk2) ops */
 static void tegra2_cdev_clk_init(struct clk *c)
 {
+	const struct clk_mux_sel *sel;
+
+	/* Find max rate from inputs */
+	for (sel = c->inputs; sel->input != NULL; sel++) {
+		c->max_rate = max(sel->input->max_rate, c->max_rate);
+	}
+
 	/* We could un-tristate the cdev1 or cdev2 pingroup here; this is
 	 * currently done in the pinmux code. */
 	c->state = ON;
@@ -1432,6 +1439,12 @@ static void tegra2_cdev_clk_init(struct clk *c)
 static int tegra2_cdev_clk_enable(struct clk *c)
 {
 	BUG_ON(!c->u.periph.clk_num);
+
+	if (!c->parent) {
+		/* Set parent from inputs */
+		tegra2_cdev_clk_set_parent(c);
+		clk_enable(c->parent);
+	}
 
 	clk_writel(PERIPH_CLK_TO_ENB_BIT(c),
 		CLK_OUT_ENB_SET + PERIPH_CLK_TO_ENB_SET_REG(c));
@@ -1996,28 +2009,6 @@ static struct clk tegra_clk_d = {
 	.max_rate  = 52000000,
 	.u.periph  = {
 		.clk_num = 90,
-	},
-};
-
-/* dap_mclk1, belongs to the cdev1 pingroup. */
-static struct clk tegra_dev1_clk = {
-	.name      = "clk_dev1",
-	.ops       = &tegra_cdev_clk_ops,
-	.rate      = 26000000,
-	.max_rate  = 26000000,
-	.u.periph  = {
-		.clk_num = 94,
-	},
-};
-
-/* dap_mclk2, belongs to the cdev2 pingroup. */
-static struct clk tegra_dev2_clk = {
-	.name      = "clk_dev2",
-	.ops       = &tegra_cdev_clk_ops,
-	.rate      = 26000000,
-	.max_rate  = 26000000,
-	.u.periph  = {
-		.clk_num   = 93,
 	},
 };
 
