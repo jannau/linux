@@ -40,9 +40,6 @@
 #include <mach/pinmux.h>
 #include <mach/iomap.h>
 #include <mach/io.h>
-#include <mach/i2s.h>
-#include <mach/spdif.h>
-#include <mach/audio.h>
 #include <asm/mach-types.h>
 #include <asm/mach/arch.h>
 #include <mach/usb_phy.h>
@@ -99,13 +96,6 @@ static struct platform_device debug_uart = {
 	},
 };
 
-static struct tegra_audio_platform_data tegra_spdif_pdata = {
-	//.master = true,
-	.dma_on = true,  /* use dma by default */
-	.i2s_clk_rate = 5644800,
-	.mode = SPDIF_BIT_MODE_MODE16BIT,
-	.fifo_fmt = 0,
-};
 static struct tegra_utmip_config utmi_phy_config[] = {
 	[0] = {
 			.hssync_start_delay = 0,
@@ -213,43 +203,6 @@ static struct platform_device star_audio_device = {
 	.dev	= {
 		.platform_data  = &star_audio_pdata,
 	},
-};
-
-static struct tegra_audio_platform_data tegra_audio_pdata[] = {
-	/* For I2S1 */
-	[0] = {
-		.i2s_master	= true,
-		.dsp_master	= false,
-		.dma_on		= true,  /* use dma by default */
-		.i2s_master_clk = 44100,
-		.dsp_master_clk = 8000,
-		.i2s_clk_rate	= 24000000,
-		.dap_mclk	= "pll_a_out0",
-		.dap_clk	= "clk_dev1",
-		.audio_sync_clk = "audio_2x",
-		.mode		= I2S_BIT_FORMAT_I2S,
-		.fifo_fmt	= I2S_FIFO_PACKED,
-		.bit_size	= I2S_BIT_SIZE_16,
-		.i2s_bus_width = 32,
-		.dsp_bus_width = 16,
-	},
-	/* For I2S2 */
-	[1] = {
-		.i2s_master	= false,
-		.dsp_master	= true,
-		.dma_on		= true,  /* use dma by default */
-		.i2s_master_clk = 44100,
-		.dsp_master_clk = 8000,
-		.i2s_clk_rate	= 24000000,
-		.dap_mclk	= "pll_a_out0",
-		.dap_clk	= "clk_dev1",
-		.audio_sync_clk = "audio_2x",
-		.mode		= I2S_BIT_FORMAT_DSP,
-		.fifo_fmt	= I2S_FIFO_16_LSB,
-		.bit_size	= I2S_BIT_SIZE_16,
-		.i2s_bus_width = 32,
-		.dsp_bus_width = 16,
-	}
 };
 
 static struct i2c_gpio_platform_data i2c_gpio_data = {
@@ -720,9 +673,7 @@ static void __init tegra_star_init(void)
 #endif
 
 	spi_register_board_info(tegra_spi_devices, ARRAY_SIZE(tegra_spi_devices));
-	tegra_i2s_device1.dev.platform_data = &tegra_audio_pdata[0];
-	tegra_i2s_device2.dev.platform_data = &tegra_audio_pdata[1];
-	tegra_spdif_device.dev.platform_data = &tegra_spdif_pdata;
+	//tegra_spdif_device.dev.platform_data = &tegra_spdif_pdata;
 
 	if (strstr(boot_command_line, "ttyS0")!=NULL) {
 		star_devices[1] = &debug_uart;
