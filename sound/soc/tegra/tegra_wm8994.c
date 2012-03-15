@@ -266,34 +266,6 @@ static const struct snd_kcontrol_new tegra_wm8994_default_controls[] = {
 			tegra_set_das),
 };
 
-static unsigned int tegra_i2s_get_mclk(struct snd_pcm_hw_params *params)
-{
-	int mclk = 0;
-
-	switch (params_rate(params)) {
-	case 96000:
-	case 64000:
-	case 48000:
-	case 32000:
-	case 16000:
-	case 8000:
-		mclk = 12288000;
-		break;
-	case 88200:
-	case 44100:
-	case 22050:
-	case 11025:
-		mclk = 11289600;
-		break;
-	default:
-		pr_err("%s: unsupported sample rate: %d\n",
-			__func__, params_rate(params));
-		mclk = 0;
-	}
-
-	return mclk;
-}
-
 static int tegra_codec_init(struct snd_soc_codec *codec)
 {
 	struct snd_soc_card *card = codec->card;
@@ -339,35 +311,29 @@ static int tegra_wm8994_hw_params(struct snd_pcm_substream *substream,
 	struct tegra_wm8994 *machine = snd_soc_card_get_drvdata(card);
 	int srate, mclk, i2s_daifmt;
 	int err;
-	struct clk *clk_m;
 	int rate;
 
 	srate = params_rate(params);
 	switch (srate) {
+	case 8000:
+	case 16000:
+	case 24000:
+	case 32000:
+	case 48000:
 	case 64000:
-	case 88200:
 	case 96000:
-		mclk = 128 * srate;
+		mclk = 12288000;
+		break;
+	case 11025:
+	case 22050:
+	case 44100:
+	case 88200:
+		mclk = 11289600;
 		break;
 	default:
-		mclk = 256 * srate;
+		mclk = 12000000;
 		break;
 	}
-
-	clk_m = clk_get_sys(NULL, "clk_m");
-	if (IS_ERR(clk_m)) {
-		dev_err(card->dev, "Can't retrieve clk clk_m\n");
-		err = PTR_ERR(clk_m);
-		return err;
-	}
-	rate = clk_get_rate(clk_m);
-	printk("extern1 rate=%d\n",rate);
-
-	mclk = rate;
-
-	i2s_daifmt = SND_SOC_DAIFMT_NB_NF |
-		     SND_SOC_DAIFMT_CBM_CFM;
-
 
 	err = tegra_asoc_utils_set_rate(&machine->util_data, srate, mclk);
 	if (err < 0) {
@@ -380,6 +346,9 @@ static int tegra_wm8994_hw_params(struct snd_pcm_substream *substream,
 	}
 
 	tegra_asoc_utils_lock_clk_rate(&machine->util_data, 1);
+
+	i2s_daifmt = SND_SOC_DAIFMT_NB_NF |
+		SND_SOC_DAIFMT_CBS_CFS;
 
 	/* Use DSP mode for mono on Tegra20 */
 	if ((params_channels(params) != 2) &&
@@ -400,40 +369,36 @@ static int tegra_wm8994_hw_params(struct snd_pcm_substream *substream,
 		return err;
 	}
 
-	err = snd_soc_dai_set_sysclk(codec_dai, 0, mclk,
+	err = snd_soc_dai_set_sysclk(codec_dai, WM8994_SYSCLK_MCLK1, mclk,
 					SND_SOC_CLOCK_IN);
 	if (err < 0) {
 		dev_err(card->dev, "codec_dai clock not set\n");
 		return err;
 	}
 
-#ifdef CONFIG_ARCH_TEGRA_2x_SOC
-	err = tegra20_das_connect_dac_to_dap(TEGRA20_DAS_DAP_SEL_DAC1,
-					TEGRA20_DAS_DAP_ID_1);
+	err = tegra20_das_connect_dac_to_dap(TEGRA20_DAS_DAC_ID_1,
+					     TEGRA20_DAS_DAC_SEL_DAP1);
 	if (err < 0) {
 		dev_err(card->dev, "failed to set dap-dac path\n");
 		return err;
 	}
 
 	err = tegra20_das_connect_dap_to_dac(TEGRA20_DAS_DAP_ID_1,
-					TEGRA20_DAS_DAP_SEL_DAC1);
+					     TEGRA20_DAS_DAP_SEL_DAC1);
 	if (err < 0) {
 		dev_err(card->dev, "failed to set dac-dap path\n");
 		return err;
 	}
-#endif
+
+	/* tegra20_das_connect_dap_to_dac(TEGRA20_DAS_DAP_ID_2, TEGRA20_DAS_DAP_SEL_DAC2); */
+	/* tegra20_das_connect_dap_to_dac(TEGRA20_DAS_DAP_ID_3, TEGRA20_DAS_DAP_SEL_DAC2); */
+	/* tegra20_das_connect_dap_to_dac(TEGRA20_DAS_DAP_ID_4, TEGRA20_DAS_DAP_SEL_DAC2); */
+	/* tegra20_das_connect_dap_to_dac(TEGRA20_DAS_DAP_ID_5, TEGRA20_DAS_DAP_SEL_DAC3); */
+	/* tegra20_das_connect_dac_to_dap(TEGRA20_DAS_DAC_ID_2, TEGRA20_DAS_DAC_SEL_DAP4); */
+	/* tegra20_das_connect_dac_to_dap(TEGRA20_DAS_DAC_ID_3, TEGRA20_DAS_DAC_SEL_DAP5); */
+
 	return 0;
 }
-
-static int tegra_wm8994_hw_free(struct snd_pcm_substream *substream)
-{
-        return 0;
-}
-
-static struct snd_soc_ops tegra_wm8994_ops = {
-	.hw_params = tegra_wm8994_hw_params,
-	.hw_free   = tegra_wm8994_hw_free,
-};
 
 static int tegra_wm8994_init(struct snd_soc_pcm_runtime *rtd)
 {
@@ -447,78 +412,144 @@ static int tegra_wm8994_init(struct snd_soc_pcm_runtime *rtd)
 	return ret;
 }
 
-#if 0
-static int tegra_bt_hw_params(struct snd_pcm_substream *substream,
+static int tegra_bt_sco_hw_params(struct snd_pcm_substream *substream,
 					struct snd_pcm_hw_params *params)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
-	int ret = 0;
+	struct snd_soc_card *card = rtd->card;
+	struct tegra_wm8994 *machine = snd_soc_card_get_drvdata(card);
+	int srate, mclk, min_mclk;
+	int err;
 
-	tegra_das_set_connection(tegra_das_port_con_id_bt_codec);
+	srate = params_rate(params);
+	switch (srate) {
+	case 11025:
+	case 22050:
+	case 44100:
+	case 88200:
+		mclk = 11289600;
+		break;
+	case 8000:
+	case 16000:
+	case 32000:
+	case 48000:
+	case 64000:
+	case 96000:
+		mclk = 12288000;
+		break;
+	default:
+		return -EINVAL;
+	}
+	min_mclk = 64 * srate;
 
-	i2s_set_fifo_format(cpu_dai->id, I2S_FIFO_16_LSB);
-
-	ret = snd_soc_dai_set_fmt(cpu_dai, SND_SOC_DAIFMT_DSP_A |
-				SND_SOC_DAIFMT_NB_NF | SND_SOC_DAIFMT_CBS_CFS);
-	if (ret < 0) {
-		pr_err("%s: failed to set cpu dai format\n", __func__);
-		goto out;
+	err = tegra_asoc_utils_set_rate(&machine->util_data, srate, mclk);
+	if (err < 0) {
+		if (!(machine->util_data.set_mclk % min_mclk))
+			mclk = machine->util_data.set_mclk;
+		else {
+			dev_err(card->dev, "Can't configure clocks\n");
+			return err;
+		}
 	}
 
-	ret = snd_soc_dai_set_sysclk(cpu_dai, TEGRA_I2S_MCLK,
-				tegra_i2s_get_mclk(params), SND_SOC_CLOCK_IN);
-	if (ret < 0) {
-		pr_err("%s: failed to set cpu dai mclk\n", __func__);
-		goto out;
+	tegra_asoc_utils_lock_clk_rate(&machine->util_data, 1);
+
+	err = snd_soc_dai_set_fmt(cpu_dai,
+				  SND_SOC_DAIFMT_DSP_A |
+				  SND_SOC_DAIFMT_NB_NF |
+				  SND_SOC_DAIFMT_CBS_CFS);
+	if (err < 0) {
+		dev_err(card->dev, "cpu_dai fmt not set\n");
+		return err;
 	}
 
-	ret = snd_soc_dai_set_sysclk(cpu_dai, TEGRA_I2S_BCLK,
-				256000, SND_SOC_CLOCK_IN);
-	if (ret < 0) {
-		pr_err("%s: failed to set cpu dai bclk\n", __func__);
-		goto out;
+	err = tegra20_das_connect_dac_to_dap(TEGRA20_DAS_DAC_ID_2,
+					     TEGRA20_DAS_DAC_SEL_DAP4);
+	if (err < 0) {
+		dev_err(card->dev, "failed to set dac-dap path\n");
+		return err;
 	}
 
-out:
-	return ret;
+	err = tegra20_das_connect_dap_to_dac(TEGRA20_DAS_DAP_ID_4,
+					     TEGRA20_DAS_DAP_SEL_DAC2);
+	if (err < 0) {
+		dev_err(card->dev, "failed to set dac-dap path\n");
+		return err;
+	}
+	return 0;
 }
 
-static struct snd_soc_ops tegra_bt_ops = {
-	.hw_params = tegra_bt_hw_params,
-};
 
-static int tegra_bt_init(struct snd_soc_codec *codec)
+static int tegra_spdif_hw_params(struct snd_pcm_substream *substream,
+					struct snd_pcm_hw_params *params)
 {
-	int ret;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct snd_soc_card *card = rtd->card;
+	struct tegra_wm8994 *machine = snd_soc_card_get_drvdata(card);
+	int srate, mclk, min_mclk;
+	int err;
 
-	ret = tegra_codec_init(codec);
-	if (ret < 0)
-		pr_err("%s: failed to tegra bluetooth init\n", __func__);
+	srate = params_rate(params);
+	switch (srate) {
+	case 11025:
+	case 22050:
+	case 44100:
+	case 88200:
+		mclk = 11289600;
+		break;
+	case 8000:
+	case 16000:
+	case 32000:
+	case 48000:
+	case 64000:
+	case 96000:
+		mclk = 12288000;
+		break;
+	default:
+		return -EINVAL;
+	}
+	min_mclk = 128 * srate;
 
-	return ret;
+	err = tegra_asoc_utils_set_rate(&machine->util_data, srate, mclk);
+	if (err < 0) {
+		if (!(machine->util_data.set_mclk % min_mclk))
+			mclk = machine->util_data.set_mclk;
+		else {
+			dev_err(card->dev, "Can't configure clocks\n");
+			return err;
+		}
+	}
+
+	tegra_asoc_utils_lock_clk_rate(&machine->util_data, 1);
+
+	return 0;
 }
-#endif
-/*
-static struct snd_soc_dai tegra_bt_dai = {
-	.name = "Tegra Bluetooth",
-	.id = 5,
-	.playback = {
-		.stream_name = "BT Playback",
-		.channels_min = 1,
-		.channels_max = 1,
-		.rates = SNDRV_PCM_RATE_8000,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE,
-	},
-	.capture = {
-		.stream_name = "BT Capture",
-		.channels_min = 1,
-		.channels_max = 1,
-		.rates = SNDRV_PCM_RATE_8000,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE,
-	 },
+
+static int tegra_hw_free(struct snd_pcm_substream *substream)
+{
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct tegra_wm8994 *machine = snd_soc_card_get_drvdata(rtd->card);
+
+	tegra_asoc_utils_lock_clk_rate(&machine->util_data, 0);
+
+	return 0;
+}
+
+static struct snd_soc_ops tegra_wm8994_ops = {
+	.hw_params	= tegra_wm8994_hw_params,
+	.hw_free	= tegra_hw_free,
 };
-*/
+
+static struct snd_soc_ops tegra_spdif_ops = {
+	.hw_params	= tegra_spdif_hw_params,
+	.hw_free	= tegra_hw_free,
+};
+
+static struct snd_soc_ops tegra_wm8994_bt_sco_ops = {
+	.hw_params	= tegra_bt_sco_hw_params,
+	.hw_free	= tegra_hw_free,
+};
 
 static struct switch_dev tegra_wm8994_headset_switch = {
 	.name = "h2w",
@@ -527,7 +558,7 @@ static struct switch_dev tegra_wm8994_headset_switch = {
 static struct snd_soc_dai_link tegra_wm8994_dai[] = {
 	{
 		.name = "WM8994",
-		.stream_name = "WM8994 PCM HIFI",
+		.stream_name = "WM8994 PCM",
 		.codec_name = "wm8994-codec",
 		.platform_name = "tegra-pcm-audio",
 		.cpu_dai_name = "tegra20-i2s.0",
@@ -535,7 +566,6 @@ static struct snd_soc_dai_link tegra_wm8994_dai[] = {
 		.init = tegra_wm8994_init,
 		.ops = &tegra_wm8994_ops,
 	},
-/* new
 	{
 		.name = "SPDIF",
 		.stream_name = "SPDIF PCM",
@@ -554,17 +584,6 @@ static struct snd_soc_dai_link tegra_wm8994_dai[] = {
 		.codec_dai_name = "dit-hifi",
 		.ops = &tegra_wm8994_bt_sco_ops,
 	},
-*/
-/* old
-	{
-		.name = "Tegra",
-		.stream_name = "Tegra Bluetooth",
-		.cpu_dai = &tegra_i2s_dai[1],
-		.codec_dai = &tegra_bt_dai,
-		.init = tegra_bt_init,
-		.ops = &tegra_bt_ops,
-	},
-*/
 };
 
 static struct snd_soc_card snd_soc_tegra_wm8994 = {
@@ -615,12 +634,9 @@ static __devinit int tegra_wm8994_driver_probe(struct platform_device *pdev)
 	card->dapm_widgets = tegra_wm8994_default_dapm_widgets;
 	card->num_dapm_widgets = ARRAY_SIZE(tegra_wm8994_default_dapm_widgets);
 
-	if (machine_is_startablet()) {
-		card->dapm_routes = startablet_audio_map;
-		card->num_dapm_routes = ARRAY_SIZE(startablet_audio_map);
-	}
+	card->dapm_routes = startablet_audio_map;
+	card->num_dapm_routes = ARRAY_SIZE(startablet_audio_map);
 
-	dev_err(&pdev->dev, "about to snd_soc_register_card\n");
 	ret = snd_soc_register_card(card);
 	if (ret) {
 		dev_err(&pdev->dev, "snd_soc_register_card failed (%d)\n",
