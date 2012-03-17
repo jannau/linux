@@ -1052,6 +1052,11 @@ subsys_initcall(tegra_dma_syscore_init);
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
 
+#define APB_DMA_STAT     0x04
+#define APB_DMA_TX_REQ   0x08
+#define APB_DMA_RX_REQ   0x0c
+#define APB_DMA_IRQ_STAT 0x14
+#define APB_DMA_TRIG_REG 0x28
 static int dbg_dma_show(struct seq_file *s, void *unused)
 {
 	int i;
@@ -1059,7 +1064,12 @@ static int dbg_dma_show(struct seq_file *s, void *unused)
 
 	seq_printf(s, "    APBDMA global register\n");
 	seq_printf(s, "DMA_GEN:   0x%08x\n", __raw_readl(addr + APB_DMA_GEN));
+	seq_printf(s, "DMA_STAT:  0x%08x\n", __raw_readl(addr + APB_DMA_STAT));
+	seq_printf(s, "DMA_TX_REQ:0x%08x\n", __raw_readl(addr + APB_DMA_TX_REQ));
+	seq_printf(s, "DMA_RX_REQ:0x%08x\n", __raw_readl(addr + APB_DMA_RX_REQ));
 	seq_printf(s, "DMA_CNTRL: 0x%08x\n", __raw_readl(addr + APB_DMA_CNTRL));
+	seq_printf(s, "IRQ_STAT:  0x%08x\n", __raw_readl(addr + APB_DMA_IRQ_STAT));
+	seq_printf(s, "TRIG_REG:  0x%08x\n", __raw_readl(addr + APB_DMA_TRIG_REG));
 	seq_printf(s, "IRQ_MASK:  0x%08x\n",
 					__raw_readl(addr + APB_DMA_IRQ_MASK));
 
