@@ -243,52 +243,6 @@ static struct resource pwm_resource[] = {
 */
 /*
 ***************************************************************************************************
-*                                       Startablet SPI devices
-***************************************************************************************************
-*/
-//setting  ttyspi driver
-#ifdef CONFIG_SPI_MDM6600
-static struct spi_board_info tegra_spi_devices[] __initdata = {
-	{
-		.modalias = "mdm6600",
-		.bus_num = 0,
-		.chip_select = 0,
-		.mode = SPI_MODE_1,
-		.max_speed_hz = 24000000,
-		.controller_data = &tegra_spi_device1,
-		.irq = 0,
-		//	.platform_data = &mdm6600
-	},
-#ifdef CONFIG_DUAL_SPI //disables spi secondary port
-	{
-		.modalias = "mdm6600",
-		.bus_num = 1,
-		.chip_select = 0,
-		.mode = SPI_MODE_1,
-		.max_speed_hz = 24000000,
-		.controller_data = &tegra_spi_device2,
-		.irq = 0,
-		//	.platform_data = &mdm6600
-	},
-#endif
-};
-#else /* CONFIG_SPI_MDM6600 */
-static struct spi_board_info tegra_spi_devices[] __initdata = {
-{
-		.modalias = "ifxn721",
-		.bus_num = 0,
-		.chip_select = 0,
-		.mode = SPI_MODE_1,
-		.max_speed_hz = 24000000,
-		//.controller_data	= &tegra_spi_device1,
-		.irq = 277,//0,//GPIO_IRQ(TEGRA_GPIO_PO5),
-		//	.platform_data = &ifxn721
-	},
-};
-#endif /* CONFIG_SPI_MDM6600 */
-
-/*
-***************************************************************************************************
 *                                       I2Cs Device Information
 ***************************************************************************************************
 */
