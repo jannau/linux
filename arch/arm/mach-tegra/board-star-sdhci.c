@@ -40,7 +40,7 @@
 #define STARTABLET_WLAN_PWR1	TEGRA_GPIO_PQ5
 #define STARTABLET_WLAN_PWR2	TEGRA_GPIO_PU2
 
-#define STARTABLET_WLAN_RST	TEGRA_GPIO_PN6
+//#define STARTABLET_WLAN_RST	TEGRA_GPIO_UNKNOWN
 
 #define STARTABLET_WLAN_WOW	TEGRA_GPIO_PY6
 
@@ -125,10 +125,9 @@ static struct tegra_sdhci_platform_data tegra_sdhci_platform_data0 = {
 		.embedded_sdio = &embedded_sdio_data0,
 		.built_in = 1,
 	},
-	.cd_gpio = -1 /* TEGRA_GPIO_PQ5 */,
+	.cd_gpio = -1,
 	.wp_gpio = -1,
 	.power_gpio = -1,
-	.is_always_on = 1,
 };
 
 static struct tegra_sdhci_platform_data tegra_sdhci_platform_data3 = {
@@ -186,9 +185,6 @@ static int startablet_wifi_power(int on)
 {
 	pr_debug("%s: %d\n", __func__, on);
 
-	if (!on)
-		return 0;
-
 	if (get_hw_rev() <= REV_1_2)
 		gpio_set_value(STARTABLET_WLAN_PWR1, on);
 	else
@@ -206,50 +202,44 @@ static int startablet_wifi_power(int on)
 static int startablet_wifi_reset(int on)
 {
 	pr_debug("%s: do nothing\n", __func__);
-	if (get_hw_rev() <= REV_1_2)
-		gpio_set_value(STARTABLET_WLAN_PWR1, on);
-	else
-		gpio_set_value(STARTABLET_WLAN_PWR2, on);
-	mdelay(200);
 	return 0;
 }
 
 static int __init startablet_wifi_init(void)
 {
+	int power_gpio;
+
 	wifi_32k_clk = clk_get_sys(NULL, "blink");
 	if (IS_ERR(wifi_32k_clk)) {
 		pr_err("%s: unable to get blink clock\n", __func__);
 		return PTR_ERR(wifi_32k_clk);
 	}
 
-	if (get_hw_rev() <= REV_1_2) {
-		gpio_request(STARTABLET_WLAN_PWR1, "wlan_power");
-		tegra_gpio_enable(STARTABLET_WLAN_PWR1);
-		gpio_direction_output(STARTABLET_WLAN_PWR1, 0);
-	} else {
-		gpio_request(STARTABLET_WLAN_PWR2, "wlan_power");
-		tegra_gpio_enable(STARTABLET_WLAN_PWR2);
-		gpio_direction_output(STARTABLET_WLAN_PWR2, 0);
-	}
-	gpio_request(STARTABLET_WLAN_RST, "wlan_rst");
-	tegra_gpio_enable(STARTABLET_WLAN_RST);
-	gpio_direction_output(STARTABLET_WLAN_RST, 0);
+	if (get_hw_rev() <= REV_1_2)
+		power_gpio = STARTABLET_WLAN_PWR1;
+	else
+		power_gpio = STARTABLET_WLAN_PWR2;
 
-	gpio_request(STARTABLET_WLAN_WOW, "bcmsdh_sdmmc");
-	tegra_gpio_enable(STARTABLET_WLAN_WOW);
-	gpio_direction_input(STARTABLET_WLAN_WOW);
+	gpio_request(power_gpio, "wlan_power");
+	tegra_gpio_enable(power_gpio);
+	gpio_direction_output(power_gpio, 0);
+
+	/* gpio_request(STARTABLET_WLAN_RST, "wlan_rst"); */
+	/* tegra_gpio_enable(STARTABLET_WLAN_RST); */
+	/* gpio_direction_output(STARTABLET_WLAN_RST, 0); */
+
+	/* gpio_request(STARTABLET_WLAN_WOW, "bcmsdh_sdmmc"); */
+	/* tegra_gpio_enable(STARTABLET_WLAN_WOW); */
+	/* gpio_direction_input(STARTABLET_WLAN_WOW); */
 
 	platform_device_register(&startablet_wifi_device);
 
 	device_init_wakeup(&startablet_wifi_device.dev, 1);
-	device_set_wakeup_enable(&startablet_wifi_device.dev, 0);
 
 	return 0;
 }
 int __init star_sdhci_init(void)
 {
-	/* tegra_gpio_enable(tegra_sdhci_platform_data3.power_gpio); */
-
 	platform_device_register(&tegra_sdhci_device3);
 	platform_device_register(&tegra_sdhci_device0);
 
