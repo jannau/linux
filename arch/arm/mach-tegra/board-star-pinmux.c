@@ -131,7 +131,7 @@ static __initdata struct tegra_pingroup_config star_pinmux[] = {
 #ifdef CONFIG_SPI_SLAVE_TEGRA
 	{TEGRA_PINGROUP_UDA,   TEGRA_MUX_SPI1,          TEGRA_PUPD_PULL_DOWN, TEGRA_TRI_NORMAL},	// SPI_1 //matches ap and cp spi pad values according to nVidia's recommendations
 #else
-    {TEGRA_PINGROUP_UDA,   TEGRA_MUX_SPI1,          TEGRA_PUPD_NORMAL,    TEGRA_TRI_NORMAL},	// SPI_1
+	{TEGRA_PINGROUP_UDA,   TEGRA_MUX_SPI1,          TEGRA_PUPD_NORMAL,    TEGRA_TRI_NORMAL},q	// SPI_1
 #endif
 	{TEGRA_PINGROUP_CK32,  TEGRA_MUX_NONE,          TEGRA_PUPD_NORMAL,    TEGRA_TRI_NORMAL},
 	{TEGRA_PINGROUP_DDRC,  TEGRA_MUX_NONE,          TEGRA_PUPD_NORMAL,    TEGRA_TRI_NORMAL},

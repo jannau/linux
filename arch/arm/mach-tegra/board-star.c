@@ -48,6 +48,7 @@
 #include <linux/pwm_backlight.h>
 #include <linux/fsl_devices.h>
 #include <linux/spi/spi.h>
+#include <linux/spi-tegra.h>
 #include <linux/nct1008.h>
 #include <linux/i2c-gpio.h>
 #include <linux/tegra_audio.h>
@@ -546,13 +547,6 @@ static struct platform_device *star_devices[] __initdata = {
 	&star_powerkey,
 	&tegra_gps_gpio,
 	&tegra_misc,
-	&tegra_spi_device1,
-#if 0 //disables spi2, spi3, spi4 device drivers
-	&tegra_spi_device2,
-	&tegra_spi_device3,
-	&tegra_spi_device4,
-#endif
-
 	&tegra_gart_device,
 	&tegra_aes_device,
 	&star_keys_device,
@@ -654,6 +648,82 @@ static void star_nct1008_init(void)
 	gpio_direction_input(TEGRA_GPIO_PK2);
 }
 
+
+/*
+ *   Startablet SPI devices
+ */
+static struct platform_device *star_spi_devices[] __initdata = {
+	&tegra_spi_device1,
+};
+
+/* static struct spi_board_info tegra_spi_devices[] __initdata = { */
+/* #ifdef CONFIG_SPI_MDM6600 */
+/* 	{ */
+/* 		.modalias = "mdm6600", */
+/* 		.bus_num = 0, */
+/* 		.chip_select = 0, */
+/* 		.mode = SPI_MODE_1, */
+/* 		.max_speed_hz = 24000000, */
+/* 		.controller_data = &tegra_spi_device1, */
+/* 		.irq = 0, */
+/* 		//	.platform_data = &mdm6600 */
+/* 	}, */
+/* #else /\* CONFIG_SPI_MDM6600 *\/ */
+/* { */
+/* 		.modalias = "ifxn721", */
+/* 		.bus_num = 0, */
+/* 		.chip_select = 0, */
+/* 		.mode = SPI_MODE_1, */
+/* 		.max_speed_hz = 24000000, */
+/* 		//.controller_data	= &tegra_spi_device1, */
+/* 		.irq = 277,//0,//GPIO_IRQ(TEGRA_GPIO_PO5), */
+/* 		//	.platform_data = &ifxn721 */
+/* 	}, */
+/* #endif /\* CONFIG_SPI_MDM6600 *\/ */
+/* }; */
+
+struct spi_clk_parent spi_parent_clk[] = {
+	[0] = {.name = "pll_p"},
+#ifndef CONFIG_TEGRA_PLLM_RESTRICTED
+	[1] = {.name = "pll_m"},
+	[2] = {.name = "clk_m"},
+#else
+	[1] = {.name = "clk_m"},
+#endif
+};
+
+static struct tegra_spi_platform_data star_spi_pdata = {
+	.is_dma_based		= true,
+	.max_dma_buffer		= (16 * 1024),
+	.is_clkon_always	= false,
+	.max_rate		= 24000000,
+};
+
+static void __init star_spi_init(void)
+{
+
+	int i;
+	struct clk *c;
+	struct board_info board_info;
+
+	tegra_get_board_info(&board_info);
+
+	for (i = 0; i < ARRAY_SIZE(spi_parent_clk); ++i) {
+		c = tegra_get_clock_by_name(spi_parent_clk[i].name);
+		if (IS_ERR_OR_NULL(c)) {
+			pr_err("Not able to get the clock for %s\n",
+						spi_parent_clk[i].name);
+			continue;
+		}
+		spi_parent_clk[i].parent_clk = c;
+		spi_parent_clk[i].fixed_clk_rate = clk_get_rate(c);
+	}
+	star_spi_pdata.parent_clk_list = spi_parent_clk;
+	star_spi_pdata.parent_clk_count = ARRAY_SIZE(spi_parent_clk);
+	tegra_spi_device1.dev.platform_data = &star_spi_pdata;
+	platform_add_devices(star_spi_devices, ARRAY_SIZE(star_spi_devices));
+}
+
 static void __init tegra_star_init(void)
 {
 	tegra_clk_init_from_table(star_clk_init_table);
@@ -662,18 +732,7 @@ static void __init tegra_star_init(void)
 	star_i2c_init();
 	star_regulator_init();
 
-#ifdef CONFIG_DUAL_SPI //disables spi secondary port
-#ifdef CONFIG_SPI_MDM6600
-/* spi secondary port use spi3 when hw revision less than f */
-	if (get_hw_rev() < REV_F) {
-		tegra_spi_devices[1].bus_num = 2;
-		tegra_spi_devices[1].chip_select = 2;
-	}
-#endif /* CONFIG_SPI_MDM6600 */
-#endif
-
-	spi_register_board_info(tegra_spi_devices, ARRAY_SIZE(tegra_spi_devices));
-	//tegra_spdif_device.dev.platform_data = &tegra_spdif_pdata;
+	star_spi_init();
 
 	if (strstr(boot_command_line, "ttyS0")!=NULL) {
 		star_devices[1] = &debug_uart;
