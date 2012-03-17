@@ -41,7 +41,8 @@
 #include <linux/irq.h>
 #include <linux/regulator/consumer.h>
 
-#include <mach/gpio-names.h>
+#include <../../../arch/arm/mach-tegra/gpio-names.h>
+#include "../../../arch/arm/mach-tegra/pm-irq.h"
 
 #define GPIO_POWERKEY       TEGRA_GPIO_PV2
 #define POWERKEY_ACTIVE_LOW 0
@@ -202,6 +203,8 @@ static int __init powerkey_probe(struct platform_device *pdev)
         goto err_input_device_register_fail;
     }
     regulator_init_on();
+    device_init_wakeup(&pdev->dev, true);
+
     return 0;
 
 err_input_device_register_fail:
@@ -213,6 +216,7 @@ err_request_irq_fail:
 
 static int powerkey_remove(struct platform_device *pdev)
 {
+	device_init_wakeup(&pdev->dev, false);
     if (!s_powerkey.inputDev) {
         input_unregister_device(s_powerkey.inputDev);
         input_free_device(s_powerkey.inputDev);
@@ -220,14 +224,16 @@ static int powerkey_remove(struct platform_device *pdev)
     return 0;
 }
 
-static int powerkey_shutdown(struct platform_device *pdev)
+static void powerkey_shutdown(struct platform_device *pdev)
 {
     disable_irq(gpio_to_irq(GPIO_POWERKEY));
-    return 0;
 }
 
 int powerkey_suspend(struct platform_device *dev, pm_message_t state)
 {
+	enable_irq_wake(gpio_to_irq(GPIO_POWERKEY));
+	tegra_pm_irq_set_wake(gpio_to_irq(GPIO_POWERKEY), true);
+	tegra_pm_irq_set_wake_type(gpio_to_irq(GPIO_POWERKEY), IRQF_TRIGGER_HIGH);
     return 0;
 }
 
@@ -236,6 +242,9 @@ int powerkey_resume(struct platform_device *dev)
     uint   pinValue;
 
     printk("[PWR_KEY] %s()\n", __func__);
+	disable_irq_wake(gpio_to_irq(GPIO_POWERKEY));
+	tegra_pm_irq_set_wake(gpio_to_irq(GPIO_POWERKEY), false);
+
     if (0 == key_pressed)
     {
         pinValue = (gpio_get_value(GPIO_POWERKEY) ? 1 : 0) ^ POWERKEY_ACTIVE_LOW;
