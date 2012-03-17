@@ -76,6 +76,8 @@ static int tegra20_i2s_show(struct seq_file *s, void *unused)
 		REG(TEGRA20_I2S_NW_CTRL),
 		REG(TEGRA20_I2S_TDM_CTRL),
 		REG(TEGRA20_I2S_TDM_TX_RX_CTRL),
+		REG(TEGRA20_I2S_FIFO1),
+		REG(TEGRA20_I2S_FIFO2),
 	};
 #undef REG
 
