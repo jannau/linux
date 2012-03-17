@@ -547,6 +547,7 @@ static struct platform_device *star_devices[] __initdata = {
 	&star_powerkey,
 	&tegra_gps_gpio,
 	&tegra_misc,
+	&tegra_wdt_device,
 	&tegra_gart_device,
 	&tegra_aes_device,
 	&star_keys_device,
