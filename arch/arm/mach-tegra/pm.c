@@ -44,6 +44,11 @@
 #include <linux/console.h>
 #include <linux/pm_qos_params.h>
 
+#include <linux/gpio.h>
+#include <linux/mfd/tps6586x.h>
+#include <linux/regulator/machine.h>
+#include <linux/regulator/consumer.h>
+
 #include <asm/cacheflush.h>
 #include <asm/cpu_pm.h>
 #include <asm/hardware/gic.h>
@@ -53,6 +58,7 @@
 #include <asm/tlbflush.h>
 
 #include <mach/clk.h>
+#include <mach/hardware.h>
 #include <mach/iomap.h>
 #include <mach/irqs.h>
 #include <mach/powergate.h>
@@ -62,12 +68,32 @@
 #include "cpuidle.h"
 #include "fuse.h"
 #include "gic.h"
+#include "gpio-names.h"
 #include "pm.h"
 #include "pm-irq.h"
 #include "reset.h"
 #include "sleep.h"
 #include "timer.h"
 #include "dvfs.h"
+
+#ifdef CONFIG_MACH_STARTABLET
+//20100909, jinwoo.nam sleep power rail off
+#define MAX_REFCOUNT_LOOP   2
+static char* pmic_suspend[] = {
+	//"sensors",      // LDO0
+	//"avdd_usb",     // LDO3
+	//"avdd_usb_pll", // LDO3
+	//"avdd_osc",     // LDO4
+	//"avdd_usb_pll",
+	//"avdd_hdmi",    // LDO7
+	//"avdd_hdmi_pll",// LDO8
+	"vdd_ddr_rx",   // LDO9
+};
+
+#define GPIO_3V3_ALWAYS  TEGRA_GPIO_PS7
+#define GPIO_5V0_EN      TEGRA_GPIO_PX7
+#define GPIO_5V0_HDMI_EN TEGRA_GPIO_PI7
+#endif
 
 struct suspend_context {
 	/*
@@ -690,8 +716,47 @@ static void tegra_common_resume(void)
 	memcpy(iram_code, iram_save, iram_save_size);
 }
 
+static int tegra_suspend_begin(suspend_state_t state)
+{
+#ifdef CONFIG_MACH_STARTABLET
+	struct regulator* regul;
+	int i;
+	int is_enabled = 1;
+
+	for (i = ARRAY_SIZE(pmic_suspend) - 1; i >= 0; i--) {
+		int loop_count = MAX_REFCOUNT_LOOP;
+		do {
+			//printk(KERN_INFO "[Suspend] Trying to get regulator(%s)\n", pmic_suspend[i]);
+			regul = regulator_get(NULL,  pmic_suspend[i]);  /* digital core */
+			if (IS_ERR(regul)) {
+				printk(KERN_ERR "[Suspend] Failed to get regulator(%s)\n", pmic_suspend[i]);
+				continue;
+			}
+			if (regulator_disable(regul)) {
+				printk(KERN_ERR "[Suspend] Failed to regulator_disable regulator(%s)\n", pmic_suspend[i]);
+				//continue;
+			}
+			is_enabled = regulator_is_enabled(regul) / 1000;
+			// WBT 196341
+			regulator_put(regul);
+			printk(KERN_INFO "[Suspend] %s() %s is enabled : %d\n", __func__, pmic_suspend[i], is_enabled);
+		} while (is_enabled && --loop_count);
+	}
+#endif
+	return regulator_suspend_prepare(state);
+}
+
 static int tegra_suspend_prepare_late(void)
 {
+#ifdef CONFIG_MACH_STARTABLET
+	gpio_set_value(GPIO_5V0_HDMI_EN, 0);
+	gpio_set_value(GPIO_5V0_EN, 0);
+	if (get_hw_rev() >= REV_I)
+	{
+		if (tps6586x_led_check() == 0)
+			gpio_set_value(GPIO_3V3_ALWAYS, 0);
+	}
+#endif
 #ifdef CONFIG_ARCH_TEGRA_2x_SOC
 	disable_irq(INT_SYS_STATS_MON);
 #endif
@@ -702,6 +767,48 @@ static void tegra_suspend_wake(void)
 {
 #ifdef CONFIG_ARCH_TEGRA_2x_SOC
 	enable_irq(INT_SYS_STATS_MON);
+#endif
+#ifdef CONFIG_MACH_STARTABLET // rev.F
+
+	if (get_hw_rev() >= REV_I)
+	{
+		gpio_set_value(GPIO_3V3_ALWAYS, 1);
+	}
+	gpio_set_value(GPIO_5V0_EN, 1);
+	gpio_set_value(GPIO_5V0_HDMI_EN, 1);
+#endif
+}
+
+static void tegra_suspend_end(void)
+{
+#ifdef CONFIG_MACH_STARTABLET
+	struct regulator* regul;
+	int i;
+	int is_enabled;
+
+	for (i = 0; i < ARRAY_SIZE(pmic_suspend); i++)
+	{
+		//int loop_count = MAX_REFCOUNT_LOOP;
+		//do
+		{
+			//printk(KERN_INFO "[Suspend] Trying to get regulator(%s)   ", pmic_suspend[i]);
+			regul = regulator_get(NULL,  pmic_suspend[i]);  /* digital core */
+			if (IS_ERR(regul)) {
+				printk(KERN_ERR "[Resume] Failed to get regulator(%s)\n", pmic_suspend[i]);
+                               continue;
+			}
+			if (regulator_enable(regul))
+			{
+				printk(KERN_ERR "[Resume] Failed to regulator_enable regulator(%s)\n", pmic_suspend[i]);
+				continue;
+			}
+			is_enabled = regulator_is_enabled(regul) / 1000;
+			// WBT 196342
+			regulator_put(regul);
+			printk(KERN_INFO "[Resume] %s() %s is enabled : %d\n", __func__, pmic_suspend[i], is_enabled);
+		}
+		//while (!is_enabled && --loop_count);
+	}
 #endif
 }
 
@@ -948,9 +1055,11 @@ static const struct platform_suspend_ops tegra_suspend_ops = {
 	.valid		= suspend_valid_only_mem,
 	.prepare	= tegra_suspend_prepare,
 	.finish		= tegra_suspend_finish,
+	.begin		= tegra_suspend_begin,
 	.prepare_late	= tegra_suspend_prepare_late,
 	.wake		= tegra_suspend_wake,
 	.enter		= tegra_suspend_enter,
+	.end		= tegra_suspend_end,
 };
 
 static ssize_t suspend_mode_show(struct kobject *kobj,
@@ -1185,6 +1294,15 @@ fail:
 		tegra_lp2_in_idle(false);
 
 	current_suspend_mode = plat->suspend_mode;
+
+#ifdef CONFIG_MACH_STARTABLET
+	tegra_gpio_enable(GPIO_3V3_ALWAYS);
+	gpio_request_one(GPIO_3V3_ALWAYS, GPIOF_OUT_INIT_HIGH, "vdd_3v3_always");
+	tegra_gpio_enable(GPIO_5V0_EN);
+	gpio_request_one(GPIO_5V0_EN, GPIOF_OUT_INIT_HIGH, "vdd_5v0");
+	tegra_gpio_enable(GPIO_5V0_HDMI_EN);
+	gpio_request_one(GPIO_5V0_HDMI_EN, GPIOF_OUT_INIT_HIGH, "vdd_5v0_hdmi");
+#endif
 }
 
 unsigned long debug_uart_port_base = 0;
