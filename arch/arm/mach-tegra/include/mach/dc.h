@@ -520,11 +520,6 @@ unsigned tegra_dc_get_out_height(const struct tegra_dc *dc);
 unsigned tegra_dc_get_out_width(const struct tegra_dc *dc);
 unsigned tegra_dc_get_out_max_pixclock(const struct tegra_dc *dc);
 
-/* backlight */
-#define LM1 1
-void tegra_dc_config_bl(struct tegra_dc *dc, int which, unsigned int period, unsigned int clk_div, unsigned int clk_select);
-void tegra_dc_update_bl(struct tegra_dc *dc, int intensity);
-
 /* PM0 and PM1 signal control */
 #define TEGRA_PWM_PM0 0
 #define TEGRA_PWM_PM1 1
