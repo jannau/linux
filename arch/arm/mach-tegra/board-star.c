@@ -543,7 +543,6 @@ static struct platform_device *star_devices[] __initdata = {
 	&debug_uart,
 	&tegra_uartc_device,
 //	&tegra_hsuart2,
-	&tegra_udc_device,
 	&star_powerkey,
 	&tegra_gps_gpio,
 	&tegra_misc,
@@ -586,6 +585,20 @@ static void star_keys_init(void)
 		tegra_gpio_enable(star_keys[i].gpio);
 }
 
+static struct usb_phy_plat_data tegra_usb_phy_pdata[] = {
+	[0] = {
+		.instance = 0,
+		.vbus_gpio = -1,
+	},
+	[1] = {
+		.instance = 1,
+		.vbus_gpio = -1,
+	},
+	[2] = {
+		.instance = 2,
+		.vbus_gpio = -1,
+	},
+};
 
 static struct tegra_ehci_platform_data tegra_ehci_pdata[] = {
 	[0] = {
@@ -618,9 +631,22 @@ static struct tegra_otg_platform_data tegra_otg_pdata = {
 
 static void star_usb_init(void)
 {
+	int gpio_usb_host_en = TEGRA_GPIO_PP1;
+
+	if (get_hw_rev() < REV_G)
+		gpio_usb_host_en = TEGRA_GPIO_PH0;
+
+	tegra_usb_phy_pdata[0].vbus_gpio = gpio_usb_host_en;
+
+	tegra_usb_phy_init(tegra_usb_phy_pdata, ARRAY_SIZE(tegra_usb_phy_pdata));
+
 #ifdef CONFIG_USB_TEGRA_OTG
+	/* OTG should be the first to be registered */
+
 	tegra_otg_device.dev.platform_data = &tegra_otg_pdata;
 	platform_device_register(&tegra_otg_device);
+
+	platform_device_register(&tegra_udc_device);
 #endif
 }
 
