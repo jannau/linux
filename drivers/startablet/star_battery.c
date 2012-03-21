@@ -1484,7 +1484,7 @@ static int star_battery_remove(struct i2c_client *client)
     return 0;
 }
 
-static int star_battery_shutdown(struct i2c_client *client)
+static void star_battery_shutdown(struct i2c_client *client)
 {
     D_FUNC("[BAT] %s()\n", __func__);
     del_timer_sync(&(batt_dev->battery_poll_timer));
@@ -1493,8 +1493,6 @@ static int star_battery_shutdown(struct i2c_client *client)
 #ifdef USE_USB_DETECT
     disable_irq(gpio_to_irq(GPIO_USB_DETECT_N));
 #endif
-
-    return 0;
 }
 
 
