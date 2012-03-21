@@ -41,7 +41,6 @@ struct tegra_audio_platform_data {
 	int dsp_master_clk; /* When DSP mode and master, the framesync rate. */
 	bool dma_on;
 	unsigned long i2s_clk_rate;
-	const char *dap_mclk;
 	const char *dap_clk;
 	const char *audio_sync_clk;
 
