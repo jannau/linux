@@ -158,7 +158,6 @@ enum tegra_mux_func {
 	TEGRA_MUX_RSVD2 = 0x8002,
 	TEGRA_MUX_RSVD3 = 0x8003,
 	TEGRA_MUX_RSVD4 = 0x8004,
-	TEGRA_MUX_I2CPMU,
 };
 
 enum tegra_pullupdown {
