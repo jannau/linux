@@ -216,16 +216,47 @@ struct platform_device tegra_displaytest =
     .id   = -1,
 };
 
+#define MPU_ACCEL_BUS_NUM	1
+#define MPU_ACCEL_IRQ_GPIO	0
+#define MPU_GYRO_BUS_NUM	1
+#define MPU_GYRO_IRQ_GPIO	TEGRA_GPIO_PZ4
+#define MPU_GYRO_NAME		"mpu3050"
+#define MPU_COMPASS_BUS_NUM	1
+#define MPU_COMPASS_IRQ_GPIO	TEGRA_GPIO_PN5
+
 static struct mpu_platform_data mpu3050_data = {
 	.int_config  = 0x10,
 	.orientation = {
-		1,0,0,
-		0,1,0,
-		0,0,1
+		1, 0, 0,
+		0, 1, 0,
+		0, 0, 1
 	},
 	.level_shifter = 1,
 };
 
+static struct ext_slave_platform_data mpu_accel_data = {
+	.address		= STAR_I2C_DEVICE_ADDR_ACCELEROMETER,
+	.irq			= 0,
+	.adapt_num		= MPU_ACCEL_BUS_NUM,
+	.bus			= EXT_SLAVE_BUS_SECONDARY,
+	.orientation		= {
+		 0, 1, 0,
+		-1, 0, 0,
+		 0, 0, 1
+	},
+};
+
+static struct ext_slave_platform_data mpu_compass_data = {
+	.address		= STAR_I2C_DEVICE_ADDR_COMPASS,
+	.irq			= 0,
+	.adapt_num		= MPU_COMPASS_BUS_NUM,
+	.bus			= EXT_SLAVE_BUS_PRIMARY,
+	.orientation		= {
+		 0, -1,  0,
+		-1,  0,  0,
+		 0,  0, -1
+	},
+};
 
 /*
 ***************************************************************************************************
@@ -262,8 +293,16 @@ static struct i2c_board_info __initdata star_i2c_bus2_devices_info[] = {
 		I2C_BOARD_INFO("wm8994", STAR_I2C_DEVICE_ADDR_WM8994),
 	},
 	{
-		I2C_BOARD_INFO("mpu3050", STAR_I2C_DEVICE_ADDR_GYRO),		  /*.irq = 299,*/
+		I2C_BOARD_INFO("mpu3050", STAR_I2C_DEVICE_ADDR_GYRO),
+		.irq = TEGRA_GPIO_TO_IRQ(MPU_GYRO_IRQ_GPIO),
 		.platform_data = &mpu3050_data,
+	},
+	{
+		I2C_BOARD_INFO("lis331dlh", STAR_I2C_DEVICE_ADDR_ACCELEROMETER),
+#if     MPU_ACCEL_IRQ_GPIO
+		.irq = TEGRA_GPIO_TO_IRQ(MPU_ACCEL_IRQ_GPIO),
+#endif
+		.platform_data = &mpu_accel_data,
 	},
 	{
 		I2C_BOARD_INFO("bh1721_als", STAR_I2C_DEVICE_ADDR_ALS),
@@ -291,6 +330,13 @@ static struct i2c_board_info __initdata star_i2c_bus3_devices_info[] = {
 
 //I2C4(PWR_I2C) device board information
 static struct i2c_board_info __initdata star_i2c_bus4_devices_info[] = {
+	{
+		I2C_BOARD_INFO("ami304", STAR_I2C_DEVICE_ADDR_COMPASS),
+#if     MPU_COMPASS_IRQ_GPIO
+                .irq = TEGRA_GPIO_TO_IRQ(MPU_COMPASS_IRQ_GPIO),
+#endif
+                .platform_data = &mpu_compass_data,
+        },
 	{
 		I2C_BOARD_INFO("star_battery", STAR_I2C_DEVICE_ADDR_FUEL_GAUGING),
 	},
