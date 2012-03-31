@@ -280,9 +280,20 @@ static const struct tegra_emc_table star_emc_tables_samsung[] = {
 	}
 };
 
+static const struct tegra_emc_chip star_emc_chips[] = {
+	{
+		.description = "Samsung 300MHz",
+		.mem_manufacturer_id = -1,
+		.mem_revision_id1 = -1,
+		.mem_revision_id2 = -1,
+		.mem_pid = -1,
+		.table = star_emc_tables_samsung,
+		.table_size = ARRAY_SIZE(star_emc_tables_samsung),
+	},
+};
+
 int star_emc_init(void)
 {
-	tegra_init_emc(star_emc_tables_samsung,
-		ARRAY_SIZE(star_emc_tables_samsung));
+	tegra_init_emc(star_emc_chips, ARRAY_SIZE(star_emc_chips));
 	return 0;
 }
