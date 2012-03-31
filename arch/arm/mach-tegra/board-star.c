@@ -373,25 +373,35 @@ static void star_i2c_init(void)
 		platform_device_register(&stereocam_i2c_gpio_controller);
 
 	//register i2c devices attached to I2C1
-	star_register_numbered_i2c_devices(0 , star_i2c_bus1_devices_info, ARRAY_SIZE(star_i2c_bus1_devices_info));
+	star_register_numbered_i2c_devices(0, star_i2c_bus1_devices_info,
+				ARRAY_SIZE(star_i2c_bus1_devices_info));
 	//register i2c devices attached to I2C2
-	star_register_numbered_i2c_devices(1 , star_i2c_bus2_devices_info, ARRAY_SIZE(star_i2c_bus2_devices_info));
+	star_register_numbered_i2c_devices(1, star_i2c_bus2_devices_info,
+				ARRAY_SIZE(star_i2c_bus2_devices_info));
 	//register i2c devices attached to I2C3
-	star_register_numbered_i2c_devices(3 , star_i2c_bus3_devices_info, ARRAY_SIZE(star_i2c_bus3_devices_info));
+	star_register_numbered_i2c_devices(3, star_i2c_bus3_devices_info,
+				ARRAY_SIZE(star_i2c_bus3_devices_info));
 	//register i2c devices attached to I2C4(PWR_I2C)
-	star_register_numbered_i2c_devices(4 , star_i2c_bus4_devices_info, ARRAY_SIZE(star_i2c_bus4_devices_info));
+	star_register_numbered_i2c_devices(4, star_i2c_bus4_devices_info,
+				ARRAY_SIZE(star_i2c_bus4_devices_info));
 
 	//register i2c devices attached to STEREOCAM-I2C-GPIO
-	if  (board_rev >= REV_1_2)
-		star_register_numbered_i2c_devices(6 , star_i2c_stereo_camera_info, ARRAY_SIZE(star_i2c_stereo_camera_info));
+	if (board_rev >= REV_1_2)
+		star_register_numbered_i2c_devices(6,
+				star_i2c_stereo_camera_info,
+				ARRAY_SIZE(star_i2c_stereo_camera_info));
 	else
-		star_register_numbered_i2c_devices(4 , star_i2c_stereo_camera_info, ARRAY_SIZE(star_i2c_stereo_camera_info));  // PWR_I2C
+		star_register_numbered_i2c_devices(4,
+				star_i2c_stereo_camera_info,
+				ARRAY_SIZE(star_i2c_stereo_camera_info));
 
 	//register i2c devices attached to I2C-GPIO (Echo canceller)
-	if  (board_rev >= REV_G)
-		star_register_numbered_i2c_devices(7 , star_i2c_bus7_echo_info, ARRAY_SIZE(star_i2c_bus7_echo_info));
+	if (board_rev >= REV_G)
+		star_register_numbered_i2c_devices(7, star_i2c_bus7_echo_info,
+					ARRAY_SIZE(star_i2c_bus7_echo_info));
 	else
-		star_register_numbered_i2c_devices(1 , star_i2c_bus7_echo_info, ARRAY_SIZE(star_i2c_bus7_echo_info));	// GEN2_I2C
+		star_register_numbered_i2c_devices(1, star_i2c_bus7_echo_info,
+					ARRAY_SIZE(star_i2c_bus7_echo_info));
 }
 
 #define GPIO_KEY(_id, _gpio, _iswake)		\
