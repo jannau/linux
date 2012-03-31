@@ -603,10 +603,29 @@ static ssize_t als_ledstate_show(struct device *dev,
 }
 #endif
 
+static ssize_t als_enable_read(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", the_data.enabled);
+}
+static ssize_t als_enable_write(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t size)
+{
+	int cmd = 0;
+	;
+	
+	if (sscanf(buf, "%d", &cmd) < 1 || cmd < ALS_OFF || cmd > ALS_ON)
+		return EINVAL;
+
+	return als_cmd(cmd, 0);
+}
+
 static DEVICE_ATTR(control, S_IRUGO | S_IWUGO, als_control_show,
 			als_control_store);
 static DEVICE_ATTR(data, S_IRUGO | S_IWUGO, als_data_show, als_data_store);
 static DEVICE_ATTR(debug, S_IRUGO | S_IWUGO, als_debug_show, als_debug_store);
+static DEVICE_ATTR(enable, S_IRUGO | S_IWUGO, als_enable_read,
+		   als_enable_write);
 #if defined (LED_LIGHT_REMOVAL)
 static DEVICE_ATTR(ledstate, S_IRUGO | S_IWUGO, als_ledstate_show,
 							als_ledstate_store);
@@ -747,6 +766,7 @@ static int bh1721_drv_probe(struct i2c_client *i2c_clnt,
 #if defined (LED_LIGHT_REMOVAL)
 	rc = device_create_file(&i2c_clnt->dev, &dev_attr_ledstate);
 #endif
+	rc = device_create_file(&inpdev->dev, &dev_attr_enable);
 	if (rc) {
 		DERR("%s: could not create file\n", __func__);
 		goto err3;
