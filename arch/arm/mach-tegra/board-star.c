@@ -148,15 +148,17 @@ static __initdata struct tegra_clk_init_table star_clk_init_table[] = {
 int muic_path = 0;
 int muic_status = 0x0B;
 
-/*
-***************************************************************************************************
-*                                       I2C platform_data
-***************************************************************************************************
-*/
+/**************************************************************************************
+ *                                       I2C platform_data
+ **************************************************************************************/
 static struct tegra_i2c_platform_data star_i2c1_platform_data = {
 	.adapter_nr	= 0,
 	.bus_count	= 1,
 	.bus_clk_rate	= { 400000, 0 },
+	.slave_addr = 0x00FC,
+	.scl_gpio		= {TEGRA_GPIO_PC4, 0},
+	.sda_gpio		= {TEGRA_GPIO_PC5, 0},
+	.arb_recovery = arb_lost_recovery,
 };
 
 static const struct tegra_pingroup_config i2c2_ddc = {
@@ -173,21 +175,34 @@ static struct tegra_i2c_platform_data star_i2c2_platform_data = {
 	.adapter_nr	= 1,
 	.bus_count	= 2,
 	.bus_clk_rate	= { 400000, 100000 },
+//	.bus_clk_rate	= { 100000, 10000 },
 	.bus_mux	= { &i2c2_gen2, &i2c2_ddc },
 	.bus_mux_len	= { 1, 1 },
+	.slave_addr = 0x00FC,
+	.scl_gpio		= {0, TEGRA_GPIO_PT5},
+	.sda_gpio		= {0, TEGRA_GPIO_PT6},
+	.arb_recovery = arb_lost_recovery,
 };
 
 static struct tegra_i2c_platform_data star_i2c3_platform_data = {
 	.adapter_nr	= 3,
 	.bus_count	= 1,
 	.bus_clk_rate	= { 400000, 0 },
+	.slave_addr = 0x00FC,
+	.scl_gpio		= {TEGRA_GPIO_PBB2, 0},
+	.sda_gpio		= {TEGRA_GPIO_PBB3, 0},
+	.arb_recovery = arb_lost_recovery,
 };
 
 static struct tegra_i2c_platform_data star_dvc_platform_data = {
 	.adapter_nr	= 4,
 	.bus_count	= 1,
 	.bus_clk_rate	= { 100000, 0 },
+//	.bus_clk_rate	= { 400000, 0 },
 	.is_dvc		= true,
+	.scl_gpio		= {TEGRA_GPIO_PZ6, 0},
+	.sda_gpio		= {TEGRA_GPIO_PZ7, 0},
+	.arb_recovery = arb_lost_recovery,
 };
 
 static struct tegra_wm8994_platform_data star_audio_pdata = {
