@@ -377,8 +377,9 @@ int als_cmd(int cmd, int arg)
 			cam_on = gpio_get_value(CAM_EN_PIN);
 			D("cam_on = %d\n", cam_on);
 
-			if(!cam_on) {
+			if (!cam_on)
 #endif
+			{
 #if defined (LED_LIGHT_REMOVAL)
 				if(the_data.blink_on) {
 					ret = als_read_lux(&the_data.lux_blink);
@@ -421,9 +422,7 @@ int als_cmd(int cmd, int arg)
 						ABS_PRESSURE, the_data.lux);
 					input_sync(the_data.input_dev);
 				}
-#if defined (CAM_ON_CHECK)
 			}
-#endif
 			mod_timer(&the_data.timer, jiffies +
 					msecs_to_jiffies(the_data.polling));
 		break;
