@@ -153,7 +153,6 @@ obj-${CONFIG_MACH_STARTABLET}           += board-star-panel.o
 obj-${CONFIG_MACH_STARTABLET}           += board-star-sdhci.o
 obj-${CONFIG_MACH_STARTABLET}           += board-star-power.o
 obj-${CONFIG_MACH_STARTABLET}           += board-star-memory.o
-obj-y					+= pwm.o
 obj-$(CONFIG_STARTABLET_REBOOT_REASON)	+= nv_data.o
 
 obj-${CONFIG_MACH_CARDHU}               += board-cardhu.o
