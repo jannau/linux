@@ -1,103 +1,104 @@
 /*
- * linux/arch/arm/mach-pxa/pwm.c
+ * arch/arm/mach-tegra/pwm.c
  *
- * simple driver for PWM (Pulse Width Modulator) controller
+ * Tegra pulse-width-modulation controller driver
+ *
+ * Copyright (c) 2010, NVIDIA Corporation.
+ * Based on arch/arm/plat-mxc/pwm.c by Sascha Hauer <s.hauer@pengutronix.de>
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * 2008-02-13	initial version
- * 		eric miao <eric.miao@marvell.com>
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/clk.h>
-#include <linux/io.h>
 #include <linux/pwm.h>
+#include <linux/slab.h>
 
-#include <asm/div64.h>
-#include <mach/iomap.h>
-#include <mach/clk.h>
-#include <linux/delay.h>
-
-#include <linux/gpio.h> //for gpio test
-#include <mach/gpio-names.h> //gor gpio test
+#define PWM_ENABLE	(1 << 31)
+#define PWM_DUTY_WIDTH	8
+#define PWM_DUTY_SHIFT	16
+#define PWM_SCALE_WIDTH	13
+#define PWM_SCALE_SHIFT	0
 
 struct pwm_device {
 	struct list_head	node;
 	struct platform_device	*pdev;
 
-	const char	*label;
-	struct clk	*clk;
-	int		clk_enabled;
-	void __iomem	*mmio_base;
+	const char		*label;
+	struct clk		*clk;
 
-	unsigned int	use_count;
-	unsigned int	pwm_id;
+	int			clk_enb;
+	void __iomem		*mmio_base;
+
+	unsigned int		in_use;
+	unsigned int		id;
 };
+
+static DEFINE_MUTEX(pwm_lock);
+static LIST_HEAD(pwm_list);
+
+static inline int pwm_writel(struct pwm_device *pwm, unsigned long val)
+{
+	int rc;
+
+	rc = clk_enable(pwm->clk);
+	if (WARN_ON(rc))
+		return rc;
+	writel(val, pwm->mmio_base);
+	clk_disable(pwm->clk);
+	return 0;
+}
 
 int pwm_config(struct pwm_device *pwm, int duty_ns, int period_ns)
 {
-  	unsigned long long div_ll;
-    unsigned long reg_bak, dc, cur_rate, div;
-    unsigned long parent_cur_rate;
-	struct clk *parent;
-	if (pwm == NULL || period_ns == 0 || duty_ns > period_ns)
+	unsigned long long c;
+	unsigned long rate, hz;
+	u32 val = 0;
+
+	/* convert from duty_ns / period_ns to a fixed number of duty
+	 * ticks per (1 << PWM_DUTY_WIDTH) cycles. */
+	c = duty_ns * ((1 << PWM_DUTY_WIDTH) - 1);
+	do_div(c, period_ns);
+
+	val = (u32)c << PWM_DUTY_SHIFT;
+
+	/* compute the prescaler value for which (1 << PWM_DUTY_WIDTH)
+	 * cycles at the PWM clock rate will take period_ns nanoseconds. */
+	rate = clk_get_rate(pwm->clk) >> PWM_DUTY_WIDTH;
+	hz = 1000000000ul / period_ns;
+
+	rate = (rate + (hz / 2)) / hz;
+
+	if (rate >> PWM_SCALE_WIDTH)
 		return -EINVAL;
-    //printk("jh.chun  pwm_config  duty_ns is %d\n", duty_ns);  
-    //printk("jh.chun  pwm_config  period_ns is %d\n", period_ns);  	
+        /* Due to the PWM divider is zero-based, we need to minus 1 to get desired frequency*/
+	if (rate>0)
+	    rate--;
 
-   	parent=clk_get_parent(pwm->clk);
-	parent_cur_rate = clk_get_rate (parent);
-    //printk("jh.chun  pwm_config  parent_cur_rate is %d\n", parent_cur_rate);
-	clk_set_rate(pwm->clk,17000000);
-	cur_rate = clk_get_rate(pwm->clk);
+	val |= (rate << PWM_SCALE_SHIFT);
 
-    //printk("jh.chun  pwm_config  cur_rate is %d\n", cur_rate);   
-    cur_rate /= 256;
-	div_ll = (cur_rate/1000) * (period_ns/1000); //convert to khz and micro sec.
-    //printk("jh.chun  before div pwm_config  div_ll is %lld\n", div_ll);  
-	do_div(div_ll, 1000);
-     //printk("jh.chun  after div pwm_config  div_ll is %lld\n", div_ll);  
-    div = div_ll;
+	/* the struct clk may be shared across multiple PWM devices, so
+	 * only enable the PWM if this device has been enabled */
+	if (pwm->clk_enb)
+		val |= PWM_ENABLE;
 
-	if (div < 1)
-		div = 1;
-
-	if (div > ((1<<13)-1)){
-        printk("jh.chun  pwm_config  div is large\n");   
-		return -EINVAL;
-	}
-    //printk("jh.chun  pwm_config  div is %d\n", div);   
-
-    dc = (256*duty_ns)/period_ns;
-    //printk("jh.chun  pwm_config dc= %d \n", dc);
-
-    pwm_enable(pwm);
-    //pwm->pwm_id = 0;
-    reg_bak = readl(pwm->mmio_base+pwm->pwm_id*0x10);
-    //printk("jh.chun  read pwm reg : 0x%x\n",reg_bak);
-
-    reg_bak = ((1<<31))|((div/20) & 0x1fff)|((dc & 0x3fff)<<16);
-    //reg_bak = ((1<<31))|(1& 0x1fff)|((dc & 0x3fff)<<16); //for test
-    //printk("jh.chun  reg_bak before write : 0x%x\n",reg_bak);
-    gpio_free(TEGRA_GPIO_PU3);
-    writel(reg_bak, (pwm->mmio_base + pwm->pwm_id * 0x10));
-    //writel(reg_bak, (pwm->mmio_base + 0x10));
-    //ch.han GPIO test
-    //gpio_request(TEGRA_GPIO_PU3,"PWM_GPIO_TEST");
-    //gpio_direction_output(TEGRA_GPIO_PU3,1);
-    
-    reg_bak = readl(pwm->mmio_base+pwm->pwm_id*0x10);
-
-    //printk("jh.chun  reg_bak after write : 0x%x\n",reg_bak);
-
-	return 0;
+	return pwm_writel(pwm, val);
 }
 EXPORT_SYMBOL(pwm_config);
 
@@ -105,26 +106,35 @@ int pwm_enable(struct pwm_device *pwm)
 {
 	int rc = 0;
 
-	if (!pwm->clk_enabled) {
+	mutex_lock(&pwm_lock);
+	if (!pwm->clk_enb) {
 		rc = clk_enable(pwm->clk);
-		if (!rc)
-			pwm->clk_enabled = 1;
+		if (!rc) {
+			u32 val = readl(pwm->mmio_base);
+			writel(val | PWM_ENABLE, pwm->mmio_base);
+			pwm->clk_enb = 1;
+		}
 	}
+	mutex_unlock(&pwm_lock);
+
 	return rc;
 }
 EXPORT_SYMBOL(pwm_enable);
 
 void pwm_disable(struct pwm_device *pwm)
 {
-	if (pwm->clk_enabled) {
+	mutex_lock(&pwm_lock);
+	if (pwm->clk_enb) {
+		u32 val = readl(pwm->mmio_base);
+		writel(val & ~PWM_ENABLE, pwm->mmio_base);
 		clk_disable(pwm->clk);
-		pwm->clk_enabled = 0;
-	}
+		pwm->clk_enb = 0;
+	} else
+		dev_warn(&pwm->pdev->dev, "%s called on disabled PWM\n",
+			 __func__);
+	mutex_unlock(&pwm_lock);
 }
 EXPORT_SYMBOL(pwm_disable);
-
-static DEFINE_MUTEX(pwm_lock);
-static LIST_HEAD(pwm_list);
 
 struct pwm_device *pwm_request(int pwm_id, const char *label)
 {
@@ -134,25 +144,23 @@ struct pwm_device *pwm_request(int pwm_id, const char *label)
 	mutex_lock(&pwm_lock);
 
 	list_for_each_entry(pwm, &pwm_list, node) {
-		if (pwm->pwm_id == pwm_id) {
+		if (pwm->id == pwm_id) {
 			found = 1;
 			break;
 		}
 	}
 
-
 	if (found) {
-		if (pwm->use_count == 0) {
-			pwm->use_count++;
+		if (!pwm->in_use) {
+			pwm->in_use = 1;
 			pwm->label = label;
 		} else
 			pwm = ERR_PTR(-EBUSY);
 	} else
-	{
-        pr_alert("PWM request error\n");
 		pwm = ERR_PTR(-ENOENT);
-	}
+
 	mutex_unlock(&pwm_lock);
+
 	return pwm;
 }
 EXPORT_SYMBOL(pwm_request);
@@ -160,143 +168,129 @@ EXPORT_SYMBOL(pwm_request);
 void pwm_free(struct pwm_device *pwm)
 {
 	mutex_lock(&pwm_lock);
-
-	if (pwm->use_count) {
-		pwm->use_count--;
+	if (pwm->in_use) {
+		pwm->in_use = 0;
 		pwm->label = NULL;
 	} else
-		pr_warning("PWM device already freed\n");
+		dev_warn(&pwm->pdev->dev, "PWM device already freed\n");
 
 	mutex_unlock(&pwm_lock);
 }
 EXPORT_SYMBOL(pwm_free);
 
-static inline void __add_pwm(struct pwm_device *pwm)
+static int tegra_pwm_probe(struct platform_device *pdev)
 {
-	mutex_lock(&pwm_lock);
-	list_add_tail(&pwm->node, &pwm_list);
-	mutex_unlock(&pwm_lock);
-}
-
-static int __devinit pwm_probe(struct platform_device *pdev)
-{
-//	struct platform_device_id *id = platform_get_device_id(pdev);
-	struct pwm_device *pwm = NULL;
+	struct pwm_device *pwm;
 	struct resource *r;
-	int ret = 0;
+	int ret;
 
-
-	pwm = kzalloc(sizeof(struct pwm_device), GFP_KERNEL);
-	if (pwm == NULL) {
+	pwm = kzalloc(sizeof(*pwm), GFP_KERNEL);
+	if (!pwm) {
 		dev_err(&pdev->dev, "failed to allocate memory\n");
 		return -ENOMEM;
 	}
+	pwm->clk = clk_get(&pdev->dev, NULL);
 
-	
-//	pwm->clk = clk_get(&pdev->dev, NULL);
-    pwm->clk = clk_get_sys("pwm", NULL);
 	if (IS_ERR(pwm->clk)) {
 		ret = PTR_ERR(pwm->clk);
 		goto err_free;
-    }
-	pwm->clk_enabled = 0;
+	}
 
-	pwm->use_count = 0;
-	pwm->pwm_id = pdev->id;
+	pwm->clk_enb = 0;
+	pwm->in_use = 0;
+	pwm->id = pdev->id;
 	pwm->pdev = pdev;
-//    dev_err(&pdev->dev, "pwm_id = %d \n",pwm->pwm_id);
 
 	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (r == NULL) {
-		dev_err(&pdev->dev, "no memory resource defined\n");
+	if (!r) {
+		dev_err(&pdev->dev, "no memory resources defined\n");
 		ret = -ENODEV;
-		goto err_free_clk;
+		goto err_put_clk;
 	}
-//   dev_err(&pdev->dev, "resource %x\n", r->start);
 
 	r = request_mem_region(r->start, resource_size(r), pdev->name);
-	if (r == NULL) {
-		dev_err(&pdev->dev, "failed to request memory resource\n");
+	if (!r) {
+		dev_err(&pdev->dev, "failed to request memory\n");
 		ret = -EBUSY;
-		goto err_free_clk;
+		goto err_put_clk;
 	}
 
 	pwm->mmio_base = ioremap(r->start, resource_size(r));
-	if (pwm->mmio_base == NULL) {
-		dev_err(&pdev->dev, "failed to ioremap() registers\n");
+	if (!pwm->mmio_base) {
+		dev_err(&pdev->dev, "failed to ioremap() region\n");
 		ret = -ENODEV;
 		goto err_free_mem;
 	}
 
-	__add_pwm(pwm);
-
 	platform_set_drvdata(pdev, pwm);
 
-
-	tegra_periph_reset_assert(pwm->clk);
-	msleep(1);
-	tegra_periph_reset_deassert(pwm->clk);
-        msleep(1);
+	mutex_lock(&pwm_lock);
+	list_add_tail(&pwm->node, &pwm_list);
+	mutex_unlock(&pwm_lock);
 
 	return 0;
 
 err_free_mem:
 	release_mem_region(r->start, resource_size(r));
-err_free_clk:
+err_put_clk:
 	clk_put(pwm->clk);
 err_free:
 	kfree(pwm);
 	return ret;
 }
 
-static int __devexit pwm_remove(struct platform_device *pdev)
+static int __devexit tegra_pwm_remove(struct platform_device *pdev)
 {
-	struct pwm_device *pwm;
+	struct pwm_device *pwm = platform_get_drvdata(pdev);
 	struct resource *r;
+	int rc;
 
-	pwm = platform_get_drvdata(pdev);
-	if (pwm == NULL)
+	if (WARN_ON(!pwm))
 		return -ENODEV;
 
+	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+
 	mutex_lock(&pwm_lock);
+	if (pwm->in_use) {
+		mutex_unlock(&pwm_lock);
+		return -EBUSY;
+	}
 	list_del(&pwm->node);
 	mutex_unlock(&pwm_lock);
 
+	rc = pwm_writel(pwm, 0);
+
 	iounmap(pwm->mmio_base);
-
-	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	//WBT #196339
-	if (r == NULL) {
-		dev_err(&pdev->dev, "failed to request memory resource\n");
-		return -ENODEV;
-	}
-
 	release_mem_region(r->start, resource_size(r));
 
+	if (pwm->clk_enb)
+		clk_disable(pwm->clk);
+
 	clk_put(pwm->clk);
+
 	kfree(pwm);
-	return 0;
+	return rc;
 }
 
-static struct platform_driver pwm_driver = {
+static struct platform_driver tegra_pwm_driver = {
 	.driver		= {
-		.name	= "tegra-pwm",
-		.owner	= THIS_MODULE,
+		.name	= "tegra_pwm",
 	},
-	.probe		= pwm_probe,
-	.remove		= __devexit_p(pwm_remove),
+	.probe		= tegra_pwm_probe,
+	.remove		= __devexit_p(tegra_pwm_remove),
 };
 
-static int __init pwm_init(void)
+static int __init tegra_pwm_init(void)
 {
-	return platform_driver_register(&pwm_driver);
+	return platform_driver_register(&tegra_pwm_driver);
 }
-arch_initcall(pwm_init);
+subsys_initcall(tegra_pwm_init);
 
-static void __exit pwm_exit(void)
+static void __exit tegra_pwm_exit(void)
 {
-	platform_driver_unregister(&pwm_driver);
+	platform_driver_unregister(&tegra_pwm_driver);
 }
-module_exit(pwm_exit);
+module_exit(tegra_pwm_exit);
 
 MODULE_LICENSE("GPL v2");
+MODULE_AUTHOR("NVIDIA Corporation");
