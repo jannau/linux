@@ -538,9 +538,11 @@ static struct snd_soc_ops tegra_wm8994_bt_sco_ops = {
 	.hw_free	= tegra_hw_free,
 };
 
+#ifdef CONFIG_SWITCH
 static struct switch_dev tegra_wm8994_headset_switch = {
 	.name = "h2w",
 };
+#endif
 
 static struct snd_soc_dai_link tegra_wm8994_dai[] = {
 	{
