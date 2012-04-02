@@ -606,6 +606,10 @@ static void star_usb_init(void)
 
 	tegra_usb_phy_pdata[0].vbus_gpio = gpio_usb_host_en;
 
+	tegra_gpio_enable(TEGRA_GPIO_PQ6);
+	gpio_request_one(TEGRA_GPIO_PQ6, GPIOF_IN, "usb1_detect_n");
+	tegra_usb_phy_pdata[0].vbus_irq = gpio_to_irq(TEGRA_GPIO_PQ6);
+
 	tegra_usb_phy_init(tegra_usb_phy_pdata, ARRAY_SIZE(tegra_usb_phy_pdata));
 
 #ifdef CONFIG_USB_TEGRA_OTG

@@ -2450,7 +2450,7 @@ struct tegra_usb_phy *tegra_usb_phy_open(int instance, void __iomem *regs,
 	}
 
 	if (instance == 0 && usb_phy_data[0].vbus_irq) {
-		err = request_threaded_irq(usb_phy_data[0].vbus_irq, NULL, usb_phy_vbus_irq_thr, IRQF_SHARED,
+		err = request_threaded_irq(usb_phy_data[0].vbus_irq, NULL, usb_phy_vbus_irq_thr, IRQF_TRIGGER_FALLING | IRQF_TRIGGER_RISING | IRQF_SHARED,
 			"usb_phy_vbus", phy);
 		if (err) {
 			pr_err("Failed to register IRQ\n");
