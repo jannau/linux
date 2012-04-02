@@ -228,7 +228,20 @@ static struct i2c_board_info __initdata star_regulators[] = {
 #define STAR_WAKE_BT_HOST_WAKEUP    TEGRA_WAKE_GPIO_PC7
 #define STAR_WAKE_CPU_RTC_ALARM TEGRA_WAKE_RTC_ALARM
 
-static struct tegra_suspend_platform_data star_suspend = {
+
+static void star_board_suspend(int lp_state, enum suspend_stage stg)
+{
+	if ((lp_state == TEGRA_SUSPEND_LP1) && (stg == TEGRA_SUSPEND_BEFORE_CPU))
+		tegra_console_uart_suspend();
+}
+
+static void star_board_resume(int lp_state, enum resume_stage stg)
+{
+	if ((lp_state == TEGRA_SUSPEND_LP1) && (stg == TEGRA_RESUME_AFTER_CPU))
+		tegra_console_uart_resume();
+}
+
+static struct tegra_suspend_platform_data star_suspend_pdata = {
 	/*
 	 * Check power on time and crystal oscillator start time
 	 * for appropriate settings.
@@ -241,6 +254,10 @@ static struct tegra_suspend_platform_data star_suspend = {
        /* .separate_req = true, */
        .corereq_high = false,
        .sysclkreq_high = true,
+
+       .board_suspend = star_board_suspend,
+       .board_resume = star_board_resume,
+
        /* .wake_enb = STAR_WAKE_POWER_KEY_HIGH */
        /*         | STAR_WAKE_WLAN_HOST_WAKEUP */
        /*         | STAR_WAKE_AC_DET_ANY | STAR_WAKE_USB_DET_ANY | STAR_WAKE_CPU_RTC_ALARM, */
@@ -259,13 +276,13 @@ int __init star_regulator_init(void)
 	minor = (readl(chip_id) >> 16) & 0xf;
 	/* A03 (but not A03p) chips do not support LP0 (<=Rev.C) */
 	if (minor == 3 && !(tegra_spare_fuse(18) || tegra_spare_fuse(19)))
-		star_suspend.suspend_mode = TEGRA_SUSPEND_LP1;
+		star_suspend_pdata.suspend_mode = TEGRA_SUSPEND_LP1;
 
 	/* configure the power management controller to trigger PMU
 	 * interrupts when low */
 	pmc_ctrl = readl(pmc + PMC_CTRL);
 	writel(pmc_ctrl | PMC_CTRL_INTR_LOW, pmc + PMC_CTRL);
 	i2c_register_board_info(4, star_regulators, 1);
-	tegra_init_suspend(&star_suspend);
+	tegra_init_suspend(&star_suspend_pdata);
 	return 0;
 }
