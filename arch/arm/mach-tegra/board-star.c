@@ -124,24 +124,16 @@ static struct tegra_ulpi_config ulpi_phy_config = {
 };
 static __initdata struct tegra_clk_init_table star_clk_init_table[] = {
 	/* name		parent		rate		enabled */
-	{ "uartb",	"pll_p",	216000000,	true},
-	{ "pll_m",	"clk_m",	600000000,	true},
-	{ "uartc",      "pll_m",        600000000,      false},
-	{ "sdmmc4",	"pll_p",	52000000,	false},
 	//clock setting for spi1 and spi2 port
 	{ "sbc1",	"pll_p",	96000000,	true},
 	//{ "sbc2",	"pll_p",	96000000,	true}, //disables spi secondary port
 	//clock setting for spi1 and spi2 port
-	{ "blink",	"clk_32k",	32768,		true},
-	{ "pll_a",	NULL,		11289600,	true},
-	{ "pll_a_out0",	NULL,		11289600,	true},
-	{ "i2s1",	"pll_a_out0",	11289600,	true},
-	{ "i2s2",	"pll_a_out0",	11289600,	true},
-	{ "audio",	"pll_a_out0",	11289600,	true},
-	{ "audio_2x",	"audio",	22579200,	true},
-	{ "spdif_out",	"pll_a_out0",	5644800,	false},
-	{ "clk_dev1",	NULL,		26000000,	true},
+	{ "blink",	"clk_32k",	32768,		false},
+	{ "pll_p_out4",	"pll_p",	24000000,	true },
 	{ "pwm",	"clk_32k",	32768,		false},
+	{ "i2s1",	"pll_a_out0",	0,		false},
+	{ "i2s2",	"pll_a_out0",	0,		false},
+	{ "spdif_out",	"pll_a_out0",	0,		false},
 	{ NULL,		NULL,		0,		0},
 };
 
