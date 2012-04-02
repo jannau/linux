@@ -257,10 +257,30 @@ static const struct snd_kcontrol_new tegra_wm8994_default_controls[] = {
 static int tegra_codec_init(struct snd_soc_codec *codec)
 {
 	struct snd_soc_card *card = codec->card;
+	struct snd_soc_dapm_context *dapm = &codec->dapm;
 	struct tegra_wm8994 *machine = snd_soc_card_get_drvdata(card);
 	int ret = 0;
 
 	machine->codec = codec;
+
+	snd_soc_add_controls(codec, tegra_wm8994_default_controls,
+			     ARRAY_SIZE(tegra_wm8994_default_controls));
+
+	/* add startablet specific widgets */
+	snd_soc_dapm_new_controls(dapm, tegra_wm8994_default_dapm_widgets,
+				  ARRAY_SIZE(tegra_wm8994_default_dapm_widgets));
+
+	/* set up startablet specific audio routes */
+	snd_soc_dapm_add_routes(dapm, startablet_audio_map,
+				ARRAY_SIZE(startablet_audio_map));
+
+	/* set endpoints to not connected */
+	snd_soc_dapm_nc_pin(dapm, "IN2LP:VXRN");
+	snd_soc_dapm_nc_pin(dapm, "IN2RP:VXRP");
+	snd_soc_dapm_nc_pin(dapm, "LINEOUT1N");
+	snd_soc_dapm_nc_pin(dapm, "LINEOUT1P");
+	snd_soc_dapm_nc_pin(dapm, "LINEOUT2N");
+	snd_soc_dapm_nc_pin(dapm, "LINEOUT2P");
 
 	/* Jack detection API stuff */
 	ret = snd_soc_jack_new(codec, "Headset Jack",
@@ -616,15 +636,6 @@ static __devinit int tegra_wm8994_driver_probe(struct platform_device *pdev)
 	card->dev = &pdev->dev;
 	platform_set_drvdata(pdev, card);
 	snd_soc_card_set_drvdata(card, machine);
-
-	card->controls = tegra_wm8994_default_controls;
-	card->num_controls = ARRAY_SIZE(tegra_wm8994_default_controls);
-
-	card->dapm_widgets = tegra_wm8994_default_dapm_widgets;
-	card->num_dapm_widgets = ARRAY_SIZE(tegra_wm8994_default_dapm_widgets);
-
-	card->dapm_routes = startablet_audio_map;
-	card->num_dapm_routes = ARRAY_SIZE(startablet_audio_map);
 
 	ret = snd_soc_register_card(card);
 	if (ret) {
