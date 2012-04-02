@@ -59,9 +59,6 @@
 
 #include "../codecs/wm8994.h"
 
-extern struct snd_soc_dai tegra_i2s_dai[];
-extern struct snd_soc_platform tegra_soc_platform;
-
 static struct snd_soc_jack hs_jack;
 
 static int tegra_jack_func;
