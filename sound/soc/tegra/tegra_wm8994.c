@@ -61,10 +61,6 @@
 
 static struct snd_soc_jack hs_jack;
 
-static int tegra_jack_func;
-static int tegra_spk_func;
-static int tegra_das_func;
-
 #define TEGRA_HP		0
 #define TEGRA_MIC		1
 #define TEGRA_LINE		2
@@ -91,6 +87,8 @@ struct tegra_wm8994 {
 	int jack_status;
 #endif
 	enum snd_soc_bias_level bias_level;
+	int jack_func;
+	int spk_func;
 };
 
 /* Headset jack detection DAPM pins */
@@ -107,8 +105,11 @@ static struct snd_soc_jack_pin hs_jack_pins[] = {
 
 static void tegra_ext_control(struct snd_soc_codec *codec)
 {
+	struct snd_soc_card *card = codec->card;
+	struct tegra_wm8994 *machine = snd_soc_card_get_drvdata(card);
+
 	/* set up jack connection */
-	switch (tegra_jack_func) {
+	switch (machine->jack_func) {
 	case TEGRA_HP:
 		/* set = unmute headphone */
 		snd_soc_dapm_disable_pin(&codec->dapm, "Mic Jack");
@@ -147,7 +148,7 @@ static void tegra_ext_control(struct snd_soc_codec *codec)
 		break;
 	}
 
-	if (tegra_spk_func == TEGRA_SPK_ON)
+	if (machine->spk_func == TEGRA_SPK_ON)
 		snd_soc_dapm_enable_pin(&codec->dapm, "Ext Spk");
 	else
 		snd_soc_dapm_disable_pin(&codec->dapm, "Ext Spk");
@@ -158,7 +159,11 @@ static void tegra_ext_control(struct snd_soc_codec *codec)
 static int tegra_get_jack(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
-	ucontrol->value.integer.value[0] = tegra_jack_func;
+	struct snd_soc_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct snd_soc_card *card = codec->card;
+	struct tegra_wm8994 *machine = snd_soc_card_get_drvdata(card);
+
+	ucontrol->value.integer.value[0] = machine->jack_func;
 	return 0;
 }
 
@@ -166,11 +171,13 @@ static int tegra_set_jack(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct snd_soc_card *card = codec->card;
+	struct tegra_wm8994 *machine = snd_soc_card_get_drvdata(card);
 
-	if (tegra_jack_func == ucontrol->value.integer.value[0])
+	if (machine->jack_func == ucontrol->value.integer.value[0])
 		return 0;
 
-	tegra_jack_func = ucontrol->value.integer.value[0];
+	machine->jack_func = ucontrol->value.integer.value[0];
 	tegra_ext_control(codec);
 	return 1;
 }
@@ -178,7 +185,11 @@ static int tegra_set_jack(struct snd_kcontrol *kcontrol,
 static int tegra_get_spk(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
-	ucontrol->value.integer.value[0] = tegra_spk_func;
+	struct snd_soc_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct snd_soc_card *card = codec->card;
+	struct tegra_wm8994 *machine = snd_soc_card_get_drvdata(card);
+
+	ucontrol->value.integer.value[0] = machine->spk_func;
 	return 0;
 }
 
@@ -186,34 +197,17 @@ static int tegra_set_spk(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_codec *codec =  snd_kcontrol_chip(kcontrol);
+	struct snd_soc_card *card = codec->card;
+	struct tegra_wm8994 *machine = snd_soc_card_get_drvdata(card);
 
-	if (tegra_spk_func == ucontrol->value.integer.value[0])
+	if (machine->spk_func == ucontrol->value.integer.value[0])
 		return 0;
 
-	tegra_spk_func = ucontrol->value.integer.value[0];
+	machine->spk_func = ucontrol->value.integer.value[0];
 	tegra_ext_control(codec);
 	return 1;
 }
 
-static int tegra_get_das(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	ucontrol->value.integer.value[0] = tegra_das_func;
-	return 0;
-}
-
-static int tegra_set_das(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_codec *codec =  snd_kcontrol_chip(kcontrol);
-
-	if (tegra_das_func == ucontrol->value.integer.value[0])
-		return 0;
-
-	tegra_das_func = ucontrol->value.integer.value[0];
-	tegra_ext_control(codec);
-	return 1;
-}
 
 /*tegra machine dapm widgets */
 static const struct snd_soc_dapm_widget tegra_wm8994_default_dapm_widgets[] = {
@@ -247,11 +241,10 @@ static const struct snd_soc_dapm_route startablet_audio_map[] = {
 static const char *jack_function[] = {"Headphone", "Mic", "Line", "Headset",
 					"Off", "On"};
 static const char *spk_function[] = {"On", "Off"};
-static const char *das_function[] = {"HiFi", "Bluetooth"};
+
 static const struct soc_enum tegra_enum[] = {
 	SOC_ENUM_SINGLE_EXT(6, jack_function),
 	SOC_ENUM_SINGLE_EXT(2, spk_function),
-	SOC_ENUM_SINGLE_EXT(2, das_function),
 };
 
 static const struct snd_kcontrol_new tegra_wm8994_default_controls[] = {
@@ -259,8 +252,6 @@ static const struct snd_kcontrol_new tegra_wm8994_default_controls[] = {
 			tegra_set_jack),
 	SOC_ENUM_EXT("Speaker Function", tegra_enum[1], tegra_get_spk,
 			tegra_set_spk),
-	SOC_ENUM_EXT("Digital Audio Switch", tegra_enum[2], tegra_get_das,
-			tegra_set_das),
 };
 
 static int tegra_codec_init(struct snd_soc_codec *codec)
@@ -287,9 +278,8 @@ static int tegra_codec_init(struct snd_soc_codec *codec)
 	}
 
 	/* Default to HP output */
-	tegra_jack_func = TEGRA_HP;
-	tegra_spk_func = TEGRA_SPK_ON;
-	tegra_das_func = TEGRA_DAS_HIFI;
+	machine->jack_func = TEGRA_HP;
+	machine->spk_func  = TEGRA_SPK_ON;
 	tegra_ext_control(codec);
 	snd_soc_dapm_sync(&codec->dapm);
 
