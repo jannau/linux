@@ -1,4 +1,5 @@
 config WIRELESS_EXT
+	def_bool y
 	bool
 
 config WEXT_CORE
