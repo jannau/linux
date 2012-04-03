@@ -71,8 +71,8 @@ static struct regulator_consumer_supply tps658621_ldo4_supply[] = {
 	REGULATOR_SUPPLY("avdd_osc", NULL),
 };
 static struct regulator_consumer_supply tps658621_ldo5_supply[] = {
-//	REGULATOR_SUPPLY("vmmc", "sdhci-tegra.0"),	// emmc
 	REGULATOR_SUPPLY("vdd_ldo5", NULL),
+	REGULATOR_SUPPLY("vmmc", "sdhci-tegra.3"),	// emmc
 };
 static struct regulator_consumer_supply tps658621_ldo6_supply[] = {
 	REGULATOR_SUPPLY("vdd_ldo6", NULL),
