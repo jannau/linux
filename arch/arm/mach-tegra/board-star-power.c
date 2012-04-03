@@ -127,7 +127,7 @@ static struct regulator_consumer_supply tps658621_lds_3v3_always_supply[] = {
 };
 #endif
 
-#define REGULATOR_INIT(_id, _minmv, _maxmv)				\
+#define REGULATOR_INIT(_id, _minmv, _maxmv, on)				\
 	{								\
 		.constraints = {					\
 			.min_uV = (_minmv)*1000,			\
@@ -137,26 +137,31 @@ static struct regulator_consumer_supply tps658621_lds_3v3_always_supply[] = {
 			.valid_ops_mask = (REGULATOR_CHANGE_MODE |	\
 					   REGULATOR_CHANGE_STATUS |	\
 					   REGULATOR_CHANGE_VOLTAGE),	\
+			.always_on = on,				\
+			.apply_uV = 1,					\
 		},							\
 		.num_consumer_supplies = ARRAY_SIZE(tps658621_##_id##_supply),\
 		.consumer_supplies = tps658621_##_id##_supply,		\
 	}
 
-static struct regulator_init_data sm0_data = REGULATOR_INIT(sm0, 725, 1500);
-static struct regulator_init_data sm1_data = REGULATOR_INIT(sm1, 725, 1500);
-static struct regulator_init_data sm2_data = REGULATOR_INIT(sm2, 3000, 4550);
-static struct regulator_init_data ldo0_data = REGULATOR_INIT(ldo0, 1250, 3300);
-static struct regulator_init_data ldo1_data = REGULATOR_INIT(ldo1, 725, 1500);
-static struct regulator_init_data ldo2_data = REGULATOR_INIT(ldo2, 725, 1500);
-static struct regulator_init_data ldo3_data = REGULATOR_INIT(ldo3, 1250, 3300);
-static struct regulator_init_data ldo4_data = REGULATOR_INIT(ldo4, 1700, 2475);
-static struct regulator_init_data ldo5_data = REGULATOR_INIT(ldo5, 1250, 3300);
-static struct regulator_init_data ldo6_data = REGULATOR_INIT(ldo6, 1250, 3300);
-static struct regulator_init_data ldo7_data = REGULATOR_INIT(ldo7, 1250, 3300);
-static struct regulator_init_data ldo8_data = REGULATOR_INIT(ldo8, 1250, 3300);
-static struct regulator_init_data ldo9_data = REGULATOR_INIT(ldo9, 1250, 3300);
-static struct regulator_init_data soc_off_data = REGULATOR_INIT(soc_off, 1250, 3300);
-static struct regulator_init_data dummy_data = REGULATOR_INIT(dummy, 1250, 5000);
+#define ON	1
+#define OFF	0
+
+static struct regulator_init_data sm0_data	= REGULATOR_INIT(sm0,      725, 1500, ON);
+static struct regulator_init_data sm1_data	= REGULATOR_INIT(sm1,      725, 1500, ON);
+static struct regulator_init_data sm2_data	= REGULATOR_INIT(sm2,     3000, 4550, ON);
+static struct regulator_init_data ldo0_data	= REGULATOR_INIT(ldo0,    1250, 3300, OFF);
+static struct regulator_init_data ldo1_data	= REGULATOR_INIT(ldo1,     725, 1500, ON);
+static struct regulator_init_data ldo2_data	= REGULATOR_INIT(ldo2,     725, 1500, OFF);
+static struct regulator_init_data ldo3_data	= REGULATOR_INIT(ldo3,    1250, 3300, ON);
+static struct regulator_init_data ldo4_data	= REGULATOR_INIT(ldo4,    1700, 2475, ON);
+static struct regulator_init_data ldo5_data	= REGULATOR_INIT(ldo5,    1250, 3300, ON);
+static struct regulator_init_data ldo6_data	= REGULATOR_INIT(ldo6,    1250, 3300, OFF);
+static struct regulator_init_data ldo7_data	= REGULATOR_INIT(ldo7,    1250, 3300, OFF);
+static struct regulator_init_data ldo8_data	= REGULATOR_INIT(ldo8,    1250, 3300, OFF);
+static struct regulator_init_data ldo9_data	= REGULATOR_INIT(ldo9,    1250, 3300, ON);
+static struct regulator_init_data soc_off_data	= REGULATOR_INIT(soc_off, 1250, 3300, OFF);
+static struct regulator_init_data dummy_data	= REGULATOR_INIT(dummy,   1250, 5000, ON);
 #ifdef  LGE_LOAD_SWITCH
 static struct regulator_init_data lds_usb_host_data = REGULATOR_INIT(lds_usb_host, 5000, 5000);
 static struct regulator_init_data lds_usb3_data = REGULATOR_INIT(lds_usb3, 5000, 5000);
@@ -166,6 +171,9 @@ static struct regulator_init_data lds_gyro_data = REGULATOR_INIT(lds_gyro, 1800,
 static struct regulator_init_data lds_5v0_data = REGULATOR_INIT(lds_5v0, 5000, 5000);
 static struct regulator_init_data lds_3v3_always_data = REGULATOR_INIT(lds_3v3_always, 3300, 3300);
 #endif
+
+#undef ON
+#undef OFF
 
 static struct tps6586x_rtc_platform_data rtc_data = {
 	.irq = TEGRA_NR_IRQS + TPS6586X_INT_RTC_ALM1,
