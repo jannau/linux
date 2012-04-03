@@ -40,8 +40,6 @@
 #define STARTABLET_WLAN_PWR1	TEGRA_GPIO_PQ5
 #define STARTABLET_WLAN_PWR2	TEGRA_GPIO_PU2
 
-#define STARTABLET_WLAN_RST	TEGRA_GPIO_PP0
-
 #define STARTABLET_WLAN_WOW	TEGRA_GPIO_PY6
 
 static void (*wifi_status_cb)(int card_present, void *dev_id);
@@ -223,10 +221,6 @@ static int __init startablet_wifi_init(void)
 	gpio_request(power_gpio, "wlan_power");
 	tegra_gpio_enable(power_gpio);
 	gpio_direction_output(power_gpio, 0);
-
-	gpio_request(STARTABLET_WLAN_RST, "wlan_rst");
-	tegra_gpio_enable(STARTABLET_WLAN_RST);
-	gpio_direction_output(STARTABLET_WLAN_RST, 0);
 
 	/* gpio_request(STARTABLET_WLAN_WOW, "bcmsdh_sdmmc"); */
 	/* tegra_gpio_enable(STARTABLET_WLAN_WOW); */
