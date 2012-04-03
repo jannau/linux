@@ -46,38 +46,48 @@ static struct regulator_consumer_supply tps658621_sm2_supply[] = {
 	REGULATOR_SUPPLY("vdd_sm2", NULL),
 };
 static struct regulator_consumer_supply tps658621_ldo0_supply[] = {
+	REGULATOR_SUPPLY("vdd_ldo0", NULL),
 	REGULATOR_SUPPLY("bcm", NULL),          // EVB only
 	REGULATOR_SUPPLY("touch_key", NULL),    // Rev.A/A1(B)
 	REGULATOR_SUPPLY("touch_panel", NULL),  // Rev.C
 	REGULATOR_SUPPLY("sensors", NULL),      // Rev.E/F (touch, ambient, accel, compass, gyro)
 };
 static struct regulator_consumer_supply tps658621_ldo1_supply[] = {
+	REGULATOR_SUPPLY("vdd_ldo1", NULL),
 	REGULATOR_SUPPLY("avdd_pll", NULL),
 };
 static struct regulator_consumer_supply tps658621_ldo2_supply[] = {
+	REGULATOR_SUPPLY("vdd_ldo2", NULL),
 	REGULATOR_SUPPLY("vdd_rtc", NULL),
         REGULATOR_SUPPLY("vdd_aon", NULL),
 };
 static struct regulator_consumer_supply tps658621_ldo3_supply[] = {
+	REGULATOR_SUPPLY("vdd_ldo3", NULL),
 	REGULATOR_SUPPLY("avdd_usb", NULL),
 	REGULATOR_SUPPLY("avdd_usb_pll", NULL),
 };
 static struct regulator_consumer_supply tps658621_ldo4_supply[] = {
+	REGULATOR_SUPPLY("vdd_ldo4", NULL),
 	REGULATOR_SUPPLY("avdd_osc", NULL),
 };
 static struct regulator_consumer_supply tps658621_ldo5_supply[] = {
 //	REGULATOR_SUPPLY("vmmc", "sdhci-tegra.0"),	// emmc
+	REGULATOR_SUPPLY("vdd_ldo5", NULL),
 };
 static struct regulator_consumer_supply tps658621_ldo6_supply[] = {
+	REGULATOR_SUPPLY("vdd_ldo6", NULL),
 	REGULATOR_SUPPLY("vdd_fuse", NULL),
 };
 static struct regulator_consumer_supply tps658621_ldo7_supply[] = {
+	REGULATOR_SUPPLY("vdd_ldo7", NULL),
 	REGULATOR_SUPPLY("avdd_hdmi", NULL),
 };
 static struct regulator_consumer_supply tps658621_ldo8_supply[] = {
+	REGULATOR_SUPPLY("vdd_ldo8", NULL),
 	REGULATOR_SUPPLY("avdd_hdmi_pll", NULL),
 };
 static struct regulator_consumer_supply tps658621_ldo9_supply[] = {
+	REGULATOR_SUPPLY("vdd_ldo9", NULL),
 	REGULATOR_SUPPLY("vdd_ddr_rx", NULL),
 };
 static struct regulator_consumer_supply tps658621_soc_off_supply[] = {
