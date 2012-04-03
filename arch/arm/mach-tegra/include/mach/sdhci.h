@@ -29,7 +29,6 @@ struct tegra_sdhci_platform_data {
 	unsigned int max_clk_limit;
 	unsigned int tap_delay;
 	struct mmc_platform_data mmc_data;
-	int is_always_on;
 };
 
 #endif
