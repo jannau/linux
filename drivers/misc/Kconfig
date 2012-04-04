@@ -569,7 +569,7 @@ source "drivers/misc/iwmc3200top/Kconfig"
 source "drivers/misc/ti-st/Kconfig"
 source "drivers/misc/lis3lv02d/Kconfig"
 source "drivers/misc/carma/Kconfig"
-source "drivers/misc/inv_mpu/Kconfig"
+source "drivers/misc/mpu3050.lge/Kconfig"
 source "drivers/misc/tegra-baseband/Kconfig"
 
 endif # MISC_DEVICES
