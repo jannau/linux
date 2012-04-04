@@ -5,7 +5,6 @@
 #include <mach/hardware.h>
 
 #include <linux/mpu.h>
-#include <linux/mpu3050.h>
 
 #include "gpio-names.h"
 /*
@@ -224,7 +223,7 @@ struct platform_device tegra_displaytest =
 #define MPU_COMPASS_BUS_NUM	1
 #define MPU_COMPASS_IRQ_GPIO	TEGRA_GPIO_PN5
 
-static struct mpu_platform_data mpu3050_data = {
+static struct mpu3050_platform_data mpu3050_data = {
 	.int_config  = 0x10,
 	.orientation = {
 		1, 0, 0,
@@ -232,29 +231,27 @@ static struct mpu_platform_data mpu3050_data = {
 		0, 0, 1
 	},
 	.level_shifter = 1,
-};
-
-static struct ext_slave_platform_data mpu_accel_data = {
-	.address		= STAR_I2C_DEVICE_ADDR_ACCELEROMETER,
-	.irq			= 0,
-	.adapt_num		= MPU_ACCEL_BUS_NUM,
-	.bus			= EXT_SLAVE_BUS_SECONDARY,
-	.orientation		= {
-		 0, 1, 0,
-		-1, 0, 0,
-		 0, 0, 1
+	.accel = {
+		.get_slave_descr	= lis331dlh_get_slave_descr,
+		.adapt_num		= 1,  //gen2
+		.bus			= EXT_SLAVE_BUS_SECONDARY,
+		.address		= 0x19,
+		.orientation		= {
+			 0, 1, 0,
+			-1, 0, 0,
+			 0, 0, 1
+		},
 	},
-};
-
-static struct ext_slave_platform_data mpu_compass_data = {
-	.address		= STAR_I2C_DEVICE_ADDR_COMPASS,
-	.irq			= 0,
-	.adapt_num		= MPU_COMPASS_BUS_NUM,
-	.bus			= EXT_SLAVE_BUS_PRIMARY,
-	.orientation		= {
-		 0, -1,  0,
-		-1,  0,  0,
-		 0,  0, -1
+	.compass = {
+		.get_slave_descr	= ami304_get_slave_descr,
+		.adapt_num		= 1,                    //bus number 3 on ventana
+		.bus			= EXT_SLAVE_BUS_PRIMARY,
+		.address		= 0x0E,
+		.orientation		= {
+			 0, -1,  0,
+			-1,  0,  0,
+			 0,  0, -1
+		},
 	},
 };
 
@@ -298,13 +295,6 @@ static struct i2c_board_info __initdata star_i2c_bus2_devices_info[] = {
 		.platform_data = &mpu3050_data,
 	},
 	{
-		I2C_BOARD_INFO("lis331dlh", STAR_I2C_DEVICE_ADDR_ACCELEROMETER),
-#if     MPU_ACCEL_IRQ_GPIO
-		.irq = TEGRA_GPIO_TO_IRQ(MPU_ACCEL_IRQ_GPIO),
-#endif
-		.platform_data = &mpu_accel_data,
-	},
-	{
 		I2C_BOARD_INFO("bh1721_als", STAR_I2C_DEVICE_ADDR_ALS),
 	},
 };
@@ -330,13 +320,6 @@ static struct i2c_board_info __initdata star_i2c_bus3_devices_info[] = {
 
 //I2C4(PWR_I2C) device board information
 static struct i2c_board_info __initdata star_i2c_bus4_devices_info[] = {
-	{
-		I2C_BOARD_INFO("ami304", STAR_I2C_DEVICE_ADDR_COMPASS),
-#if     MPU_COMPASS_IRQ_GPIO
-                .irq = TEGRA_GPIO_TO_IRQ(MPU_COMPASS_IRQ_GPIO),
-#endif
-                .platform_data = &mpu_compass_data,
-        },
 	{
 		I2C_BOARD_INFO("star_battery", STAR_I2C_DEVICE_ADDR_FUEL_GAUGING),
 	},
