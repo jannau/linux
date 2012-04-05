@@ -45,13 +45,6 @@
 
 #include <mach/dma.h>
 #include <mach/clk.h>
-// 2010.08.20 soonhee.hong@lge.com For Bluetooth Low Power Mode Start
-// For Bluetooth Low Power Mode
-#include <mach/bcm_bt_lpm.h>
-// 2010.08.20 soonhee.hong@lge.com For Bluetooth Low Power Mode End
-// For Bluetooth Low Power Mode
-
-//#include <mach/clk.h>
 
 #define TX_EMPTY_STATUS (UART_LSR_TEMT | UART_LSR_THRE)
 
@@ -264,16 +257,6 @@ static void tegra_start_tx(struct uart_port *u)
 {
 	struct tegra_uart_port *t;
 	struct circ_buf *xmit;
-
-	// 2010.08.20 soonhee.hong@lge.com For Bluetooth Low Power Mode Start
-	// For Bluetooth Low Power Mode
-	if(u->line == 2)
-	{
-		//printk(KERN_NOTICE "+++++ %s %d invoke bt_lpm_exit_lpm_locked() \n", __func__, __LINE__);
-		bcm_bt_lpm_exit_lpm_locked(u);
-	}
-	// For Bluetooth Low Power Mode
-	// 2010.08.20 soonhee.hong@lge.com For Bluetooth Low Power Mode End
 
 	t = container_of(u, struct tegra_uart_port, uport);
 	xmit = &u->state->xmit;
@@ -644,7 +627,6 @@ static void tegra_stop_rx(struct uart_port *u)
 
 static void tegra_uart_hw_deinit(struct tegra_uart_port *t)
 {
-	unsigned char fcr;
 	unsigned long flags;
 	int retry = 0;
 	unsigned long char_time = DIV_ROUND_UP(10000000, t->baud);
@@ -687,11 +669,7 @@ static void tegra_uart_hw_deinit(struct tegra_uart_port *t)
 	spin_lock_irqsave(&t->uport.lock, flags);
 
 	/* Reset the Rx and Tx FIFOs */
-	fcr = t->fcr_shadow;
-	fcr |= UART_FCR_CLEAR_XMIT | UART_FCR_CLEAR_RCVR;
-	uart_writeb(t, fcr, UART_FCR);
-
-	udelay(200);
+	tegra_fifo_reset(t, UART_FCR_CLEAR_XMIT | UART_FCR_CLEAR_RCVR);
 
 	t->baud = 0;
 	t->uart_state = TEGRA_UART_CLOSED;
@@ -722,7 +700,6 @@ static void tegra_uart_free_rx_dma(struct tegra_uart_port *t)
 
 static int tegra_uart_hw_init(struct tegra_uart_port *t)
 {
-	unsigned char fcr;
 	unsigned char ier;
 
 	dev_vdbg(t->uport.dev, "+tegra_uart_hw_init\n");
@@ -742,20 +719,6 @@ static int tegra_uart_hw_init(struct tegra_uart_port *t)
 	udelay(100);
 
 	t->rx_in_progress = 0;
-
-	/* Reset the FIFO twice with some delay to make sure that the FIFOs are
-	 * really flushed. Wait is needed as the clearing needs to cross
-	 * multiple clock domains.
-	 * */
-	t->fcr_shadow = UART_FCR_ENABLE_FIFO;
-
-	fcr = t->fcr_shadow;
-	fcr |= UART_FCR_CLEAR_XMIT | UART_FCR_CLEAR_RCVR;
-	uart_writeb(t, fcr, UART_FCR);
-
-	udelay(100);
-	uart_writeb(t, t->fcr_shadow, UART_FCR);
-	udelay(100);
 
 	/* Set the trigger level
 	 *
@@ -778,6 +741,7 @@ static int tegra_uart_hw_init(struct tegra_uart_port *t)
 	 *  Set the Tx trigger to 4. This should match the DMA burst size that
 	 *  programmed in the DMA registers.
 	 * */
+	t->fcr_shadow = UART_FCR_ENABLE_FIFO;
 	t->fcr_shadow |= UART_FCR_R_TRIG_01;
 	t->fcr_shadow |= TEGRA_UART_TX_TRIG_8B;
 	uart_writeb(t, t->fcr_shadow, UART_FCR);
@@ -786,7 +750,7 @@ static int tegra_uart_hw_init(struct tegra_uart_port *t)
 		/* initialize the UART for a simple default configuration
 		  * so that the receive DMA buffer may be enqueued */
 		t->lcr_shadow = 3;  /* no parity, stop, 8 data bits */
-		tegra_set_baudrate(t, 9600);
+		tegra_set_baudrate(t, 115200);
                 t->fcr_shadow |= UART_FCR_DMA_SELECT;
 		uart_writeb(t, t->fcr_shadow, UART_FCR);
 		if (tegra_start_dma_rx(t)) {
