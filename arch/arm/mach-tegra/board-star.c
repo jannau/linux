@@ -783,6 +783,8 @@ static void __init tegra_star_init(void)
 	star_nct1008_init();//Thermal IC enable
 
 	star_setup_bluesleep();
+
+	tegra_release_bootloader_fb();
 }
 
 int __init tegra_star_protected_aperture_init(void)
