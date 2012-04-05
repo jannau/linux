@@ -1609,19 +1609,6 @@ struct platform_device tegra_avp_device = {
 	},
 };
 
-/*
-***************************************************************************************************
-*                                       Bluetooth Devices
-***************************************************************************************************
-*/
-struct platform_device bcm_bt_lpm = {
-	.name   = "bcm_bt_lpm",
-	.id     = -1,
-	.dev    = {
-	},
-};
-
-
 static struct resource tegra_aes_resources[] = {
 	{
 		.start	= TEGRA_VDE_BASE,
