@@ -392,7 +392,6 @@ struct platform_device tegra_echo = {
 	},
 };
 
-#ifdef CONFIG_BCM4329_RFKILL
 static struct resource star_bcm4329_rfkill_resources[] = {
 	{
 		.name   = "bcm4329_nreset_gpio",
@@ -441,18 +440,14 @@ static noinline void __init star_bt_rfkill(void)
             star_bcm4329_rfkill_device.resource = star_1_2_bcm4329_rfkill_resources;
         }
 
-        /*Add Clock Resource*/
-        /* Always turn on 32k clock */
-        //clk_add_alias("bcm4329_32k_clk", star_bcm4329_rfkill_device.name,
-        //                        "blink", NULL);
+	/*Add Clock Resource*/
+	clk_add_alias("bcm4329_32k_clk", star_bcm4329_rfkill_device.name, \
+		      "blink", NULL);
 
         platform_device_register(&star_bcm4329_rfkill_device);
 
         return;
 }
-#else
-static inline void star_bt_rfkill(void) { }
-#endif
 
 #ifdef CONFIG_STARTABLET_GPS_BCM4751
 //LGE_UPDATE_S jayeong.im@lge.com 2010-11-30 star_gps_init
