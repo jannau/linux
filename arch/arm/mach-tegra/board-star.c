@@ -449,6 +449,45 @@ static noinline void __init star_bt_rfkill(void)
         return;
 }
 
+#define STAR_GPIO_BT_WAKE	TEGRA_GPIO_PX4
+#define STAR_GPIO_BT_HOST_WAKE	TEGRA_GPIO_PC7
+
+static struct resource star_bluesleep_resources[] = {
+	[0] = {
+		.name	= "gpio_host_wake",
+		.start	= STAR_GPIO_BT_HOST_WAKE,
+		.end	= STAR_GPIO_BT_HOST_WAKE,
+		.flags	= IORESOURCE_IO,
+	},
+	[1] = {
+		.name	= "gpio_ext_wake",
+		.start	= STAR_GPIO_BT_WAKE,
+		.end	= STAR_GPIO_BT_WAKE,
+		.flags	= IORESOURCE_IO,
+	},
+	[2] = {
+		.name = "host_wake",
+		.start  = TEGRA_GPIO_TO_IRQ(STAR_GPIO_BT_HOST_WAKE),
+		.end    = TEGRA_GPIO_TO_IRQ(STAR_GPIO_BT_HOST_WAKE),
+		.flags  = IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE,
+	},
+};
+
+static struct platform_device star_bluesleep_device = {
+	.name           = "bluesleep",
+	.id             = -1,
+	.num_resources  = ARRAY_SIZE(star_bluesleep_resources),
+	.resource       = star_bluesleep_resources,
+};
+
+static void __init star_setup_bluesleep(void)
+{
+	platform_device_register(&star_bluesleep_device);
+	tegra_gpio_enable(STAR_GPIO_BT_WAKE);
+	tegra_gpio_enable(STAR_GPIO_BT_HOST_WAKE);
+	return;
+}
+
 #ifdef CONFIG_STARTABLET_GPS_BCM4751
 //LGE_UPDATE_S jayeong.im@lge.com 2010-11-30 star_gps_init
 static int __init star_gps_init(void)
@@ -508,7 +547,6 @@ static struct platform_device *star_devices[] __initdata = {
 	&tegra_leds, //2010.08.11 ch.han@lge.com for leds drives
 	&star_headset_device,
 	//&tegra_rtc_device,
-	&bcm_bt_lpm,
 	&tegra_camera,
 /* standard tegra audio devices */
 	&tegra_i2s_device1,
@@ -743,6 +781,8 @@ static void __init tegra_star_init(void)
 	star_power_off_init();
 	star_emc_init();
 	star_nct1008_init();//Thermal IC enable
+
+	star_setup_bluesleep();
 }
 
 int __init tegra_star_protected_aperture_init(void)
