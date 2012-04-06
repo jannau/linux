@@ -231,80 +231,6 @@ static int tps6586x_dummy_disable(struct regulator_dev *rdev)
 	/* TODO: */
 	return 0;
 }
-#ifdef  LGE_LOAD_SWITCH
-static int tps6586x_lds_get_voltage(struct regulator_dev *rdev)
-{
-	struct tps6586x_regulator *ri = rdev_get_drvdata(rdev);
-	//struct device *parent = to_tps6586x_dev(rdev);
-	int ret;
-
-    ret = gpio_request(ri->volt_shift, "Load Switch");
-    if (ret)
-    {
-        printk(KERN_ERR "[Load Switch] %s() Fail to request GPIO (%d)\n", 
-            __func__, ri->volt_shift);
-        return ret;
-    }
-
-    ret = gpio_get_value(ri->volt_shift);
-    gpio_free(ri->volt_shift);
-
-	return ret * 1000;
-}
-
-static int tps6586x_lds_set_voltage(struct regulator_dev *rdev,
-				    int min_uV, int max_uV)
-{
-	struct tps6586x_regulator *ri = rdev_get_drvdata(rdev);
-	struct device *parent = to_tps6586x_dev(rdev);
-	int ret;
-
-    ret = gpio_request(ri->volt_shift, "Load Switch");
-    if (ret)
-    {
-        printk(KERN_ERR "[Load Switch] %s() Fail to request GPIO (%d)\n", 
-            __func__, ri->volt_shift);
-        return ret;
-    }
-
-    gpio_set_value(ri->volt_shift, !!(ri->volt_nbits));
-    gpio_free(ri->volt_shift);
-
-	return 0;
-}
-
-static int tps6586x_lds_is_enabled(struct regulator_dev *rdev)
-{
-    // Load Switch is always enabled :)
-	return 1;
-}
-
-static int tps6586x_lds_enable(struct regulator_dev *rdev)
-{
-    // Load Switch is always enabled :)
-    return 0;
-}
-
-static int tps6586x_lds_disable(struct regulator_dev *rdev)
-{
-	struct tps6586x_regulator *ri = rdev_get_drvdata(rdev);
-	//struct device *parent = to_tps6586x_dev(rdev);
-	int ret;
-
-    ret = gpio_request(ri->volt_shift, "Load Switch");
-    if (ret)
-    {
-        printk(KERN_ERR "[DC Switch] %s() Fail to request GPIO (%d)\n", 
-            __func__, ri->volt_shift);
-        return ret;
-    }
-
-    gpio_set_value(ri->volt_shift, 0);
-    gpio_free(ri->volt_shift);
-
-    return 0;
-}
-#endif
 
 static int tps6586x_regulator_enable_time(struct regulator_dev *rdev)
 {
@@ -341,17 +267,6 @@ static struct regulator_ops tps6586x_regulator_dummy_ops = {
 	.enable = tps6586x_dummy_enable,
 	.disable = tps6586x_dummy_disable,
 };
-#ifdef  LGE_LOAD_SWITCH
-static struct regulator_ops tps6586x_regulator_lds_ops = {  // FIXME!! change for gpio DCS
-	.list_voltage = tps6586x_ldo_list_voltage,
-	.get_voltage = tps6586x_lds_get_voltage,
-	.set_voltage = tps6586x_lds_set_voltage,
-
-	.is_enabled = tps6586x_lds_is_enabled,
-	.enable = tps6586x_lds_enable,
-	.disable = tps6586x_lds_disable,
-};
-#endif
 
 static int tps6586x_ldo_voltages[] = {
 	1250, 1500, 1800, 2500, 2700, 2850, 3100, 3300,
@@ -377,12 +292,6 @@ static int tps6586x_dvm_voltages[] = {
 	1125, 1150, 1175, 1200, 1225, 1250, 1275, 1300,
 	1325, 1350, 1375, 1400, 1425, 1450, 1475, 1500,
 };
-
-#ifdef  LGE_LOAD_SWITCH
-static int tps6586x_lds_voltages[] = {
-	1800, 3300, 5000,
-};
-#endif
 
 #define TPS6586X_REGULATOR(_id, vdata, _ops, vreg, shift, nbits,	\
 			   ereg0, ebit0, ereg1, ebit1, en_time)		\
@@ -430,12 +339,6 @@ static int tps6586x_lds_voltages[] = {
 			   _INVALID, NULL, _INVALID, NULL, en_time)	\
 }
 
-#ifdef  LGE_LOAD_SWITCH
-#define TPS6586X_LDS(_id, vdata, gpio_nr, active_high)		\
-	TPS6586X_REGULATOR(_id, vdata, lds_ops, INVALID, gpio_nr, active_high,	\
-			   _INVALID, NULL, _INVALID, NULL, NULL, NULL)
-#endif
-
 static struct tps6586x_regulator tps6586x_regulator[] = {
 	TPS6586X_LDO(LDO_0, ldo, SUPPLYV1, 5, 3, ENC, 0, END, 0, 4000),
 	TPS6586X_LDO(LDO_1, dvm, SUPPLYV1, 0, 5, ENC, 1, END, 1, 4000),
@@ -455,16 +358,6 @@ static struct tps6586x_regulator tps6586x_regulator[] = {
 
 	TPS6586X_LDO(SOC_OFF, ldo, INVALID, 0, 0, ENE, 3, ENE, 3, 4000),
 	TPS6586X_DUMMY(DUMMY, ldo, INVALID, 0, 0, _INVALID, 0, _INVALID, 0, 4000),
-#ifdef  LGE_LOAD_SWITCH
-	TPS6586X_LDS(LDS_USB_HOST, lds, TEGRA_GPIO_PH0, 1),
-	TPS6586X_LDS(LDS_USB3, lds, TEGRA_GPIO_PH1, 1), // only for Rev.C
-	TPS6586X_LDS(LDS_3V3, lds, TEGRA_GPIO_PH2, 1),
-	TPS6586X_LDS(LDS_TOUCH, lds, TEGRA_GPIO_PK4, 1),
-	TPS6586X_LDS(LDS_GYRO, lds, TEGRA_GPIO_PV5, 1), // only for Rev.C
-	TPS6586X_LDS(LDS_5V0_REVC, lds, TEGRA_GPIO_PK5, 1), // only for Rev.C
-	TPS6586X_LDS(LDS_5V0, lds, TEGRA_GPIO_PX7, 1),
-	TPS6586X_LDS(LDS_3V3_ALWAYS, lds, TEGRA_GPIO_PS7, 1), // Added at Rev.F
-#endif // LGE_LOAD_SWITCH
 };
 
 /*

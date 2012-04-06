@@ -365,14 +365,6 @@ static char* poweroff_regs [] = {
 
     "vdd_5v0",      // VDD_5V0,
 
-#ifdef LGE_LOAD_SWITCH
-    "usb_host",
-    "usb3_kbd_5v0",
-    "vdd_3v3",
-    "touch",
-    "gyro_1v8",
-#endif
-
     "vdd_sm2",      // DCD2,
 };
 #endif

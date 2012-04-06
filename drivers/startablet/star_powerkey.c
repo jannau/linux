@@ -126,11 +126,6 @@ static regul_info init_power_on_reguls [] = {
 //    { "mcore_mmc", 2850},       // LDO5,
 //    { "vdd_fuse", 2850},        // LDO6,
     { "vdd_ddr_rx", 2850},      // LDO9,
-
-#ifdef LGE_LOAD_SWITCH
-    { "vdd_5v0", 5000},      // VDD_5V0,
-    { "vdd_3v3", 3300 },
-#endif
 };
 
 int __init regulator_init_on(void)
