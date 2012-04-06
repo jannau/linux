@@ -103,29 +103,6 @@ static struct regulator_consumer_supply tps658621_dummy_supply[] = {
 		REGULATOR_SUPPLY("SPKVDD2", NULL),
 };
 
-#ifdef  LGE_LOAD_SWITCH
-static struct regulator_consumer_supply tps658621_lds_usb_host_supply[] = {
-	REGULATOR_SUPPLY("usb_host", NULL),
-};
-static struct regulator_consumer_supply tps658621_lds_usb3_supply[] = {
-	REGULATOR_SUPPLY("usb3_kbd_5v0", NULL),
-};
-static struct regulator_consumer_supply tps658621_lds_3v3_supply[] = {
-	REGULATOR_SUPPLY("vdd_3v3", NULL),
-};
-static struct regulator_consumer_supply tps658621_lds_touch_supply[] = {
-	REGULATOR_SUPPLY("touch", NULL),
-};
-static struct regulator_consumer_supply tps658621_lds_gyro_supply[] = {
-	REGULATOR_SUPPLY("gyro_1v8", NULL),
-};
-static struct regulator_consumer_supply tps658621_lds_5v0_supply[] = {
-	REGULATOR_SUPPLY("vdd_5v0", NULL),
-};
-static struct regulator_consumer_supply tps658621_lds_3v3_always_supply[] = {
-	REGULATOR_SUPPLY("vdd_3v3_always", NULL),
-};
-#endif
 
 #define REGULATOR_INIT(_id, _minmv, _maxmv, on)				\
 	{								\
@@ -162,15 +139,6 @@ static struct regulator_init_data ldo8_data	= REGULATOR_INIT(ldo8,    1250, 3300
 static struct regulator_init_data ldo9_data	= REGULATOR_INIT(ldo9,    1250, 3300, ON);
 static struct regulator_init_data soc_off_data	= REGULATOR_INIT(soc_off, 1250, 3300, OFF);
 static struct regulator_init_data dummy_data	= REGULATOR_INIT(dummy,   1250, 5000, ON);
-#ifdef  LGE_LOAD_SWITCH
-static struct regulator_init_data lds_usb_host_data = REGULATOR_INIT(lds_usb_host, 5000, 5000);
-static struct regulator_init_data lds_usb3_data = REGULATOR_INIT(lds_usb3, 5000, 5000);
-static struct regulator_init_data lds_3v3_data = REGULATOR_INIT(lds_3v3, 3300, 3300);
-static struct regulator_init_data lds_touch_data = REGULATOR_INIT(lds_touch, 3300, 3300);
-static struct regulator_init_data lds_gyro_data = REGULATOR_INIT(lds_gyro, 1800, 5000);
-static struct regulator_init_data lds_5v0_data = REGULATOR_INIT(lds_5v0, 5000, 5000);
-static struct regulator_init_data lds_3v3_always_data = REGULATOR_INIT(lds_3v3_always, 3300, 3300);
-#endif
 
 #undef ON
 #undef OFF
@@ -208,15 +176,6 @@ static struct tps6586x_subdev_info tps_devs[] = {
 	TPS_REG(LDO_9, &ldo9_data),
 	TPS_REG(SOC_OFF, &soc_off_data),
 	TPS_REG(DUMMY, &dummy_data),
-#ifdef  LGE_LOAD_SWITCH
-	TPS_REG(LDS_USB_HOST, &lds_usb_host_data),
-	TPS_REG(LDS_USB3, &lds_usb3_data),
-	TPS_REG(LDS_3V3, &lds_3v3_data),
-	TPS_REG(LDS_TOUCH, &lds_touch_data),
-	TPS_REG(LDS_GYRO, &lds_gyro_data),
-	TPS_REG(LDS_5V0, &lds_5v0_data),
-	TPS_REG(LDS_3V3_ALWAYS, &lds_3v3_always_data),
-#endif
 	{
 		.id	= 0,
 		.name	= "tps6586x-rtc",
