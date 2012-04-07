@@ -4,6 +4,10 @@
 
 #include <mach/hardware.h>
 
+#include <linux/mfd/wm8994/pdata.h>
+#include <linux/regulator/machine.h>
+#include <linux/regulator/fixed.h>
+
 #include <linux/mpu.h>
 
 #include "gpio-names.h"
@@ -284,10 +288,104 @@ static struct i2c_board_info __initdata star_i2c_bus1_devices_info[] ={
 	},
 };
 
+static struct regulator_consumer_supply wm8994_fixed_voltage0_supplies[] = {
+        REGULATOR_SUPPLY("DBVDD", "1-001a"),
+        REGULATOR_SUPPLY("DCVDD", "1-001a"),
+        REGULATOR_SUPPLY("AVDD2", "1-001a"),
+        REGULATOR_SUPPLY("CPVDD", "1-001a"),
+};
+
+static struct regulator_consumer_supply wm8994_fixed_voltage1_supplies[] = {
+        REGULATOR_SUPPLY("AVDD1", "1-001a"),
+        REGULATOR_SUPPLY("SPKVDD1", "1-001a"),
+        REGULATOR_SUPPLY("SPKVDD2", "1-001a"),
+};
+
+static struct regulator_init_data wm8994_fixed_voltage0_init_data = {
+        .constraints = {
+                .always_on = 1,
+        },
+        .num_consumer_supplies  = ARRAY_SIZE(wm8994_fixed_voltage0_supplies),
+        .consumer_supplies      = wm8994_fixed_voltage0_supplies,
+};
+
+static struct regulator_init_data wm8994_fixed_voltage1_init_data = {
+        .constraints = {
+                .always_on = 1,
+        },
+        .num_consumer_supplies  = ARRAY_SIZE(wm8994_fixed_voltage1_supplies),
+        .consumer_supplies      = wm8994_fixed_voltage1_supplies,
+};
+
+static struct fixed_voltage_config wm8994_fixed_voltage0_config = {
+        .supply_name    = "VCC_1.8V_PDA",
+        .microvolts     = 1100000,
+        .gpio           = -EINVAL,
+        .init_data      = &wm8994_fixed_voltage0_init_data,
+};
+
+static struct fixed_voltage_config wm8994_fixed_voltage1_config = {
+        .supply_name    = "V_BAT",
+        .microvolts     = 3600000,
+        .gpio           = -EINVAL,
+        .init_data      = &wm8994_fixed_voltage1_init_data,
+};
+
+static struct platform_device wm8994_fixed_voltage0 = {
+        .name           = "reg-fixed-voltage",
+        .id             = 0,
+        .dev            = {
+                .platform_data  = &wm8994_fixed_voltage0_config,
+        },
+};
+
+static struct platform_device wm8994_fixed_voltage1 = {
+        .name           = "reg-fixed-voltage",
+        .id             = 1,
+        .dev            = {
+                .platform_data  = &wm8994_fixed_voltage1_config,
+        },
+};
+
+static struct regulator_consumer_supply wm8994_avdd1_supply =
+	REGULATOR_SUPPLY("AVDD1", "1-001a");
+
+static struct regulator_consumer_supply wm8994_dcvdd_supply =
+	REGULATOR_SUPPLY("DCVDD", "1-001a");
+
+static struct regulator_init_data wm8994_ldo1_data = {
+        .constraints    = {
+                .name           = "AVDD1_3.0V",
+		.always_on	= 1,
+		.max_uV		= 3000000,
+		.min_uV		= 3000000,
+                .valid_ops_mask = REGULATOR_CHANGE_STATUS,
+        },
+        .num_consumer_supplies  = 1,
+        .consumer_supplies      = &wm8994_avdd1_supply,
+};
+
+static struct regulator_init_data wm8994_ldo2_data = {
+	.constraints    = {
+		.name           = "DCVDD_1.0V",
+		.always_on	= 1,
+		.max_uV		= 1000000,
+		.min_uV		= 1000000,
+	},
+	.num_consumer_supplies  = 1,
+	.consumer_supplies      = &wm8994_dcvdd_supply,
+};
+
+static struct wm8994_pdata wm8994_mfd_pdata = {
+	.ldo[0] = { 0, NULL, &wm8994_ldo1_data},
+	.ldo[1] = { 0, NULL, &wm8994_ldo2_data},
+};
+
 //I2C2 device board information
 static struct i2c_board_info __initdata star_i2c_bus2_devices_info[] = {
 	{
 		I2C_BOARD_INFO("wm8994", STAR_I2C_DEVICE_ADDR_WM8994),
+		//.platform_data = &wm8994_mfd_pdata,
 	},
 	{
 		I2C_BOARD_INFO("mpu3050", STAR_I2C_DEVICE_ADDR_GYRO),
@@ -351,52 +449,6 @@ static struct i2c_board_info __initdata star_i2c_bus7_echo_info[] = {
 *                                       Startablet Poweroff
 ***************************************************************************************************
 */
-#if 0	// do not need turn off ldo
-#define MAX_REFCOUNT_LOOP   10
-static char* poweroff_regs [] = {
-    "touch_key",    // LDO0, for Rev.A Rev.A1
-    "touch_panel",  // LDO0, for Rev.C~
-    "avdd_osc",     // LDO4,
-    "avdd_usb_pll",
-    "vdd_fuse",     // LDO6,
-    "avdd_hdmi",    // LDO7, // ??
-    "avdd_hdmi_pll",// LDO8,
-    "vdd_ddr_rx",   // LDO9,
-
-    "vdd_5v0",      // VDD_5V0,
-
-    "vdd_sm2",      // DCD2,
-};
-#endif
-
-static void star_power_off(void)
-{
-    struct regulator* regul;
-
-#if 0	// do not need turn off ldo
-    int i;
-
-    for (i = 0; i < ARRAY_SIZE(poweroff_regs); i++)
-    {
-        regul = regulator_get(NULL,  poweroff_regs[i]);  /* digital core */
-        if (IS_ERR(regul)) {
-            printk(KERN_ERR "[PWR OFF] Failed to get regulator(%s)\n", poweroff_regs[i]);
-            continue;
-        }
-        if (regulator_force_disable(regul))
-        {
-            printk(KERN_ERR "[PWR OFF] Failed to regulator_force_disable regulator(%s)\n", poweroff_regs[i]);
-            continue;
-        }
-    }
-#endif
-    regul = regulator_get(NULL, "pmic_soc_off");  /* digital core */
-    if (IS_ERR(regul)) {
-        printk(KERN_ERR "[PWR OFF] Failed to get regulator(PMIC_SOC)\n");
-        return;
-    }
-    regulator_enable(regul);
-}
 
 int is_modem_connected(void)
 {

@@ -204,33 +204,6 @@ static int tps6586x_regulator_is_enabled(struct regulator_dev *rdev)
 
 	return !!(reg_val & (1 << ri->enable_bit[0]));
 }
-static int tps6586x_dummy_get_voltage(struct regulator_dev *rdev)
-{
-	/* TODO: */
-	return 1250;
-}
-static int tps6586x_dummy_set_voltage(struct regulator_dev *rdev,
-				    int min_uV, int max_uV)
-{
-	/* TODO: */
-	return 0;
-}
-static int tps6586x_dummy_is_enabled(struct regulator_dev *rdev)
-{
-	/* TODO: */
-	return 1;
-}
-static int tps6586x_dummy_enable(struct regulator_dev *rdev)
-{
-    // rail is always enabled :)
-    return 0;
-}
-
-static int tps6586x_dummy_disable(struct regulator_dev *rdev)
-{
-	/* TODO: */
-	return 0;
-}
 
 static int tps6586x_regulator_enable_time(struct regulator_dev *rdev)
 {
@@ -257,15 +230,6 @@ static struct regulator_ops tps6586x_regulator_dvm_ops = {
 	.is_enabled = tps6586x_regulator_is_enabled,
 	.enable = tps6586x_regulator_enable,
 	.disable = tps6586x_regulator_disable,
-};
-static struct regulator_ops tps6586x_regulator_dummy_ops = {
-	.list_voltage = tps6586x_ldo_list_voltage,
-	.get_voltage = tps6586x_dummy_get_voltage,
-	.set_voltage = tps6586x_dummy_set_voltage,
-
-	.is_enabled = tps6586x_dummy_is_enabled,
-	.enable = tps6586x_dummy_enable,
-	.disable = tps6586x_dummy_disable,
 };
 
 static int tps6586x_ldo_voltages[] = {
@@ -332,12 +296,6 @@ static int tps6586x_dvm_voltages[] = {
 	TPS6586X_REGULATOR_DVM_GOREG(goreg, gobit)			\
 }
 
-#define TPS6586X_DUMMY(_id, vdata, vreg, shift, nbits,			\
-		     ereg0, ebit0, ereg1, ebit1, en_time)		\
-{	\
-	TPS6586X_REGULATOR(_id, vdata, dummy_ops, INVALID, 0, 0,	\
-			   _INVALID, NULL, _INVALID, NULL, en_time)	\
-}
 
 static struct tps6586x_regulator tps6586x_regulator[] = {
 	TPS6586X_LDO(LDO_0, ldo, SUPPLYV1, 5, 3, ENC, 0, END, 0, 4000),
@@ -355,9 +313,6 @@ static struct tps6586x_regulator tps6586x_regulator[] = {
 	TPS6586X_DVM(SM_0, dvm, SM0V1, 0, 5, ENA, 1, ENB, 1, VCC1, 2, 4000),
 	TPS6586X_DVM(SM_1, dvm, SM1V1, 0, 5, ENA, 0, ENB, 0, VCC1, 0, 4000),
 	TPS6586X_DVM(LDO_4, ldo4, LDO4V1, 0, 5, ENC, 3, END, 3, VCC1, 6, 15000),
-
-	TPS6586X_LDO(SOC_OFF, ldo, INVALID, 0, 0, ENE, 3, ENE, 3, 4000),
-	TPS6586X_DUMMY(DUMMY, ldo, INVALID, 0, 0, _INVALID, 0, _INVALID, 0, 4000),
 };
 
 /*

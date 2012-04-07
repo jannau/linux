@@ -558,6 +558,8 @@ static struct platform_device *star_devices[] __initdata = {
 	&tegra_pcm_device,
 	&star_audio_device,
 /* end of standard tegra audio devices */
+	&wm8994_fixed_voltage0,
+	&wm8994_fixed_voltage1,
 	&tegra_avp_device,
 	&tegra_echo,
 	&tegra_displaytest,
@@ -657,11 +659,6 @@ static int __init star_muic_path_setup(char *line)
 }
 
 __setup("muic_path=", star_muic_path_setup);
-
-static void __init star_power_off_init(void)
-{
-      pm_power_off = star_power_off;
-}
 
 extern char boot_command_line[COMMAND_LINE_SIZE];
 
@@ -778,7 +775,6 @@ static void __init tegra_star_init(void)
 	printk("star_gps_init BCM4751 \n") ;
 	star_gps_init(); // jayeong.im@lge.com 2010-11-30 star_gps_init
 #endif
-	star_power_off_init();
 	star_emc_init();
 	star_nct1008_init();//Thermal IC enable
 
