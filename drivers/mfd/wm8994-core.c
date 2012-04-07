@@ -490,19 +490,7 @@ static int wm8994_device_init(struct wm8994 *wm8994, int irq)
 
 	ret = wm8994_reg_read(wm8994, WM8994_SOFTWARE_RESET);
 	if (ret < 0) {
-		dev_err(wm8994->dev, "1st : Failed to read ID register\n");
-		msleep(10);
-	}
-
-	ret = wm8994_reg_read(wm8994, WM8994_SOFTWARE_RESET);
-	if (ret < 0) {
-		dev_err(wm8994->dev, "2nd : Failed to read ID register\n");
-		msleep(10);
-	}
-
-	ret = wm8994_reg_read(wm8994, WM8994_SOFTWARE_RESET);
-	if (ret < 0) {
-		dev_err(wm8994->dev, "3rd : Failed to read ID register\n");
+		dev_err(wm8994->dev, "Failed to read ID register\n");
 		goto err_enable;
 	}
 	switch (ret) {
