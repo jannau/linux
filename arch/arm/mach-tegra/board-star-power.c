@@ -90,19 +90,6 @@ static struct regulator_consumer_supply tps658621_ldo9_supply[] = {
 	REGULATOR_SUPPLY("vdd_ldo9", NULL),
 	REGULATOR_SUPPLY("vdd_ddr_rx", NULL),
 };
-static struct regulator_consumer_supply tps658621_soc_off_supply[] = {
-	REGULATOR_SUPPLY("pmic_soc_off", NULL),
-};
-static struct regulator_consumer_supply tps658621_dummy_supply[] = {
-		REGULATOR_SUPPLY("DBVDD", NULL),
-		REGULATOR_SUPPLY("DCVDD", NULL),
-		REGULATOR_SUPPLY("AVDD1", NULL),
-		REGULATOR_SUPPLY("AVDD2", NULL),
-		REGULATOR_SUPPLY("CPVDD", NULL),
-		REGULATOR_SUPPLY("SPKVDD1", NULL),
-		REGULATOR_SUPPLY("SPKVDD2", NULL),
-};
-
 
 #define REGULATOR_INIT(_id, _minmv, _maxmv, on)				\
 	{								\
@@ -137,8 +124,6 @@ static struct regulator_init_data ldo6_data	= REGULATOR_INIT(ldo6,    1250, 3300
 static struct regulator_init_data ldo7_data	= REGULATOR_INIT(ldo7,    1250, 3300, OFF);
 static struct regulator_init_data ldo8_data	= REGULATOR_INIT(ldo8,    1250, 3300, OFF);
 static struct regulator_init_data ldo9_data	= REGULATOR_INIT(ldo9,    1250, 3300, ON);
-static struct regulator_init_data soc_off_data	= REGULATOR_INIT(soc_off, 1250, 3300, OFF);
-static struct regulator_init_data dummy_data	= REGULATOR_INIT(dummy,   1250, 5000, ON);
 
 #undef ON
 #undef OFF
@@ -174,8 +159,6 @@ static struct tps6586x_subdev_info tps_devs[] = {
 	TPS_REG(LDO_7, &ldo7_data),
 	TPS_REG(LDO_8, &ldo8_data),
 	TPS_REG(LDO_9, &ldo9_data),
-	TPS_REG(SOC_OFF, &soc_off_data),
-	TPS_REG(DUMMY, &dummy_data),
 	{
 		.id	= 0,
 		.name	= "tps6586x-rtc",
@@ -188,6 +171,7 @@ static struct tps6586x_platform_data tps_platform = {
 	.num_subdevs = ARRAY_SIZE(tps_devs),
 	.subdevs = tps_devs,
 	.gpio_base = TEGRA_NR_GPIOS,
+	.use_power_off	= true,
 };
 
 static struct i2c_board_info __initdata star_regulators[] = {
