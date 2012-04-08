@@ -710,7 +710,7 @@ static void spi_tegra_start_transfer(struct spi_device *spi,
 	spi_tegra_writel(tspi, command, SLINK_COMMAND);
 	tspi->command_reg = command;
 
-	dev_dbg(&tspi->pdev->dev, "The def 0x%x and written 0x%lx\n",
+	dev_vdbg(&tspi->pdev->dev, "The def 0x%x and written 0x%lx\n",
 				tspi->def_command_reg, command);
 
 	command2 &= ~(SLINK_SS_EN_CS(~0) | SLINK_RXEN | SLINK_TXEN);
