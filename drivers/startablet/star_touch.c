@@ -1778,7 +1778,8 @@ param_check_ok:
 
 	mxt->irq = gpio_to_irq(TOUCH_INT);
 	client->irq = gpio_to_irq(TOUCH_INT);
-	error = request_irq(gpio_to_irq(TOUCH_INT),mxt_irq_handler,IRQF_TRIGGER_LOW,"touch_int_n", mxt);
+	error = request_threaded_irq(gpio_to_irq(TOUCH_INT), NULL, mxt_irq_handler,
+				     IRQF_ONESHOT | IRQF_TRIGGER_LOW, "touch_int_n", mxt);
 
 	pinValue = gpio_get_value(TOUCH_INT);
 	printk(" touch interrupt2 =%d \n",pinValue);
