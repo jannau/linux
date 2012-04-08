@@ -34,6 +34,7 @@
 #include <linux/input.h>
 #include <linux/platform_data/tegra_usb.h>
 #include <linux/memblock.h>
+#include <linux/tegra_uart.h>
 #include <mach/clk.h>
 #include <mach/iomap.h>
 #include <mach/irqs.h>
@@ -65,6 +66,7 @@
 #include "fuse.h"
 #include "sleep.h"
 #include "wakeups-t2.h"
+#include "pm.h"
 
 #if defined (CONFIG_MACH_STARTABLET)
 #include "star_i2c_device_address.h"
@@ -74,28 +76,6 @@
 #define CARVEOUT_320MB	1	// 1: 320MB, 0: 256MB (default)
 #define CARVEOUT_352MB  0
 #define CARVEOUT_384MB  0
-
-static struct plat_serial8250_port debug_uart_platform_data[] = {
-	{
-		.membase	= IO_ADDRESS(TEGRA_UARTB_BASE),
-		.mapbase	= TEGRA_UARTB_BASE,
-		.irq		= INT_UARTB,
-		.flags		= UPF_BOOT_AUTOCONF,
-		.iotype		= UPIO_MEM,
-		.regshift	= 2,
-		.uartclk	= 216000000,
-	}, {
-		.flags		= 0
-	}
-};
-
-static struct platform_device debug_uart = {
-	.name = "serial8250",
-	.id = PLAT8250_DEV_PLATFORM,
-	.dev = {
-		.platform_data = debug_uart_platform_data,
-	},
-};
 
 static struct tegra_utmip_config utmi_phy_config[] = {
 	[0] = {
@@ -534,9 +514,6 @@ static struct platform_device star_ram_console_device = {
 #endif
 
 static struct platform_device *star_devices[] __initdata = {
-	&debug_uart,
-	&tegra_uartc_device,
-//	&tegra_hsuart2,
 	&star_powerkey,
 	&tegra_gps_gpio,
 	&tegra_misc,
@@ -564,9 +541,6 @@ static struct platform_device *star_devices[] __initdata = {
 	&tegra_echo,
 	&tegra_displaytest,
 	&tegra_camera_flash, //2010.12.08 hyungmoo.huh@lge.com for camera flash LED
-#ifdef CONFIG_STARTABLET_GPS_BCM4751
-	&tegra_uartd_device, //jayeong.im@lge.com 2010-11-30 star_gps_init
-#endif
 #if defined(CONFIG_ANDROID_RAM_CONSOLE)
 	&star_ram_console_device,
 #endif
@@ -743,6 +717,89 @@ static void __init star_spi_init(void)
 	star_spi_pdata.parent_clk_count = ARRAY_SIZE(spi_parent_clk);
 	tegra_spi_device1.dev.platform_data = &star_spi_pdata;
 	platform_add_devices(star_spi_devices, ARRAY_SIZE(star_spi_devices));
+
+}
+
+static struct platform_device *star_uart_devices[] __initdata = {
+	&tegra_uartb_device,
+	&tegra_uartc_device,
+#ifdef CONFIG_STARTABLET_GPS_BCM4751
+	&tegra_uartd_device, //jayeong.im@lge.com 2010-11-30 star_gps_init
+#endif
+};
+
+static struct uart_clk_parent uart_parent_clk[] = {
+	[0] = {.name = "pll_p"},
+	[1] = {.name = "pll_m"},
+#ifdef CONFIG_STARTABLET_GPS_BCM4751
+	[2] = {.name = "clk_m"},
+#endif
+};
+
+static struct tegra_uart_platform_data star_uart_pdata;
+
+static void __init uart_debug_init(void)
+{
+	unsigned long rate;
+	struct clk *c;
+
+	/* UARTB is the debug port. */
+	pr_info("Selecting UARTB as the debug console\n");
+	star_uart_devices[0] = &debug_uartd_device;
+	debug_uart_port_base = ((struct plat_serial8250_port *)(
+			debug_uartb_device.dev.platform_data))->mapbase;
+	debug_uart_clk = clk_get_sys("serial8250.0", "uartb");
+
+	/* Clock enable for the debug channel */
+	if (!IS_ERR_OR_NULL(debug_uart_clk)) {
+		rate = ((struct plat_serial8250_port *)(
+			debug_uartb_device.dev.platform_data))->uartclk;
+		pr_info("The debug console clock name is %s\n",
+						debug_uart_clk->name);
+		c = tegra_get_clock_by_name("pll_p");
+		if (IS_ERR_OR_NULL(c))
+			pr_err("Not getting the parent clock pll_p\n");
+		else
+			clk_set_parent(debug_uart_clk, c);
+
+		clk_enable(debug_uart_clk);
+		clk_set_rate(debug_uart_clk, rate);
+	} else {
+		pr_err("Not getting the clock %s for debug console\n",
+					debug_uart_clk->name);
+	}
+}
+
+static void __init star_uart_init(void)
+{
+	int i;
+	struct clk *c;
+
+	for (i = 0; i < ARRAY_SIZE(uart_parent_clk); ++i) {
+		c = tegra_get_clock_by_name(uart_parent_clk[i].name);
+		if (IS_ERR_OR_NULL(c)) {
+			pr_err("Not able to get the clock for %s\n",
+						uart_parent_clk[i].name);
+			continue;
+		}
+		uart_parent_clk[i].parent_clk = c;
+		uart_parent_clk[i].fixed_clk_rate = clk_get_rate(c);
+	}
+	star_uart_pdata.parent_clk_list = uart_parent_clk;
+	star_uart_pdata.parent_clk_count = ARRAY_SIZE(uart_parent_clk);
+	tegra_uartb_device.dev.platform_data = &star_uart_pdata;
+	tegra_uartc_device.dev.platform_data = &star_uart_pdata;
+#ifdef CONFIG_STARTABLET_GPS_BCM4751
+	&tegra_uartd_device.dev.platform_data = &star_uart_pdata;
+#endif
+
+	/* Register low speed only if it is selected */
+	if (!is_tegra_debug_uartport_hs() &&
+	    (strstr(boot_command_line, "ttyS0") != NULL))
+		uart_debug_init();
+
+	platform_add_devices(star_uart_devices,
+				ARRAY_SIZE(star_uart_devices));
 }
 
 static void __init tegra_star_init(void)
@@ -755,11 +812,8 @@ static void __init tegra_star_init(void)
 
 	star_spi_init();
 
-	if (strstr(boot_command_line, "ttyS0")!=NULL) {
-		star_devices[1] = &debug_uart;
-	}else{
-		star_devices[1] = &tegra_uartb_device;
-	}
+	star_uart_init();
+
 	platform_add_devices(star_devices, ARRAY_SIZE(star_devices));
 
 	// star_i2c_init();
