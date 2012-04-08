@@ -436,6 +436,9 @@ static void mdm_spi_close(struct tty_struct *tty, struct file *filp)
 
 	TTYSPI_DEBUG_PRINT("%s\n", __func__);
 
+	if (!spi_table[tty->index].allocated)
+		return;
+
 	//assign the value 0 to 'in_use', inactivating it and blocking additional write requests occuring from the workqueue
 	atomic_set(&spi_table[tty->index].in_use, 0);
 
