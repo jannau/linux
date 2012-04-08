@@ -348,8 +348,7 @@ static void spi_statistic_cb_func(unsigned long unused)
 /*
  * Function opens a tty device when called from user space
  */
-static int
-mdm_spi_open(struct tty_struct *tty, struct file *filp)
+static int mdm_spi_open(struct tty_struct *tty, struct file *filp)
 {
 	int status = 0;
 	struct mdm_spi_data *spi_data;
@@ -411,8 +410,7 @@ mdm_spi_open(struct tty_struct *tty, struct file *filp)
 /*
  * Function closes an opened tty device driver when called from user space
  */
-static void
-mdm_spi_close(struct tty_struct *tty, struct file *filp)
+static void mdm_spi_close(struct tty_struct *tty, struct file *filp)
 {
 #ifdef TX_BUFFER_QUEUE
 	struct mdm_spi_data *spi_data = (struct mdm_spi_data *)tty->driver_data;
@@ -474,8 +472,7 @@ mdm_spi_close(struct tty_struct *tty, struct file *filp)
  * and this function returns number of bytes sent to MODEM
  */
 #ifdef TX_BUFFER_QUEUE
-static int
-mdm_spi_write(struct tty_struct *tty, const unsigned char *buf, int count)
+static int mdm_spi_write(struct tty_struct *tty, const unsigned char *buf, int count)
 {
 	struct mdm_spi_data *spi_data = (struct mdm_spi_data *)tty->driver_data;
 
@@ -575,8 +572,7 @@ mdm_spi_write(struct tty_struct *tty, const unsigned char *buf, int count)
 	return count;
 }
 #else // TX_BUFFER_QUEUE
-static int
-mdm_spi_write(struct tty_struct *tty, const unsigned char *buf, int count)
+static int mdm_spi_write(struct tty_struct *tty, const unsigned char *buf, int count)
 {
 	struct mdm_spi_data *spi_data = (struct mdm_spi_data *)tty->driver_data;
 
@@ -620,8 +616,7 @@ mdm_spi_write(struct tty_struct *tty, const unsigned char *buf, int count)
 
 
 /* This function should return number of free bytes left in the write buffer, in this case always return 2048 */
-static int
-mdm_spi_write_room(struct tty_struct *tty)
+static int mdm_spi_write_room(struct tty_struct *tty)
 {
 	return IFX_SPI_MAX_BUF_SIZE;
 }
@@ -660,8 +655,7 @@ mdm_spi_write_room(struct tty_struct *tty)
 /* ################################################################################################################ */
 
 /* TTY - SPI driver Operations */
-static int
-mdm_spi_probe(struct spi_device *spi)
+static int mdm_spi_probe(struct spi_device *spi)
 {
 	int status;
 	struct mdm_spi_data *spi_data;
@@ -838,8 +832,7 @@ mdm_spi_probe(struct spi_device *spi)
 	return status;
 }
 
-static int
-mdm_spi_remove(struct spi_device *spi)
+static int mdm_spi_remove(struct spi_device *spi)
 {
 	struct mdm_spi_data *spi_data;
 
@@ -1041,8 +1034,7 @@ static const struct tty_operations mdm_spi_ops = {
 /*
  * Intialize frame sizes as "IFX_SPI_DEFAULT_BUF_SIZE"(2044) bytes for first SPI frame transfer
  */
-static void
-mdm_spi_buffer_initialization(struct mdm_spi_data *spi_data)
+static void mdm_spi_buffer_initialization(struct mdm_spi_data *spi_data)
 {
 	spi_data->mdm_sender_buf_size = IFX_SPI_DEFAULT_BUF_SIZE;
 	spi_data->mdm_receiver_buf_size = IFX_SPI_DEFAULT_BUF_SIZE;
@@ -1054,8 +1046,7 @@ mdm_spi_buffer_initialization(struct mdm_spi_data *spi_data)
 /*
  * Allocate memory for TX_BUFFER and RX_BUFFER
  */
-static int
-mdm_spi_allocate_frame_memory(struct mdm_spi_data *spi_data, unsigned int memory_size)
+static int mdm_spi_allocate_frame_memory(struct mdm_spi_data *spi_data, unsigned int memory_size)
 {
 	int status = 0;
 
@@ -1083,8 +1074,7 @@ mdm_spi_allocate_frame_memory(struct mdm_spi_data *spi_data, unsigned int memory
 /*
  * Function to set header information according to IFX SPI framing protocol specification
  */
-static void
-mdm_spi_set_header_info(unsigned char *header_buffer, unsigned int curr_buf_size, unsigned int next_buf_size)
+static void mdm_spi_set_header_info(unsigned char *header_buffer, unsigned int curr_buf_size, unsigned int next_buf_size)
 {
 	int i;
 	union mdm_spi_frame_header header;
@@ -1108,8 +1098,7 @@ mdm_spi_set_header_info(unsigned char *header_buffer, unsigned int curr_buf_size
 /*
  * Function to get header information according to IFX SPI framing protocol specification
  */
-static int
-mdm_spi_get_header_info(struct mdm_spi_data *spi_data, unsigned int *valid_buf_size)
+static int mdm_spi_get_header_info(struct mdm_spi_data *spi_data, unsigned int *valid_buf_size)
 {
 	int i;
 	union mdm_spi_frame_header header;
@@ -1137,8 +1126,7 @@ mdm_spi_get_header_info(struct mdm_spi_data *spi_data, unsigned int *valid_buf_s
 }
 
 
-static void
-mdm_spi_clear_header_info(unsigned int *hdr_ptr)
+static void mdm_spi_clear_header_info(unsigned int *hdr_ptr)
 {
 	*(hdr_ptr) = 0;
 	*(hdr_ptr + 1) = 0;
@@ -1154,14 +1142,12 @@ mdm_spi_set_tx_frame_count(unsigned int *hdr_ptr, unsigned int id)
 	TTYSPI_DEBUG_PRINT(KERN_ERR "Tx Count %d\n", tx_count[id]);
 }
 
-static unsigned int
-mdm_spi_get_rx_frame_count(unsigned int *hdr_ptr)
+static unsigned int mdm_spi_get_rx_frame_count(unsigned int *hdr_ptr)
 {
 	return *(hdr_ptr + 1);
 }
 
-static int
-mdm_spi_get_remote_chk(unsigned long *hdr_ptr)
+static int mdm_spi_get_remote_chk(unsigned long *hdr_ptr)
 {
 	if (*(hdr_ptr) & (0x00002000))
 		return 1;
@@ -1172,8 +1158,7 @@ mdm_spi_get_remote_chk(unsigned long *hdr_ptr)
 /*
  * Function to set/unset SRDY signal
  */
-static void
-mdm_spi_set_srdy_signal(s16 bus_num, int value)
+static void mdm_spi_set_srdy_signal(s16 bus_num, int value)
 {
 #if 1   //ndef USE_SRDY
 	int gpio_num = 0;
@@ -1196,8 +1181,7 @@ mdm_spi_set_srdy_signal(s16 bus_num, int value)
 }
 
 
-static int
-mdm_spi_get_mrdy_signal(s16 bus_num)
+static int mdm_spi_get_mrdy_signal(s16 bus_num)
 {
 	int gpio_num = 0;
 	int value = 0;
@@ -1222,7 +1206,7 @@ mdm_spi_get_mrdy_signal(s16 bus_num)
 }
 
 
-int     mdm_spi_callback(void *client_data)
+int mdm_spi_callback(void *client_data)
 {
 	s16 *bus_num;
 
@@ -1238,8 +1222,7 @@ int     mdm_spi_callback(void *client_data)
 /*
  * Function to calculate next_frame_size required for filling in SPI frame Header
  */
-static int
-mdm_spi_get_next_frame_size(int count)
+static int mdm_spi_get_next_frame_size(int count)
 {
 	if (count > IFX_SPI_MAX_BUF_SIZE)
 		return IFX_SPI_MAX_BUF_SIZE;
@@ -1252,8 +1235,7 @@ mdm_spi_get_next_frame_size(int count)
  * valid_frame_size and sender_next_frame_size to set in SPI header frame. Copys the data to be transferred from
  * user space to TX buffer and set MRDY signal to HIGH to indicate Master is ready to transfer data.
  */
-static void
-mdm_spi_setup_transmission(struct mdm_spi_data *spi_data)
+static void mdm_spi_setup_transmission(struct mdm_spi_data *spi_data)
 {
 	if ((spi_data->mdm_sender_buf_size != 0) || (spi_data->mdm_receiver_buf_size != 0)) {
 		// current_frame_size must be IFX_SPI_MAX_BUF_SIZE
@@ -1295,8 +1277,7 @@ mdm_spi_setup_transmission(struct mdm_spi_data *spi_data)
 #define CURR_DATA   0x00000FFF
 #define NEXT_DATA   0x0FFF0000
 
-static int
-check_valid_rx_frame_header(unsigned int *hdr_ptr, int index)
+static int check_valid_rx_frame_header(unsigned int *hdr_ptr, int index)
 {
 	int retval = 1;
 
@@ -1328,8 +1309,7 @@ check_valid_rx_frame_header(unsigned int *hdr_ptr, int index)
  */
 #define MAX_RETRY_COUNT 3
 #ifdef TX_BUFFER_QUEUE
-static void
-mdm_spi_send_and_receive_data(struct mdm_spi_data *spi_data, int tx_pending)
+static void mdm_spi_send_and_receive_data(struct mdm_spi_data *spi_data, int tx_pending)
 {
 	unsigned int rx_valid_buf_size;
 	int status = 0;
@@ -1429,8 +1409,7 @@ mdm_spi_send_and_receive_data(struct mdm_spi_data *spi_data, int tx_pending)
 #endif
 }
 #else // TX_BUFFER_QUEUE
-static void
-mdm_spi_send_and_receive_data(struct mdm_spi_data *spi_data)
+static void mdm_spi_send_and_receive_data(struct mdm_spi_data *spi_data)
 {
 	unsigned int rx_valid_buf_size;
 	int status = 0;
@@ -1484,8 +1463,7 @@ mdm_spi_send_and_receive_data(struct mdm_spi_data *spi_data)
 static int count_transfer_failed = 0;
 
 //check communication with modem
-int
-is_modem_communicating(void)
+int is_modem_communicating(void)
 {
 	int ret = 1;
 
@@ -1499,8 +1477,7 @@ is_modem_communicating(void)
 //#define SPI_TIMEDOUT_NSEC     20000000     //20ms
 #define SPI_TIMEDOUT_SEC      2     //2s
 
-static unsigned int
-mdm_spi_sync_read_write(struct mdm_spi_data *spi_data, unsigned int len)
+static unsigned int mdm_spi_sync_read_write(struct mdm_spi_data *spi_data, unsigned int len)
 {
 	int status;
 	struct spi_message m;
@@ -1585,8 +1562,7 @@ mdm_spi_sync_read_write(struct mdm_spi_data *spi_data, unsigned int len)
  * reception if it is a Master initiated data transfer. For both the cases Master intiated/Slave intiated
  * transfer it starts data transfer.
  */
-static irqreturn_t
-mdm_spi_handle_mrdy_irq(int irq, void *handle)
+static irqreturn_t mdm_spi_handle_mrdy_irq(int irq, void *handle)
 {
 	struct mdm_spi_data *spi_data = (struct mdm_spi_data *)handle;
 	int value;
@@ -1728,8 +1704,7 @@ int get_tx_pending_data(struct mdm_spi_data *spi_data, int *anymore)
 
 
 #ifdef TX_BUFFER_QUEUE
-static void
-mdm_spi_handle_work(struct work_struct *work)
+static void mdm_spi_handle_work(struct work_struct *work)
 {
 	struct mdm_spi_data *spi_data;
 	int tx_pending = 0;
@@ -1844,8 +1819,7 @@ mdm_spi_handle_work(struct work_struct *work)
 #endif
 }
 #else
-static void
-mdm_spi_handle_work(struct work_struct *work)
+static void mdm_spi_handle_work(struct work_struct *work)
 {
 	struct mdm_spi_data *spi_data = container_of(work, struct mdm_spi_data, mdm_work);
 	s16 bus_num = spi_data->spi->master->bus_num;
@@ -1923,8 +1897,7 @@ mdm_spi_handle_work(struct work_struct *work)
  * on SRDY GPIO pin for SRDY signal going HIGH. In case of failure of SPI driver register cases it unregister tty driver
  * from tty core.
  */
-static int
-__init mdm_spi_init(void)
+static int __init mdm_spi_init(void)
 {
 	int status = 0;
 
@@ -1989,8 +1962,7 @@ module_init(mdm_spi_init);
 /*
  * Exit function to unregister SPI driver and tty SPI driver
  */
-static void
-__exit mdm_spi_exit(void)
+static void __exit mdm_spi_exit(void)
 {
 	TTYSPI_DEBUG_PRINT("%s\n", __func__);
 	spi_unregister_driver(&mdm_spi_driver);
