@@ -731,7 +731,7 @@ static struct i2c_driver wm8994_i2c_driver = {
 	.driver = {
 		.name = "wm8994",
 		.owner = THIS_MODULE,
-		.pm = &wm8994_pm_ops,
+		//.pm = &wm8994_pm_ops,
 	},
 	.probe = wm8994_i2c_probe,
 	.remove = wm8994_i2c_remove,
