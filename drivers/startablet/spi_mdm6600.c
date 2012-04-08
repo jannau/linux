@@ -684,22 +684,14 @@ static int mdm_spi_probe(struct spi_device *spi)
 	TTYSPI_DEBUG_PRINT("%s: (assign_num=%d)\n", __func__, assign_num);
 
 	/* memory allocation for SPI driver data */
-	spi_data = (struct mdm_spi_data *)kmalloc(sizeof(struct mdm_spi_data), GFP_KERNEL);
+	spi_data = kzalloc(sizeof(*spi_data), GFP_KERNEL);
 	if (!spi_data)
 		return -ENOMEM;
-
-	//spi_data->mdm_tty = NULL;
-	//initialize all member variables of mdm_spi_data
-	memset((void *)spi_data, 0, sizeof(struct mdm_spi_data));
 
 	status = mdm_spi_allocate_frame_memory(spi_data, IFX_SPI_FRAME_SIZE);
 	if (status != 0) {
 		printk(KERN_ERR "%s: Failed to allocate memory for buffers\n", __func__);
-
-		//WBT #196465
-		if (spi_data)
-			kfree(spi_data);
-
+		kfree(spi_data);
 		return -ENOMEM;
 	}
 
