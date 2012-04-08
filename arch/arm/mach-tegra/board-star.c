@@ -648,34 +648,34 @@ static void star_nct1008_init(void)
  *   Startablet SPI devices
  */
 static struct platform_device *star_spi_devices[] __initdata = {
-	&tegra_spi_device1,
+	&tegra_spi_slave_device1,
 };
 
-/* static struct spi_board_info tegra_spi_devices[] __initdata = { */
-/* #ifdef CONFIG_SPI_MDM6600 */
-/* 	{ */
-/* 		.modalias = "mdm6600", */
-/* 		.bus_num = 0, */
-/* 		.chip_select = 0, */
-/* 		.mode = SPI_MODE_1, */
-/* 		.max_speed_hz = 24000000, */
-/* 		.controller_data = &tegra_spi_device1, */
-/* 		.irq = 0, */
-/* 		//	.platform_data = &mdm6600 */
-/* 	}, */
-/* #else /\* CONFIG_SPI_MDM6600 *\/ */
-/* { */
-/* 		.modalias = "ifxn721", */
-/* 		.bus_num = 0, */
-/* 		.chip_select = 0, */
-/* 		.mode = SPI_MODE_1, */
-/* 		.max_speed_hz = 24000000, */
-/* 		//.controller_data	= &tegra_spi_device1, */
-/* 		.irq = 277,//0,//GPIO_IRQ(TEGRA_GPIO_PO5), */
-/* 		//	.platform_data = &ifxn721 */
-/* 	}, */
-/* #endif /\* CONFIG_SPI_MDM6600 *\/ */
-/* }; */
+static struct spi_board_info star_spi_board_devices[] __initdata = {
+#ifdef CONFIG_SPI_MDM6600
+	{
+		.modalias = "mdm6600",
+		.bus_num = 0,
+		.chip_select = 0,
+		.mode = SPI_MODE_1,
+		.max_speed_hz = 24000000,
+		.controller_data = &tegra_spi_slave_device1,
+		.irq = 0,
+		//	.platform_data = &mdm6600
+	},
+#else /* CONFIG_SPI_MDM6600 */
+{
+		.modalias = "ifxn721",
+		.bus_num = 0,
+		.chip_select = 0,
+		.mode = SPI_MODE_1,
+		.max_speed_hz = 24000000,
+		//.controller_data	= &tegra_spi_slave_device1,
+		.irq = 277,//0,//GPIO_IRQ(TEGRA_GPIO_PO5),
+		//	.platform_data = &ifxn721
+	},
+#endif /* CONFIG_SPI_MDM6600 */
+};
 
 struct spi_clk_parent spi_parent_clk[] = {
 	[0] = {.name = "pll_p"},
@@ -696,7 +696,6 @@ static struct tegra_spi_platform_data star_spi_pdata = {
 
 static void __init star_spi_init(void)
 {
-
 	int i;
 	struct clk *c;
 	struct board_info board_info;
@@ -715,9 +714,13 @@ static void __init star_spi_init(void)
 	}
 	star_spi_pdata.parent_clk_list = spi_parent_clk;
 	star_spi_pdata.parent_clk_count = ARRAY_SIZE(spi_parent_clk);
-	tegra_spi_device1.dev.platform_data = &star_spi_pdata;
+
+	tegra_spi_slave_device1.dev.platform_data = &star_spi_pdata;
+
 	platform_add_devices(star_spi_devices, ARRAY_SIZE(star_spi_devices));
 
+	spi_register_board_info(star_spi_board_devices,
+				ARRAY_SIZE(star_spi_board_devices));
 }
 
 static struct platform_device *star_uart_devices[] __initdata = {
