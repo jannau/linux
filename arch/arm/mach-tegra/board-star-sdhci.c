@@ -121,7 +121,6 @@ static struct tegra_sdhci_platform_data tegra_sdhci_platform_data0 = {
 	.mmc_data = {
 		.register_status_notify	= startablet_wifi_status_register,
 		.embedded_sdio = &embedded_sdio_data0,
-		.built_in = 1,
 	},
 	.cd_gpio = -1,
 	.wp_gpio = -1,
