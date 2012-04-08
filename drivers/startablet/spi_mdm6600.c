@@ -699,7 +699,8 @@ static int mdm_spi_probe(struct spi_device *spi)
 	spin_lock_init(&spi_data->spi_lock);
 	INIT_WORK(&spi_data->mdm_work, mdm_spi_handle_work);
 
-	//workqueue thread must be created in the probe function, because of the mrdy interrupt coming from cp
+	/* workqueue thread must be created in the probe function
+	 * because of the mrdy interrupt coming from cp */
 	spi_data->mdm_wq = create_singlethread_workqueue("mdm6600");
 	if (!spi_data->mdm_wq)
 		printk(KERN_ERR "Failed to setup workqueue - mdm_wq \n");
@@ -745,7 +746,7 @@ static int mdm_spi_probe(struct spi_device *spi)
 		break;
 	}
 
-	//must be set to 4 times the speed of the actual running clock
+	// must be set to 4 times the speed of the actual running clock
 	spi->max_speed_hz = 4 * 24 * 1000 * 1000;
 
 	status = spi_setup(spi);
@@ -1566,7 +1567,8 @@ static unsigned int mdm_spi_sync_read_write(struct mdm_spi_data *spi_data, unsig
 	spi_message_init(&m);
 	spi_message_add_tail(&t, &m);
 
-	//condition added for checking the 'in_use' variable in order to prevent spi transmitting after 'mdm_spi_close'
+	/* condition added for checking the 'in_use' variable in order
+	 * to prevent spi transmitting after 'mdm_spi_close' */
 	if ((NULL == spi_data) || (NULL == spi_data->spi) ||
 	    (atomic_read(&spi_table[spi_data->index].in_use) == 0)) {
 		//WBT #196461
@@ -1577,11 +1579,10 @@ static unsigned int mdm_spi_sync_read_write(struct mdm_spi_data *spi_data, unsig
 		hrtimer_start(&(spi_data->timer), ktime_set(SPI_TIMEDOUT_SEC,
 							    0), HRTIMER_MODE_REL);
 
-		//check if 'spi_sync' is running(when running, is_syncing is 1, when finished, is_syncing is 0)
+		/* check if 'spi_sync' is running(when running, is_syncing is 1,
+		 *  when finished, is_syncing is 0) */
 		atomic_set(&spi_data->is_syncing, 1);
-
 		status = spi_sync(spi_data->spi, &m);
-
 		atomic_set(&spi_data->is_syncing, 0);
 
 		do {
