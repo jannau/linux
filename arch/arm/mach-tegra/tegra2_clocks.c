@@ -2474,6 +2474,10 @@ struct clk_duplicate tegra_clk_duplicates[] = {
 	CLK_DUPLICATE("vde", "tegra-aes", "vde"),
 	CLK_DUPLICATE("twd", "smp_twd", NULL),
 	CLK_DUPLICATE("bsea", "tegra-aes", "bsea"),
+	CLK_DUPLICATE("sbc1", "spi_slave_tegra.0", NULL),
+	CLK_DUPLICATE("sbc2", "spi_slave_tegra.1", NULL),
+	CLK_DUPLICATE("sbc3", "spi_slave_tegra.2", NULL),
+	CLK_DUPLICATE("sbc4", "spi_slave_tegra.3", NULL),
 };
 
 #define CLK(dev, con, ck)	\
