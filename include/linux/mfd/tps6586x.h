@@ -151,10 +151,4 @@ extern int tps6586x_set_led(unsigned int color); // color=0x00RRGGBB
 extern int tps6586x_set_led_onoff_time(unsigned int on_time_ms, unsigned int off_time_ms);
 extern bool tps6586x_led_check(void);
 
-/* RTC */
-extern int tps6586x_rtc_count_read(uint32_t* count);
-extern int tps6586x_rtc_count_write(uint32_t count);
-extern int tps6586x_rtc_alarm_count_read(uint32_t* count);
-extern int tps6586x_rtc_alarm_count_write(uint32_t count);
-
 #endif /*__LINUX_MFD_TPS6586X_H */
