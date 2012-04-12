@@ -193,9 +193,12 @@ static struct platform_device star_audio_device = {
 	},
 };
 
+#define STAR_ECHO_SCL_PIN TEGRA_GPIO_PI5
+#define STAR_ECHO_SDA_PIN TEGRA_GPIO_PH1
+
 static struct i2c_gpio_platform_data i2c_gpio_data = {
-	.sda_pin		= TEGRA_GPIO_PH1,
-	.scl_pin		= TEGRA_GPIO_PI5,
+	.sda_pin		= STAR_ECHO_SDA_PIN,
+	.scl_pin		= STAR_ECHO_SCL_PIN,
 	.sda_is_open_drain	= 0,
 	.scl_is_open_drain	= 0,
 	.udelay			= 5, 	/* cloase to 100kHz */
@@ -283,7 +286,11 @@ static void star_i2c_init(void)
 	platform_device_register(&tegra_i2c_device2);
 	platform_device_register(&tegra_i2c_device1);
 
+	/* enable gpios and register gpio i2c controller */
 	platform_device_register(&i2c_gpio_controller);
+	tegra_gpio_enable(STAR_ECHO_SCL_PIN);
+	tegra_gpio_enable(STAR_ECHO_SDA_PIN);
+
 	if( board_rev>=REV_1_2)
 		platform_device_register(&stereocam_i2c_gpio_controller);
 

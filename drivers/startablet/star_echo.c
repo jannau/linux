@@ -33,8 +33,6 @@
 #define GPIO_ECHO_BP_N		        TEGRA_GPIO_PJ6
 #define GPIO_ECHO_PWDN_N          	TEGRA_GPIO_PJ5
 #define GPIO_ECHO_RST_N           	TEGRA_GPIO_PU4
-#define GPIO_ECHO_SCL             	TEGRA_GPIO_PI5
-#define GPIO_ECHO_SDA             	TEGRA_GPIO_PH1
 
 DEFINE_MUTEX(bypass_mutex);
 DEFINE_MUTEX(voip_mutex);
@@ -541,11 +539,6 @@ static int __init echocancel_probe(struct i2c_client *client, const struct i2c_d
 	memset(echo_client, 0, sizeof(*echo_client));
 	echo_client = client;
 	i2c_set_clientdata(client, echo_client);
-
-	gpio_request(GPIO_ECHO_SCL, "echo_scl");
-	tegra_gpio_enable(GPIO_ECHO_SCL);
-	gpio_request(GPIO_ECHO_SDA, "echo_sda");
-	tegra_gpio_enable(GPIO_ECHO_SDA);
 
 	gpio_request(GPIO_ECHO_BP_N, "echo_bp_n");
 	tegra_gpio_enable(GPIO_ECHO_BP_N);
