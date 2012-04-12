@@ -48,14 +48,6 @@ unsigned char rd_bytes[2][4] = {
 	  READ_HIGH_BYTE }
 };
 
-static int echo_write_register(int reg, int value);
-static int echo_read_register(int reg);
-void echo_set_bypass_parameters(void);
-static ssize_t rw_register(struct device *dev, struct device_attribute *attr, const char *buf,
-			   size_t size);
-void echo_set_parameters(void);
-int echo_loop_test(void);
-
 static int echo_write_register(int reg, int value)
 {
 	unsigned char arr[7];
@@ -190,7 +182,7 @@ static ssize_t fm31_status(struct device *dev,
 	return 0;
 }
 
-void echo_set_bypass_parameters()
+static void echo_set_bypass_parameters(void)
 {
 	int i = 0, ret = 0, rval = 0, rval1 = 0, rval2 = 0;
 
@@ -264,7 +256,7 @@ void echo_set_bypass_parameters()
 	}
 }
 
-void echo_set_parameters()
+static void echo_set_parameters(void)
 {
 	int i = 0, ret = 0, rval = 0, rval1 = 0, rval2 = 0;
 
@@ -375,7 +367,7 @@ void echo_set_parameters()
 	}
 }
 
-void echo_set_headset_parameters()
+static void echo_set_headset_parameters(void)
 {
 	int i = 0, ret = 0, rval = 0, rval1 = 0, rval2 = 0;
 
