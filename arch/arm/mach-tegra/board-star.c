@@ -108,7 +108,7 @@ static __initdata struct tegra_clk_init_table star_clk_init_table[] = {
 	{ "sbc1",	"pll_p",	96000000,	true},
 	//{ "sbc2",	"pll_p",	96000000,	true}, //disables spi secondary port
 	//clock setting for spi1 and spi2 port
-	{ "blink",	"clk_32k",	32768,		false},
+	{ "blink",	"clk_32k",	32768,		true},
 	{ "pll_p_out4",	"pll_p",	24000000,	true },
 	{ "pwm",	"clk_32k",	32768,		false},
 	{ "i2s1",	"pll_a_out0",	0,		false},
