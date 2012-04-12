@@ -12,6 +12,7 @@
 #include <linux/mutex.h>
 
 #include <linux/platform_device.h>
+#include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/module.h>
 #include <linux/delay.h>
@@ -41,6 +42,7 @@ struct star_echo_device {
 	struct device *dev;
 	struct i2c_client *client;
 	struct wake_lock wlock;
+	struct clk *clk;
 };
 
 unsigned char rd_bytes[2][4] = {
@@ -153,6 +155,8 @@ static ssize_t fm31_status(struct device *dev,
 {
 	struct star_echo_device *echo = dev_get_drvdata(dev);
 
+	clk_enable(echo->clk);
+
 	printk("0x23f8 = 0x%x \n", echo_read_register(echo, 0x23f8));
 	printk("0x232c = 0x%x \n", echo_read_register(echo, 0x232C));
 	printk("0x2304 = 0x%x \n", echo_read_register(echo, 0x2304));
@@ -169,6 +173,9 @@ static ssize_t fm31_status(struct device *dev,
 	printk("0x2352 = 0x%x \n", echo_read_register(echo, 0x2352));
 	printk("0x2392 = 0x%x \n", echo_read_register(echo, 0x2392));
 	printk("0x230c = 0x%x \n", echo_read_register(echo, 0x230C));
+
+	clk_disable(echo->clk);
+
 	return 0;
 }
 
@@ -182,6 +189,7 @@ static void echo_set_bypass_parameters(struct star_echo_device *echo)
 
 	ret = mutex_trylock(&bypass_mutex);
 	if (ret != 0) {         //get the lock
+		clk_enable(echo->clk);
 		do {
 			if (i > 3) {
 				printk(
@@ -239,6 +247,8 @@ static void echo_set_bypass_parameters(struct star_echo_device *echo)
 			i++;
 		} while ((err != 0) || (fm31 != 0));
 
+		clk_disable(echo->clk);
+
 		mutex_unlock(&bypass_mutex);
 		return;
 	} else {
@@ -254,6 +264,7 @@ static void echo_set_parameters(struct star_echo_device *echo)
 
 	ret = mutex_trylock(&voip_mutex);
 	if (ret != 0) {         //get the lock
+		clk_enable(echo->clk);
 		do {
 			if (i > 3) {
 				printk("[FM31] voip parameter try to write 4 times but fail.\n");
@@ -350,6 +361,8 @@ static void echo_set_parameters(struct star_echo_device *echo)
 			i++;
 		} while ((err != 0) || (fm31 != 0));
 
+		clk_disable(echo->clk);
+
 		mutex_unlock(&voip_mutex);
 		return;
 	} else {
@@ -366,6 +379,7 @@ static void echo_set_headset_parameters(struct star_echo_device *echo)
 
 	ret = mutex_trylock(&voip_headset_mutex);
 	if (ret != 0) {         //get the lock
+		clk_enable(echo->clk);
 		do {
 			if (i > 3) {
 				printk(
@@ -463,6 +477,8 @@ static void echo_set_headset_parameters(struct star_echo_device *echo)
 			i++;
 		} while ((err != 0) || (fm31 != 0));
 
+		clk_disable(echo->clk);
+
 		mutex_unlock(&voip_headset_mutex);
 		return;
 	} else {
@@ -559,6 +575,14 @@ static int __init echocancel_probe(struct i2c_client *client, const struct i2c_d
 	echo->dev = &client->dev;
 	dev_set_drvdata(echo->dev, echo);
 
+	echo->clk = clk_get_sys(NULL, "cdev1");
+	if (IS_ERR(echo->clk)) {
+		dev_err(echo->dev, "Can't retrieve clk cdev1\n");
+		kfree(echo);
+		return PTR_ERR(echo->clk);
+	}
+	clk_enable(echo->clk);
+
 	gpio_request(GPIO_ECHO_BP_N, "echo_bp_n");
 	tegra_gpio_enable(GPIO_ECHO_BP_N);
 	gpio_direction_output(GPIO_ECHO_BP_N, 1);
@@ -633,6 +657,8 @@ static int __init echocancel_probe(struct i2c_client *client, const struct i2c_d
 		i++;
 	} while ((err != 0) || (fm31 != 0));
 
+	clk_disable(echo->clk);
+
 	return 0;
 }
 
@@ -640,6 +666,7 @@ static int echocancel_remove(struct i2c_client *client)
 {
 	struct star_echo_device *echo = i2c_get_clientdata(client);
 	wake_lock_destroy(&echo->wlock);
+	clk_put(echo->clk);
 	kfree(echo);
 	return 0;
 }
