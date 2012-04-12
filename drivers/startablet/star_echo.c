@@ -37,9 +37,11 @@ DEFINE_MUTEX(bypass_mutex);
 DEFINE_MUTEX(voip_mutex);
 DEFINE_MUTEX(voip_headset_mutex);
 
-static struct i2c_client *echo_client;
-
-struct wake_lock wlock;
+struct star_echo_device {
+	struct device *dev;
+	struct i2c_client *client;
+	struct wake_lock wlock;
+};
 
 unsigned char rd_bytes[2][4] = {
 	{ (ECHO_SYNC_WORD >> 8) & 0xFF, (ECHO_SYNC_WORD >> 0) & 0xFF, ECHO_REG_READ,
@@ -48,17 +50,18 @@ unsigned char rd_bytes[2][4] = {
 	  READ_HIGH_BYTE }
 };
 
-static int echo_write_register(int reg, int value)
+static int echo_write_register(struct star_echo_device *echo, int reg, int value)
 {
 	unsigned char arr[7];
+	int addr = echo->client->addr;
 	struct i2c_msg msg[] = {
-		{ .addr = echo_client->addr, .flags = 0, .buf = &arr[0], .len = 1 },
-		{ .addr = echo_client->addr, .flags = 0, .buf = &arr[1], .len = 1 },
-		{ .addr = echo_client->addr, .flags = 0, .buf = &arr[2], .len = 1 },
-		{ .addr = echo_client->addr, .flags = 0, .buf = &arr[3], .len = 1 },
-		{ .addr = echo_client->addr, .flags = 0, .buf = &arr[4], .len = 1 },
-		{ .addr = echo_client->addr, .flags = 0, .buf = &arr[5], .len = 1 },
-		{ .addr = echo_client->addr, .flags = 0, .buf = &arr[6], .len = 1 },
+		{ .addr = addr, .flags = 0, .buf = &arr[0], .len = 1 },
+		{ .addr = addr, .flags = 0, .buf = &arr[1], .len = 1 },
+		{ .addr = addr, .flags = 0, .buf = &arr[2], .len = 1 },
+		{ .addr = addr, .flags = 0, .buf = &arr[3], .len = 1 },
+		{ .addr = addr, .flags = 0, .buf = &arr[4], .len = 1 },
+		{ .addr = addr, .flags = 0, .buf = &arr[5], .len = 1 },
+		{ .addr = addr, .flags = 0, .buf = &arr[6], .len = 1 },
 	};
 
 	arr[0] = (ECHO_SYNC_WORD >> 8) & 0xFF;
@@ -69,59 +72,44 @@ static int echo_write_register(int reg, int value)
 	arr[5] = (value >> 8) & 0xff;
 	arr[6] = (value >> 0) & 0xff;
 /*
- *      if (i2c_transfer(echo_client->adapter, msg, 7) != 7)
+ *      if (i2c_transfer(echo->client->adapter, msg, 7) != 7)
  *      {
- *              dev_err(&echo_client->dev, "i2c write error\n");
+ *              dev_err(&echo->client->dev, "i2c write error\n");
  *              return -EIO;
  *      }
  */
-	if (i2c_transfer(echo_client->adapter, &msg[0], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[1], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[2], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[3], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[4], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[5], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[6], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[0], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[1], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[2], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[3], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[4], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[5], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[6], 1) != 1) return -EIO;
 
 	return 0;
 }
 
-static int echo_read_register(int reg)
+static int echo_read_register(struct star_echo_device *echo, int reg)
 {
 	int ret_lo = 0, ret_hi = 0, value = 0;
+	int addr = echo->client->addr;
 	unsigned char w_buf[5], r_buf[2];
 	struct i2c_msg msg[] = {
-		{ .addr = echo_client->addr, .flags = 0,	.buf		   = &w_buf[0],
-		  .len	     =
-			  1 },
-		{ .addr = echo_client->addr, .flags = 0,	.buf = &w_buf[1],	.len =
-			  1 },
-		{ .addr = echo_client->addr, .flags = 0,	.buf = &w_buf[2],	.len =
-			  1 },
-		{ .addr = echo_client->addr, .flags = 0,	.buf = &w_buf[3],	.len =
-			  1 },
-		{ .addr = echo_client->addr, .flags = 0,	.buf = &w_buf[4],	.len =
-			  1 },
-		{ .addr = echo_client->addr, .flags = 0,	.buf = &rd_bytes[0][0], .len =
-			  1 },
-		{ .addr = echo_client->addr, .flags = 0,	.buf = &rd_bytes[0][1], .len =
-			  1 },
-		{ .addr = echo_client->addr, .flags = 0,	.buf = &rd_bytes[0][2], .len =
-			  1 },
-		{ .addr = echo_client->addr, .flags = 0,	.buf = &rd_bytes[0][3], .len =
-			  1 },
-		{ .addr = echo_client->addr, .flags = I2C_M_RD, .buf = &r_buf[0],	.len =
-			  1 },
-		{ .addr = echo_client->addr, .flags = 0,	.buf = &rd_bytes[1][0], .len =
-			  1 },
-		{ .addr = echo_client->addr, .flags = 0,	.buf = &rd_bytes[1][1], .len =
-			  1 },
-		{ .addr = echo_client->addr, .flags = 0,	.buf = &rd_bytes[1][2], .len =
-			  1 },
-		{ .addr = echo_client->addr, .flags = 0,	.buf = &rd_bytes[1][3], .len =
-			  1 },
-		{ .addr = echo_client->addr, .flags = I2C_M_RD, .buf = &r_buf[1],	.len =
-			  1 },
+		{ .addr = addr, .flags = 0,	.buf = &w_buf[0],	.len = 1 },
+		{ .addr = addr, .flags = 0,	.buf = &w_buf[1],	.len = 1 },
+		{ .addr = addr, .flags = 0,	.buf = &w_buf[2],	.len = 1 },
+		{ .addr = addr, .flags = 0,	.buf = &w_buf[3],	.len = 1 },
+		{ .addr = addr, .flags = 0,	.buf = &w_buf[4],	.len = 1 },
+		{ .addr = addr, .flags = 0,	.buf = &rd_bytes[0][0], .len = 1 },
+		{ .addr = addr, .flags = 0,	.buf = &rd_bytes[0][1], .len = 1 },
+		{ .addr = addr, .flags = 0,	.buf = &rd_bytes[0][2], .len = 1 },
+		{ .addr = addr, .flags = 0,	.buf = &rd_bytes[0][3], .len = 1 },
+		{ .addr = addr, .flags = I2C_M_RD, .buf = &r_buf[0],	.len = 1 },
+		{ .addr = addr, .flags = 0,	.buf = &rd_bytes[1][0], .len = 1 },
+		{ .addr = addr, .flags = 0,	.buf = &rd_bytes[1][1], .len = 1 },
+		{ .addr = addr, .flags = 0,	.buf = &rd_bytes[1][2], .len = 1 },
+		{ .addr = addr, .flags = 0,	.buf = &rd_bytes[1][3], .len = 1 },
+		{ .addr = addr, .flags = I2C_M_RD, .buf = &r_buf[1],	.len = 1 },
 	};
 
 	w_buf[0] = (ECHO_SYNC_WORD >> 8) & 0xFF;
@@ -130,28 +118,28 @@ static int echo_read_register(int reg)
 	w_buf[3] = (reg >> 8) & 0xFF;
 	w_buf[4] = (reg >> 0) & 0xFF;
 /*
- *      if (i2c_transfer(echo_client->adapter, msg, 15) != 15)
+ *      if (i2c_transfer(echo->client->adapter, msg, 15) != 15)
  *      {
- *              dev_err(&echo_client->dev, "i2c read error\n");
+ *              dev_err(&echo->client->dev, "i2c read error\n");
  *              return -EIO;
  *      }
  */
 
-	if (i2c_transfer(echo_client->adapter, &msg[0], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[1], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[2], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[3], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[4], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[5], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[6], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[7], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[8], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[9], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[10], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[11], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[12], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[13], 1) != 1) return -EIO;
-	if (i2c_transfer(echo_client->adapter, &msg[14], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[0], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[1], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[2], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[3], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[4], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[5], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[6], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[7], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[8], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[9], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[10], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[11], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[12], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[13], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->client->adapter, &msg[14], 1) != 1) return -EIO;
 
 	ret_lo = r_buf[0];
 	ret_hi = r_buf[1];
@@ -163,26 +151,28 @@ static int echo_read_register(int reg)
 static ssize_t fm31_status(struct device *dev,
 			   struct device_attribute *attr, char *buf)
 {
-	printk("0x23f8 = 0x%x \n", echo_read_register(0x23f8));
-	printk("0x232c = 0x%x \n", echo_read_register(0x232C));
-	printk("0x2304 = 0x%x \n", echo_read_register(0x2304));
-	printk("0x2308 = 0x%x \n", echo_read_register(0x2308));
-	printk("0x230b = 0x%x \n", echo_read_register(0x230B));
-	printk("0x230d = 0x%x \n", echo_read_register(0x230D));
-	printk("0x230e = 0x%x \n", echo_read_register(0x230E));
-	printk("0x2311 = 0x%x \n", echo_read_register(0x2311));
-	printk("0x2312 = 0x%x \n", echo_read_register(0x2312));
-	printk("0x2315 = 0x%x \n", echo_read_register(0x2315));
-	printk("0x2316 = 0x%x \n", echo_read_register(0x2316));
-	printk("0x231a = 0x%x \n", echo_read_register(0x231A));
-	printk("0x231d = 0x%x \n", echo_read_register(0x231D));
-	printk("0x2352 = 0x%x \n", echo_read_register(0x2352));
-	printk("0x2392 = 0x%x \n", echo_read_register(0x2392));
-	printk("0x230c = 0x%x \n", echo_read_register(0x230C));
+	struct star_echo_device *echo = dev_get_drvdata(dev);
+
+	printk("0x23f8 = 0x%x \n", echo_read_register(echo, 0x23f8));
+	printk("0x232c = 0x%x \n", echo_read_register(echo, 0x232C));
+	printk("0x2304 = 0x%x \n", echo_read_register(echo, 0x2304));
+	printk("0x2308 = 0x%x \n", echo_read_register(echo, 0x2308));
+	printk("0x230b = 0x%x \n", echo_read_register(echo, 0x230B));
+	printk("0x230d = 0x%x \n", echo_read_register(echo, 0x230D));
+	printk("0x230e = 0x%x \n", echo_read_register(echo, 0x230E));
+	printk("0x2311 = 0x%x \n", echo_read_register(echo, 0x2311));
+	printk("0x2312 = 0x%x \n", echo_read_register(echo, 0x2312));
+	printk("0x2315 = 0x%x \n", echo_read_register(echo, 0x2315));
+	printk("0x2316 = 0x%x \n", echo_read_register(echo, 0x2316));
+	printk("0x231a = 0x%x \n", echo_read_register(echo, 0x231A));
+	printk("0x231d = 0x%x \n", echo_read_register(echo, 0x231D));
+	printk("0x2352 = 0x%x \n", echo_read_register(echo, 0x2352));
+	printk("0x2392 = 0x%x \n", echo_read_register(echo, 0x2392));
+	printk("0x230c = 0x%x \n", echo_read_register(echo, 0x230C));
 	return 0;
 }
 
-static void echo_set_bypass_parameters(void)
+static void echo_set_bypass_parameters(struct star_echo_device *echo)
 {
 	int i = 0, ret = 0, rval = 0, rval1 = 0, rval2 = 0;
 
@@ -207,27 +197,27 @@ static void echo_set_bypass_parameters(void)
 
 			msleep(10);
 
-			if (echo_write_register(0x2308, 0x005F) != 0) err = 1;
-			if (echo_write_register(0x232C, 0x0025) != 0) err = 1;
-			if (echo_write_register(0x2300, 0x0004) != 0) err = 1;
-			if (echo_write_register(0x2302, 0x0024) != 0) err = 1;
-			if (echo_write_register(0x23F7, 0x001E) != 0) err = 1;
-			if (echo_write_register(0x230C, 0x0000) != 0) err = 1;
+			if (echo_write_register(echo, 0x2308, 0x005F) != 0) err = 1;
+			if (echo_write_register(echo, 0x232C, 0x0025) != 0) err = 1;
+			if (echo_write_register(echo, 0x2300, 0x0004) != 0) err = 1;
+			if (echo_write_register(echo, 0x2302, 0x0024) != 0) err = 1;
+			if (echo_write_register(echo, 0x23F7, 0x001E) != 0) err = 1;
+			if (echo_write_register(echo, 0x230C, 0x0000) != 0) err = 1;
 			msleep(50);
 
 			//Check FM31 state//
-			rval = echo_read_register(0x230C);
-			rval1 = echo_read_register(0x2300);
-			rval2 = echo_read_register(0x3FE4);
+			rval = echo_read_register(echo, 0x230C);
+			rval1 = echo_read_register(echo, 0x2300);
+			rval2 = echo_read_register(echo, 0x3FE4);
 			if ((rval != 0x5A5A) || (rval1 != 0x0004) || (rval2 != 0x129E)) {
 				printk(
 					"[FM31]Bypass Parameter Write  Fail :  0x230C = %x, 0x2300 = %x, 0x3FE4 = %x  \n",
 					rval, rval1, rval2);
 
 				while (rw_count < 10) {
-					echo_write_register(0x3FE4, 0x361E);
+					echo_write_register(echo, 0x3FE4, 0x361E);
 					msleep(50);
-					rval = echo_read_register(0x3FE4);
+					rval = echo_read_register(echo, 0x3FE4);
 
 					if (rval == 0x361E) {
 						printk(
@@ -256,7 +246,7 @@ static void echo_set_bypass_parameters(void)
 	}
 }
 
-static void echo_set_parameters(void)
+static void echo_set_parameters(struct star_echo_device *echo)
 {
 	int i = 0, ret = 0, rval = 0, rval1 = 0, rval2 = 0;
 
@@ -277,68 +267,68 @@ static void echo_set_parameters(void)
 			gpio_set_value(GPIO_ECHO_RST_N, 1);
 			msleep(10);
 
-			if (echo_write_register(0x2300, 0x0000) != 0) err = 1;
-			if (echo_write_register(0x2302, 0x0024) != 0) err = 1;
-			if (echo_write_register(0x23F7, 0x0048) != 0) err = 1;
-			if (echo_write_register(0x22C0, 0x8101) != 0) err = 1;
-			if (echo_write_register(0x22C1, 0xF9C2) != 0) err = 1;
-			if (echo_write_register(0x22C2, 0xFCE1) != 0) err = 1;
-			if (echo_write_register(0x22C3, 0xB514) != 0) err = 1;
-			if (echo_write_register(0x22C4, 0xDA8A) != 0) err = 1;
-			if (echo_write_register(0x2308, 0x005F) != 0) err = 1;
-			if (echo_write_register(0x230B, 0x0001) != 0) err = 1;
-			if (echo_write_register(0x230D, 0x0380) != 0) err = 1;
-			if (echo_write_register(0x230E, 0x0400) != 0) err = 1;
-			if (echo_write_register(0x2311, 0x0101) != 0) err = 1;
-			if (echo_write_register(0x2312, 0x6981) != 0) err = 1;
-			if (echo_write_register(0x2315, 0x03DD) != 0) err = 1;
-			if (echo_write_register(0x2316, 0x0044) != 0) err = 1;
-			if (echo_write_register(0x2317, 0x1000) != 0) err = 1;
-			if (echo_write_register(0x231D, 0x0200) != 0) err = 1;
-			if (echo_write_register(0x232C, 0x0025) != 0) err = 1;
-			if (echo_write_register(0x233A, 0x7000) != 0) err = 1;
-			if (echo_write_register(0x233B, 0x0280) != 0) err = 1;
-			if (echo_write_register(0x2351, 0x4000) != 0) err = 1;
-			if (echo_write_register(0x2352, 0x2000) != 0) err = 1;
-			if (echo_write_register(0x2391, 0x000D) != 0) err = 1;
-			if (echo_write_register(0x2392, 0x0400) != 0) err = 1;
-			if (echo_write_register(0x23E0, 0x0000) != 0) err = 1;
-			if (echo_write_register(0x23F8, 0x4003) != 0) err = 1;
-			if (echo_write_register(0x2336, 0x0001) != 0) err = 1;
-			if (echo_write_register(0x2301, 0x0002) != 0) err = 1;
-			if (echo_write_register(0x2353, 0x2000) != 0) err = 1;
-			if (echo_write_register(0x2318, 0x0400) != 0) err = 1;
-			if (echo_write_register(0x2319, 0x0400) != 0) err = 1;
-			if (echo_write_register(0x231C, 0x2000) != 0) err = 1;
-			if (echo_write_register(0x23D9, 0x0C7D) != 0) err = 1;
-			if (echo_write_register(0x23DA, 0x544A) != 0) err = 1;
-			if (echo_write_register(0x23DB, 0x7FFF) != 0) err = 1;
-			if (echo_write_register(0x23DC, 0x7FFF) != 0) err = 1;
-			if (echo_write_register(0x2344, 0x0A00) != 0) err = 1;
-			if (echo_write_register(0x2325, 0x7FFF) != 0) err = 1;
-			if (echo_write_register(0x23A9, 0x0800) != 0) err = 1;
-			if (echo_write_register(0x23B0, 0x3000) != 0) err = 1;
-			if (echo_write_register(0x231B, 0x0001) != 0) err = 1;
-			if (echo_write_register(0x2335, 0x000F) != 0) err = 1;
-			if (echo_write_register(0x23FC, 0x000D) != 0) err = 1;
-			if (echo_write_register(0x23CD, 0x4000) != 0) err = 1;
-			if (echo_write_register(0x23CE, 0x4000) != 0) err = 1;
-			if (echo_write_register(0x230C, 0x0000) != 0) err = 1;
+			if (echo_write_register(echo, 0x2300, 0x0000) != 0) err = 1;
+			if (echo_write_register(echo, 0x2302, 0x0024) != 0) err = 1;
+			if (echo_write_register(echo, 0x23F7, 0x0048) != 0) err = 1;
+			if (echo_write_register(echo, 0x22C0, 0x8101) != 0) err = 1;
+			if (echo_write_register(echo, 0x22C1, 0xF9C2) != 0) err = 1;
+			if (echo_write_register(echo, 0x22C2, 0xFCE1) != 0) err = 1;
+			if (echo_write_register(echo, 0x22C3, 0xB514) != 0) err = 1;
+			if (echo_write_register(echo, 0x22C4, 0xDA8A) != 0) err = 1;
+			if (echo_write_register(echo, 0x2308, 0x005F) != 0) err = 1;
+			if (echo_write_register(echo, 0x230B, 0x0001) != 0) err = 1;
+			if (echo_write_register(echo, 0x230D, 0x0380) != 0) err = 1;
+			if (echo_write_register(echo, 0x230E, 0x0400) != 0) err = 1;
+			if (echo_write_register(echo, 0x2311, 0x0101) != 0) err = 1;
+			if (echo_write_register(echo, 0x2312, 0x6981) != 0) err = 1;
+			if (echo_write_register(echo, 0x2315, 0x03DD) != 0) err = 1;
+			if (echo_write_register(echo, 0x2316, 0x0044) != 0) err = 1;
+			if (echo_write_register(echo, 0x2317, 0x1000) != 0) err = 1;
+			if (echo_write_register(echo, 0x231D, 0x0200) != 0) err = 1;
+			if (echo_write_register(echo, 0x232C, 0x0025) != 0) err = 1;
+			if (echo_write_register(echo, 0x233A, 0x7000) != 0) err = 1;
+			if (echo_write_register(echo, 0x233B, 0x0280) != 0) err = 1;
+			if (echo_write_register(echo, 0x2351, 0x4000) != 0) err = 1;
+			if (echo_write_register(echo, 0x2352, 0x2000) != 0) err = 1;
+			if (echo_write_register(echo, 0x2391, 0x000D) != 0) err = 1;
+			if (echo_write_register(echo, 0x2392, 0x0400) != 0) err = 1;
+			if (echo_write_register(echo, 0x23E0, 0x0000) != 0) err = 1;
+			if (echo_write_register(echo, 0x23F8, 0x4003) != 0) err = 1;
+			if (echo_write_register(echo, 0x2336, 0x0001) != 0) err = 1;
+			if (echo_write_register(echo, 0x2301, 0x0002) != 0) err = 1;
+			if (echo_write_register(echo, 0x2353, 0x2000) != 0) err = 1;
+			if (echo_write_register(echo, 0x2318, 0x0400) != 0) err = 1;
+			if (echo_write_register(echo, 0x2319, 0x0400) != 0) err = 1;
+			if (echo_write_register(echo, 0x231C, 0x2000) != 0) err = 1;
+			if (echo_write_register(echo, 0x23D9, 0x0C7D) != 0) err = 1;
+			if (echo_write_register(echo, 0x23DA, 0x544A) != 0) err = 1;
+			if (echo_write_register(echo, 0x23DB, 0x7FFF) != 0) err = 1;
+			if (echo_write_register(echo, 0x23DC, 0x7FFF) != 0) err = 1;
+			if (echo_write_register(echo, 0x2344, 0x0A00) != 0) err = 1;
+			if (echo_write_register(echo, 0x2325, 0x7FFF) != 0) err = 1;
+			if (echo_write_register(echo, 0x23A9, 0x0800) != 0) err = 1;
+			if (echo_write_register(echo, 0x23B0, 0x3000) != 0) err = 1;
+			if (echo_write_register(echo, 0x231B, 0x0001) != 0) err = 1;
+			if (echo_write_register(echo, 0x2335, 0x000F) != 0) err = 1;
+			if (echo_write_register(echo, 0x23FC, 0x000D) != 0) err = 1;
+			if (echo_write_register(echo, 0x23CD, 0x4000) != 0) err = 1;
+			if (echo_write_register(echo, 0x23CE, 0x4000) != 0) err = 1;
+			if (echo_write_register(echo, 0x230C, 0x0000) != 0) err = 1;
 			msleep(50);
 
 			//Check FM31 state//
-			rval = echo_read_register(0x230C);
-			rval1 = echo_read_register(0x2300);
-			rval2 = echo_read_register(0x3FE4);
+			rval = echo_read_register(echo, 0x230C);
+			rval1 = echo_read_register(echo, 0x2300);
+			rval2 = echo_read_register(echo, 0x3FE4);
 			if ((rval != 0x5a5a) || (rval1 != 0x0000) || (rval2 != 0x12C8)) {
 				printk(
 					"[FM31]Normal Parameter Write  Fail :  0x230C = %x, 0x2300 = %x, 0x3FE4 = %x  \n",
 					rval, rval1, rval2);
 
 				while (rw_count < 10) {
-					echo_write_register(0x3FE4, 0x361E);
+					echo_write_register(echo, 0x3FE4, 0x361E);
 					msleep(50);
-					rval = echo_read_register(0x3FE4);
+					rval = echo_read_register(echo, 0x3FE4);
 
 					if (rval == 0x361E) {
 						printk(
@@ -367,7 +357,7 @@ static void echo_set_parameters(void)
 	}
 }
 
-static void echo_set_headset_parameters(void)
+static void echo_set_headset_parameters(struct star_echo_device *echo)
 {
 	int i = 0, ret = 0, rval = 0, rval1 = 0, rval2 = 0;
 
@@ -390,68 +380,68 @@ static void echo_set_headset_parameters(void)
 			gpio_set_value(GPIO_ECHO_RST_N, 1);
 			msleep(10);
 
-			if (echo_write_register(0x2300, 0x0000) != 0) err = 1;
-			if (echo_write_register(0x2302, 0x0024) != 0) err = 1;
-			if (echo_write_register(0x23F7, 0x0048) != 0) err = 1;
-			if (echo_write_register(0x22C0, 0x8101) != 0) err = 1;
-			if (echo_write_register(0x22C1, 0x0000) != 0) err = 1;
-			if (echo_write_register(0x22C2, 0x0000) != 0) err = 1;
-			if (echo_write_register(0x22C3, 0x0000) != 0) err = 1;
-			if (echo_write_register(0x22C4, 0x0000) != 0) err = 1;
-			if (echo_write_register(0x2308, 0x005F) != 0) err = 1;
-			if (echo_write_register(0x230B, 0x0001) != 0) err = 1;
-			if (echo_write_register(0x230D, 0x0400) != 0) err = 1;
-			if (echo_write_register(0x230E, 0x0100) != 0) err = 1;
-			if (echo_write_register(0x2311, 0x0101) != 0) err = 1;
-			if (echo_write_register(0x2315, 0x03DD) != 0) err = 1;
-			if (echo_write_register(0x2316, 0x0045) != 0) err = 1;
-			if (echo_write_register(0x2317, 0x1000) != 0) err = 1;
-			if (echo_write_register(0x231D, 0x0200) != 0) err = 1;
-			if (echo_write_register(0x232C, 0x0025) != 0) err = 1;
-			if (echo_write_register(0x233A, 0x0100) != 0) err = 1;
-			if (echo_write_register(0x233B, 0x0004) != 0) err = 1;
-			if (echo_write_register(0x2351, 0x2000) != 0) err = 1;
-			if (echo_write_register(0x2352, 0x2000) != 0) err = 1;
-			if (echo_write_register(0x2391, 0x000D) != 0) err = 1;
-			if (echo_write_register(0x2392, 0x0400) != 0) err = 1;
-			if (echo_write_register(0x23E0, 0x0000) != 0) err = 1;
-			if (echo_write_register(0x23F8, 0x4003) != 0) err = 1;
-			if (echo_write_register(0x2336, 0x0001) != 0) err = 1;
-			if (echo_write_register(0x2301, 0x0002) != 0) err = 1;
-			if (echo_write_register(0x2353, 0x2000) != 0) err = 1;
-			if (echo_write_register(0x2318, 0x0400) != 0) err = 1;
-			if (echo_write_register(0x2319, 0x0400) != 0) err = 1;
-			if (echo_write_register(0x231C, 0x2000) != 0) err = 1;
-			if (echo_write_register(0x23D9, 0x0C7D) != 0) err = 1;
-			if (echo_write_register(0x23DA, 0x544A) != 0) err = 1;
-			if (echo_write_register(0x23DB, 0x7FFF) != 0) err = 1;
-			if (echo_write_register(0x23DC, 0x7FFF) != 0) err = 1;
-			if (echo_write_register(0x2344, 0x0CCC) != 0) err = 1;
-			if (echo_write_register(0x2325, 0x7FFF) != 0) err = 1;
-			if (echo_write_register(0x23A9, 0x0800) != 0) err = 1;
-			if (echo_write_register(0x23B0, 0x3000) != 0) err = 1;
-			if (echo_write_register(0x231B, 0x0001) != 0) err = 1;
-			if (echo_write_register(0x2335, 0x000F) != 0) err = 1;
-			if (echo_write_register(0x23FC, 0x000D) != 0) err = 1;
-			if (echo_write_register(0x23CD, 0x4000) != 0) err = 1;
-			if (echo_write_register(0x23CE, 0x4000) != 0) err = 1;
-			if (echo_write_register(0x2312, 0x6881) != 0) err = 1;
-			if (echo_write_register(0x230C, 0x0000) != 0) err = 1;
+			if (echo_write_register(echo, 0x2300, 0x0000) != 0) err = 1;
+			if (echo_write_register(echo, 0x2302, 0x0024) != 0) err = 1;
+			if (echo_write_register(echo, 0x23F7, 0x0048) != 0) err = 1;
+			if (echo_write_register(echo, 0x22C0, 0x8101) != 0) err = 1;
+			if (echo_write_register(echo, 0x22C1, 0x0000) != 0) err = 1;
+			if (echo_write_register(echo, 0x22C2, 0x0000) != 0) err = 1;
+			if (echo_write_register(echo, 0x22C3, 0x0000) != 0) err = 1;
+			if (echo_write_register(echo, 0x22C4, 0x0000) != 0) err = 1;
+			if (echo_write_register(echo, 0x2308, 0x005F) != 0) err = 1;
+			if (echo_write_register(echo, 0x230B, 0x0001) != 0) err = 1;
+			if (echo_write_register(echo, 0x230D, 0x0400) != 0) err = 1;
+			if (echo_write_register(echo, 0x230E, 0x0100) != 0) err = 1;
+			if (echo_write_register(echo, 0x2311, 0x0101) != 0) err = 1;
+			if (echo_write_register(echo, 0x2315, 0x03DD) != 0) err = 1;
+			if (echo_write_register(echo, 0x2316, 0x0045) != 0) err = 1;
+			if (echo_write_register(echo, 0x2317, 0x1000) != 0) err = 1;
+			if (echo_write_register(echo, 0x231D, 0x0200) != 0) err = 1;
+			if (echo_write_register(echo, 0x232C, 0x0025) != 0) err = 1;
+			if (echo_write_register(echo, 0x233A, 0x0100) != 0) err = 1;
+			if (echo_write_register(echo, 0x233B, 0x0004) != 0) err = 1;
+			if (echo_write_register(echo, 0x2351, 0x2000) != 0) err = 1;
+			if (echo_write_register(echo, 0x2352, 0x2000) != 0) err = 1;
+			if (echo_write_register(echo, 0x2391, 0x000D) != 0) err = 1;
+			if (echo_write_register(echo, 0x2392, 0x0400) != 0) err = 1;
+			if (echo_write_register(echo, 0x23E0, 0x0000) != 0) err = 1;
+			if (echo_write_register(echo, 0x23F8, 0x4003) != 0) err = 1;
+			if (echo_write_register(echo, 0x2336, 0x0001) != 0) err = 1;
+			if (echo_write_register(echo, 0x2301, 0x0002) != 0) err = 1;
+			if (echo_write_register(echo, 0x2353, 0x2000) != 0) err = 1;
+			if (echo_write_register(echo, 0x2318, 0x0400) != 0) err = 1;
+			if (echo_write_register(echo, 0x2319, 0x0400) != 0) err = 1;
+			if (echo_write_register(echo, 0x231C, 0x2000) != 0) err = 1;
+			if (echo_write_register(echo, 0x23D9, 0x0C7D) != 0) err = 1;
+			if (echo_write_register(echo, 0x23DA, 0x544A) != 0) err = 1;
+			if (echo_write_register(echo, 0x23DB, 0x7FFF) != 0) err = 1;
+			if (echo_write_register(echo, 0x23DC, 0x7FFF) != 0) err = 1;
+			if (echo_write_register(echo, 0x2344, 0x0CCC) != 0) err = 1;
+			if (echo_write_register(echo, 0x2325, 0x7FFF) != 0) err = 1;
+			if (echo_write_register(echo, 0x23A9, 0x0800) != 0) err = 1;
+			if (echo_write_register(echo, 0x23B0, 0x3000) != 0) err = 1;
+			if (echo_write_register(echo, 0x231B, 0x0001) != 0) err = 1;
+			if (echo_write_register(echo, 0x2335, 0x000F) != 0) err = 1;
+			if (echo_write_register(echo, 0x23FC, 0x000D) != 0) err = 1;
+			if (echo_write_register(echo, 0x23CD, 0x4000) != 0) err = 1;
+			if (echo_write_register(echo, 0x23CE, 0x4000) != 0) err = 1;
+			if (echo_write_register(echo, 0x2312, 0x6881) != 0) err = 1;
+			if (echo_write_register(echo, 0x230C, 0x0000) != 0) err = 1;
 			msleep(50);
 
 			//Check FM31 state//
-			rval = echo_read_register(0x230C);
-			rval1 = echo_read_register(0x2300);
-			rval2 = echo_read_register(0x3FE4);
+			rval = echo_read_register(echo, 0x230C);
+			rval1 = echo_read_register(echo, 0x2300);
+			rval2 = echo_read_register(echo, 0x3FE4);
 			if ((rval != 0x5A5A) || (rval1 != 0x0000) || (rval2 != 0x12C8)) {
 				printk(
 					"[FM31]Headset Parameter Write  Fail :  0x230C = %x, 0x2300 = %x, 0x3FE4 = %x  \n",
 					rval, rval1, rval2);
 
 				while (rw_count < 10) {
-					echo_write_register(0x3FE4, 0x361E);
+					echo_write_register(echo, 0x3FE4, 0x361E);
 					msleep(50);
-					rval = echo_read_register(0x3FE4);
+					rval = echo_read_register(echo, 0x3FE4);
 
 					if (rval == 0x361E) {
 						printk(
@@ -483,6 +473,7 @@ static void echo_set_headset_parameters(void)
 static ssize_t rw_register(struct device *dev,
 			   struct device_attribute *attr, const char *buf, size_t size)
 {
+	struct star_echo_device *echo = dev_get_drvdata(dev);
 	char cmd = 0;
 	int prereg = 0, wrval = 0;
 	int value = 0;
@@ -491,25 +482,25 @@ static ssize_t rw_register(struct device *dev,
 	sscanf(buf, "%c %x %x", &cmd, &prereg, &wrval);
 
 	if (cmd == 'r') {
-		value = echo_read_register(prereg);
+		value = echo_read_register(echo, prereg);
 		printk("\n[FM31] Read register 0x%x =  0x%x \n\n", prereg, value);
 	} else if (cmd == 'w') {
-		value = echo_write_register(prereg, wrval);
+		value = echo_write_register(echo, prereg, wrval);
 	} else if (cmd == 'b') {
 		//printk("\n[FM31] bypass \n");
-		echo_set_bypass_parameters();
+		echo_set_bypass_parameters(echo);
 	} else if (cmd == 'n') {
 		printk("\n[FM31] set_main_mic_speaker_parameter  \n");
-		echo_set_parameters();
+		echo_set_parameters(echo);
 	} else if (cmd == 'h') {
 		printk("\n[FM31] set_headset_parameter  \n");
-		echo_set_headset_parameters();
+		echo_set_headset_parameters(echo);
 	} else if (cmd == 'p') {
 		//printk("\n[FM31] prevent_suspend  \n");
-		wake_lock(&wlock);
+		wake_lock(&echo->wlock);
 	} else if (cmd == 'a') {
 		//printk("\n[FM31] allow_suspend\n");
-		wake_unlock(&wlock);
+		wake_unlock(&echo->wlock);
 	}
 
 	return size;
@@ -518,6 +509,7 @@ static ssize_t rw_register(struct device *dev,
 static ssize_t bypass_status(struct device *dev,
 			     struct device_attribute *attr, char *buf)
 {
+	struct star_echo_device *echo = dev_get_drvdata(dev);
 	int value = 0;
 
 	value = gpio_get_value(GPIO_ECHO_BP_N);
@@ -528,6 +520,7 @@ static ssize_t bypass_status(struct device *dev,
 static ssize_t bypass_control(struct device *dev,
 			      struct device_attribute *attr, const char *buf, size_t size)
 {
+	struct star_echo_device *echo = dev_get_drvdata(dev);
 	int mode = 0;
 
 	if (sscanf(buf, "%d", &mode) != 1)
@@ -553,16 +546,18 @@ static int __init echocancel_probe(struct i2c_client *client, const struct i2c_d
 
 	int err = 0, fm31 = 0, rw_count = 0;
 
-	echo_client = kzalloc(sizeof(*echo_client), GFP_KERNEL);
+	struct star_echo_device *echo = kzalloc(sizeof(*echo), GFP_KERNEL);
 
-	if (!echo_client)
+	if (!echo)
 		return -ENOMEM;
 
-	wake_lock_init(&wlock, WAKE_LOCK_SUSPEND, "AudioOutLock");
+	wake_lock_init(&echo->wlock, WAKE_LOCK_SUSPEND, "AudioOutLock");
 
-	memset(echo_client, 0, sizeof(*echo_client));
-	echo_client = client;
-	i2c_set_clientdata(client, echo_client);
+	echo->client = client;
+	i2c_set_clientdata(client, echo);
+
+	echo->dev = &client->dev;
+	dev_set_drvdata(echo->dev, echo);
 
 	gpio_request(GPIO_ECHO_BP_N, "echo_bp_n");
 	tegra_gpio_enable(GPIO_ECHO_BP_N);
@@ -576,10 +571,10 @@ static int __init echocancel_probe(struct i2c_client *client, const struct i2c_d
 	tegra_gpio_enable(GPIO_ECHO_RST_N);
 	gpio_direction_output(GPIO_ECHO_RST_N, 1);
 
-	if (device_create_file(&echo_client->dev, &dev_attr_fm31_reg))
+	if (device_create_file(&echo->client->dev, &dev_attr_fm31_reg))
 		printk("[FM31] reg_rw file create -error \n");
 
-	if (device_create_file(&echo_client->dev, &dev_attr_fm31_bypass))
+	if (device_create_file(&echo->client->dev, &dev_attr_fm31_bypass))
 		printk("[FM31] bypass control  file create -error \n");
 
 
@@ -597,27 +592,27 @@ static int __init echocancel_probe(struct i2c_client *client, const struct i2c_d
 
 		msleep(10);
 
-		if (echo_write_register(0x2308, 0x005F) != 0) err = 1;
-		if (echo_write_register(0x232C, 0x0025) != 0) err = 1;
-		if (echo_write_register(0x2300, 0x0004) != 0) err = 1;
-		if (echo_write_register(0x2302, 0x0024) != 0) err = 1;
-		if (echo_write_register(0x23F7, 0x001E) != 0) err = 1;
-		if (echo_write_register(0x230C, 0x0000) != 0) err = 1;
+		if (echo_write_register(echo, 0x2308, 0x005F) != 0) err = 1;
+		if (echo_write_register(echo, 0x232C, 0x0025) != 0) err = 1;
+		if (echo_write_register(echo, 0x2300, 0x0004) != 0) err = 1;
+		if (echo_write_register(echo, 0x2302, 0x0024) != 0) err = 1;
+		if (echo_write_register(echo, 0x23F7, 0x001E) != 0) err = 1;
+		if (echo_write_register(echo, 0x230C, 0x0000) != 0) err = 1;
 		msleep(50);
 
 		//Check FM31 state//
-		rval = echo_read_register(0x230C);
-		rval1 = echo_read_register(0x2300);
-		rval2 = echo_read_register(0x3FE4);
+		rval = echo_read_register(echo, 0x230C);
+		rval1 = echo_read_register(echo, 0x2300);
+		rval2 = echo_read_register(echo, 0x3FE4);
 		if ((rval != 0x5A5A) || (rval1 != 0x0004) || (rval2 != 0x129E)) {
 			printk(
 				"[FM31]Bypass Parameter Write  Fail :  0x230C = %x, 0x2300 = %x, 0x3FE4 = %x  \n",
 				rval, rval1, rval2);
 
 			while (rw_count < 10) {
-				echo_write_register(0x3FE4, 0x361E);
+				echo_write_register(echo, 0x3FE4, 0x361E);
 				msleep(50);
-				rval = echo_read_register(0x3FE4);
+				rval = echo_read_register(echo, 0x3FE4);
 
 				if (rval == 0x361E) {
 					printk("[FM31] 0x3FE4 rewrite %d times and success. \n",
@@ -643,12 +638,9 @@ static int __init echocancel_probe(struct i2c_client *client, const struct i2c_d
 
 static int echocancel_remove(struct i2c_client *client)
 {
-	wake_lock_destroy(&wlock);
-	if (echo_client) {
-		kfree(echo_client);
-		echo_client = NULL;
-	}
-
+	struct star_echo_device *echo = i2c_get_clientdata(client);
+	wake_lock_destroy(&echo->wlock);
+	kfree(echo);
 	return 0;
 }
 
