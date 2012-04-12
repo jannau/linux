@@ -26,8 +26,6 @@
 #include "../../../startablet/star_cam_pmic.h"
 
 DEFINE_MUTEX(star_camera_lock);
-#define GPIO_CAM2_SCL             	TEGRA_GPIO_PH0//TEGRA_GPIO_PI5
-#define GPIO_CAM2_SDA             	TEGRA_GPIO_PG1//TEGRA_GPIO_PH1
 
 struct imx072_info {
 	int mode;
@@ -988,13 +986,7 @@ static int imx072R_probe(struct i2c_client *client,
 	hw_rev board_rev=0;
 	board_rev = get_hw_rev();
 	pr_info("imx072R: probing sensor.\n");
-	if( board_rev>=REV_1_2)
-	{
-		gpio_request(GPIO_CAM2_SCL, "cam2_scl");
-		tegra_gpio_enable(GPIO_CAM2_SCL);
-		gpio_request(GPIO_CAM2_SDA, "cam2_sda");
-		tegra_gpio_enable(GPIO_CAM2_SDA);
-	}
+
 	if(!info)
 	{
 		info = kzalloc(sizeof(struct imx072_info), GFP_KERNEL);
@@ -1041,13 +1033,7 @@ static int imx072R_remove(struct i2c_client *client)
 		kfree(info);
 		info = NULL;
 	}
-	if( board_rev>=REV_1_2)
-	{
-		tegra_gpio_disable(GPIO_CAM2_SCL);
-		gpio_free(GPIO_CAM2_SCL);
-		tegra_gpio_disable(GPIO_CAM2_SDA);
-		gpio_free(GPIO_CAM2_SDA);
-	}
+
 	gpio_free(Imx072R_RESET);
 	gpio_free(Imx072R_PWRDN);
 	return 0;
