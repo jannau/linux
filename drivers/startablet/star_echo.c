@@ -179,11 +179,47 @@ static ssize_t fm31_status(struct device *dev,
 	return 0;
 }
 
+static int fm31_check_status(struct star_echo_device *echo)
+{
+	int rval, rval1, rval2, ret = 0;
+	int rw_count = 0;
+
+	rval  = echo_read_register(echo, 0x230C);
+	rval1 = echo_read_register(echo, 0x2300);
+	rval2 = echo_read_register(echo, 0x3FE4);
+
+	if ((rval != 0x5A5A) || (rval1 != 0x0004) || (rval2 != 0x129E)) {
+		dev_warn(echo->dev,
+			 "%s: 0x230C = %x, 0x2300 = %x, 0x3FE4 = %x\n",
+			 __func__, rval, rval1, rval2);
+
+		while (rw_count < 10) {
+			echo_write_register(echo, 0x3FE4, 0x361E);
+			msleep(50);
+			rval = echo_read_register(echo, 0x3FE4);
+
+			if (rval == 0x361E) {
+				dev_info(echo->dev,
+					 "0x3FE4 rewrite %d times and success.\n",
+					 rw_count);
+				return ret;
+			} else {
+				dev_err(echo->dev,
+					"0x3FE4 rewrite Fail, Return value is not 0x361E, Return value =  %x\n",
+					rval);
+			}
+			rw_count++;
+		}
+		ret = -1;
+	}
+
+	return ret;
+}
+
 static void echo_set_bypass_parameters(struct star_echo_device *echo)
 {
-	int i = 0, ret = 0, rval = 0, rval1 = 0, rval2 = 0;
-
-	int err = 0, fm31 = 0, rw_count = 0;
+	int i = 0, ret = 0;
+	int err = 0, fm31 = 0;
 
 	printk("\n[FM31] Start bypass parameter writing !\n");
 
@@ -196,7 +232,7 @@ static void echo_set_bypass_parameters(struct star_echo_device *echo)
 					"[FM31]bypass parameter try to write 4 times but fail.\n");
 				break;
 			}
-			err = 0, fm31 = 0, rw_count = 0;
+			err = 0, fm31 = 0;
 
 			gpio_set_value(GPIO_ECHO_PWDN_N, 1);
 			gpio_set_value(GPIO_ECHO_RST_N, 0);
@@ -214,31 +250,7 @@ static void echo_set_bypass_parameters(struct star_echo_device *echo)
 			msleep(50);
 
 			//Check FM31 state//
-			rval = echo_read_register(echo, 0x230C);
-			rval1 = echo_read_register(echo, 0x2300);
-			rval2 = echo_read_register(echo, 0x3FE4);
-			if ((rval != 0x5A5A) || (rval1 != 0x0004) || (rval2 != 0x129E)) {
-				printk(
-					"[FM31]Bypass Parameter Write  Fail :  0x230C = %x, 0x2300 = %x, 0x3FE4 = %x  \n",
-					rval, rval1, rval2);
-
-				while (rw_count < 10) {
-					echo_write_register(echo, 0x3FE4, 0x361E);
-					msleep(50);
-					rval = echo_read_register(echo, 0x3FE4);
-
-					if (rval == 0x361E) {
-						printk(
-							"[FM31] 0x3FE4 rewrite %d times and success. \n",
-							rw_count);
-						break;
-					} else {
-						printk(
-							"[FM31] 0x3FE4 rewrite Fail, Return value is not 0x361E, Return value =  %x  \n",
-							rval);
-					}
-					rw_count++;
-				}
+			if (fm31_check_status(echo) < 0) {
 				fm31 = 1;
 			}
 
@@ -258,8 +270,7 @@ static void echo_set_bypass_parameters(struct star_echo_device *echo)
 
 static void echo_set_parameters(struct star_echo_device *echo)
 {
-	int i = 0, ret = 0, rval = 0, rval1 = 0, rval2 = 0;
-
+	int i = 0, ret = 0;
 	int err = 0, fm31 = 0, rw_count = 0;
 
 	ret = mutex_trylock(&voip_mutex);
@@ -328,31 +339,7 @@ static void echo_set_parameters(struct star_echo_device *echo)
 			msleep(50);
 
 			//Check FM31 state//
-			rval = echo_read_register(echo, 0x230C);
-			rval1 = echo_read_register(echo, 0x2300);
-			rval2 = echo_read_register(echo, 0x3FE4);
-			if ((rval != 0x5a5a) || (rval1 != 0x0000) || (rval2 != 0x12C8)) {
-				printk(
-					"[FM31]Normal Parameter Write  Fail :  0x230C = %x, 0x2300 = %x, 0x3FE4 = %x  \n",
-					rval, rval1, rval2);
-
-				while (rw_count < 10) {
-					echo_write_register(echo, 0x3FE4, 0x361E);
-					msleep(50);
-					rval = echo_read_register(echo, 0x3FE4);
-
-					if (rval == 0x361E) {
-						printk(
-							"[FM31] 0x3FE4 rewrite %d times and success. \n",
-							rw_count);
-						break;
-					} else {
-						printk(
-							"[FM31] 0x3FE4 rewrite Fail, Return value is not 0x361E, Return value =  %x  \n",
-							rval);
-					}
-					rw_count++;
-				}
+			if (fm31_check_status(echo) < 0) {
 				fm31 = 1;
 			}
 
@@ -372,10 +359,8 @@ static void echo_set_parameters(struct star_echo_device *echo)
 
 static void echo_set_headset_parameters(struct star_echo_device *echo)
 {
-	int i = 0, ret = 0, rval = 0, rval1 = 0, rval2 = 0;
-
+	int i = 0, ret = 0;
 	int err = 0, fm31 = 0, rw_count = 0;
-
 
 	ret = mutex_trylock(&voip_headset_mutex);
 	if (ret != 0) {         //get the lock
@@ -444,31 +429,7 @@ static void echo_set_headset_parameters(struct star_echo_device *echo)
 			msleep(50);
 
 			//Check FM31 state//
-			rval = echo_read_register(echo, 0x230C);
-			rval1 = echo_read_register(echo, 0x2300);
-			rval2 = echo_read_register(echo, 0x3FE4);
-			if ((rval != 0x5A5A) || (rval1 != 0x0000) || (rval2 != 0x12C8)) {
-				printk(
-					"[FM31]Headset Parameter Write  Fail :  0x230C = %x, 0x2300 = %x, 0x3FE4 = %x  \n",
-					rval, rval1, rval2);
-
-				while (rw_count < 10) {
-					echo_write_register(echo, 0x3FE4, 0x361E);
-					msleep(50);
-					rval = echo_read_register(echo, 0x3FE4);
-
-					if (rval == 0x361E) {
-						printk(
-							"[FM31] 0x3FE4 rewrite %d times and success. \n",
-							rw_count);
-						break;
-					} else {
-						printk(
-							"[FM31] 0x3FE4 rewrite Fail, Return value is not 0x361E, Return value =  %x  \n",
-							rval);
-					}
-					rw_count++;
-				}
+			if (fm31_check_status(echo) < 0) {
 				fm31 = 1;
 			}
 
@@ -493,7 +454,6 @@ static ssize_t rw_register(struct device *dev,
 	char cmd = 0;
 	int prereg = 0, wrval = 0;
 	int value = 0;
-	int ret = 0, pass = 0, i = 0;
 
 	sscanf(buf, "%c %x %x", &cmd, &prereg, &wrval);
 
@@ -558,7 +518,7 @@ static DEVICE_ATTR(fm31_bypass, S_IRUGO | S_IWUSR | S_IROTH | S_IWOTH | S_IWUGO,
 
 static int __init echocancel_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
-	int i = 0, rval = 0, rval1 = 0, rval2 = 0;
+	int i = 0;
 
 	int err = 0, fm31 = 0, rw_count = 0;
 
@@ -625,30 +585,7 @@ static int __init echocancel_probe(struct i2c_client *client, const struct i2c_d
 		msleep(50);
 
 		//Check FM31 state//
-		rval = echo_read_register(echo, 0x230C);
-		rval1 = echo_read_register(echo, 0x2300);
-		rval2 = echo_read_register(echo, 0x3FE4);
-		if ((rval != 0x5A5A) || (rval1 != 0x0004) || (rval2 != 0x129E)) {
-			printk(
-				"[FM31]Bypass Parameter Write  Fail :  0x230C = %x, 0x2300 = %x, 0x3FE4 = %x  \n",
-				rval, rval1, rval2);
-
-			while (rw_count < 10) {
-				echo_write_register(echo, 0x3FE4, 0x361E);
-				msleep(50);
-				rval = echo_read_register(echo, 0x3FE4);
-
-				if (rval == 0x361E) {
-					printk("[FM31] 0x3FE4 rewrite %d times and success. \n",
-					       rw_count);
-					break;
-				} else {
-					printk(
-						"[FM31] 0x3FE4 rewrite Fail, Return value is not 0x361E, Return value =  %x  \n",
-						rval);
-				}
-				rw_count++;
-			}
+		if (fm31_check_status(echo) < 0) {
 			fm31 = 1;
 		}
 
