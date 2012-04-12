@@ -518,10 +518,6 @@ static DEVICE_ATTR(fm31_bypass, S_IRUGO | S_IWUSR | S_IROTH | S_IWOTH | S_IWUGO,
 
 static int __init echocancel_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
-	int i = 0;
-
-	int err = 0, fm31 = 0, rw_count = 0;
-
 	struct star_echo_device *echo = kzalloc(sizeof(*echo), GFP_KERNEL);
 
 	if (!echo)
@@ -561,38 +557,7 @@ static int __init echocancel_probe(struct i2c_client *client, const struct i2c_d
 	if (device_create_file(&echo->client->dev, &dev_attr_fm31_bypass))
 		printk("[FM31] bypass control  file create -error \n");
 
-
-	do {
-		if (i > 3) {
-			printk("[FM31]bypass parameter try to write 4 times but fail.\n");
-			break;
-		}
-		err = 0, fm31 = 0, rw_count = 0;
-
-		gpio_set_value(GPIO_ECHO_PWDN_N, 1);
-		gpio_set_value(GPIO_ECHO_RST_N, 0);
-		msleep(3);
-		gpio_set_value(GPIO_ECHO_RST_N, 1);
-
-		msleep(10);
-
-		if (echo_write_register(echo, 0x2308, 0x005F) != 0) err = 1;
-		if (echo_write_register(echo, 0x232C, 0x0025) != 0) err = 1;
-		if (echo_write_register(echo, 0x2300, 0x0004) != 0) err = 1;
-		if (echo_write_register(echo, 0x2302, 0x0024) != 0) err = 1;
-		if (echo_write_register(echo, 0x23F7, 0x001E) != 0) err = 1;
-		if (echo_write_register(echo, 0x230C, 0x0000) != 0) err = 1;
-		msleep(50);
-
-		//Check FM31 state//
-		if (fm31_check_status(echo) < 0) {
-			fm31 = 1;
-		}
-
-		if (err != 0) printk("[FM31] I2C write Fail\n");
-		if (fm31 != 0) printk("[FM31] FM31 DSP running Fail \n");
-		i++;
-	} while ((err != 0) || (fm31 != 0));
+	echo_set_bypass_parameters(echo);
 
 	clk_disable(echo->clk);
 
