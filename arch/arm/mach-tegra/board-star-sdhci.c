@@ -45,6 +45,7 @@
 static void (*wifi_status_cb)(int card_present, void *dev_id);
 static void *wifi_status_cb_devid;
 static int startablet_wifi_status_register(void (*callback)(int , void *), void *);
+static int startablet_wifi_status(void*);
 static struct clk *wifi_32k_clk;
 
 static int startablet_wifi_reset(int on);
@@ -102,9 +103,26 @@ static struct resource sdhci_resource3[] = {
 	},
 };
 
+static struct embedded_sdio_data embedded_sdio_data0 = {
+	.cccr   = {
+		.sdio_vsn       = 2,
+		.multi_block    = 1,
+		.low_speed      = 0,
+		.wide_bus       = 0,
+		.high_power     = 1,
+		.high_speed     = 1,
+	},
+	.cis  = {
+		.vendor         = 0x02d0,
+		.device         = 0x4329,
+	},
+};
+
 static struct tegra_sdhci_platform_data tegra_sdhci_platform_data0 = {
 	.mmc_data = {
+		.status = startablet_wifi_status,
 		.register_status_notify	= startablet_wifi_status_register,
+		.embedded_sdio = &embedded_sdio_data0,
 	},
 	.cd_gpio = -1,
 	.wp_gpio = -1,
@@ -150,6 +168,16 @@ static int startablet_wifi_status_register(
 	wifi_status_cb = callback;
 	wifi_status_cb_devid = dev_id;
 	return 0;
+}
+
+static int startablet_wifi_status(void *dev_id)
+{
+	pr_debug("%s:\n", __func__);
+
+	if (get_hw_rev() <= REV_1_2)
+		return gpio_get_value(STARTABLET_WLAN_PWR1);
+	else
+		return gpio_get_value(STARTABLET_WLAN_PWR2);
 }
 
 static int startablet_wifi_set_carddetect(int val)
