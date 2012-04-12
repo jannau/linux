@@ -212,9 +212,13 @@ static struct platform_device i2c_gpio_controller = {
 	  .platform_data = &i2c_gpio_data,
 	},
 };
+
+#define STAR_3DCAM_SCL_PIN TEGRA_GPIO_PH0
+#define STAR_3DCAM_SDA_PIN TEGRA_GPIO_PG1
+
 static struct i2c_gpio_platform_data stereocam_i2c_gpio_data = {
-	.sda_pin		= TEGRA_GPIO_PG1,
-	.scl_pin		= TEGRA_GPIO_PH0,
+	.sda_pin		= STAR_3DCAM_SDA_PIN,
+	.scl_pin		= STAR_3DCAM_SCL_PIN,
 	.sda_is_open_drain	= 0,
 	.scl_is_open_drain	= 0,
 	.udelay			= 2, 	/* cloase to 100kHz */
@@ -291,8 +295,11 @@ static void star_i2c_init(void)
 	tegra_gpio_enable(STAR_ECHO_SCL_PIN);
 	tegra_gpio_enable(STAR_ECHO_SDA_PIN);
 
-	if( board_rev>=REV_1_2)
+	if( board_rev>=REV_1_2) {
 		platform_device_register(&stereocam_i2c_gpio_controller);
+		tegra_gpio_enable(STAR_3DCAM_SCL_PIN);
+		tegra_gpio_enable(STAR_3DCAM_SDA_PIN);
+	}
 
 	//register i2c devices attached to I2C1
 	star_register_numbered_i2c_devices(0, star_i2c_bus1_devices_info,
