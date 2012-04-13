@@ -9,6 +9,7 @@
 #include <linux/regulator/fixed.h>
 
 #include <linux/mpu.h>
+#include <sound/fm31392.h>
 
 #include "gpio-names.h"
 /*
@@ -437,10 +438,22 @@ static struct i2c_board_info __initdata star_i2c_stereo_camera_info[] = {
 	},
 };
 
+
+#define GPIO_ECHO_BP_N                  TEGRA_GPIO_PJ6
+#define GPIO_ECHO_PWDN_N                TEGRA_GPIO_PJ5
+#define GPIO_ECHO_RST_N                 TEGRA_GPIO_PU4
+
+static struct fm31392_platform_data star_fm31392_pdata = {
+	.gpio_power	= GPIO_ECHO_PWDN_N,
+	.gpio_reset	= GPIO_ECHO_RST_N,
+	.gpio_bypass	= GPIO_ECHO_BP_N,
+};
+
 //I2C-GPIO device board information
 static struct i2c_board_info __initdata star_i2c_bus7_echo_info[] = {
 	{
-		I2C_BOARD_INFO("tegra_echo", STAR_I2C_GPIO_DEVICE_ADDR_ECHO),
+		I2C_BOARD_INFO("fm31392", STAR_I2C_GPIO_DEVICE_ADDR_ECHO),
+		.platform_data = &star_fm31392_pdata,
 	},
 };
 

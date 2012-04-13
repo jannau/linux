@@ -23,6 +23,7 @@
 #include <linux/gpio.h>
 #include <mach/gpio-names.h>
 #include <linux/wakelock.h>
+#include <sound/fm31392.h>
 
 #define ECHO_SYNC_WORD                  0xFCF3
 #define ECHO_MEM_WRITE                  0x3B
@@ -44,6 +45,10 @@ struct fm31392 {
 	struct i2c_client *i2c;
 	struct wake_lock wlock;
 	struct clk *clk;
+
+	int gpio_power;
+	int gpio_reset;
+	int gpio_bypass;
 };
 
 unsigned char rd_bytes[2][4] = {
