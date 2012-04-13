@@ -36,13 +36,6 @@ config STARTABLET_GPS_BCM4751
     help
      Support for GPS driver for xmm6160 only.
 
-config STARTABLET_HEADSET_DET
-        bool "Star Headset Detection Driver"
-        default n
-        depends on MACH_STARTABLET
-        help
-         Suport for headset detection driver.
-
 config STAR_RIL
     bool "Star RIL Driver"
     default y
