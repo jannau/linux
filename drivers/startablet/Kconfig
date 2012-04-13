@@ -63,13 +63,6 @@ config STARTABLET_BATTERY
     help
      Support for battery driver.
 
-config STARTABLET_TOUCHKEY
-    bool "Star Tablet TOUCHKEY Driver"
-    default y
-    depends on MACH_STARTABLET && MACH_STARTABLET_REV_A1
-    help
-     Support for TOUCHKEY driver.
-
 config STARTABLET_MISC
     bool "Star Tablet MISC Driver"
     default n

@@ -23,9 +23,6 @@ obj-$(CONFIG_RINETWORK_DRIVER) += rindrv.o
 #LGE_KERNEL_MUX END
 obj-$(CONFIG_STARTABLET_MISC)	+= star_misc.o
 obj-$(CONFIG_STARTABLET_MISC)	+= star_leds.o
-#obj-$(CONFIG_STARTABLET_GYRO_ACCEL) += star_accelerometer.o
-#obj-$(CONFIG_STARTABLET_GYRO_ACCEL) += star_gyro.o
-#obj-$(CONFIG_STARTABLET_COMPASS) += star_compass.o
 obj-$(CONFIG_STARTABLET_ALS)	+= bh1721_als.o
 obj-y					+= tegra_displaytest.o
 obj-y     += camera_flash.o
