@@ -39,7 +39,7 @@ DEFINE_MUTEX(bypass_mutex);
 DEFINE_MUTEX(voip_mutex);
 DEFINE_MUTEX(voip_headset_mutex);
 
-struct star_echo_device {
+struct fm31392 {
 	struct device *dev;
 	struct i2c_client *client;
 	struct wake_lock wlock;
@@ -53,7 +53,7 @@ unsigned char rd_bytes[2][4] = {
 	  READ_HIGH_BYTE }
 };
 
-static int echo_write_register(struct star_echo_device *echo, int reg, int value)
+static int echo_write_register(struct fm31392 *echo, int reg, int value)
 {
 	unsigned char arr[7];
 	int addr = echo->client->addr;
@@ -92,7 +92,7 @@ static int echo_write_register(struct star_echo_device *echo, int reg, int value
 	return 0;
 }
 
-static int echo_read_register(struct star_echo_device *echo, int reg)
+static int echo_read_register(struct fm31392 *echo, int reg)
 {
 	int ret_lo = 0, ret_hi = 0, value = 0;
 	int addr = echo->client->addr;
@@ -154,7 +154,7 @@ static int echo_read_register(struct star_echo_device *echo, int reg)
 static ssize_t fm31_status(struct device *dev,
 			   struct device_attribute *attr, char *buf)
 {
-	struct star_echo_device *echo = dev_get_drvdata(dev);
+	struct fm31392 *echo = dev_get_drvdata(dev);
 
 	clk_enable(echo->clk);
 
@@ -180,7 +180,7 @@ static ssize_t fm31_status(struct device *dev,
 	return 0;
 }
 
-static int fm31_check_status(struct star_echo_device *echo)
+static int fm31_check_status(struct fm31392 *echo)
 {
 	int rval, rval1, rval2, ret = 0;
 	int rw_count = 0;
@@ -217,7 +217,7 @@ static int fm31_check_status(struct star_echo_device *echo)
 	return ret;
 }
 
-static void echo_set_bypass_parameters(struct star_echo_device *echo)
+static void echo_set_bypass_parameters(struct fm31392 *echo)
 {
 	int i = 0, ret = 0;
 	int err = 0, fm31 = 0;
@@ -269,7 +269,7 @@ static void echo_set_bypass_parameters(struct star_echo_device *echo)
 	}
 }
 
-static void echo_set_parameters(struct star_echo_device *echo)
+static void echo_set_parameters(struct fm31392 *echo)
 {
 	int i = 0, ret = 0;
 	int err = 0, fm31 = 0, rw_count = 0;
@@ -358,7 +358,7 @@ static void echo_set_parameters(struct star_echo_device *echo)
 	}
 }
 
-static void echo_set_headset_parameters(struct star_echo_device *echo)
+static void echo_set_headset_parameters(struct fm31392 *echo)
 {
 	int i = 0, ret = 0;
 	int err = 0, fm31 = 0, rw_count = 0;
@@ -451,7 +451,7 @@ static void echo_set_headset_parameters(struct star_echo_device *echo)
 static ssize_t rw_register(struct device *dev,
 			   struct device_attribute *attr, const char *buf, size_t size)
 {
-	struct star_echo_device *echo = dev_get_drvdata(dev);
+	struct fm31392 *echo = dev_get_drvdata(dev);
 	char cmd = 0;
 	int prereg = 0, wrval = 0;
 	int value = 0;
@@ -486,7 +486,7 @@ static ssize_t rw_register(struct device *dev,
 static ssize_t bypass_status(struct device *dev,
 			     struct device_attribute *attr, char *buf)
 {
-	struct star_echo_device *echo = dev_get_drvdata(dev);
+	struct fm31392 *echo = dev_get_drvdata(dev);
 	int value = 0;
 
 	value = gpio_get_value(GPIO_ECHO_BP_N);
@@ -497,7 +497,7 @@ static ssize_t bypass_status(struct device *dev,
 static ssize_t bypass_control(struct device *dev,
 			      struct device_attribute *attr, const char *buf, size_t size)
 {
-	struct star_echo_device *echo = dev_get_drvdata(dev);
+	struct fm31392 *echo = dev_get_drvdata(dev);
 	int mode = 0;
 
 	if (sscanf(buf, "%d", &mode) != 1)
@@ -519,7 +519,7 @@ static DEVICE_ATTR(fm31_bypass, S_IRUGO | S_IWUSR | S_IROTH | S_IWOTH | S_IWUGO,
 
 static int __init fm31392_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
-	struct star_echo_device *echo = kzalloc(sizeof(*echo), GFP_KERNEL);
+	struct fm31392 *echo = kzalloc(sizeof(*echo), GFP_KERNEL);
 
 	if (!echo)
 		return -ENOMEM;
@@ -567,7 +567,7 @@ static int __init fm31392_probe(struct i2c_client *client, const struct i2c_devi
 
 static int fm31392_remove(struct i2c_client *client)
 {
-	struct star_echo_device *echo = i2c_get_clientdata(client);
+	struct fm31392 *echo = i2c_get_clientdata(client);
 	wake_lock_destroy(&echo->wlock);
 	clk_put(echo->clk);
 	kfree(echo);
