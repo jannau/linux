@@ -147,6 +147,45 @@ static struct snd_soc_jack_gpio hs_jack_gpios[] = {
 	},
 };
 
+#ifdef CONFIG_SWITCH
+static struct switch_dev tegra_wm8994_headset_switch = {
+	.name = "h2w",
+};
+
+/* These values are copied from WiredAccessoryObserver */
+enum headset_state {
+	BIT_NO_HEADSET = 0,
+	BIT_HEADSET = (1 << 0),
+	BIT_HEADSET_NO_MIC = (1 << 1),
+};
+
+static int tegra_wm8994_headset_switch_notify(struct notifier_block *self,
+					unsigned long action, void *dev)
+{
+	int state = 0;
+
+	switch (action & SND_JACK_HEADSET) {
+	case SND_JACK_HEADPHONE:
+		state |= BIT_HEADSET_NO_MIC;
+		break;
+	case SND_JACK_HEADSET:
+		state |= BIT_HEADSET;
+		break;
+	default:
+		state |= BIT_NO_HEADSET;
+	}
+
+	switch_set_state(&tegra_wm8994_headset_switch, state);
+
+	return NOTIFY_OK;
+}
+
+static struct notifier_block tegra_wm8994_switch_nb = {
+	.notifier_call = tegra_wm8994_headset_switch_notify,
+};
+#endif
+
+
 static void tegra_ext_control(struct snd_soc_codec *codec)
 {
 	struct snd_soc_card *card = codec->card;
@@ -383,6 +422,9 @@ static int tegra_codec_init(struct snd_soc_codec *codec)
 		pr_err("%s: failed to add jack gpios\n", __func__);
 		goto out;
 	}
+#ifdef CONFIG_SWITCH
+	snd_soc_jack_notifier_register(&hs_jack, &tegra_wm8994_switch_nb);
+#endif
 
 	/* Default to HP output */
 	machine->jack_func = TEGRA_HP;
@@ -644,12 +686,6 @@ static struct snd_soc_ops tegra_wm8994_bt_sco_ops = {
 	.hw_params	= tegra_bt_sco_hw_params,
 	.hw_free	= tegra_hw_free,
 };
-
-#ifdef CONFIG_SWITCH
-static struct switch_dev tegra_wm8994_headset_switch = {
-	.name = "h2w",
-};
-#endif
 
 static struct snd_soc_dai_link tegra_wm8994_dai[] = {
 	{
