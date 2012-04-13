@@ -28,6 +28,7 @@
 #include <asm/mach-types.h>
 
 #include <linux/clk.h>
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
@@ -37,7 +38,10 @@
 #include <linux/switch.h>
 #endif
 
+#include <linux/mfd/tps6586x.h>
+
 #include <mach/tegra_wm8994_pdata.h>
+#include <mach/gpio-names.h>
 
 #include <linux/mfd/wm8994/registers.h>
 
@@ -106,6 +110,40 @@ static struct snd_soc_jack_pin hs_jack_pins[] = {
 	{
 		.pin	= "Headphone Jack",
 		.mask	= SND_JACK_HEADPHONE,
+	},
+};
+
+static int headset_mic_detect(void)
+{
+	int voltage, status, ret = 0;
+
+	status = gpio_get_value(TEGRA_GPIO_PW3);
+
+	if (status) {
+		ret = SND_JACK_HEADPHONE;
+		gpio_set_value(TEGRA_GPIO_PX6, 1);
+		mdelay(10);
+
+		tps6586x_adc_read(ANLG_1, &voltage);
+
+		pr_debug("%s: original voltage: %d\n", __func__, voltage);
+		voltage = voltage * (5100 + 7500) / 7500;
+
+		if (voltage > 1000)
+			ret |= SND_JACK_MICROPHONE;
+	} else {
+		gpio_set_value(TEGRA_GPIO_PX6, 0);
+	}
+
+	return ret;
+}
+
+static struct snd_soc_jack_gpio hs_jack_gpios[] = {
+	{
+		.name	= "hs_jack_detect",
+		.report = SND_JACK_HEADPHONE,
+		.debounce_time = 200,
+		.jack_status_check = headset_mic_detect,
 	},
 };
 
@@ -324,7 +362,8 @@ static int tegra_codec_init(struct snd_soc_codec *codec)
 
 	/* Jack detection API stuff */
 	ret = snd_soc_jack_new(codec, "Headset Jack",
-			       SND_JACK_HEADSET, &hs_jack);
+			       SND_JACK_HEADSET | SND_JACK_MECHANICAL,
+			       &hs_jack);
 	if (ret < 0) {
 		pr_err("%s: failed to add new jack\n", __func__);
 		goto out;
@@ -334,6 +373,14 @@ static int tegra_codec_init(struct snd_soc_codec *codec)
 				    hs_jack_pins);
 	if (ret < 0) {
 		pr_err("%s: failed to add jack pins\n", __func__);
+		goto out;
+	}
+
+	hs_jack_gpios[0].gpio = machine->pdata->gpio_hp_det;
+	ret = snd_soc_jack_add_gpios(&hs_jack, ARRAY_SIZE(hs_jack_gpios),
+				    hs_jack_gpios);
+	if (ret < 0) {
+		pr_err("%s: failed to add jack gpios\n", __func__);
 		goto out;
 	}
 

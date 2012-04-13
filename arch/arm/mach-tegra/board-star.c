@@ -177,13 +177,13 @@ static struct tegra_i2c_platform_data star_dvc_platform_data = {
 	.arb_recovery = arb_lost_recovery,
 };
 
+#define STAR_GPIO_HP_DET	TEGRA_GPIO_PW3
+#define STAR_GPIO_MIC_BIAS 	TEGRA_GPIO_PX6
+
 static struct tegra_wm8994_platform_data star_audio_pdata = {
-	/* .gpio_spkr_en		= TEGRA_GPIO_SPKR_EN, */
-	/* .gpio_hp_det		= TEGRA_GPIO_HP_DET, */
-	.gpio_hp_mute		= -1,
+	.gpio_hp_det		= STAR_GPIO_HP_DET,
 	.gpio_spk_orientation	= -1,
-	/* .gpio_int_mic_en	= TEGRA_GPIO_INT_MIC_EN, */
-	/* .gpio_ext_mic_en	= TEGRA_GPIO_EXT_MIC_EN, */
+	.gpio_mic_bias		= STAR_GPIO_MIC_BIAS,
 };
 
 static struct platform_device star_audio_device = {
@@ -557,6 +557,11 @@ static int star_audio_init(void)
 		orientation_gpio = TEGRA_GPIO_PV7;
 
 	star_audio_pdata.gpio_spk_orientation = orientation_gpio;
+
+	tegra_gpio_enable(STAR_GPIO_HP_DET);
+	gpio_request(STAR_GPIO_MIC_BIAS, "hs_mic_bias");
+	tegra_gpio_enable(STAR_GPIO_MIC_BIAS);
+	gpio_direction_output(STAR_GPIO_MIC_BIAS, 0);
 
 	return platform_device_register(&star_audio_device);
 }

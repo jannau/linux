@@ -17,7 +17,5 @@
 struct tegra_wm8994_platform_data {
 	int gpio_spk_orientation;
 	int gpio_hp_det;
-	int gpio_hp_mute;
-	int gpio_int_mic_en;
-	int gpio_ext_mic_en;
+	int gpio_mic_bias;
 };
