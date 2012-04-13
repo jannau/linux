@@ -1,7 +1,8 @@
 /*
- * *Echo Canceller Driver
+ * FM31-392 Echo Canceller Driver
  *
  **Copyright (C) 2010 LGE Inc.
+ * Copyright (C) Janne Grunau, <j@jannau.net>
  *
  **This program is free software; you can redistribute if and/or modify
  **it under the terms of the GNU General Public License version 2 as
@@ -516,7 +517,7 @@ static DEVICE_ATTR(fm31_reg, S_IRUGO | S_IWUSR | S_IROTH | S_IWOTH | S_IWUGO, fm
 static DEVICE_ATTR(fm31_bypass, S_IRUGO | S_IWUSR | S_IROTH | S_IWOTH | S_IWUGO, bypass_status,
 		   bypass_control);
 
-static int __init echocancel_probe(struct i2c_client *client, const struct i2c_device_id *id)
+static int __init fm31392_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
 	struct star_echo_device *echo = kzalloc(sizeof(*echo), GFP_KERNEL);
 
@@ -564,7 +565,7 @@ static int __init echocancel_probe(struct i2c_client *client, const struct i2c_d
 	return 0;
 }
 
-static int echocancel_remove(struct i2c_client *client)
+static int fm31392_remove(struct i2c_client *client)
 {
 	struct star_echo_device *echo = i2c_get_clientdata(client);
 	wake_lock_destroy(&echo->wlock);
@@ -573,7 +574,7 @@ static int echocancel_remove(struct i2c_client *client)
 	return 0;
 }
 
-static int echocancel_suspend(struct device *dev)
+static int fm31392_suspend(struct device *dev)
 {
 	printk("%s \n", __func__);
 	gpio_set_value(GPIO_ECHO_PWDN_N, 0);
@@ -581,7 +582,7 @@ static int echocancel_suspend(struct device *dev)
 	return 0;
 }
 
-static int echocancel_resume(struct device *dev)
+static int fm31392_resume(struct device *dev)
 {
 	printk("%s \n", __func__);
 	gpio_set_value(GPIO_ECHO_PWDN_N, 1);
@@ -589,40 +590,33 @@ static int echocancel_resume(struct device *dev)
 	return 0;
 }
 
-static const struct i2c_device_id echo_ids[] = {
-	{ "tegra_echo", 0 },
-	{ /*end of list*/ },
+static const struct i2c_device_id fm31392_i2c_id[] = {
+	{ "fm31392", 0 },
+	{ },
 };
 
-static const struct dev_pm_ops echocancel_pm_ops = {
-	.suspend	= echocancel_suspend,
-	.resume		= echocancel_resume,
-};
-
-static struct i2c_driver echocancel_driver = {
-	.probe		= echocancel_probe,
-	.remove		= echocancel_remove,
-	.id_table	= echo_ids,
+static struct i2c_driver fm31392_driver = {
+	.probe		= fm31392_probe,
+	.remove		= __devexit_p(fm31392_remove),
+	.id_table	= fm31392_i2c_id,
 	.driver		= {
-		.name	= "tegra_echo",
+		.name	= "fm31392",
 		.owner	= THIS_MODULE,
-		.pm	= &echocancel_pm_ops,
 	},
 };
 
 
-static int __devinit echocancel_init(void)
+static int __devinit fm31392_init(void)
 {
-	return i2c_add_driver(&echocancel_driver);
+	return i2c_add_driver(&fm31392_driver);
 }
+module_init(fm31392_init);
 
-static void __exit echocancel_exit(void)
+static void __exit fm31392_exit(void)
 {
-	i2c_del_driver(&echocancel_driver);
+	i2c_del_driver(&fm31392_driver);
 }
+module_exit(fm31392_exit);
 
-module_init(echocancel_init);
-module_exit(echocancel_exit);
-
-MODULE_DESCRIPTION("ECHO Canceller Driver for LGE STAR Tablet");
+MODULE_DESCRIPTION("FM31-392 Echo Canceller Driver");
 MODULE_LICENSE("GPL");
