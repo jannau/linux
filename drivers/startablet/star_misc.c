@@ -33,9 +33,6 @@ struct proc_dir_entry *sumproc_root_fp          = NULL;
 #define ON	1
 #define OFF	0
 
-//#define GPIO_SPK_SWITCH TEGRA_GPIO_PK5
-static int GPIO_SPK_SWITCH;
-
 #ifndef CONFIG_STARTABLET_XMM6160
 //#define GPIO_MDM_RESET_INT_N		TEGRA_GPIO_PS2	// SDIO_LTE_DAT3 for wakeup source
 #define GPIO_MDM_RESET_INT_N		TEGRA_GPIO_PV3	// GPIO_PV3 for wakeup source
@@ -154,27 +151,14 @@ static ssize_t pmic_test_store(struct device *dev, struct device_attribute *attr
 
 static ssize_t spk_switch_show(struct device *dev,  struct device_attribute *attr,  char *buf)
 {
-	int value = 0;
-	value = gpio_get_value(GPIO_SPK_SWITCH);
-	return sprintf(buf, "%d\n", value);
+	pr_info("deprecated star_misc:%s called\n", __func__);
+	return sprintf(buf, "deprecated star_misc:%s called\n", __func__);
 }
 
 static ssize_t spk_switch_store(struct device *dev, struct device_attribute *attr,
                                 const char *buf, size_t count)
 {
-	int mode = 0;
-
-	if (sscanf(buf, "%d", &mode) != 1) {
-		return count;
-	}
-
-	if (mode == 1) {
-		gpio_set_value(GPIO_SPK_SWITCH, 1);
-	}
-	else if (mode == 0) {
-		gpio_set_value(GPIO_SPK_SWITCH, 0);
-	}
-
+	pr_info("deprecated star_misc:%s called\n", __func__);
 	return count;
 }
 
@@ -400,16 +384,6 @@ static int __init misc_probe(struct platform_device *pdev)
 	printk(KERN_INFO "%s: start.....\n",__func__);
 
 	memset(&s_misc, 0x00, sizeof(s_misc));
-
-	// set speak change gpio
-	if (get_hw_rev() >= REV_F)
-		GPIO_SPK_SWITCH = TEGRA_GPIO_PK5;
-	else
-		GPIO_SPK_SWITCH = TEGRA_GPIO_PV7;
-
-	gpio_request(GPIO_SPK_SWITCH, "spk_switch");
-	tegra_gpio_enable(GPIO_SPK_SWITCH);
-	gpio_direction_output(GPIO_SPK_SWITCH, 0);
 
 	if (is_modem_connected()){
 		sumproc_root_fp   = proc_mkdir( "modem", 0 );

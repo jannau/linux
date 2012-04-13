@@ -181,6 +181,7 @@ static struct tegra_wm8994_platform_data star_audio_pdata = {
 	/* .gpio_spkr_en		= TEGRA_GPIO_SPKR_EN, */
 	/* .gpio_hp_det		= TEGRA_GPIO_HP_DET, */
 	.gpio_hp_mute		= -1,
+	.gpio_spk_orientation	= -1,
 	/* .gpio_int_mic_en	= TEGRA_GPIO_INT_MIC_EN, */
 	/* .gpio_ext_mic_en	= TEGRA_GPIO_EXT_MIC_EN, */
 };
@@ -547,7 +548,6 @@ static struct platform_device *star_devices[] __initdata = {
 	&spdif_dit_device,
 	&bluetooth_dit_device,
 	&tegra_pcm_device,
-	&star_audio_device,
 /* end of standard tegra audio devices */
 	&wm8994_fixed_voltage0,
 	&wm8994_fixed_voltage1,
@@ -559,6 +559,19 @@ static struct platform_device *star_devices[] __initdata = {
 	&star_ram_console_device,
 #endif
 };
+
+static int star_audio_init(void)
+{
+	int orientation_gpio = TEGRA_GPIO_PK5;
+	// set speak change gpio
+	if (get_hw_rev() < REV_F)
+		orientation_gpio = TEGRA_GPIO_PV7;
+
+	star_audio_pdata.gpio_spk_orientation = orientation_gpio;
+
+	return platform_device_register(&star_audio_device);
+}
+
 
 static void star_keys_init(void)
 {
@@ -832,6 +845,8 @@ static void __init tegra_star_init(void)
 	star_uart_init();
 
 	platform_add_devices(star_devices, ARRAY_SIZE(star_devices));
+
+	star_audio_init();
 
 	// star_i2c_init();
 	star_sdhci_init();
