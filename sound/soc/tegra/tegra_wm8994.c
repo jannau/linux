@@ -76,6 +76,11 @@ static struct snd_soc_jack hs_jack;
 
 #define DRV_NAME "tegra-snd-wm8994"
 
+enum speaker_orientation {
+	landscape,
+	portrait,
+};
+
 struct tegra_wm8994 {
 	struct snd_soc_codec *codec;
 	struct tegra_asoc_utils_data util_data;
@@ -89,6 +94,7 @@ struct tegra_wm8994 {
 	enum snd_soc_bias_level bias_level;
 	int jack_func;
 	int spk_func;
+	enum speaker_orientation spk_orientation;
 };
 
 /* Headset jack detection DAPM pins */
@@ -208,6 +214,36 @@ static int tegra_set_spk(struct snd_kcontrol *kcontrol,
 	return 1;
 }
 
+static int tegra_get_orientation(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_kcontrol_chip(kcontrol);
+	struct snd_soc_card *card = codec->card;
+	struct tegra_wm8994 *machine = snd_soc_card_get_drvdata(card);
+
+	ucontrol->value.integer.value[0] = machine->spk_orientation;
+	return 0;
+}
+
+static int tegra_set_orientation(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec =  snd_kcontrol_chip(kcontrol);
+	struct snd_soc_card *card = codec->card;
+	struct tegra_wm8994 *machine = snd_soc_card_get_drvdata(card);
+
+	if (machine->spk_orientation == ucontrol->value.integer.value[0])
+		return 0;
+
+	machine->spk_orientation = ucontrol->value.integer.value[0];
+
+	if (machine->pdata->gpio_spk_orientation > 0)
+		gpio_set_value(machine->pdata->gpio_spk_orientation,
+			       machine->spk_orientation);
+
+	return 1;
+}
+
 
 /*tegra machine dapm widgets */
 static const struct snd_soc_dapm_widget tegra_wm8994_default_dapm_widgets[] = {
@@ -238,20 +274,24 @@ static const struct snd_soc_dapm_route startablet_audio_map[] = {
 	{"IN1LN", NULL, "Line Jack"},
 };
 
-static const char *jack_function[] = {"Headphone", "Mic", "Line", "Headset",
-					"Off", "On"};
-static const char *spk_function[] = {"On", "Off"};
+static const char *jack_function[]	= {"Headphone", "Mic", "Line",
+					   "Headset",   "Off", "On"};
+static const char *spk_function[]	= {"On",        "Off"};
+static const char *spk_orientation[]	= {"Landscape", "Portrait"};
 
 static const struct soc_enum tegra_enum[] = {
 	SOC_ENUM_SINGLE_EXT(6, jack_function),
 	SOC_ENUM_SINGLE_EXT(2, spk_function),
+	SOC_ENUM_SINGLE_EXT(2, spk_orientation),
 };
 
 static const struct snd_kcontrol_new tegra_wm8994_default_controls[] = {
-	SOC_ENUM_EXT("Jack Function", tegra_enum[0], tegra_get_jack,
-			tegra_set_jack),
-	SOC_ENUM_EXT("Speaker Function", tegra_enum[1], tegra_get_spk,
-			tegra_set_spk),
+	SOC_ENUM_EXT("Jack Function",       tegra_enum[0], tegra_get_jack,
+		     tegra_set_jack),
+	SOC_ENUM_EXT("Speaker Function",    tegra_enum[1], tegra_get_spk,
+		     tegra_set_spk),
+	SOC_ENUM_EXT("Speaker Orientation", tegra_enum[2],
+		     tegra_get_orientation, tegra_set_orientation),
 };
 
 static int tegra_codec_init(struct snd_soc_codec *codec)
@@ -625,6 +665,13 @@ static __devinit int tegra_wm8994_driver_probe(struct platform_device *pdev)
 	ret = tegra_asoc_utils_init(&machine->util_data, &pdev->dev);
 	if (ret)
 		goto err_free_machine;
+
+	if (pdata->gpio_spk_orientation > 0) {
+		gpio_request(pdata->gpio_spk_orientation,
+			     "spk_orientation_switch");
+		tegra_gpio_enable(pdata->gpio_spk_orientation);
+		gpio_direction_output(pdata->gpio_spk_orientation, 0);
+	}
 
 #ifdef CONFIG_SWITCH
 	/* Addd h2w swith class support */
