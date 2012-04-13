@@ -29,7 +29,6 @@ obj-$(CONFIG_STARTABLET_MISC)	+= star_leds.o
 #obj-$(CONFIG_STARTABLET_COMPASS) += star_compass.o
 obj-$(CONFIG_STARTABLET_ALS)	+= bh1721_als.o
 obj-y					+= tegra_displaytest.o
-obj-$(CONFIG_STARTABLET_ECHO) += star_echo.o
 obj-y     += camera_flash.o
 obj-$(CONFIG_TOUCHSCREEN_ATMEL_MAXTOUCH)+= star_touch.o
 
