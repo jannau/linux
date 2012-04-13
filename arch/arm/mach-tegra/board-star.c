@@ -377,11 +377,8 @@ struct platform_device star_keys_device = {
 	},
 };
 
-
-
-
-struct platform_device tegra_echo = {
-	.name   = "tegra_echo",
+struct platform_device fm31392_echo_device = {
+	.name   = "fm31392",
 	.id     = -1,
 	.dev    = {
 	},
@@ -552,7 +549,7 @@ static struct platform_device *star_devices[] __initdata = {
 	&wm8994_fixed_voltage0,
 	&wm8994_fixed_voltage1,
 	&tegra_avp_device,
-	&tegra_echo,
+	&fm31392_echo_device,
 	&tegra_displaytest,
 	&tegra_camera_flash, //2010.12.08 hyungmoo.huh@lge.com for camera flash LED
 #if defined(CONFIG_ANDROID_RAM_CONSOLE)
