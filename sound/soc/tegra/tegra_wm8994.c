@@ -634,11 +634,27 @@ static struct snd_soc_dai_link tegra_wm8994_dai[] = {
 		.ops = &tegra_wm8994_bt_sco_ops,
 	},
 };
+static struct snd_soc_aux_dev tegra_wm8994_aux_devs[] = {
+	{
+		.name = "fm31392",
+		.codec_name = "fm31392.7-0060",
+	},
+};
+
+static struct snd_soc_codec_conf tegra_wm8994_codec_conf[] = {
+	{
+		.dev_name = "fm31392.7-0060",
+		.name_prefix = "Echo ",
+	},
+};
 
 static struct snd_soc_card snd_soc_tegra_wm8994 = {
 	.name = "tegra-wm8994",
 	.dai_link = tegra_wm8994_dai,
 	.num_links = ARRAY_SIZE(tegra_wm8994_dai),
+	.aux_dev = tegra_wm8994_aux_devs,
+	.num_aux_devs = ARRAY_SIZE(tegra_wm8994_aux_devs),
+	.codec_conf = tegra_wm8994_codec_conf,
 };
 
 static __devinit int tegra_wm8994_driver_probe(struct platform_device *pdev)
