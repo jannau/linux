@@ -41,7 +41,7 @@ DEFINE_MUTEX(voip_headset_mutex);
 
 struct fm31392 {
 	struct device *dev;
-	struct i2c_client *client;
+	struct i2c_client *i2c;
 	struct wake_lock wlock;
 	struct clk *clk;
 };
@@ -56,7 +56,7 @@ unsigned char rd_bytes[2][4] = {
 static int echo_write_register(struct fm31392 *echo, int reg, int value)
 {
 	unsigned char arr[7];
-	int addr = echo->client->addr;
+	int addr = echo->i2c->addr;
 	struct i2c_msg msg[] = {
 		{ .addr = addr, .flags = 0, .buf = &arr[0], .len = 1 },
 		{ .addr = addr, .flags = 0, .buf = &arr[1], .len = 1 },
@@ -75,19 +75,19 @@ static int echo_write_register(struct fm31392 *echo, int reg, int value)
 	arr[5] = (value >> 8) & 0xff;
 	arr[6] = (value >> 0) & 0xff;
 /*
- *      if (i2c_transfer(echo->client->adapter, msg, 7) != 7)
+ *      if (i2c_transfer(echo->i2c->adapter, msg, 7) != 7)
  *      {
- *              dev_err(&echo->client->dev, "i2c write error\n");
+ *              dev_err(&echo->i2c->dev, "i2c write error\n");
  *              return -EIO;
  *      }
  */
-	if (i2c_transfer(echo->client->adapter, &msg[0], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[1], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[2], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[3], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[4], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[5], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[6], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[0], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[1], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[2], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[3], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[4], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[5], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[6], 1) != 1) return -EIO;
 
 	return 0;
 }
@@ -95,7 +95,7 @@ static int echo_write_register(struct fm31392 *echo, int reg, int value)
 static int echo_read_register(struct fm31392 *echo, int reg)
 {
 	int ret_lo = 0, ret_hi = 0, value = 0;
-	int addr = echo->client->addr;
+	int addr = echo->i2c->addr;
 	unsigned char w_buf[5], r_buf[2];
 	struct i2c_msg msg[] = {
 		{ .addr = addr, .flags = 0,	.buf = &w_buf[0],	.len = 1 },
@@ -121,28 +121,28 @@ static int echo_read_register(struct fm31392 *echo, int reg)
 	w_buf[3] = (reg >> 8) & 0xFF;
 	w_buf[4] = (reg >> 0) & 0xFF;
 /*
- *      if (i2c_transfer(echo->client->adapter, msg, 15) != 15)
+ *      if (i2c_transfer(echo->i2c->adapter, msg, 15) != 15)
  *      {
- *              dev_err(&echo->client->dev, "i2c read error\n");
+ *              dev_err(&echo->i2c->dev, "i2c read error\n");
  *              return -EIO;
  *      }
  */
 
-	if (i2c_transfer(echo->client->adapter, &msg[0], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[1], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[2], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[3], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[4], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[5], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[6], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[7], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[8], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[9], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[10], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[11], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[12], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[13], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->client->adapter, &msg[14], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[0], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[1], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[2], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[3], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[4], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[5], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[6], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[7], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[8], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[9], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[10], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[11], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[12], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[13], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, &msg[14], 1) != 1) return -EIO;
 
 	ret_lo = r_buf[0];
 	ret_hi = r_buf[1];
@@ -526,7 +526,7 @@ static int __init fm31392_probe(struct i2c_client *client, const struct i2c_devi
 
 	wake_lock_init(&echo->wlock, WAKE_LOCK_SUSPEND, "AudioOutLock");
 
-	echo->client = client;
+	echo->i2c = client;
 	i2c_set_clientdata(client, echo);
 
 	echo->dev = &client->dev;
@@ -552,10 +552,10 @@ static int __init fm31392_probe(struct i2c_client *client, const struct i2c_devi
 	tegra_gpio_enable(GPIO_ECHO_RST_N);
 	gpio_direction_output(GPIO_ECHO_RST_N, 1);
 
-	if (device_create_file(&echo->client->dev, &dev_attr_fm31_reg))
+	if (device_create_file(&echo->i2c->dev, &dev_attr_fm31_reg))
 		printk("[FM31] reg_rw file create -error \n");
 
-	if (device_create_file(&echo->client->dev, &dev_attr_fm31_bypass))
+	if (device_create_file(&echo->i2c->dev, &dev_attr_fm31_bypass))
 		printk("[FM31] bypass control  file create -error \n");
 
 	echo_set_bypass_parameters(echo);
