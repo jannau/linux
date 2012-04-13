@@ -5,7 +5,6 @@ ccflags-$(CONFIG_DEBUG_GPIO)	+= -DDEBUG
 obj-$(CONFIG_STARTABLET_MUIC)   += star_muic.o
 obj-y				+= star_powerkey.o
 obj-y				+= star_cam_pmic.o
-obj-$(CONFIG_STARTABLET_HEADSET_DET)	+= headset_det.o
 obj-$(CONFIG_STARTABLET_GPS)	+= star_gps.o
 obj-$(CONFIG_STARTABLET_RFKILL)	+= star_rfkill.o
 obj-$(CONFIG_STARTABLET_BATTERY)+= star_battery.o
