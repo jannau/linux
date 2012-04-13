@@ -578,16 +578,18 @@ static int fm31392_remove(struct i2c_client *client)
 
 static int fm31392_suspend(struct device *dev)
 {
-	printk("%s \n", __func__);
-	gpio_set_value(GPIO_ECHO_PWDN_N, 0);
+	struct fm31392 *fm31392 = dev_get_drvdata(dev);
+
+	gpio_set_value(fm31392->gpio_power, 0);
 
 	return 0;
 }
 
 static int fm31392_resume(struct device *dev)
 {
-	printk("%s \n", __func__);
-	gpio_set_value(GPIO_ECHO_PWDN_N, 1);
+	struct fm31392 *fm31392 = dev_get_drvdata(dev);
+
+	gpio_set_value(fm31392->gpio_power, 1);
 
 	return 0;
 }
