@@ -343,7 +343,7 @@ static const struct snd_soc_dapm_route startablet_audio_map[] = {
 	{"Ext Spk", NULL, "SPKOUTRN"},
 	{"Ext Spk", NULL, "SPKOUTRP"},
 
-	/* main mic is connected to INRN */
+	/* main mic is connected to IN1RN */
 	{"MICBIAS1", NULL, "Mic Jack"},
 	{"IN1RN", NULL, "MICBIAS1"},
 
