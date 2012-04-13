@@ -63,13 +63,6 @@ config RINETWORK_DRIVER
 	help
 	  Support for raw ip network driver.
 
-config STARTABLET_ECHO
-    bool "Star Tablet Echo Cancel Driver"
-    default n
-    depends on MACH_STARTABLET
-    help
-     Support for echo cancel driver.
-
 config STARTABLET_BATTERY
     bool "Star Tablet Battery Driver"
     default n
