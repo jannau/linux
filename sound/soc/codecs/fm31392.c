@@ -493,9 +493,30 @@ static int fm31392_codec_probe(struct snd_soc_codec *codec)
 	return 0;
 }
 
+static int fm31_codec_suspend(struct snd_soc_codec *codec,
+			      pm_message_t state)
+{
+	struct fm31392 *fm31392 = snd_soc_codec_get_drvdata(codec);
+
+	dev_info(fm31392->dev, "%s\n", __func__);
+
+	return 0;
+}
+
+static int fm31_codec_resume(struct snd_soc_codec *codec)
+{
+	struct fm31392 *fm31392 = snd_soc_codec_get_drvdata(codec);
+
+	dev_info(fm31392->dev, "%s\n", __func__);
+
+	return 0;
+}
+
 static struct snd_soc_codec_driver soc_codec_dev_fm31392 = {
 	/* .write	= fm31392_write, */
 	/* .read	= lm4857_read, */
+	.suspend	= fm31_codec_suspend,
+	.resume		= fm31_codec_resume,
 	.probe	= fm31392_codec_probe,
 	/* .reg_cache_size		= ARRAY_SIZE(lm4857_default_regs), */
 	/* .reg_word_size		= sizeof(uint8_t), */
