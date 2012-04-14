@@ -465,6 +465,26 @@ static const struct snd_kcontrol_new fm31392_controls[] = {
 		     fm31_get_mode, fm31_set_mode),
 };
 
+static int fm31_playback_event(struct snd_soc_dapm_widget *w,
+			       struct snd_kcontrol *kcontrol, int event)
+{
+	struct fm31392 *fm31392 = snd_soc_codec_get_drvdata(w->codec);
+
+	dev_info(fm31392->dev, "%s\n", __func__);
+
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		fm31392_set_bypass(fm31392);
+		break;
+	}
+
+	return 0;
+}
+
+static const struct snd_soc_dapm_widget fm31392_dapm_widgets[] = {
+	SND_SOC_DAPM_PRE("Pre Playback", fm31_playback_event),
+};
+
 static int fm31392_codec_probe(struct snd_soc_codec *codec)
 {
 	struct fm31392 *fm31392 = snd_soc_codec_get_drvdata(codec);
@@ -478,10 +498,10 @@ static int fm31392_codec_probe(struct snd_soc_codec *codec)
 	if (ret)
 		return ret;
 
-	/* ret = snd_soc_dapm_new_controls(dapm, fm31392_dapm_widgets, */
-	/* 		ARRAY_SIZE(fm31392_dapm_widgets)); */
-	/* if (ret) */
-	/* 	return ret; */
+	ret = snd_soc_dapm_new_controls(dapm, fm31392_dapm_widgets,
+			ARRAY_SIZE(fm31392_dapm_widgets));
+	if (ret)
+		return ret;
 
 	/* ret = snd_soc_dapm_add_routes(dapm, fm31392_routes, */
 	/* 		ARRAY_SIZE(fm31392_routes)); */
