@@ -87,7 +87,7 @@ static int bcm4329_rfkill_probe(struct platform_device *pdev)
 	struct rfkill *bt_rfkill;
 	struct resource *res;
 	int ret;
-	bool enable = false;  /* off */
+	bool enable = true;  /* off */
 	bool default_sw_block_state;
 
 	bcm4329_rfkill = kzalloc(sizeof(*bcm4329_rfkill), GFP_KERNEL);
