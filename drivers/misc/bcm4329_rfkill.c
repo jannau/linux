@@ -38,6 +38,7 @@ struct bcm4329_rfkill_data {
 	int gpio_shutdown;
 	int delay;
 	struct clk *bt_32k_clk;
+	int clk_enabled;
 };
 
 static struct bcm4329_rfkill_data *bcm4329_rfkill;
@@ -49,11 +50,15 @@ static int bcm4329_bt_rfkill_set_power(void *data, bool blocked)
 			gpio_direction_output(bcm4329_rfkill->gpio_shutdown, 0);
 		if (bcm4329_rfkill->gpio_reset)
 			gpio_direction_output(bcm4329_rfkill->gpio_reset, 0);
-		if (bcm4329_rfkill->bt_32k_clk)
+		if (bcm4329_rfkill->bt_32k_clk && bcm4329_rfkill->clk_enabled) {
+			bcm4329_rfkill->clk_enabled = 0;
 			clk_disable(bcm4329_rfkill->bt_32k_clk);
+		}
 	} else {
-		if (bcm4329_rfkill->bt_32k_clk)
+		if (bcm4329_rfkill->bt_32k_clk && !bcm4329_rfkill->clk_enabled) {
+			bcm4329_rfkill->clk_enabled = 1;
 			clk_enable(bcm4329_rfkill->bt_32k_clk);
+		}
 		if (bcm4329_rfkill->gpio_shutdown)
 		{
 			gpio_direction_output(bcm4329_rfkill->gpio_shutdown, 0);
@@ -95,6 +100,7 @@ static int bcm4329_rfkill_probe(struct platform_device *pdev)
 				assuming 32k clock to chip\n", __func__);
 		bcm4329_rfkill->bt_32k_clk = NULL;
 	}
+	bcm4329_rfkill->clk_enabled = 0;
 
 	res = platform_get_resource_byname(pdev, IORESOURCE_IO,
 						"bcm4329_nreset_gpio");
@@ -124,8 +130,10 @@ static int bcm4329_rfkill_probe(struct platform_device *pdev)
 	if (!bcm4329_rfkill->gpio_reset && !bcm4329_rfkill->gpio_shutdown)
 		goto free_bcm_res;
 
-	if (bcm4329_rfkill->bt_32k_clk && enable)
+	if (bcm4329_rfkill->bt_32k_clk && enable && !bcm4329_rfkill->clk_enabled) {
+		bcm4329_rfkill->clk_enabled = 1;
 		clk_enable(bcm4329_rfkill->bt_32k_clk);
+	}
 	if (bcm4329_rfkill->gpio_shutdown)
 		gpio_direction_output(bcm4329_rfkill->gpio_shutdown, enable);
 	if (bcm4329_rfkill->gpio_reset)
@@ -155,8 +163,10 @@ free_bcm_res:
 		gpio_free(bcm4329_rfkill->gpio_shutdown);
 	if (bcm4329_rfkill->gpio_reset)
 		gpio_free(bcm4329_rfkill->gpio_reset);
-	if (bcm4329_rfkill->bt_32k_clk && enable)
+	if (bcm4329_rfkill->bt_32k_clk && enable) {
+		bcm4329_rfkill->clk_enabled = 0;
 		clk_disable(bcm4329_rfkill->bt_32k_clk);
+	}
 	if (bcm4329_rfkill->bt_32k_clk)
 		clk_put(bcm4329_rfkill->bt_32k_clk);
 	kfree(bcm4329_rfkill);
