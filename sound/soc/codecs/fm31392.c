@@ -79,20 +79,12 @@ static int echo_write_register(struct fm31392 *echo, int reg, int value)
 	arr[4] = (reg >> 0) & 0xff;
 	arr[5] = (value >> 8) & 0xff;
 	arr[6] = (value >> 0) & 0xff;
-/*
- *      if (i2c_transfer(echo->i2c->adapter, msg, 7) != 7)
- *      {
- *              dev_err(&echo->i2c->dev, "i2c write error\n");
- *              return -EIO;
- *      }
- */
-	if (i2c_transfer(echo->i2c->adapter, &msg[0], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[1], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[2], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[3], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[4], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[5], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[6], 1) != 1) return -EIO;
+
+	if (i2c_transfer(echo->i2c->adapter, msg, 7) != 7)
+	{
+		dev_err(&echo->i2c->dev, "i2c write error\n");
+		return -EIO;
+	}
 
 	return 0;
 }
@@ -125,29 +117,12 @@ static int echo_read_register(struct fm31392 *echo, int reg)
 	w_buf[2] = ECHO_MEM_READ;
 	w_buf[3] = (reg >> 8) & 0xFF;
 	w_buf[4] = (reg >> 0) & 0xFF;
-/*
- *      if (i2c_transfer(echo->i2c->adapter, msg, 15) != 15)
- *      {
- *              dev_err(&echo->i2c->dev, "i2c read error\n");
- *              return -EIO;
- *      }
- */
 
-	if (i2c_transfer(echo->i2c->adapter, &msg[0], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[1], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[2], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[3], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[4], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[5], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[6], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[7], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[8], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[9], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[10], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[11], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[12], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[13], 1) != 1) return -EIO;
-	if (i2c_transfer(echo->i2c->adapter, &msg[14], 1) != 1) return -EIO;
+	if (i2c_transfer(echo->i2c->adapter, msg, 15) != 15)
+	{
+		dev_err(&echo->i2c->dev, "i2c read error\n");
+		return -EIO;
+	}
 
 	ret_lo = r_buf[0];
 	ret_hi = r_buf[1];
