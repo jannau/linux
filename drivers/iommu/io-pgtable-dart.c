@@ -16,6 +16,7 @@
 #include <linux/atomic.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>
+#include <linux/io.h>
 #include <linux/io-pgtable.h>
 #include <linux/kernel.h>
 #include <linux/sizes.h>
@@ -566,6 +567,7 @@ static struct io_pgtable *
 apple_dart_alloc_pgtable(struct io_pgtable_cfg *cfg, void *cookie)
 {
 	struct dart_io_pgtable *data;
+	size_t size;
 	int i;
 
 	if (!cfg->coherent_walk)
@@ -592,9 +594,28 @@ apple_dart_alloc_pgtable(struct io_pgtable_cfg *cfg, void *cookie)
 	data->start_level = 1;
 	cfg->apple_dart_cfg.n_ttbrs = 1 << data->pgd_bits;
 	data->pgd_bits += data->bits_per_level;
+	size = DART_PGD_SIZE(data);
 
-	data->pgd = __dart_alloc_pages(DART_PGD_SIZE(data), GFP_KERNEL,
-					   cfg);
+	/* Locked DARTs can not modify the TTBR registers. The known locked
+	 * DARTs (dcp, dcpext0) use just a single TTBR so we do not have to
+	 * worry whether the pages are consecutive.
+	 */
+	if (cfg->quirks & IO_PGTABLE_QUIRK_APPLE_LOCKED) {
+		if (cfg->apple_dart_cfg.n_ttbrs > 1)
+			goto out_free_data;
+
+		data->pgd = devm_memremap(cfg->iommu_dev,
+					  cfg->apple_dart_cfg.ttbr[0],
+					  size, MEMREMAP_WB);
+		if (!data->pgd)
+			goto out_free_data;
+		/* start with an empty table */
+		memset(data->pgd, 0, size);
+		return &data->iop;
+	}
+
+
+	data->pgd = __dart_alloc_pages(size, GFP_KERNEL, cfg);
 	if (!data->pgd)
 		goto out_free_data;
 
@@ -611,9 +632,12 @@ out_free_data:
 
 static void apple_dart_free_pgtable(struct io_pgtable *iop)
 {
+	struct io_pgtable_cfg *cfg = &iop->cfg;
 	struct dart_io_pgtable *data = io_pgtable_to_data(iop);
 
-	__dart_free_pgtable(data, data->start_level, data->pgd);
+	 if (!(cfg->quirks & IO_PGTABLE_QUIRK_APPLE_LOCKED))
+		__dart_free_pgtable(data, data->start_level, data->pgd);
+
 	kfree(data);
 }
 
