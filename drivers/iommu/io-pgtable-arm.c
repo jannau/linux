@@ -18,6 +18,7 @@
 #include <linux/slab.h>
 #include <linux/types.h>
 #include <linux/dma-mapping.h>
+#include <linux/io.h>
 
 #include <asm/barrier.h>
 
@@ -1137,6 +1138,7 @@ static struct io_pgtable *
 apple_dart_alloc_pgtable(struct io_pgtable_cfg *cfg, void *cookie)
 {
 	struct arm_lpae_io_pgtable *data;
+	size_t size;
 	int i;
 
 	switch (cfg->oas) {
@@ -1172,9 +1174,27 @@ apple_dart_alloc_pgtable(struct io_pgtable_cfg *cfg, void *cookie)
 	data->start_level = 2;
 	cfg->apple_dart_cfg.n_ttbrs = 1 << data->pgd_bits;
 	data->pgd_bits += data->bits_per_level;
+	size = ARM_LPAE_PGD_SIZE(data);
 
-	data->pgd = __arm_lpae_alloc_pages(ARM_LPAE_PGD_SIZE(data), GFP_KERNEL,
-					   cfg);
+	/* Locked DARTs can not modify the TTBR registers. The known locked
+	 * DARTs (dcp, dcpext0) use just a single TTBR so we do not have to
+	 * worry whether the pages are consecutive.
+	 */
+	if (cfg->quirks & IO_PGTABLE_QUIRK_APPLE_LOCKED) {
+		if (cfg->apple_dart_cfg.n_ttbrs > 1)
+			goto out_free_data;
+
+		data->pgd = devm_memremap(cfg->iommu_dev,
+					  cfg->apple_dart_cfg.ttbr[0],
+					  size, MEMREMAP_WB);
+		if (!data->pgd)
+			goto out_free_data;
+		/* start with an empty table */
+		memset(data->pgd, 0, size);
+		return &data->iop;
+	}
+
+	data->pgd = __arm_lpae_alloc_pages(size, GFP_KERNEL, cfg);
 	if (!data->pgd)
 		goto out_free_data;
 
@@ -1187,6 +1207,17 @@ apple_dart_alloc_pgtable(struct io_pgtable_cfg *cfg, void *cookie)
 out_free_data:
 	kfree(data);
 	return NULL;
+}
+
+static void apple_dart_free_pgtable(struct io_pgtable *iop)
+{
+	struct io_pgtable_cfg *cfg = &iop->cfg;
+	struct arm_lpae_io_pgtable *data = io_pgtable_to_data(iop);
+
+	if (!(cfg->quirks & IO_PGTABLE_QUIRK_APPLE_LOCKED))
+		__arm_lpae_free_pgtable(data, data->start_level, data->pgd);
+
+	kfree(data);
 }
 
 struct io_pgtable_init_fns io_pgtable_arm_64_lpae_s1_init_fns = {
@@ -1216,7 +1247,7 @@ struct io_pgtable_init_fns io_pgtable_arm_mali_lpae_init_fns = {
 
 struct io_pgtable_init_fns io_pgtable_apple_dart_init_fns = {
 	.alloc	= apple_dart_alloc_pgtable,
-	.free	= arm_lpae_free_pgtable,
+	.free	= apple_dart_free_pgtable,
 };
 
 #ifdef CONFIG_IOMMU_IO_PGTABLE_LPAE_SELFTEST
