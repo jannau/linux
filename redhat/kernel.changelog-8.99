@@ -1,3 +1,6 @@
+* Wed Sep 08 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc0.20210908gitac08b1c68d1b.6]
+- Some initial Fedora config items for 5.15 (Justin M. Forbes)
+
 * Tue Aug 31 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc0.20210831gitb91db6a0b52e.1]
 - arm64: use common CONFIG_MAX_ZONEORDER for arm kernel (Mark Salter)
 - Create Makefile.variables for a single point of configuration change (Justin M. Forbes)
