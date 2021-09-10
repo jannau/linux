@@ -1,3 +1,7 @@
+* Fri Sep 10 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc0.20210910gitbf9f243f23e6.8]
+- Update CONFIG_WERROR to disabled as it can cause issue with out of tree modules. (Justin M. Forbes)
+- Fixup IOMMU configs in pending so that configs are sane again (Justin M. Forbes)
+
 * Wed Sep 08 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc0.20210908gitac08b1c68d1b.6]
 - Some initial Fedora config items for 5.15 (Justin M. Forbes)
 
