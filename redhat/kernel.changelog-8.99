@@ -1,3 +1,6 @@
+* Wed Sep 15 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc1.20210915git3ca706c189db.13]
+- x86_64: Enable Elkhart Lake Quadrature Encoder Peripheral support (Prarit Bhargava)
+
 * Fri Sep 10 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc0.20210910gitbf9f243f23e6.8]
 - Update CONFIG_WERROR to disabled as it can cause issue with out of tree modules. (Justin M. Forbes)
 - Fixup IOMMU configs in pending so that configs are sane again (Justin M. Forbes)
