@@ -1,3 +1,6 @@
+* Thu Sep 16 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc1.20210916gitff1ffd71d5f0.14]
+- Build kernel-doc for Fedora (Justin M. Forbes)
+
 * Wed Sep 15 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc1.20210915git3ca706c189db.13]
 - x86_64: Enable Elkhart Lake Quadrature Encoder Peripheral support (Prarit Bhargava)
 
