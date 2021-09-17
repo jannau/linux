@@ -1,3 +1,6 @@
+* Fri Sep 17 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc1.20210917gitbdb575f87217.15]
+- redhat/configs: enable SYSTEM_BLACKLIST_KEYRING which is already enabled in rhel8 and Fedora 34 (Coiby Xu)
+
 * Thu Sep 16 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc1.20210916gitff1ffd71d5f0.14]
 - Build kernel-doc for Fedora (Justin M. Forbes)
 
