@@ -1,3 +1,6 @@
+* Thu Sep 23 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc2.20210923git58e2cf5d7946.21]
+- redhat/configs: enable CONFIG_SQUASHFS_ZSTD which is already enabled in Fedora 34 (Tao Liu) [1998953]
+
 * Sat Sep 18 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc1.20210918git4357f03d6611.16]
 - redhat: bump RHEL_MAJOR and add the changelog file for it (Herton R. Krzesinski)
 - redhat: add documentation about the os-build rebase process (Herton R. Krzesinski)
