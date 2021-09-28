@@ -1,3 +1,9 @@
+* Tue Sep 28 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc3.20210928git0513e464f900.26]
+- Manually add pending items that need to be set due to mismatch (Justin M. Forbes)
+- Clean up pending common (Justin M. Forbes)
+- redhat/configs: Enable CONFIG_BLK_CGROUP_IOLATENCY & CONFIG_BLK_CGROUP_FC_APPID (Waiman Long) [2006813]
+- redhat: remove kernel.changelog-8.99 file (Herton R. Krzesinski)
+
 * Thu Sep 23 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc2.20210923git58e2cf5d7946.21]
 - redhat/configs: enable CONFIG_SQUASHFS_ZSTD which is already enabled in Fedora 34 (Tao Liu) [1998953]
 
