@@ -1,3 +1,7 @@
+* Wed Sep 29 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc3.20210929gita4e6f95a891a.27]
+- cleanup CONFIG_X86_PLATFORM_DRIVERS_INTEL (David Arcari)
+- redhat: rename usage of .rhel8git.mk to .rhpkg.mk (Herton R. Krzesinski)
+
 * Tue Sep 28 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc3.20210928git0513e464f900.26]
 - Manually add pending items that need to be set due to mismatch (Justin M. Forbes)
 - Clean up pending common (Justin M. Forbes)
