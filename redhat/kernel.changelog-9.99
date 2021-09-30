@@ -1,3 +1,6 @@
+* Thu Sep 30 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc3.20210930git02d5e016800d.28]
+- redhat/configs: Remove CONFIG_INFINIBAND_I40IW (Kamal Heib)
+
 * Wed Sep 29 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc3.20210929gita4e6f95a891a.27]
 - cleanup CONFIG_X86_PLATFORM_DRIVERS_INTEL (David Arcari)
 - redhat: rename usage of .rhel8git.mk to .rhpkg.mk (Herton R. Krzesinski)
