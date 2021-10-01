@@ -1,3 +1,14 @@
+* Fri Oct 01 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc3.20211001git4de593fb965f.29]
+- Change s390x CONFIG_NODES_SHIFT from 4 to 1 (Justin M. Forbes)
+- Build CRYPTO_SHA3_*_S390 inline for s390 zfcpdump (Justin M. Forbes)
+- redhat: move the DIST variable setting to Makefile.variables (Herton R. Krzesinski)
+- redhat/kernel.spec.template: Cleanup source numbering (Prarit Bhargava)
+- redhat/kernel.spec.template: Reorganize RHEL and Fedora specific files (Prarit Bhargava)
+- redhat/kernel.spec.template: Add include_fedora and include_rhel variables (Prarit Bhargava)
+- redhat/Makefile: Make kernel-local global (Prarit Bhargava)
+- redhat/Makefile: Use flavors file (Prarit Bhargava)
+- Turn on CONFIG_CPU_FREQ_GOV_SCHEDUTIL for x86 (Justin M. Forbes)
+
 * Thu Sep 30 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc3.20210930git02d5e016800d.28]
 - redhat/configs: Remove CONFIG_INFINIBAND_I40IW (Kamal Heib)
 
