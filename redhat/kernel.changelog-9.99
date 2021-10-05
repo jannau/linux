@@ -1,3 +1,6 @@
+* Tue Oct 05 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc4.20211005gitf6274b06e326.33]
+- Fix ordering in genspec args (Justin M. Forbes)
+
 * Sat Oct 02 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc3.20211002git53d5fc89d66a.30]
 - redhat/configs: Enable Hyper-V guests on ARM64 (Vitaly Kuznetsov) [2007430]
 - redhat: configs: Enable CONFIG_THINKPAD_LMI (Hans de Goede)
