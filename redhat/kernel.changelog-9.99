@@ -1,3 +1,6 @@
+* Wed Oct 06 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc4.20211006git60a9483534ed.34]
+- Revert "Merge branch 'ppcbpfselftest' into 'os-build'" (Justin M. Forbes)
+
 * Tue Oct 05 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc4.20211005gitf6274b06e326.33]
 - Fix ordering in genspec args (Justin M. Forbes)
 
