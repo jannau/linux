@@ -1,3 +1,7 @@
+* Thu Oct 07 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc4.20211007git5af4055fa813.35]
+- Fedora NTFS config updates (Justin M. Forbes)
+- Fedora 5.15 configs part 1 (Justin M. Forbes)
+
 * Wed Oct 06 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc4.20211006git60a9483534ed.34]
 - Revert "Merge branch 'ppcbpfselftest' into 'os-build'" (Justin M. Forbes)
 
