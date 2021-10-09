@@ -1,3 +1,6 @@
+* Sat Oct 09 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc4.20211009git5d6ab0bb408f.37]
+- redhat: fix typo and make the output more silent for dist-git sync (Herton R. Krzesinski)
+
 * Thu Oct 07 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc4.20211007git5af4055fa813.35]
 - Fedora NTFS config updates (Justin M. Forbes)
 - Fedora 5.15 configs part 1 (Justin M. Forbes)
