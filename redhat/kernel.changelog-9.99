@@ -1,3 +1,8 @@
+* Fri Oct 15 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc5.20211015gitec681c53f8d2.43]
+- Fix dist-srpm-gcov (Don Zickus)
+- redhat: configs: add CONFIG_NTB and related items (John W. Linville)
+- Add kfence_test to mod-internal.list (Justin M. Forbes)
+
 * Tue Oct 12 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc5.20211012gitfa5878760579.40]
 - Enable KUNIT tests for redhat kernel-modules-internal (Nico Pache)
 - redhat: add *-matched meta packages to rpminspect emptyrpm config (Herton R. Krzesinski)
