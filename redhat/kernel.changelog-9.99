@@ -1,3 +1,7 @@
+* Tue Oct 19 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc6.47]
+- redhat: Disable clang's integrated assembler on ppc64le and s390x (Tom Stellard)
+- redhat/configs: enable CONFIG_IMA_WRITE_POLICY (Bruno Meneguele)
+
 * Fri Oct 15 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc5.20211015gitec681c53f8d2.43]
 - Fix dist-srpm-gcov (Don Zickus)
 - redhat: configs: add CONFIG_NTB and related items (John W. Linville)
