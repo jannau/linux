@@ -1,3 +1,8 @@
+* Thu Oct 21 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc6.20211021git2f111a6fd5b5.49]
+- Revert "bpf, selftests: Disable tests that need clang13" (Jiri Olsa)
+- spec: Don't fail spec build if ksamples fails (Jiri Olsa)
+- Enable CONFIG_QCOM_SCM for arm (Justin M. Forbes)
+
 * Tue Oct 19 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc6.47]
 - redhat: Disable clang's integrated assembler on ppc64le and s390x (Tom Stellard)
 - redhat/configs: enable CONFIG_IMA_WRITE_POLICY (Bruno Meneguele)
