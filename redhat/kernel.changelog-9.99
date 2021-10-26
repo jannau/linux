@@ -1,3 +1,7 @@
+* Tue Oct 26 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc7.53]
+- Enable CONFIG_FAIL_SUNRPC for debug builds (Justin M. Forbes)
+- fedora: Disable fbdev drivers and use simpledrm instead (Javier Martinez Canillas)
+
 * Thu Oct 21 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc6.20211021git2f111a6fd5b5.49]
 - Revert "bpf, selftests: Disable tests that need clang13" (Jiri Olsa)
 - spec: Don't fail spec build if ksamples fails (Jiri Olsa)
