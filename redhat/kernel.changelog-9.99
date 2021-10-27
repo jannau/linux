@@ -1,3 +1,6 @@
+* Wed Oct 27 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc7.20211027gitd25f27432f80.54]
+- Fedora config updates (Justin M. Forbes)
+
 * Tue Oct 26 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc7.53]
 - Enable CONFIG_FAIL_SUNRPC for debug builds (Justin M. Forbes)
 - fedora: Disable fbdev drivers and use simpledrm instead (Javier Martinez Canillas)
