@@ -1,3 +1,8 @@
+* Fri Oct 29 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc7.20211029gitf25a5481af12.56]
+- redhat/configs/evaluate_configs: walk cfgvariants line by line (Jan Stancek)
+- redhat/configs/evaluate_configs: insert EMPTY tags at correct place (Jan Stancek)
+- redhat: make dist-srpm-gcov add to BUILDOPTS (Jan Stancek)
+
 * Thu Oct 28 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.15-0.rc7.20211028git1fc596a56b33.55]
 - Build CONFIG_SPI_PXA2XX as a module on x86 (Justin M. Forbes)
 - redhat/configs: enable CONFIG_BCMGENET as module (Joel Savitz)
