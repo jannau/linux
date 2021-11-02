@@ -134,8 +134,19 @@
 #define APPLE_DART_PTE_PROT_NO_WRITE (1<<7)
 #define APPLE_DART_PTE_PROT_NO_READ (1<<8)
 
+#define APPLE_DART_PTE_VALID BIT(0) // identical to ARM_LPAE_PTE_TYPE_BLOCK
+
+#define APPLE_DART2_PTE_PROT_NO_CACHE BIT(1)
+#define APPLE_DART2_PTE_PROT_NO_WRITE BIT(2)
+#define APPLE_DART2_PTE_PROT_NO_READ BIT(3)
+
 #define APPLE_DART_PTE_SUBPAGE_START	GENMASK_ULL(63, 52)
 #define APPLE_DART_PTE_SUBPAGE_END	GENMASK_ULL(51, 40)
+
+#define APPLE_DART_PADDR_MASK_PS_36BIT	GENMASK_ULL(35, 12)
+#define APPLE_DART_PADDR_SHIFT_PS_36BIT	(0)
+#define APPLE_DART_PADDR_MASK_PS_42BIT	GENMASK_ULL(37, 10)
+#define APPLE_DART_PADDR_SHIFT_PS_42BIT	(4)
 
 /* IOPTE accessors */
 #define iopte_deref(pte,d) __va(iopte_to_paddr(pte, d))
@@ -160,6 +171,10 @@ typedef u64 arm_lpae_iopte;
 static inline bool iopte_leaf(arm_lpae_iopte pte, int lvl,
 			      enum io_pgtable_fmt fmt)
 {
+	if (fmt == APPLE_DART2)
+		return lvl == (ARM_LPAE_MAX_LEVELS - 1) &&
+			FIELD_GET(APPLE_DART_PTE_VALID, pte);
+
 	if (lvl == (ARM_LPAE_MAX_LEVELS - 1) && fmt != ARM_MALI_LPAE)
 		return iopte_type(pte) == ARM_LPAE_PTE_TYPE_PAGE;
 
@@ -171,6 +186,13 @@ static arm_lpae_iopte paddr_to_iopte(phys_addr_t paddr,
 {
 	arm_lpae_iopte pte = paddr;
 
+	if (data->iop.fmt == APPLE_DART || data->iop.fmt == APPLE_DART2) {
+		pte = paddr >> data->iop.cfg.apple_dart_cfg.paddr_shift;
+		pte &= data->iop.cfg.apple_dart_cfg.paddr_mask;
+
+		return pte;
+	}
+
 	/* Of the bits which overlap, either 51:48 or 15:12 are always RES0 */
 	return (pte | (pte >> (48 - 12))) & ARM_LPAE_PTE_ADDR_MASK;
 }
@@ -179,6 +201,12 @@ static phys_addr_t iopte_to_paddr(arm_lpae_iopte pte,
 				  struct arm_lpae_io_pgtable *data)
 {
 	u64 paddr = pte & ARM_LPAE_PTE_ADDR_MASK;
+
+	if (data->iop.fmt == APPLE_DART || data->iop.fmt == APPLE_DART2) {
+		paddr = pte & data->iop.cfg.apple_dart_cfg.paddr_mask;
+		paddr <<= data->iop.cfg.apple_dart_cfg.paddr_shift;
+		return paddr;
+	}
 
 	if (ARM_LPAE_GRANULE(data) < SZ_64K)
 		return paddr;
@@ -272,12 +300,13 @@ static void __arm_lpae_init_pte(struct arm_lpae_io_pgtable *data,
 	size_t sz = ARM_LPAE_BLOCK_SIZE(lvl, data);
 	int i;
 
-	if (data->iop.fmt != ARM_MALI_LPAE && lvl == ARM_LPAE_MAX_LEVELS - 1)
+	if ((data->iop.fmt != ARM_MALI_LPAE && data->iop.fmt != APPLE_DART2) &&
+		lvl == ARM_LPAE_MAX_LEVELS - 1)
 		pte |= ARM_LPAE_PTE_TYPE_PAGE;
 	else
 		pte |= ARM_LPAE_PTE_TYPE_BLOCK;
 
-	if (data->iop.fmt == APPLE_DART) {
+	if (data->iop.fmt == APPLE_DART || data->iop.fmt == APPLE_DART2) {
 		/* subpage protection: always allow access to the entire page */
 		pte |= FIELD_PREP(APPLE_DART_PTE_SUBPAGE_START, 0);
 		pte |= FIELD_PREP(APPLE_DART_PTE_SUBPAGE_END, 0xfff);
@@ -330,7 +359,18 @@ static arm_lpae_iopte arm_lpae_install_table(arm_lpae_iopte *table,
 	arm_lpae_iopte old, new;
 	struct io_pgtable_cfg *cfg = &data->iop.cfg;
 
-	new = paddr_to_iopte(__pa(table), data) | ARM_LPAE_PTE_TYPE_TABLE;
+	new = paddr_to_iopte(__pa(table), data);
+	/*
+	 * The APPLE_DART2 PTE format is incompatible with ARM_LPAE_PTE_TYPE_*
+	 * since BIT(1) is used to tag "uncached" mappings.
+	 * This is the only place where ARM_LPAE_PTE_TYPE_TABLE has to be
+	 * taken into account since APPLE_DART2 supports only a single block
+	 * size.
+	 */
+	if (data->iop.fmt == APPLE_DART2)
+		new |= APPLE_DART_PTE_VALID;
+	else
+		new |= ARM_LPAE_PTE_TYPE_TABLE;
 	if (cfg->quirks & IO_PGTABLE_QUIRK_ARM_NS)
 		new |= ARM_LPAE_PTE_NSTABLE;
 
@@ -422,6 +462,16 @@ static arm_lpae_iopte arm_lpae_prot_to_pte(struct arm_lpae_io_pgtable *data,
 			pte |= APPLE_DART_PTE_PROT_NO_WRITE;
 		if (!(prot & IOMMU_READ))
 			pte |= APPLE_DART_PTE_PROT_NO_READ;
+		return pte;
+	}
+	if (data->iop.fmt == APPLE_DART2) {
+		pte = 0;
+		if (!(prot & IOMMU_WRITE))
+			pte |= APPLE_DART2_PTE_PROT_NO_WRITE;
+		if (!(prot & IOMMU_READ))
+			pte |= APPLE_DART2_PTE_PROT_NO_READ;
+		if (!(prot & IOMMU_CACHE))
+			pte |= APPLE_DART2_PTE_PROT_NO_CACHE;
 		return pte;
 	}
 
@@ -1123,8 +1173,18 @@ apple_dart_alloc_pgtable(struct io_pgtable_cfg *cfg, void *cookie)
 	struct arm_lpae_io_pgtable *data;
 	int i;
 
-	if (cfg->oas > 36)
+	switch (cfg->oas) {
+	case 36:
+		cfg->apple_dart_cfg.paddr_shift = APPLE_DART_PADDR_SHIFT_PS_36BIT;
+		cfg->apple_dart_cfg.paddr_mask = APPLE_DART_PADDR_MASK_PS_36BIT;
+		break;
+	case 42:
+		cfg->apple_dart_cfg.paddr_shift = APPLE_DART_PADDR_SHIFT_PS_42BIT;
+		cfg->apple_dart_cfg.paddr_mask = APPLE_DART_PADDR_MASK_PS_42BIT;
+		break;
+	default:
 		return NULL;
+	}
 
 	data = arm_lpae_alloc_pgtable(cfg);
 	if (!data)
