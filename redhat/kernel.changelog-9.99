@@ -1,3 +1,6 @@
+* Wed Nov 03 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc0.20211103gitdcd68326d29b.2]
+- Fix up fedora and pending configs for PREEMPT to end mismatch (Justin M. Forbes)
+
 * Tue Nov 02 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc0.20211102gitbfc484fe6abb.1]
 - Enable binder for fedora (Justin M. Forbes)
 - Reset RHEL_RELEASE for 5.16 (Justin M. Forbes)
