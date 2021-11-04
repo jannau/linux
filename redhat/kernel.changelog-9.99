@@ -1,3 +1,14 @@
+* Thu Nov 04 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc0.20211104git7ddb58cb0eca.3]
+- Add nct6775 to filter-modules.sh.rhel (Justin M. Forbes)
+- Enable PREEMPT_DYNAMIC for all but s390x (Justin M. Forbes)
+- Add memcpy_kunit to mod-internal.list (Justin M. Forbes)
+- New configs in fs/ksmbd (Fedora Kernel Team)
+- Add nct6775 to Fedora filter-modules.sh (Justin M. Forbes)
+- New configs in fs/ntfs3 (Fedora Kernel Team)
+- Make CONFIG_IOMMU_DEFAULT_DMA_STRICT default for all but x86 (Justin M. Forbes)
+- redhat/configs: enable  KEXEC_IMAGE_VERIFY_SIG for RHEL (Coiby Xu)
+- redhat/configs: enable KEXEC_SIG for aarch64 RHEL (Coiby Xu) [1994858]
+
 * Wed Nov 03 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc0.20211103gitdcd68326d29b.2]
 - Fix up fedora and pending configs for PREEMPT to end mismatch (Justin M. Forbes)
 
