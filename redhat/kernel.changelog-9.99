@@ -1,3 +1,6 @@
+* Fri Nov 05 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc0.20211105gitd4439a1189f9.4]
+- Fix up fedora config options from mismatch (Justin M. Forbes)
+
 * Thu Nov 04 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc0.20211104git7ddb58cb0eca.3]
 - Add nct6775 to filter-modules.sh.rhel (Justin M. Forbes)
 - Enable PREEMPT_DYNAMIC for all but s390x (Justin M. Forbes)
