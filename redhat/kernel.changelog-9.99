@@ -1,3 +1,7 @@
+* Sat Nov 06 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc0.20211106gitfe91c4725aee.5]
+- Enable e1000 in rhel9 as unsupported (Ken Cox) [2002344]
+- Turn on COMMON_CLK_AXG_AUDIO for Fedora rhbz 2020481 (Justin M. Forbes)
+
 * Fri Nov 05 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc0.20211105gitd4439a1189f9.4]
 - Fix up fedora config options from mismatch (Justin M. Forbes)
 
