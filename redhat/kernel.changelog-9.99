@@ -1,3 +1,9 @@
+* Tue Nov 09 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc0.20211109gitd2f38a3c6507.8]
+- Filter updates for hid-playstation on Fedora (Justin M. Forbes)
+- Revert "Force DWARF4 because crash does not support DWARF5 yet" (Lianbo Jiang)
+- Enable CONFIG_VIRT_DRIVERS for ARK (Vitaly Kuznetsov)
+- redhat/configs: Enable Nitro Enclaves on aarch64 (Vitaly Kuznetsov)
+
 * Sat Nov 06 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc0.20211106gitfe91c4725aee.5]
 - Enable e1000 in rhel9 as unsupported (Ken Cox) [2002344]
 - Turn on COMMON_CLK_AXG_AUDIO for Fedora rhbz 2020481 (Justin M. Forbes)
