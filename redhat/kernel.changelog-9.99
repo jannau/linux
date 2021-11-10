@@ -1,3 +1,6 @@
+* Wed Nov 10 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc0.20211110gitcb690f5238d7.9]
+- redhat: configs: move CONFIG_ACCESSIBILITY from fedora to common (John W. Linville)
+
 * Tue Nov 09 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc0.20211109gitd2f38a3c6507.8]
 - Filter updates for hid-playstation on Fedora (Justin M. Forbes)
 - Revert "Force DWARF4 because crash does not support DWARF5 yet" (Lianbo Jiang)
