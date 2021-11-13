@@ -1,3 +1,7 @@
+* Sat Nov 13 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc0.20211113git66f4beaa6c1d.12]
+- Turn on CONFIG_HID_NINTENDO for controller support (Dave Olsthoorn)
+- Fedora: Enable MediaTek bluetooth pieces (Peter Robinson)
+
 * Thu Nov 11 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc0.20211111gitdebe436e77c7.10]
 - Add rebase notes to check for PCI patches (Justin M. Forbes)
 
