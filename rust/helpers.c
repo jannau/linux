@@ -20,6 +20,7 @@
 
 #include <linux/bug.h>
 #include <linux/build_bug.h>
+#include <linux/device.h>
 #include <linux/err.h>
 #include <linux/refcount.h>
 #include <linux/xarray.h>
@@ -101,6 +102,18 @@ int rust_helper_xa_err(void *entry)
 	return xa_err(entry);
 }
 EXPORT_SYMBOL_GPL(rust_helper_xa_err);
+
+void *rust_helper_dev_get_drvdata(struct device *dev)
+{
+	return dev_get_drvdata(dev);
+}
+EXPORT_SYMBOL_GPL(rust_helper_dev_get_drvdata);
+
+const char *rust_helper_dev_name(const struct device *dev)
+{
+	return dev_name(dev);
+}
+EXPORT_SYMBOL_GPL(rust_helper_dev_name);
 
 /*
  * We use `bindgen`'s `--size_t-is-usize` option to bind the C `size_t` type

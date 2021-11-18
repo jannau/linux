@@ -29,7 +29,9 @@ compile_error!("Missing kernel configuration for conditional compilation");
 #[cfg(not(test))]
 #[cfg(not(testlib))]
 mod allocator;
+
 mod build_assert;
+pub mod device;
 pub mod error;
 pub mod ioctl;
 pub mod prelude;
