@@ -1,3 +1,9 @@
+* Thu Nov 18 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc1.20211118git42eb8fdac2fc.15]
+- New configs in drivers/net/wwan (Fedora Kernel Team)
+- New configs in drivers/i2c (Fedora Kernel Team)
+- redhat/docs/index.rst: Add local build information. (Prarit Bhargava)
+- Fix up preempt configs (Justin M. Forbes)
+
 * Sat Nov 13 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc0.20211113git66f4beaa6c1d.12]
 - Turn on CONFIG_HID_NINTENDO for controller support (Dave Olsthoorn)
 - Fedora: Enable MediaTek bluetooth pieces (Peter Robinson)
