@@ -1,3 +1,6 @@
+* Sat Nov 20 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc1.20211120gita90af8f15bdc.17]
+- spec: add bpf_testmod.ko to kselftests/bpf (Viktor Malik)
+
 * Thu Nov 18 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc1.20211118git42eb8fdac2fc.15]
 - New configs in drivers/net/wwan (Fedora Kernel Team)
 - New configs in drivers/i2c (Fedora Kernel Team)
