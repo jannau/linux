@@ -1,3 +1,8 @@
+* Wed Nov 24 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc2.20211124git5d9f4cf36721.19]
+- Fix up PREEMPT configs (Justin M. Forbes)
+- New configs in drivers/media (Fedora Kernel Team)
+- New configs in drivers/net/ethernet/litex (Fedora Kernel Team)
+
 * Sat Nov 20 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc1.20211120gita90af8f15bdc.17]
 - spec: add bpf_testmod.ko to kselftests/bpf (Viktor Malik)
 
