@@ -1,3 +1,7 @@
+* Wed Dec 01 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc3.20211201git58e1100fdc59.25]
+- redhat/configs: unset KEXEC_SIG for s390x zfcpdump (Coiby Xu)
+- spec: Keep .BTF section in modules (Jiri Olsa)
+
 * Wed Nov 24 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc2.20211124git5d9f4cf36721.19]
 - Fix up PREEMPT configs (Justin M. Forbes)
 - New configs in drivers/media (Fedora Kernel Team)
