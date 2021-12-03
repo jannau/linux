@@ -1,3 +1,15 @@
+* Fri Dec 03 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc3.20211203git5f58da2befa5.26]
+- redhat/configs: Add two new CONFIGs (Prarit Bhargava)
+- redhat/configs: Remove dead CONFIG files (Prarit Bhargava)
+- redhat/configs/evaluate_configs: Add find dead configs option (Prarit Bhargava)
+- Add more rebase notes for Fedora 5.16 (Justin M. Forbes)
+- Fedora: Feature: Retire wireless Extensions (Peter Robinson)
+- fedora: arm: some SoC enablement pieces (Peter Robinson)
+- fedora: arm: enable PCIE_ROCKCHIP_DW for rk35xx series (Peter Robinson)
+- fedora: enable RTW89 802.11 WiFi driver (Peter Robinson)
+- fedora: arm: Enable DRM_PANEL_EDP (Peter Robinson)
+- fedora: sound: enable new sound drivers (Peter Robinson)
+
 * Wed Dec 01 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc3.20211201git58e1100fdc59.25]
 - redhat/configs: unset KEXEC_SIG for s390x zfcpdump (Coiby Xu)
 - spec: Keep .BTF section in modules (Jiri Olsa)
