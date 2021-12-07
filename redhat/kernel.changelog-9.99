@@ -1,3 +1,10 @@
+* Tue Dec 07 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc4.20211207gitcd8c917a56f2.30]
+- redhat/configs: enable CONFIG_AMD_PTDMA for ark (John W. Linville)
+- redhat/configs: enable CONFIG_RD_ZSTD for rhel (Tao Liu) [2020132]
+- fedora: build TEE as a module for all arches (Peter Robinson)
+- common: build TRUSTED_KEYS in everywhere (Peter Robinson)
+- redhat: make Patchlist.changelog generation conditional (Herton R. Krzesinski)
+
 * Fri Dec 03 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc3.20211203git5f58da2befa5.26]
 - redhat/configs: Add two new CONFIGs (Prarit Bhargava)
 - redhat/configs: Remove dead CONFIG files (Prarit Bhargava)
