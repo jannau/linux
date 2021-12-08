@@ -1,3 +1,7 @@
+* Wed Dec 08 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc4.20211208git2a987e65025e.31]
+- common: arm64: ensure all the required arm64 errata are enabled (Peter Robinson)
+- kernel/rh_taint.c: Update to new messaging (Prarit Bhargava) [2019377]
+
 * Tue Dec 07 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc4.20211207gitcd8c917a56f2.30]
 - redhat/configs: enable CONFIG_AMD_PTDMA for ark (John W. Linville)
 - redhat/configs: enable CONFIG_RD_ZSTD for rhel (Tao Liu) [2020132]
