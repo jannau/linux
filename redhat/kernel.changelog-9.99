@@ -1,3 +1,6 @@
+* Sun Dec 12 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc4.20211212gita763d5a5abd6.34]
+- Enable CONFIG_VFIO_NOIOMMU for Fedora (Justin M. Forbes)
+
 * Fri Dec 10 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc4.20211210gitc741e49150db.32]
 - redhat/configs: enable CONFIG_NTB_NETDEV for ark (John W. Linville)
 - drivers/pci/pci-driver.c: Fix if/ifdef typo (Prarit Bhargava)
