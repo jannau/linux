@@ -1,3 +1,10 @@
+* Tue Dec 14 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc5.20211214git5472f14a3742.36]
+- Enable CONFIG_CIFS_SMB_DIRECT for ARK (Ronnie Sahlberg)
+- mt76: enable new device MT7921E in CentOs/RHEL (Íñigo Huguet) [2004821]
+- Disable CONFIG_DEBUG_PREEMPT on normal builds (Phil Auld)
+- redhat/configs: Enable CONFIG_PCI_P2PDMA for ark (Myron Stowe)
+- pci.h: Fix static include (Prarit Bhargava)
+
 * Sun Dec 12 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc4.20211212gita763d5a5abd6.34]
 - Enable CONFIG_VFIO_NOIOMMU for Fedora (Justin M. Forbes)
 
