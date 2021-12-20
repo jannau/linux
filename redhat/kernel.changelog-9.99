@@ -1,3 +1,6 @@
+* Mon Dec 20 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc6.41]
+- redhat/configs: Enable CONFIG_CRYPTO_BLAKE2B (Neal Gompa) [2031547]
+
 * Thu Dec 16 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc5.20211216git2b14864acbaa.37]
 - Enable CONFIG_BPF_SYSCALL for zfcpdump (Jiri Olsa)
 
