@@ -1,3 +1,6 @@
+* Tue Dec 21 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc6.20211221git59b3f9448833.42]
+- Update rebase-notes with dracut 5.17 information (Justin M. Forbes)
+
 * Mon Dec 20 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc6.41]
 - redhat/configs: Enable CONFIG_CRYPTO_BLAKE2B (Neal Gompa) [2031547]
 
