@@ -1,3 +1,7 @@
+* Fri Dec 24 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc6.20211224git7a29b11da965.45]
+- Fedora configs for 5.16 pt 1 (Justin M. Forbes)
+- redhat/configs: NFS: disable UDP, insecure enctypes (Benjamin Coddington) [1952863]
+
 * Tue Dec 21 2021 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc6.20211221git59b3f9448833.42]
 - Update rebase-notes with dracut 5.17 information (Justin M. Forbes)
 
