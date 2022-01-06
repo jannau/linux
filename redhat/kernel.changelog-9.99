@@ -1,3 +1,6 @@
+* Thu Jan 06 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc8.20220106git75acfdb6fd92.56]
+- Fedora config updates for 5.16 (Justin M. Forbes)
+
 * Mon Jan 03 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc8.55]
 - redhat/configs: enable CONFIG_INPUT_KEYBOARD for AARCH64 (Vitaly Kuznetsov)
 
