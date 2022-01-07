@@ -1,3 +1,6 @@
+* Fri Jan 07 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc8.20220107gitddec8ed2d490.57]
+- Clean up excess text in Fedora config files (Justin M. Forbes)
+
 * Thu Jan 06 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc8.20220106git75acfdb6fd92.56]
 - Fedora config updates for 5.16 (Justin M. Forbes)
 
