@@ -1,3 +1,8 @@
+* Sun Jan 09 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc8.20220109git4634129ad9fd.59]
+- redhat/configs: Migrate ZRAM_DEF_* configs to common/ (Neal Gompa)
+- redhat/configs: Enable CONFIG_CRYPTO_ZSTD (Neal Gompa) [2032758]
+- Turn CONFIG_DEVMEM back off for aarch64 (Justin M. Forbes)
+
 * Fri Jan 07 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.16-0.rc8.20220107gitddec8ed2d490.57]
 - Clean up excess text in Fedora config files (Justin M. Forbes)
 
