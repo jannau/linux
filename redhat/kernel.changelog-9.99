@@ -1,3 +1,7 @@
+* Wed Jan 12 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc0.20220112gitdaadb3bd0e8d.62]
+- redhat: ignore ksamples and kselftests on the badfuncs rpminspect test (Herton R. Krzesinski)
+- redhat: disable upstream check for rpminspect (Herton R. Krzesinski)
+
 * Tue Jan 11 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc0.20220111gitfe8152b38d3a.61]
 - redhat: switch the vsyscall config to CONFIG_LEGACY_VSYSCALL_XONLY=y (Herton R. Krzesinski) [1876977]
 - redhat: configs: increase CONFIG_DEBUG_KMEMLEAK_MEM_POOL_SIZE (Rafael Aquini)
