@@ -1,3 +1,6 @@
+* Thu Jan 13 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc0.20220113git455e73a07f6e.63]
+- configs/fedora: Enable CONFIG_NFC_PN532_UART for use PN532 NFC module (Ziqian SUN (Zamir))
+
 * Wed Jan 12 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc0.20220112gitdaadb3bd0e8d.62]
 - redhat: ignore ksamples and kselftests on the badfuncs rpminspect test (Herton R. Krzesinski)
 - redhat: disable upstream check for rpminspect (Herton R. Krzesinski)
