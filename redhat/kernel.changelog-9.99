@@ -1,3 +1,6 @@
+* Fri Jan 14 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc0.20220114gitfb3b0673b7d5.64]
+- Add dev_addr_lists_test to mod-internal.list (Justin M. Forbes)
+
 * Thu Jan 13 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc0.20220113git455e73a07f6e.63]
 - configs/fedora: Enable CONFIG_NFC_PN532_UART for use PN532 NFC module (Ziqian SUN (Zamir))
 
