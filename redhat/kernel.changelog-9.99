@@ -1,3 +1,6 @@
+* Tue Jan 18 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc0.20220118gitfe81ba137ebc.68]
+- Move CONFIG_SND_SOC_TLV320AIC31XX as it is now selected by CONFIG_SND_SOC_FSL_ASOC_CARD (Justin M. Forbes)
+
 * Fri Jan 14 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc0.20220114gitfb3b0673b7d5.64]
 - Add dev_addr_lists_test to mod-internal.list (Justin M. Forbes)
 
