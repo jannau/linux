@@ -1,3 +1,8 @@
+* Wed Jan 19 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc0.20220118gitfe81ba137ebc.69]
+- lib/crypto: add prompts back to crypto libraries (Justin M. Forbes)
+- Add packaged but empty /lib/modules/<kver>/systemtap/ (Justin M. Forbes)
+- filter-modules.sh.rhel: Add ntc_thermistor to singlemods (Prarit Bhargava)
+
 * Tue Jan 18 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc0.20220118gitfe81ba137ebc.68]
 - Move CONFIG_SND_SOC_TLV320AIC31XX as it is now selected by CONFIG_SND_SOC_FSL_ASOC_CARD (Justin M. Forbes)
 
