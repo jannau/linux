@@ -1,3 +1,6 @@
+* Tue Jan 25 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc1.20220125gita08b41ab9e2e.76]
+- objtool: check: give big enough buffer for pv_ops (Sergei Trofimovich)
+
 * Sat Jan 22 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc0.20220122git1c52283265a4.73]
 - Revert "[redhat] Generate a crashkernel.default for each kernel build" (Coiby Xu)
 - spec: make linux-firmware weak(er) dependency (Jan Stancek)
