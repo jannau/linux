@@ -1,3 +1,7 @@
+* Fri Jan 28 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc1.20220128git145d9b498fc8.79]
+- Add test_hash to the mod-internal.list (Justin M. Forbes)
+- configs: disable CONFIG_CRAMFS (Abhi Das) [2041184]
+
 * Thu Jan 27 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc1.20220127git626b2dda7651.78]
 - spec: speed up "cp -r" when it overwrites existing files. (Denys Vlasenko)
 - redhat: use centos x509.genkey file if building under centos (Herton R. Krzesinski)
