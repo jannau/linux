@@ -331,6 +331,7 @@
 			#iommu-cells = <1>;
 			interrupt-parent = <&aic>;
 			interrupts = <AIC_IRQ 445 IRQ_TYPE_LEVEL_HIGH>;
+			mapped-devices = <&disp0>, <&piodma>;
 		};
 
 		dcp_dart: iommu@23130c000 {
@@ -339,6 +340,7 @@
 			#iommu-cells = <1>;
 			interrupt-parent = <&aic>;
 			interrupts = <AIC_IRQ 445 IRQ_TYPE_LEVEL_HIGH>;
+			mapped-devices = <&dcp>;
 		};
 
 		dcp_mbox: mbox@231c08000 {
