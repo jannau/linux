@@ -32,6 +32,52 @@
 		};
 	};
 
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		 /* /vram */
+		vram: vram@0 {
+			reg = <0 0 0 0>; /* To be filled by loader */
+			no-map;
+			iommu-addresses = <&dcp 0 0 0 0>, <&disp0 0 0 0 0>;
+			status = "disabled";
+		};
+
+		 /* /chosen/carveout-memory-map/region-id-50 */
+		dcp_text: dcp_text@0 {
+			reg = <0 0 0 0>; /* To be filled by loader */
+			no-map;
+			iommu-addresses = <&dcp 0 0 0 0>;
+			status = "disabled";
+		};
+
+		 /* /chosen/carveout-memory-map/region-id-57 */
+		dcp_data: dcp_data@0 {
+			reg = <0 0 0 0>; /* To be filled by loader */
+			no-map;
+			iommu-addresses = <&dcp 0 0 0 0>;
+			status = "disabled";
+		};
+
+		 /* /chosen/carveout-memory-map/region-id-94 */
+		region94: region94@0 {
+			reg = <0 0 0 0>; /* To be filled by loader */
+			no-map;
+			iommu-addresses = <&dcp 0 0 0 0>, <&disp0 0 0 0 0>;
+			status = "disabled";
+		};
+
+		 /* /chosen/carveout-memory-map/region-id-95 */
+		region95: region95@0 {
+			reg = <0 0 0 0>; /* To be filled by loader */
+			no-map;
+			iommu-addresses = <&dcp 0 0 0 0>, <&piodma 0 0 0 0>;
+			status = "disabled";
+		};
+	};
+
 	memory@800000000 {
 		device_type = "memory";
 		reg = <0x8 0 0x2 0>; /* To be filled by loader */
