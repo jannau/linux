@@ -9,6 +9,7 @@ use crate::{
     device_id::RawDeviceId,
     driver,
     error::{to_result, Result},
+    io_mem::*,
     of,
     prelude::*,
     str::CStr,
@@ -186,7 +187,10 @@ pub trait Driver {
 /// `Device` holds a valid reference of `ARef<device::Device>` whose underlying `struct device` is a
 /// member of a `struct platform_device`.
 #[derive(Clone)]
-pub struct Device(ARef<device::Device>);
+pub struct Device {
+    dev: ARef<device::Device>,
+    used_resource: u64,
+}
 
 impl Device {
     /// Convert a raw kernel device into a `Device`
@@ -196,22 +200,74 @@ impl Device {
     /// `dev` must be an `Aref<device::Device>` whose underlying `bindings::device` is a member of a
     /// `bindings::platform_device`.
     unsafe fn from_dev(dev: ARef<device::Device>) -> Self {
-        Self(dev)
+        Self(dev, 0)
     }
 
     fn as_dev(&self) -> &device::Device {
-        &self.0
+        &self.dev
     }
 
     fn as_raw(&self) -> *mut bindings::platform_device {
         // SAFETY: By the type invariant `self.0.as_raw` is a pointer to the `struct device`
         // embedded in `struct platform_device`.
-        unsafe { container_of!(self.0.as_raw(), bindings::platform_device, dev) }.cast_mut()
+        unsafe { container_of!(self.dev.as_raw(), bindings::platform_device, dev) }.cast_mut()
     }
+
+    /// Gets a system resources of a platform device.
+    pub fn get_resource(&mut self, rtype: IoResource, num: usize) -> Result<Resource> {
+        // SAFETY: `self.ptr` is valid by the type invariant.
+        let res = unsafe { bindings::platform_get_resource(self.ptr, rtype as _, num as _) };
+        if res.is_null() {
+            return Err(EINVAL);
+        }
+
+        // Get the position of the found resource in the array.
+        // SAFETY:
+        //   - `self.ptr` is valid by the type invariant.
+        //   - `res` is a displaced pointer to one of the array's elements,
+        //     and `resource` is its base pointer.
+        let index = unsafe { res.offset_from((*self.ptr).resource) } as usize;
+
+        // Make sure that the index does not exceed the 64-bit mask.
+        assert!(index < 64);
+
+        if self.used_resource >> index & 1 == 1 {
+            return Err(EBUSY);
+        }
+        self.used_resource |= 1 << index;
+
+        // SAFETY: The pointer `res` is returned from `bindings::platform_get_resource`
+        // above and checked if it is not a NULL.
+        unsafe { Resource::new((*res).start, (*res).end) }.ok_or(EINVAL)
+    }
+
+    /// Ioremaps resources of a platform device.
+    ///
+    /// # Safety
+    ///
+    /// Callers must ensure that either (a) the resulting interface cannot be used to initiate DMA
+    /// operations, or (b) that DMA operations initiated via the returned interface use DMA handles
+    /// allocated through the `dma` module.
+    pub unsafe fn ioremap_resource<const SIZE: usize>(
+        &mut self,
+        index: usize,
+    ) -> Result<IoMem<SIZE>> {
+        let mask = self.used_resource;
+        let res = self.get_resource(IoResource::Mem, index)?;
+
+        // SAFETY: Valid by the safety contract.
+        let iomem = unsafe { IoMem::<SIZE>::try_new(res) };
+        // If remapping fails, the given resource won't be used, so restore the old mask.
+        if iomem.is_err() {
+            self.used_resource = mask;
+        }
+        iomem
+    }
+
 }
 
 impl AsRef<device::Device> for Device {
     fn as_ref(&self) -> &device::Device {
-        &self.0
+        &self.dev
     }
 }
