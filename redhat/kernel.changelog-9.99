@@ -1,3 +1,7 @@
+* Wed Feb 09 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc3.e6251ab4551f.90]
+- Change CONFIG_TEST_BPF to a module (Justin M. Forbes)
+- Change CONFIG_TEST_BPF to module in pending MR coming for proper review (Justin M. Forbes)
+
 * Tue Feb 08 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc3.555f3d7be91a.89]
 - redhat/configs: Enable CONFIG_TEST_BPF (Viktor Malik)
 - Enable KUNIT tests for testing (Nico Pache)
