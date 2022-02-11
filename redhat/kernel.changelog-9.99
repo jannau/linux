@@ -1,3 +1,6 @@
+* Fri Feb 11 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc3.f1baf68e1383.92]
+- Cleanup 'disabled' config options for RHEL (Prarit Bhargava)
+
 * Thu Feb 10 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc3.f4bc5bbb5fef.91]
 - redhat: move CONFIG_ARM64_MTE to aarch64 config directory (Herton R. Krzesinski)
 
