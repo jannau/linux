@@ -1,3 +1,6 @@
+* Sat Feb 12 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc3.83e396641110.93]
+- [fedora] Turn on CONFIG_VIDEO_OV5693 for sensor support (Dave Olsthoorn)
+
 * Fri Feb 11 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc3.f1baf68e1383.92]
 - Cleanup 'disabled' config options for RHEL (Prarit Bhargava)
 
