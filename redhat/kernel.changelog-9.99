@@ -1,3 +1,6 @@
+* Sun Feb 13 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc3.b81b1829e7e3.94]
+- redhat: fix make {distg-brew,distg-koji} (Andrea Claudi)
+
 * Sat Feb 12 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc3.83e396641110.93]
 - [fedora] Turn on CONFIG_VIDEO_OV5693 for sensor support (Dave Olsthoorn)
 
