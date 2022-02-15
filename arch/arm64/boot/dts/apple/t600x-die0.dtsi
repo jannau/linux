@@ -6,6 +6,10 @@
  * Copyright The Asahi Linux Contributors
  */
 
+	cpufreq_hw: cpufreq@210e20000 {
+		compatible = "apple,t6000-soc-cpufreq", "apple,soc-cpufreq";
+		#freq-domain-cells = <1>;
+	};
 
 	nco: clock-controller@28e03c000 {
 		compatible = "apple,t6000-nco", "apple,nco";
