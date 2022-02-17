@@ -1,3 +1,7 @@
+* Thu Feb 17 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc4.f71077a4d84b.98]
+- configs: enable LOGITECH_FF for RHEL/CentOS too (Benjamin Tissoires)
+- redhat/configs: Disable CONFIG_SENSORS_NCT6683 in RHEL for arm/aarch64 (Dean Nelson) [2041186]
+
 * Sun Feb 13 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc3.b81b1829e7e3.94]
 - redhat: fix make {distg-brew,distg-koji} (Andrea Claudi)
 
