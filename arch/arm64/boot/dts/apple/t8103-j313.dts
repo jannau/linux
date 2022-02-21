@@ -56,3 +56,15 @@
 		interrupts-extended = <&pinctrl_nub 13 IRQ_TYPE_LEVEL_LOW>;
 	};
 };
+
+/ {
+	backlight: gpio-bl {
+		compatible = "gpio-backlight";
+		gpios = <&smc_gpio 18 GPIO_ACTIVE_HIGH>;
+		default-on;
+	};
+};
+
+&framebuffer0 {
+	backlight = <&backlight>;
+};
