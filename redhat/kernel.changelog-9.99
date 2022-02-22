@@ -1,3 +1,6 @@
+* Tue Feb 22 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc5.038101e6b2cd.102]
+- redhat: configs: disable the surface platform (David Arcari)
+
 * Fri Feb 18 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc4.9195e5e0adbb.99]
 - redhat: configs: Disable team driver (Hangbin Liu) [1945477]
 
