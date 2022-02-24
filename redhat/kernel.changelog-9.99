@@ -1,3 +1,6 @@
+* Thu Feb 24 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc5.23d04328444a.104]
+- configs/process_configs.sh: Remove orig files (Prarit Bhargava)
+
 * Wed Feb 23 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc5.5c1ee569660d.103]
 - redhat: configs: Disable CONFIG_MPLS for s390x/zfcpdump (Guillaume Nault)
 - Fedora 5.17 configs round 1 (Justin M. Forbes)
