@@ -1,3 +1,10 @@
+* Fri Feb 25 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc5.53ab78cd6d5a.105]
+- configs: clean up CONFIG_PAGE_TABLE_ISOLATION files (Ondrej Mosnacek)
+- redhat: configs: enable CONFIG_INTEL_PCH_THERMAL for RHEL x86 (David Arcari)
+- redhat/Makefile: Fix dist-dump-variables target (Prarit Bhargava)
+- redhat/configs: Enable DEV_DAX and DEV_DAX_PMEM modules on aarch64 for fedora (D Scott Phillips)
+- redhat/configs: Enable CONFIG_TRANSPARENT_HUGEPAGE on aarch64 for fedora (D Scott Phillips)
+
 * Thu Feb 24 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc5.23d04328444a.104]
 - configs/process_configs.sh: Remove orig files (Prarit Bhargava)
 
