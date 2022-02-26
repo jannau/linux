@@ -1,3 +1,6 @@
+* Sat Feb 26 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc5.9137eda53752.106]
+- configs/fedora: Enable the interconnect SC7180 driver built-in (Enric Balletbo i Serra)
+
 * Fri Feb 25 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc5.53ab78cd6d5a.105]
 - configs: clean up CONFIG_PAGE_TABLE_ISOLATION files (Ondrej Mosnacek)
 - redhat: configs: enable CONFIG_INTEL_PCH_THERMAL for RHEL x86 (David Arcari)
