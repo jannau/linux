@@ -1,3 +1,7 @@
+* Mon Feb 28 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc6.108]
+- redhat: configs: change aarch64 default dma domain to lazy (Jerry Snitselaar)
+- redhat: configs: disable ATM protocols (Davide Caratti)
+
 * Sat Feb 26 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc5.9137eda53752.106]
 - configs/fedora: Enable the interconnect SC7180 driver built-in (Enric Balletbo i Serra)
 
