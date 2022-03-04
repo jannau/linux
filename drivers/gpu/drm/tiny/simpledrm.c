@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include <linux/backlight.h>
 #include <linux/clk.h>
 #include <linux/of_clk.h>
 #include <linux/minmax.h>
@@ -243,6 +244,8 @@ struct simpledrm_device {
 	struct drm_crtc crtc;
 	struct drm_encoder encoder;
 	struct drm_connector connector;
+	/* backlight */
+	struct backlight_device *backlight;
 };
 
 static struct simpledrm_device *simpledrm_device_of_dev(struct drm_device *dev)
@@ -553,6 +556,26 @@ static enum drm_mode_status simpledrm_crtc_helper_mode_valid(struct drm_crtc *cr
 	return drm_crtc_helper_mode_valid_fixed(crtc, mode, &sdev->mode);
 }
 
+static void simpledrm_crtc_helper_atomic_enable(struct drm_crtc *crtc,
+						struct drm_atomic_state *state)
+{
+	struct drm_device *dev = crtc->dev;
+	struct simpledrm_device *sdev = simpledrm_device_of_dev(dev);
+
+	if (sdev->backlight)
+		backlight_enable(sdev->backlight);
+}
+
+static void simpledrm_crtc_helper_atomic_disable(struct drm_crtc *crtc,
+						 struct drm_atomic_state *state)
+{
+	struct drm_device *dev = crtc->dev;
+	struct simpledrm_device *sdev = simpledrm_device_of_dev(dev);
+
+	if (sdev->backlight)
+		backlight_disable(sdev->backlight);
+}
+
 /*
  * The CRTC is always enabled. Screen updates are performed by
  * the primary plane's atomic_update function. Disabling clears
@@ -561,6 +584,8 @@ static enum drm_mode_status simpledrm_crtc_helper_mode_valid(struct drm_crtc *cr
 static const struct drm_crtc_helper_funcs simpledrm_crtc_helper_funcs = {
 	.mode_valid = simpledrm_crtc_helper_mode_valid,
 	.atomic_check = drm_crtc_helper_atomic_check,
+	.atomic_enable = simpledrm_crtc_helper_atomic_enable,
+	.atomic_disable = simpledrm_crtc_helper_atomic_disable,
 };
 
 static const struct drm_crtc_funcs simpledrm_crtc_funcs = {
@@ -648,6 +673,10 @@ static struct simpledrm_device *simpledrm_device_create(struct drm_driver *drv,
 	/*
 	 * Hardware settings
 	 */
+
+	sdev->backlight = devm_of_find_backlight(&pdev->dev);
+	if (IS_ERR(sdev->backlight))
+		sdev->backlight = NULL;
 
 	ret = simpledrm_device_init_clocks(sdev);
 	if (ret)
