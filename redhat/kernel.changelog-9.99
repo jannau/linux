@@ -1,3 +1,7 @@
+* Tue Mar 08 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc7.ea4424be1688.116]
+- redhat: Unify genspec.sh and kernel.spec variable names (Prarit Bhargava)
+- redhat/genspec.sh: Remove options and use Makefile variables (Prarit Bhargava)
+
 * Sat Mar 05 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc6.ac84e82f78cb.113]
 - Add rebase note for 5.17 on Fedora stable (Justin M. Forbes)
 - More Fedora config updates for 5.17 (Justin M. Forbes)
