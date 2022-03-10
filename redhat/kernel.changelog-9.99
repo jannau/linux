@@ -1,3 +1,14 @@
+* Thu Mar 10 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc7.3bf7edc84a9e.118]
+- redhat/configs/process_configs.sh: Fix issue with old error files (Prarit Bhargava)
+- redhat/configs/build_configs.sh: Parallelize execution (Prarit Bhargava)
+- redhat/configs/build_configs.sh: Provide better messages (Prarit Bhargava)
+- redhat/configs/build_configs.sh: Create unique output files (Prarit Bhargava)
+- redhat/configs/build_configs.sh: Add local variables (Prarit Bhargava)
+- redhat/configs/process_configs.sh: Parallelize execution (Prarit Bhargava)
+- redhat/configs/process_configs.sh: Provide better messages (Prarit Bhargava)
+- redhat/configs/process_configs.sh: Create unique output files (Prarit Bhargava)
+- redhat/configs/process_configs.sh: Add processing config function (Prarit Bhargava)
+
 * Tue Mar 08 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc7.ea4424be1688.116]
 - redhat: Unify genspec.sh and kernel.spec variable names (Prarit Bhargava)
 - redhat/genspec.sh: Remove options and use Makefile variables (Prarit Bhargava)
