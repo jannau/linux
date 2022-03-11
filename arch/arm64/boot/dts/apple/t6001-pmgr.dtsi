@@ -359,7 +359,7 @@
 		#power-domain-cells = <0>;
 		#reset-cells = <0>;
 		label = "dispext0_fe";
-		power-domains = <&ps_afi>;
+		power-domains = <&ps_afi>, <&ps_pmp>;
 	};
 
 	ps_dispext1_fe: power-controller@260 {
@@ -368,7 +368,7 @@
 		#power-domain-cells = <0>;
 		#reset-cells = <0>;
 		label = "dispext1_fe";
-		power-domains = <&ps_afi>;
+		power-domains = <&ps_afi>, <&ps_pmp>;
 	};
 
 	ps_ane_sys: power-controller@268 {
@@ -1289,7 +1289,7 @@
 		#power-domain-cells = <0>;
 		#reset-cells = <0>;
 		label = "disp0_fe";
-		power-domains = <&ps_afnc2_lw0>;
+		power-domains = <&ps_afnc2_lw0>, <&ps_pmp>;
 		apple,always-on; /* TODO: figure out if we can enable PM here */
 	};
 
@@ -1702,7 +1702,7 @@
 		#power-domain-cells = <0>;
 		#reset-cells = <0>;
 		label = "dispext2_fe";
-		power-domains = <&ps_afnc4_lw0>;
+		power-domains = <&ps_afnc4_lw0>, <&ps_pmp>;
 	};
 
 	ps_dispext2_cpu0: power-controller@1e8 {
@@ -1720,7 +1720,7 @@
 		#power-domain-cells = <0>;
 		#reset-cells = <0>;
 		label = "dispext3_fe";
-		power-domains = <&ps_afnc4_lw0>;
+		power-domains = <&ps_afnc4_lw0>, <&ps_pmp>;
 	};
 
 	ps_dispext3_cpu0: power-controller@228 {
