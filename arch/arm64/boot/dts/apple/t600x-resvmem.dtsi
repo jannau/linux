@@ -1,0 +1,61 @@
+// SPDX-License-Identifier: GPL-2.0+ OR MIT
+/*
+ * Reserved memory regions and IOMMU mappings used on Apple T6000, T6001, T6002
+ * ("M1 Pro", "M1 Max", "M1 Ultra") SoCs.
+ *
+ * Copyright The Asahi Linux Contributors
+ */
+
+&{/reserved-memory} {
+	#address-cells = <2>;
+	#size-cells = <2>;
+	ranges;
+
+	/* /vram */
+	vram: vram@0 {
+		reg = <0 0 0 0>; /* To be filled by loader */
+		no-map;
+		iommu-addresses = <&dcp 0 0 0 0>, <&disp0 0 0 0 0>;
+		status = "disabled";
+	};
+
+	/* /chosen/carveout-memory-map/region-id-50 */
+	dcp_text: dcp_text@0 {
+		reg = <0 0 0 0>; /* To be filled by loader */
+		no-map;
+		iommu-addresses = <&dcp 0 0 0 0>;
+		status = "disabled";
+	};
+
+	/* /chosen/carveout-memory-map/region-id-57 */
+	dcp_data: dcp_data@0 {
+		reg = <0 0 0 0>; /* To be filled by loader */
+		no-map;
+		iommu-addresses = <&dcp 0 0 0 0>;
+		status = "disabled";
+	};
+
+	/* /chosen/carveout-memory-map/region-id-94 */
+	region94: region94@0 {
+		reg = <0 0 0 0>; /* To be filled by loader */
+		no-map;
+		iommu-addresses = <&dcp 0 0 0 0>, <&disp0 0 0 0 0>;
+		status = "disabled";
+	};
+
+	/* /chosen/carveout-memory-map/region-id-95 */
+	region95: region95@0 {
+		reg = <0 0 0 0>; /* To be filled by loader */
+		no-map;
+		iommu-addresses = <&dcp 0 0 0 0>, <&piodma 0 0 0 0>;
+		status = "disabled";
+	};
+
+	/* /chosen/carveout-memory-map/region-id-157 */
+	region157: region157@0 {
+		reg = <0 0 0 0>; /* To be filled by loader */
+		no-map;
+		iommu-addresses = <&dcp 0 0 0 0>, <&disp0 0 0 0 0>;
+		status = "disabled";
+	};
+};

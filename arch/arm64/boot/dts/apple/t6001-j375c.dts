@@ -36,11 +36,17 @@
 		};
 	};
 
+	reserved-memory {
+		/* filled by t600x-resvmem.dtsi */
+	};
+
 	memory@10000000000 {
 		device_type = "memory";
 		reg = <0x100 0 0x2 0>; /* To be filled by loader */
 	};
 };
+
+#include "t600x-resvmem.dtsi"
 
 &serial0 {
 	status = "okay";
