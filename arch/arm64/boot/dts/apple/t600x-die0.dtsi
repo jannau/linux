@@ -165,6 +165,69 @@
 		};
 	};
 
+	disp0_piodma: mapper@38a000000 {
+		compatible = "apple,t6000-dcp-piodma", "apple,dcp-piodma";
+		iommus = <&disp0_dart 4>;
+	};
+
+	disp0_dart: iommu@38b304000 {
+		compatible = "apple,t6000-dart";
+		reg = <0x3 0x8b304000 0x0 0x4000>;
+		#iommu-cells = <1>;
+		interrupt-parent = <&aic>;
+		interrupts = <AIC_IRQ 0 821 IRQ_TYPE_LEVEL_HIGH>;
+	};
+
+	dcp_dart: iommu@38b30c000 {
+		compatible = "apple,t6000-dart";
+		reg = <0x3 0x8b30c000 0x0 0x4000>;
+		#iommu-cells = <1>;
+		interrupt-parent = <&aic>;
+		interrupts = <AIC_IRQ 0 821 IRQ_TYPE_LEVEL_HIGH>;
+	};
+
+	dcp_mbox: mbox@38bc08000 {
+		compatible = "apple,t6000-asc-mailbox", "apple,asc-mailbox-v4";
+		reg = <0x3 0x8bc08000 0x0 0x4000>;
+		interrupt-parent = <&aic>;
+		interrupts = <AIC_IRQ 0 842 IRQ_TYPE_LEVEL_HIGH>,
+			<AIC_IRQ 0 843 IRQ_TYPE_LEVEL_HIGH>,
+			<AIC_IRQ 0 844 IRQ_TYPE_LEVEL_HIGH>,
+			<AIC_IRQ 0 845 IRQ_TYPE_LEVEL_HIGH>;
+		interrupt-names = "send-empty", "send-not-empty",
+			"recv-empty", "recv-not-empty";
+		#mbox-cells = <0>;
+		power-domains = <&ps_disp0_cpu0>;
+	};
+
+	dcp: dcp@38bc00000 {
+		compatible = "apple,t6000-dcp", "apple,dcp";
+		mboxes = <&dcp_mbox>;
+		mbox-names = "mbox";
+		iommus = <&dcp_dart 0>;
+
+		reg-names = "coproc", "disp-0", "disp-1", "disp-2",
+			"disp-3", "disp-4";
+		reg = <0x3 0x8bc00000 0x0 0x4000>,
+			<0x3 0x8a000000 0x0 0x3000000>,
+			<0x3 0x8b320000 0x0 0x4000>,
+			<0x3 0x8b344000 0x0 0x4000>,
+			<0x3 0x8b800000 0x0 0x800000>,
+			<0x2 0x8e3d0000 0x0 0x4000>;
+		power-domains = <&ps_disp0_cpu0>;
+		clocks = <&clk_disp0>;
+		apple,asc-dram-mask = <0x1f0 0x00000000>;
+		apple,piodma-mapper = <&disp0_piodma>;
+	};
+
+	display: display-subsystem {
+		compatible = "apple,display-subsystem";
+		iommus = <&disp0_dart 0>;
+		apple,coprocessors = <&dcp>;
+		/* generate phandle explicitly for use in loader */
+		phandle = <&display>;
+	};
+
 	dart_sio_0: iommu@39b004000 {
 		compatible = "apple,t6000-dart";
 		reg = <0x3 0x9b004000 0x0 0x4000>;
