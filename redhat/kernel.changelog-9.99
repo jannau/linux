@@ -1,3 +1,8 @@
+* Fri Mar 11 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc7.79b00034e9dc.119]
+- Setting CONFIG_I2C_SMBUS to "m" for ark (Gopal Tiwari)
+- Print arch with process_configs errors (Justin M. Forbes)
+- Pass RHJOBS to process_configs for dist-configs-check as well (Justin M. Forbes)
+
 * Thu Mar 10 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc7.3bf7edc84a9e.118]
 - redhat/configs/process_configs.sh: Fix issue with old error files (Prarit Bhargava)
 - redhat/configs/build_configs.sh: Parallelize execution (Prarit Bhargava)
