@@ -1,3 +1,7 @@
+* Wed Mar 16 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc8.56e337f2cf13.123]
+- Add asus_wmi_sensors modules to filters for Fedora (Justin M. Forbes)
+- redhat: spec: trigger dracut when modules are installed separately (Jan Stancek)
+
 * Sat Mar 12 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc7.68453767131a.120]
 - Last of the Fedora 5.17 configs initial pass (Justin M. Forbes)
 - redhat/Makefile: Silence dist-clean-configs output (Prarit Bhargava)
