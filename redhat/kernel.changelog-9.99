@@ -1,3 +1,6 @@
+* Tue Mar 22 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0]
+- Reset Makefile.rhelver for the 5.18 cycle (Justin M. Forbes)
+
 * Sat Mar 19 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17-0.rc8.34e047aa16c0.124]
 - Enable net reference count trackers in all debug kernels (Jiri Benc)
 - redhat/Makefile: Reorganize variables (Prarit Bhargava)
