@@ -1,3 +1,16 @@
+* Fri Mar 25 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18-0.rc0.34af78c4e616.5]
+- redhat/configs: Disable watchdog components (Prarit Bhargava)
+- redhat/README.Makefile: Add a Makefile README file (Prarit Bhargava)
+- redhat/Makefile: Remove duplicated code (Prarit Bhargava)
+- Add BuildRequires libnl3-devel for intel-speed-select (Justin M. Forbes)
+- Add new kunit tests for 5.18 to mod-internal.list (Justin M. Forbes)
+- Fix RHDISTGIT for Fedora (Justin M. Forbes)
+- redhat/configs/process_configs.sh: Fix race with tools generation (Prarit Bhargava)
+- New configs in drivers/dax (Fedora Kernel Team)
+- Fix up CONFIG_SND_AMD_ACP_CONFIG files (Patrick Talbert)
+- Remove CONFIG_SND_SOC_SOF_DEBUG_PROBES files (Patrick Talbert)
+- SATA_MOBILE_LPM_POLICY is now SATA_LPM_POLICY (Justin M. Forbes)
+
 * Thu Mar 24 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18-0.rc0.ed4643521e6a.4]
 - Fix up rng merge (Justin M. Forbes)
 - Define SNAPSHOT correctly when VERSION_ON_UPSTREAM is 0 (Justin M. Forbes)
