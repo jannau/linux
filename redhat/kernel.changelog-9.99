@@ -1,3 +1,11 @@
+* Sat Mar 26 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc0.52d543b5497c.6]
+- Fedora config updates to fix process_configs (Justin M. Forbes)
+- redhat: Fix release tagging (Prarit Bhargava)
+- redhat/self-test: Fix version tag test (Prarit Bhargava)
+- redhat/self-test: Fix BUILD verification test (Prarit Bhargava)
+- redhat/self-test: Cleanup SRPM related self-tests (Prarit Bhargava)
+- redhat/self-test: Fix shellcheck test (Prarit Bhargava)
+
 * Fri Mar 25 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18-0.rc0.34af78c4e616.5]
 - redhat/configs: Disable watchdog components (Prarit Bhargava)
 - redhat/README.Makefile: Add a Makefile README file (Prarit Bhargava)
