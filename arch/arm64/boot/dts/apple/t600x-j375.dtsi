@@ -11,6 +11,10 @@
 
 / {
 	aliases {
+		atcphy0 = &atcphy0;
+		atcphy1 = &atcphy1;
+		atcphy2 = &atcphy2;
+		atcphy3 = &atcphy3;
 		bluetooth0 = &bluetooth0;
 		dcp = &dcp;
 		dcpext0 = &dcpext0;
@@ -80,6 +84,12 @@
 						remote-endpoint = <&typec0_usb_hs>;
 					};
 				};
+				port@1 {
+					reg = <1>;
+					typec0_con_ss: endpoint {
+						remote-endpoint = <&typec0_usb_ss>;
+					};
+				};
 			};
 		};
 	};
@@ -104,6 +114,12 @@
 					reg = <0>;
 					typec1_con_hs: endpoint {
 						remote-endpoint = <&typec1_usb_hs>;
+					};
+				};
+				port@1 {
+					reg = <1>;
+					typec1_con_ss: endpoint {
+						remote-endpoint = <&typec1_usb_ss>;
 					};
 				};
 			};
@@ -132,6 +148,12 @@
 						remote-endpoint = <&typec2_usb_hs>;
 					};
 				};
+				port@1 {
+					reg = <1>;
+					typec2_con_ss: endpoint {
+						remote-endpoint = <&typec2_usb_ss>;
+					};
+				};
 			};
 		};
 	};
@@ -156,6 +178,12 @@
 					reg = <0>;
 					typec3_con_hs: endpoint {
 						remote-endpoint = <&typec3_usb_hs>;
+					};
+				};
+				port@1 {
+					reg = <1>;
+					typec3_con_ss: endpoint {
+						remote-endpoint = <&typec3_usb_ss>;
 					};
 				};
 			};
@@ -192,6 +220,39 @@
 	port {
 		typec3_usb_hs: endpoint {
 			remote-endpoint = <&typec3_con_hs>;
+		};
+	};
+};
+
+/* Type-C PHYs */
+&atcphy0 {
+	port {
+		typec0_usb_ss: endpoint {
+			remote-endpoint = <&typec0_con_ss>;
+		};
+	};
+};
+
+&atcphy1 {
+	port {
+		typec1_usb_ss: endpoint {
+			remote-endpoint = <&typec1_con_ss>;
+		};
+	};
+};
+
+&atcphy2 {
+	port {
+		typec2_usb_ss: endpoint {
+			remote-endpoint = <&typec2_con_ss>;
+		};
+	};
+};
+
+&atcphy3 {
+	port {
+		typec3_usb_ss: endpoint {
+			remote-endpoint = <&typec3_con_ss>;
 		};
 	};
 };
