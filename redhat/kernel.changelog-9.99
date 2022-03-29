@@ -1,3 +1,12 @@
+* Tue Mar 29 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc0.1930a6e739c4.9]
+- redhat/configs: remove unnecessary GPIO options for aarch64 (Brian Masney)
+- redhat/configs: remove viperboard related Kconfig options (Brian Masney)
+- redhat/configs/process_configs.sh: Avoid race with find (Prarit Bhargava)
+- redhat/configs/process_configs.sh: Remove CONTINUEONERROR (Prarit Bhargava)
+- Remove i686 configs and filters (Justin M. Forbes)
+- redhat/configs: Set CONFIG_X86_AMD_PSTATE built-in on Fedora (Prarit Bhargava)
+- Fix up mismatch with CRC64 (Justin M. Forbes)
+
 * Sat Mar 26 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc0.52d543b5497c.6]
 - Fedora config updates to fix process_configs (Justin M. Forbes)
 - redhat: Fix release tagging (Prarit Bhargava)
