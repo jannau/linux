@@ -1,3 +1,11 @@
+* Wed Mar 30 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc0.d888c83fcec7.10]
+- redhat/config: Remove obsolete CONFIG_MFD_INTEL_PMT (David Arcari)
+- redhat/configs: enable CONFIG_INTEL_ISHTP_ECLITE (David Arcari)
+- Avoid creating files in $RPM_SOURCE_DIR (Nicolas Chauvet)
+- Flip CRC64 from off to y (Justin M. Forbes)
+- New configs in lib/Kconfig (Fedora Kernel Team)
+- disable redundant assignment of CONFIG_BQL on ARK (Davide Caratti)
+
 * Tue Mar 29 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc0.1930a6e739c4.9]
 - redhat/configs: remove unnecessary GPIO options for aarch64 (Brian Masney)
 - redhat/configs: remove viperboard related Kconfig options (Brian Masney)
