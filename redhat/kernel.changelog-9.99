@@ -1,3 +1,14 @@
+* Fri Apr 01 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc0.e8b767f5e04097a.13]
+- Add clk_test and clk-gate_test to mod-internal.list (Justin M. Forbes)
+- redhat/self-tests: Ignore UPSTREAM (Prarit Bhargava)
+- redhat/self-tests: Ignore RHGITURL (Prarit Bhargava)
+- redhat/Makefile.variables: Extend git hash length to 15 (Prarit Bhargava)
+- redhat/self-test: Remove changelog from spec files (Prarit Bhargava)
+- redhat/genspec.sh: Rearrange genspec.sh (Prarit Bhargava)
+- redhat/self-test: Add spec file data (Prarit Bhargava)
+- redhat/self-test: Add better dist-dump-variables test (Prarit Bhargava)
+- redhat/self-test: Add variable test data (Prarit Bhargava)
+
 * Wed Mar 30 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc0.d888c83fcec7.10]
 - redhat/config: Remove obsolete CONFIG_MFD_INTEL_PMT (David Arcari)
 - redhat/configs: enable CONFIG_INTEL_ISHTP_ECLITE (David Arcari)
