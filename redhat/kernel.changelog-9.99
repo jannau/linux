@@ -1,3 +1,7 @@
+* Mon Apr 04 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc1.16]
+- mm/sparsemem: Fix 'mem_section' will never be NULL gcc 12 warning (Waiman Long)
+- redhat/configs: Enable CONFIG_RCU_SCALE_TEST & CONFIG_RCU_REF_SCALE_TEST (Waiman Long)
+
 * Fri Apr 01 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc0.e8b767f5e04097a.13]
 - Add clk_test and clk-gate_test to mod-internal.list (Justin M. Forbes)
 - redhat/self-tests: Ignore UPSTREAM (Prarit Bhargava)
