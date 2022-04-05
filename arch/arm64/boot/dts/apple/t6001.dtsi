@@ -624,13 +624,13 @@
 				<0x3 0x8b800000 0x0 0x800000>,
 				<0x3 0x8e3d0000 0x0 0x4000>;
 			power-domains = <&ps_disp0_cpu0>;
-			memory-region = <&dcprodataio>, <&dcpheapio>, <&vram_dcp>, <&region94_dcp>, <&region95_dcp>, <&region157_dcp>;
+			memory-region = <&dcprodata>, <&dcpheap>, <&vram>, <&region94>, <&region95>, <&region157>;
 			apple,asc-dram-mask = <0x1f0 0x00000000>;
 
 			piodma: piodma {
 				compatible = "apple,t8103-dcp-piodma";
 				iommus = <&disp0_dart 4>;
-				memory-region = <&region95_disp0_4>;
+				memory-region = <&region95>;
 			};
 		};
 
@@ -638,7 +638,7 @@
 			compatible = "apple,display-subsystem";
 			iommus = <&disp0_dart 0>;
 			apple,coprocessors = <&dcp>;
-			memory-region = <&vram_disp0>, <&region94_disp0_0>, <&region157_disp0_0>;
+			memory-region = <&vram>, <&region94>, <&region157>;
 		};
 
 		ans_mbox: mbox@38f408000 {
