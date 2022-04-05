@@ -979,8 +979,8 @@ static int apple_dart_of_reserved_regions(struct apple_dart *dart,
 					  struct device_node *node,
 					  u32 sid)
 {
-	struct device_node *pa_node, *iova_node;
-	struct resource res_pa, res_iova;
+	struct device_node *mem_node;
+	struct resource res_pa;
 	struct device *dev = dart->dev;
 	int i, ret, count, idx = 0;
 
@@ -997,36 +997,43 @@ static int apple_dart_of_reserved_regions(struct apple_dart *dart,
 	dart->num_resv_regions[sid] = count;
 
 	for (i = 0; i < count; i++) {
-		iova_node = of_parse_phandle(node, "memory-region", i);
-		if (!of_device_is_compatible(iova_node, "iommu-mapping") ||
-		    !of_device_is_available(iova_node))
+		int j = 0;
+		struct of_phandle_args map_args;
+		mem_node = of_parse_phandle(node, "memory-region", i);
+		if (!of_device_is_available(mem_node))
 			continue;
 
-		ret = of_address_to_resource(iova_node, 0, &res_iova);
+		ret = of_address_to_resource(mem_node, 0, &res_pa);
 		if (ret) {
-			dev_err(dev, "of_address_to_resource IOVA failed\n");
-			of_node_put(iova_node);
+			dev_err(dev, "of_address_to_resource for %s failed\n",
+				mem_node->name);
+			of_node_put(mem_node);
 			continue;
 		}
 
-		pa_node = of_parse_phandle(iova_node, "memory-region", 0);
-		of_node_put(iova_node);
-		if (!of_device_is_available(iova_node))
-			continue;
+		while (!of_parse_phandle_with_fixed_args(mem_node,
+							 "iommu-mapping", 4,
+							 j, &map_args)) {
+			uintptr_t iova;
+			size_t size;
 
-		ret = of_address_to_resource(pa_node, 0, &res_pa);
-		of_node_put(pa_node);
-		if (ret) {
-			dev_err(dev, "of_address_to_resource PA failed\n");
-			continue;
+			++j;
+			of_node_put(map_args.np);
+			if (node->phandle != map_args.np->phandle)
+				continue;
+
+			iova = (u64)map_args.args[0] << 32 | map_args.args[1];
+			size = (size_t)map_args.args[2] << 32 | map_args.args[3];
+
+			dev_info(dev, "reserved region: PA %pR IOVA 0x%08lx %zx\n",
+				 &res_pa, iova, size);
+
+			dart->resv_regions[sid][idx].iova = iova;
+			dart->resv_regions[sid][idx].paddr = res_pa.start;
+			dart->resv_regions[sid][idx].size = size;
+			++idx;
 		}
-		dev_info(dev, "reserved region: IOVA %pR PA %pR\n", &res_iova,
-			 &res_pa);
-
-		dart->resv_regions[sid][idx].iova = res_iova.start;
-		dart->resv_regions[sid][idx].paddr = res_pa.start;
-		dart->resv_regions[sid][idx].size = res_iova.end - res_iova.start +1;
-		idx += 1;
+		of_node_put(mem_node);
 	}
 	dart->num_resv_regions[sid] = idx;
 
@@ -1073,6 +1080,7 @@ static int apple_dart_of_mapped_devices(struct apple_dart *dart)
 			if (dart->num_resv_regions[stream_id])
 				dart->reset_mask |= BIT(stream_id);
 		}
+		of_node_put(mapped_node);
 	}
 
 	return 0;
