@@ -1,3 +1,8 @@
+* Wed Apr 06 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc1.3e732ebf7316ac8.17]
+- Add Partner Supported taint flag to kAFS (Alice Mitchell) [2038999]
+- Add Partner Supported taint flag (Alice Mitchell) [2038999]
+- Enabled INTEGRITY_MACHINE_KEYRING for all configs. (Peter Robinson)
+
 * Mon Apr 04 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc1.16]
 - mm/sparsemem: Fix 'mem_section' will never be NULL gcc 12 warning (Waiman Long)
 - redhat/configs: Enable CONFIG_RCU_SCALE_TEST & CONFIG_RCU_REF_SCALE_TEST (Waiman Long)
