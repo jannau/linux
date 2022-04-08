@@ -1,3 +1,9 @@
+* Fri Apr 08 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc1.1831fed559732b1.18]
+- redhat/configs: Enable cr50 I2C TPM interface (Akihiko Odaki)
+- spec: make HMAC file encode relative path (Jonathan Lebon)
+- redhat/kernel.spec.template: Add intel_sdsi utility (Prarit Bhargava)
+- Spec fixes for intel-speed-select (Justin M. Forbes)
+
 * Wed Apr 06 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc1.3e732ebf7316ac8.17]
 - Add Partner Supported taint flag to kAFS (Alice Mitchell) [2038999]
 - Add Partner Supported taint flag (Alice Mitchell) [2038999]
