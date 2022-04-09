@@ -1,3 +1,7 @@
+* Sat Apr 09 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc1.f1b45d8ccb9839b.19]
+- configs: enable CONFIG_RMI4_F3A (Benjamin Tissoires)
+- redhat: configs: Disable TPM 1.2 specific drivers (Jerry Snitselaar)
+
 * Fri Apr 08 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc1.1831fed559732b1.18]
 - redhat/configs: Enable cr50 I2C TPM interface (Akihiko Odaki)
 - spec: make HMAC file encode relative path (Jonathan Lebon)
