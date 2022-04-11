@@ -1,3 +1,6 @@
+* Mon Apr 11 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc2.21]
+- redhat/configs: enable CONFIG_RANDOMIZE_KSTACK_OFFSET_DEFAULT (Joel Savitz) [2026319]
+
 * Sat Apr 09 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc1.f1b45d8ccb9839b.19]
 - configs: enable CONFIG_RMI4_F3A (Benjamin Tissoires)
 - redhat: configs: Disable TPM 1.2 specific drivers (Jerry Snitselaar)
