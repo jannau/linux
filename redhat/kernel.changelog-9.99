@@ -1,3 +1,9 @@
+* Wed Apr 13 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc2.a19944809fe9942.22]
+- redhat/configs: enable CONFIG_SAMPLE_VFIO_MDEV_MTTY (Patrick Talbert)
+- Build intel_sdsi with %%{tools_make} (Justin M. Forbes)
+- configs: remove redundant Fedora config for INTEL_IDXD_COMPAT (Jerry Snitselaar)
+- tools/power/x86/intel-speed-select: fix build failure when using -Wl,--as-needed (Herton R. Krzesinski)
+
 * Mon Apr 11 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc2.21]
 - redhat/configs: enable CONFIG_RANDOMIZE_KSTACK_OFFSET_DEFAULT (Joel Savitz) [2026319]
 
