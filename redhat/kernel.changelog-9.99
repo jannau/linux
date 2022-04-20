@@ -1,3 +1,11 @@
+* Wed Apr 20 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc3.559089e0a93d442.27]
+- spec: keep .BTF section in modules for s390 (Yauheni Kaliuta) [2071969]
+- kernel.spec.template: Ship arch/s390/lib/expoline.o in kernel-devel (Ondrej Mosnacek)
+- redhat: disable tv/radio media device infrastructure (Jarod Wilson)
+- redhat/configs: clean up INTEL_LPSS configuration (David Arcari)
+- Have to rename the actual contents too (Justin M. Forbes)
+- The CONFIG_SATA_MOBILE_LPM_POLICY rebane was reverted (Justin M. Forbes)
+
 * Fri Apr 15 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc2.028192fea1de083.23]
 - redhat: Enable KASAN on all ELN debug kernels (Nico Pache)
 - redhat: configs: Enable INTEL_IOMMU_DEBUGFS for debug builds (Jerry Snitselaar)
