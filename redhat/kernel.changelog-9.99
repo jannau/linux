@@ -1,3 +1,6 @@
+* Thu Apr 21 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc3.b253435746d9a4a.28]
+- kernel-ark: arch_hw Update CONFIG_MOUSE_VSXXXAA=m (Tony Camuso) [2062909]
+
 * Wed Apr 20 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc3.559089e0a93d442.27]
 - spec: keep .BTF section in modules for s390 (Yauheni Kaliuta) [2071969]
 - kernel.spec.template: Ship arch/s390/lib/expoline.o in kernel-devel (Ondrej Mosnacek)
