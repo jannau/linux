@@ -1,3 +1,8 @@
+* Fri Apr 22 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc3.d569e86915b7f2f.29]
+- fedora: Disable fbdev drivers missed before (Javier Martinez Canillas)
+- Redhat: enable Kfence on production servers (Nico Pache)
+- redhat: ignore known empty patches on the patches rpminspect test (Herton R. Krzesinski)
+
 * Thu Apr 21 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc3.b253435746d9a4a.28]
 - kernel-ark: arch_hw Update CONFIG_MOUSE_VSXXXAA=m (Tony Camuso) [2062909]
 
