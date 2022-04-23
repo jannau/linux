@@ -1,3 +1,17 @@
+* Sat Apr 23 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc3.c00c5e1d157bec0.30]
+- redhat/self-test: Clean up data set (Prarit Bhargava)
+- redhat/Makefile.rhpkg: Remove quotes for RHDISTGIT (Prarit Bhargava)
+- redhat/scripts/create-tarball.sh: Use Makefile variables (Prarit Bhargava)
+- redhat/Makefile: Deprecate SINGLE_TARBALL (Prarit Bhargava)
+- redhat/Makefile: Move SINGLE_TARBALL to Makefile.variables (Prarit Bhargava)
+- redhat/Makefile: Use RPMVERSION (Prarit Bhargava)
+- redhat/scripts/rh-dist-git.sh: Use Makefile variables (Prarit Bhargava)
+- redhat/configs/build_configs.sh: Use Makefile variables (Prarit Bhargava)
+- redhat/configs/process_configs.sh: Use Makefile variables (Prarit Bhargava)
+- redhat/kernel.spec.template: Use RPM_BUILD_NCPUS (Prarit Bhargava)
+- redhat/configs/generate_all_configs.sh: Use Makefile variables (Prarit Bhargava)
+- redhat/configs: enable nf_tables SYNPROXY extension on ark (Davide Caratti)
+
 * Fri Apr 22 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc3.d569e86915b7f2f.29]
 - fedora: Disable fbdev drivers missed before (Javier Martinez Canillas)
 - Redhat: enable Kfence on production servers (Nico Pache)
