@@ -1,3 +1,8 @@
+* Tue Apr 26 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc4.d615b5416f8a1af.33]
+- Turn on CONFIG_RANDOM_TRUST_BOOTLOADER (Justin M. Forbes)
+- redhat/configs: aarch64: enable CPU_FREQ_GOV_SCHEDUTIL (Mark Salter)
+- Move CONFIG_HW_RANDOM_CN10K to a proper place (Vladis Dronov)
+
 * Sat Apr 23 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc3.c00c5e1d157bec0.30]
 - redhat/self-test: Clean up data set (Prarit Bhargava)
 - redhat/Makefile.rhpkg: Remove quotes for RHDISTGIT (Prarit Bhargava)
