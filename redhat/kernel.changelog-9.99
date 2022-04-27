@@ -1,3 +1,9 @@
+* Wed Apr 27 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc4.46cf2c613f4b10e.34]
+- ARK: Remove code marking drivers as tech preview (Peter Georg)
+- ARK: Remove code marking devices deprecated (Peter Georg)
+- ARK: Remove code marking devices unmaintained (Peter Georg)
+- rh_message: Fix function name (Peter Georg) [2019377]
+
 * Tue Apr 26 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc4.d615b5416f8a1af.33]
 - Turn on CONFIG_RANDOM_TRUST_BOOTLOADER (Justin M. Forbes)
 - redhat/configs: aarch64: enable CPU_FREQ_GOV_SCHEDUTIL (Mark Salter)
