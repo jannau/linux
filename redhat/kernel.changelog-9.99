@@ -1,3 +1,12 @@
+* Sat Apr 30 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc4.8013d1d3d2e3323.37]
+- enable DAMON configs (Chris von Recklinghausen) [2004233]
+- redhat: add zstream switch for zstream release numbering (Herton R. Krzesinski)
+- redhat: change kabi tarballs to use the package release (Herton R. Krzesinski)
+- redhat: generate distgit changelog in genspec.sh as well (Herton R. Krzesinski)
+- redhat: make genspec prefer metadata from git notes (Herton R. Krzesinski)
+- redhat: use tags from git notes for zstream to generate changelog (Herton R. Krzesinski)
+Resolves: rhbz#2004233
+
 * Wed Apr 27 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc4.46cf2c613f4b10e.34]
 - ARK: Remove code marking drivers as tech preview (Peter Georg)
 - ARK: Remove code marking devices deprecated (Peter Georg)
