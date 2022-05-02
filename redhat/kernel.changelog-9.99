@@ -1,3 +1,7 @@
+* Mon May 02 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc5.39]
+- redhat/configs: Set GUP_TEST in debug kernel (Joel Savitz)
+Resolves: 
+
 * Sat Apr 30 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc4.8013d1d3d2e3323.37]
 - enable DAMON configs (Chris von Recklinghausen) [2004233]
 - redhat: add zstream switch for zstream release numbering (Herton R. Krzesinski)
