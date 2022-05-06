@@ -1,3 +1,23 @@
+* Fri May 06 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc5.fe27d189e3f42e3.43]
+- redhat: shellcheck cleanup (Prarit Bhargava)
+- redhat/self-test/data: Cleanup data (Prarit Bhargava)
+- redhat/self-test: Add test to verify SPEC variables (Prarit Bhargava)
+- redhat/Makefile: Add 'duplicate' SPEC entries for user set variables (Prarit Bhargava)
+- redhat/Makefile: Rename TARFILE_RELEASE to SPECTARFILE_RELEASE (Prarit Bhargava)
+- redhat/genspec: Rename PATCHLIST_CHANGELOG to SPECPATCHLIST_CHANGELOG (Prarit Bhargava)
+- redhat/genspec: Rename DEBUG_BUILDS_ENABLED to SPECDEBUG_BUILDS_ENABLED (Prarit Bhargava)
+- redhat/Makefile: Rename PKGRELEASE to SPECBUILD (Prarit Bhargava)
+- redhat/genspec: Rename BUILDID_DEFINE to SPECBUILDID (Prarit Bhargava)
+- redhat/Makefile: Rename CHANGELOG to SPECCHANGELOG (Prarit Bhargava)
+- redhat/Makefile: Rename RPMKEXTRAVERSION to SPECKEXTRAVERSION (Prarit Bhargava)
+- redhat/Makefile: Rename RPMKSUBLEVEL to SPECKSUBLEVEL (Prarit Bhargava)
+- redhat/Makefile: Rename RPMKPATCHLEVEL to SPECKPATCHLEVEL (Prarit Bhargava)
+- redhat/Makefile: Rename RPMKVERSION to SPECKVERSION (Prarit Bhargava)
+- redhat/Makefile: Rename KVERSION to SPECVERSION (Prarit Bhargava)
+- redhat/Makefile: Deprecate some simple targets (Prarit Bhargava)
+- redhat/Makefile: Use KVERSION (Prarit Bhargava)
+Resolves: 
+
 * Mon May 02 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc5.39]
 - redhat/configs: Set GUP_TEST in debug kernel (Joel Savitz)
 Resolves: 
