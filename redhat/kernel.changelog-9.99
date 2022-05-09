@@ -1,3 +1,8 @@
+* Mon May 09 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc6.46]
+- redhat/self-test: Add test to verify Makefile declarations. (Prarit Bhargava)
+- redhat/Makefile: Add RHTEST (Prarit Bhargava)
+Resolves: 
+
 * Fri May 06 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc5.fe27d189e3f42e3.43]
 - redhat: shellcheck cleanup (Prarit Bhargava)
 - redhat/self-test/data: Cleanup data (Prarit Bhargava)
