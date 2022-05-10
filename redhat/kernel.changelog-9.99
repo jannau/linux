@@ -1,3 +1,8 @@
+* Tue May 10 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc6.9be9ed2612b5aed.47]
+- fedora: arm: Enable new Rockchip 356x series drivers (Peter Robinson)
+- fedora: arm: enable DRM_I2C_NXP_TDA998X on aarch64 (Peter Robinson)
+Resolves: 
+
 * Mon May 09 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc6.46]
 - redhat/self-test: Add test to verify Makefile declarations. (Prarit Bhargava)
 - redhat/Makefile: Add RHTEST (Prarit Bhargava)
