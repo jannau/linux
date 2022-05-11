@@ -1,3 +1,7 @@
+* Wed May 11 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc6.feb9c5e19e913b5.48]
+- Fedora 5.18 config set part 1 (Justin M. Forbes)
+Resolves: 
+
 * Tue May 10 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc6.9be9ed2612b5aed.47]
 - fedora: arm: Enable new Rockchip 356x series drivers (Peter Robinson)
 - fedora: arm: enable DRM_I2C_NXP_TDA998X on aarch64 (Peter Robinson)
