@@ -1,3 +1,13 @@
+* Fri May 13 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc6.f3f19f939c11925.49]
+- redhat/configs: Fix rm warning on error (Prarit Bhargava)
+- Fix nightly merge CI (Don Zickus)
+- redhat/kernel.spec.template: fix standalone tools build (Jan Stancek)
+- Add system-sb-certs for RHEL-9 (Don Zickus)
+- Fix dist-buildcheck-reqs (Don Zickus)
+- move DAMON configs to correct directory (Chris von Recklinghausen)
+- redhat: indicate HEAD state in tarball/rpm name (Jarod Wilson)
+Resolves: 
+
 * Wed May 11 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc6.feb9c5e19e913b5.48]
 - Fedora 5.18 config set part 1 (Justin M. Forbes)
 Resolves: 
