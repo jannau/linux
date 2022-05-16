@@ -1,3 +1,7 @@
+* Mon May 16 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc7.52]
+- redhat/configs: fix CONFIG_INTEL_ISHTP_ECLITE (David Arcari)
+Resolves: 
+
 * Fri May 13 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc6.f3f19f939c11925.49]
 - redhat/configs: Fix rm warning on error (Prarit Bhargava)
 - Fix nightly merge CI (Don Zickus)
