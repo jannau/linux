@@ -1,3 +1,9 @@
+* Wed May 18 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc7.210e04ff7681.53]
+- redhat/Makefile.variables: Change git hash length to default (Prarit Bhargava)
+- redhat/Makefile: Drop quotation marks around string definitions (Prarit Bhargava)
+- Turn on INTEGRITY_MACHINE_KEYRING for Fedora (Justin M. Forbes)
+Resolves: 
+
 * Mon May 16 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.18.0-0.rc7.52]
 - redhat/configs: fix CONFIG_INTEL_ISHTP_ECLITE (David Arcari)
 Resolves: 
