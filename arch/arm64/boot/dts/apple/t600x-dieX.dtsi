@@ -107,7 +107,7 @@
 		reg = <0x7 0x02f00000 0x0 0x4000>;
 		interrupt-parent = <&aic>;
 		interrupts = <AIC_IRQ DIE_NO 1194 IRQ_TYPE_LEVEL_HIGH>;
-		power-domains = <&ps_atc0_usb>;
+		power-domains = <&DIE_NODE(ps_atc0_usb)>;
 		#iommu-cells = <1>;
 	};
 
@@ -200,7 +200,7 @@
 		reg = <0x13 0x02f00000 0x0 0x4000>;
 		interrupt-parent = <&aic>;
 		interrupts = <AIC_IRQ DIE_NO 1245 IRQ_TYPE_LEVEL_HIGH>;
-		power-domains = <&ps_atc3_usb>;
+		power-domains = <&DIE_NODE(ps_atc3_usb)>;
 		#iommu-cells = <1>;
 	};
 
