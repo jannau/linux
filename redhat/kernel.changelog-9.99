@@ -1,3 +1,7 @@
+* Wed May 25 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc0.143a6252e1b8.0]
+- Reset Release for 5.19 (Justin M. Forbes)
+Resolves: 
+
 * Tue May 24 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc0.143a6252e1b8.59]
 - redhat/Makefile: Drop quotation marks around string definitions (Prarit Bhargava)
 - Fedora: arm: Updates for QCom devices (Peter Robinson)
