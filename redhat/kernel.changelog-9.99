@@ -1,3 +1,10 @@
+* Thu May 26 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc0.babf0bb978e3.2]
+- Enable PAGE_POOL_STATS for arm only (Justin M. Forbes)
+- Revert "Merge branch 'fix-ci-20220523' into 'os-build'" (Patrick Talbert)
+- Fix changelog one more time post rebase (Justin M. Forbes)
+- Flip CONFIG_RADIO_ADAPTERS to module for Fedora (Justin M. Forbes)
+Resolves: 
+
 * Wed May 25 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc0.143a6252e1b8.0]
 - Reset Release for 5.19 (Justin M. Forbes)
 Resolves: 
