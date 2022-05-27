@@ -1,3 +1,11 @@
+* Fri May 27 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc0.7e284070abe5.3]
+- generic/fedora: cleanup and disable Lightning Moutain SoC (Peter Robinson)
+- redhat: Set SND_SOC_SOF_HDA_PROBES to =m (Patrick Talbert)
+- Fix versioning on stable Fedora (Justin M. Forbes)
+- Revert "crypto: rng - Override drivers/char/random in FIPS mode" (Justin M. Forbes)
+- Revert random: Add hook to override device reads and getrandom(2) (Justin M. Forbes)
+Resolves: 
+
 * Thu May 26 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc0.babf0bb978e3.2]
 - Enable PAGE_POOL_STATS for arm only (Justin M. Forbes)
 - Revert "Merge branch 'fix-ci-20220523' into 'os-build'" (Patrick Talbert)
