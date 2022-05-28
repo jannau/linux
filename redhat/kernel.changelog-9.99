@@ -1,3 +1,7 @@
+* Sat May 28 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc0.9d004b2f4fea.4]
+- Fix up config mismatches (Justin M. Forbes)
+Resolves: 
+
 * Fri May 27 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc0.7e284070abe5.3]
 - generic/fedora: cleanup and disable Lightning Moutain SoC (Peter Robinson)
 - redhat: Set SND_SOC_SOF_HDA_PROBES to =m (Patrick Talbert)
