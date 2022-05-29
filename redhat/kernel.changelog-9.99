@@ -1,3 +1,7 @@
+* Sun May 29 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc0.664a393a2663.5]
+- Fix up crypto config mistmatches (Justin M. Forbes)
+Resolves: 
+
 * Sat May 28 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc0.9d004b2f4fea.4]
 - Fix up config mismatches (Justin M. Forbes)
 Resolves: 
