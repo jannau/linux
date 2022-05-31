@@ -1,3 +1,8 @@
+* Tue May 31 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc0.8ab2afa23bd1.7]
+- redhat/kernel.spec.template: update selftest data via "make dist-self-test-data" (Denys Vlasenko)
+- redhat/kernel.spec.template: remove stray *.hardlink-temporary files, if any (Denys Vlasenko)
+Resolves: 
+
 * Mon May 30 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc0.b00ed48bb0a7.6]
 - Fix up ZSMALLOC config for s390 (Justin M. Forbes)
 - Turn on KASAN_OUTLINE for ppc debug (Justin M. Forbes)
