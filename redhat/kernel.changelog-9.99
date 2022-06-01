@@ -1,3 +1,7 @@
+* Wed Jun 01 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc0.700170bf6b4d.8]
+- Turn off KASAN_INLINE for RHEL ppc in pending (Justin M. Forbes)
+Resolves: 
+
 * Tue May 31 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc0.8ab2afa23bd1.7]
 - redhat/kernel.spec.template: update selftest data via "make dist-self-test-data" (Denys Vlasenko)
 - redhat/kernel.spec.template: remove stray *.hardlink-temporary files, if any (Denys Vlasenko)
