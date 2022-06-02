@@ -1,3 +1,8 @@
+* Thu Jun 02 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc0.d1dc87763f40.9]
+- redhat/configs: enable CONFIG_SP5100_TCO (David Arcari)
+- redhat/configs: Set CONFIG_VIRTIO_IOMMU on x86_64 (Eric Auger) [2089765]
+Resolves: rhbz#2089765
+
 * Wed Jun 01 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc0.700170bf6b4d.8]
 - Turn off KASAN_INLINE for RHEL ppc in pending (Justin M. Forbes)
 Resolves: 
