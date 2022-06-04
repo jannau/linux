@@ -1,3 +1,9 @@
+* Sat Jun 04 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc0.032dcf09e2bf.11]
+- redhat/docs: Add a description of kernel naming (Prarit Bhargava)
+- Change CRYPTO_CHACHA_S390 from m to y (Justin M. Forbes)
+- enable CONFIG_NET_ACT_CTINFO in ark (Davide Caratti)
+Resolves: 
+
 * Thu Jun 02 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc0.d1dc87763f40.9]
 - redhat/configs: enable CONFIG_SP5100_TCO (David Arcari)
 - redhat/configs: Set CONFIG_VIRTIO_IOMMU on x86_64 (Eric Auger) [2089765]
