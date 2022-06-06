@@ -1,3 +1,9 @@
+* Mon Jun 06 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc1.13]
+- redhat/docs: fix hyperlink typo (Patrick Talbert)
+- all: net: remove old NIC/ATM drivers that use virt_to_bus() (Peter Robinson)
+- Explicitly turn off CONFIG_KASAN_INLINE for ppc (Justin M. Forbes)
+Resolves: 
+
 * Sat Jun 04 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc0.032dcf09e2bf.11]
 - redhat/docs: Add a description of kernel naming (Prarit Bhargava)
 - Change CRYPTO_CHACHA_S390 from m to y (Justin M. Forbes)
