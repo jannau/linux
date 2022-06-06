@@ -1632,10 +1632,13 @@ void dcp_flush(struct drm_crtc *crtc, struct drm_atomic_state *state)
 	}
 
 	if (!has_surface) {
-		dev_warn(dcp->dev, "flush without surfaces, vsync:%d",
-				dcp->crtc->vsync_disabled);
-		schedule_work(&dcp->vblank_wq);
-		return;
+		if (crtc_state->enable && crtc_state->active) {
+			schedule_work(&dcp->vblank_wq);
+			return;
+		}
+
+		WARN_ON(!has_surface);
+		req->clear = 1;
 	}
 	do_swap(dcp, NULL, NULL);
 }
