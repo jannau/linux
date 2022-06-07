@@ -1,3 +1,7 @@
+* Tue Jun 07 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc1.e71e60cd74df.14]
+- redhat/configs/README: Update the README (Prarit Bhargava)
+Resolves: 
+
 * Mon Jun 06 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc1.13]
 - redhat/docs: fix hyperlink typo (Patrick Talbert)
 - all: net: remove old NIC/ATM drivers that use virt_to_bus() (Peter Robinson)
