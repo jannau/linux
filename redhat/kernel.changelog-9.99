@@ -1,3 +1,7 @@
+* Thu Jun 09 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc1.6bfb56e93bce.16]
+- Drop RCU_EXP_CPU_STALL_TIMEOUT to 0, we are not really android (Justin M. Forbes)
+Resolves: 
+
 * Tue Jun 07 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc1.e71e60cd74df.14]
 - redhat/configs/README: Update the README (Prarit Bhargava)
 Resolves: 
