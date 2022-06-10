@@ -1,3 +1,14 @@
+* Fri Jun 10 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc1.874c8ca1e60b.17]
+- Common: minor cleanups (Peter Robinson)
+- fedora: some minor Fedora cleanups (Peter Robinson)
+- fedora: drop X86_PLATFORM_DRIVERS_DELL dupe (Peter Robinson)
+- redhat: change tools_make macro to avoid full override of variables in Makefile (Herton R. Krzesinski)
+- Fix typo in Makefile for Fedora Stable Versioning (Justin M. Forbes)
+- Remove duplicates from ark/generic/s390x/zfcpdump/ (Vladis Dronov)
+- Move common/debug/s390x/zfcpdump/ configs to ark/debug/s390x/zfcpdump/ (Vladis Dronov)
+- Move common/generic/s390x/zfcpdump/ configs to ark/generic/s390x/zfcpdump/ (Vladis Dronov)
+Resolves: 
+
 * Thu Jun 09 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc1.6bfb56e93bce.16]
 - Drop RCU_EXP_CPU_STALL_TIMEOUT to 0, we are not really android (Justin M. Forbes)
 Resolves: 
