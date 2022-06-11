@@ -269,6 +269,7 @@ static int apple_smc_rtkit_shmem_setup(void *cookie, struct apple_rtkit_shmem *b
 	}
 
 	bfr->iomem = smc->sram_base + (res.start - smc->sram->start);
+	bfr->is_mapped = true;
 
 	return 0;
 }
