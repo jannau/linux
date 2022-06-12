@@ -147,5 +147,5 @@
 };
 
 &framebuffer0 {
-	backlight = <&backlight>;
+	//backlight = <&backlight>;
 };

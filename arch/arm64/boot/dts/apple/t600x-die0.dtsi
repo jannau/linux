@@ -32,6 +32,7 @@
 		interrupt-names = "send-empty", "send-not-empty",
 			"recv-empty", "recv-not-empty";
 		#mbox-cells = <0>;
+		status = "disabled";
 	};
 
 	smc: smc@290400000 {
@@ -40,6 +41,7 @@
 			<0x2 0x91e00000 0x0 0x100000>;
 		reg-names = "smc", "sram";
 		mboxes = <&smc_mbox>;
+		status = "disabled";
 
 		smc_gpio: gpio {
 			gpio-controller;
