@@ -1,3 +1,9 @@
+* Sun Jun 12 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc1.7a68065eb9cd.19]
+- redhat/configs/fedora: Enable a set of modules used on some x86 tablets (Hans de Goede)
+- redhat/configs: Make INTEL_SOC_PMIC_CHTDC_TI builtin (Hans de Goede)
+- redhat/configs/fedora: enable missing modules modules for Intel IPU3 camera support (Hans de Goede)
+Resolves: 
+
 * Fri Jun 10 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc1.874c8ca1e60b.17]
 - Common: minor cleanups (Peter Robinson)
 - fedora: some minor Fedora cleanups (Peter Robinson)
