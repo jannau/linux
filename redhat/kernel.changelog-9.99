@@ -1,3 +1,13 @@
+* Wed Jun 15 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc2.018ab4fabddd.21]
+- redhat/self-test: Update data set (Prarit Bhargava)
+- create-data.sh: Reduce specfile data output (Prarit Bhargava)
+- redhat/configs: restore/fix core INTEL_LPSS configs to be builtin again (Hans de Goede)
+- Enable CKI on os-build MRs only (Don Zickus)
+- self-test: Fixup Makefile contents test (Prarit Bhargava)
+- redhat/self-test: self-test data update (Prarit Bhargava)
+- redhat/self-test: Fix up create-data.sh to not report local variables (Prarit Bhargava)
+Resolves: 
+
 * Sun Jun 12 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc1.7a68065eb9cd.19]
 - redhat/configs/fedora: Enable a set of modules used on some x86 tablets (Hans de Goede)
 - redhat/configs: Make INTEL_SOC_PMIC_CHTDC_TI builtin (Hans de Goede)
