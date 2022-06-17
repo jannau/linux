@@ -1,3 +1,13 @@
+* Fri Jun 17 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc2.47700948a4ab.23]
+- redhat/Makefile: Add SPECKABIVERSION variable (Prarit Bhargava)
+- redhat/self-test: Provide better failure output (Prarit Bhargava)
+- redhat/self-test: Reformat tests to kernel standard (Prarit Bhargava)
+- redhat/self-test: Add purpose and header to each test (Prarit Bhargava)
+- Drop outdated CRYPTO_ECDH configs (Vladis Dronov)
+- Brush up crypto SHA512 and USER configs (Vladis Dronov)
+- Brush up crypto ECDH and ECDSA configs (Vladis Dronov)
+Resolves: 
+
 * Wed Jun 15 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc2.018ab4fabddd.21]
 - redhat/self-test: Update data set (Prarit Bhargava)
 - create-data.sh: Reduce specfile data output (Prarit Bhargava)
