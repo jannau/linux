@@ -1,3 +1,7 @@
+* Sat Jun 18 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc2.4b35035bcf80.24]
+- redhat/configs: enable CONFIG_DEBUG_NET for debug kernel (Hangbin Liu)
+Resolves: 
+
 * Fri Jun 17 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc2.47700948a4ab.23]
 - redhat/Makefile: Add SPECKABIVERSION variable (Prarit Bhargava)
 - redhat/self-test: Provide better failure output (Prarit Bhargava)
