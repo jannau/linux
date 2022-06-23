@@ -1,3 +1,7 @@
+* Thu Jun 23 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc3.de5c208d533a.28]
+- configs/fedora: Enable the pinctrl SC7180 driver built-in (Enric Balletbo i Serra)
+Resolves: 
+
 * Sat Jun 18 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc2.4b35035bcf80.24]
 - redhat/configs: enable CONFIG_DEBUG_NET for debug kernel (Hangbin Liu)
 Resolves: 
