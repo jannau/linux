@@ -1,3 +1,7 @@
+* Fri Jun 24 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc3.92f20ff72066.29]
+- fedora: minor updates for Fedora configs (Peter Robinson)
+Resolves: 
+
 * Thu Jun 23 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc3.de5c208d533a.28]
 - configs/fedora: Enable the pinctrl SC7180 driver built-in (Enric Balletbo i Serra)
 Resolves: 
