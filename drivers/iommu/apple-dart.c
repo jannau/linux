@@ -1265,7 +1265,7 @@ static int apple_dart_suspend(struct device *dev)
 	unsigned int sid, idx;
 
 	for (sid = 0; sid < dart->num_streams; sid++) {
-		dart->save_tcr[sid] = readl_relaxed(dart->regs + DART_TCR(sid));
+		dart->save_tcr[sid] = readl_relaxed(dart->regs + DART_TCR(dart, sid));
 		for (idx = 0; idx < dart->hw->ttbr_count; idx++)
 			dart->save_ttbr[sid][idx] =
 				readl_relaxed(dart->regs + DART_TTBR(dart, sid, idx));
@@ -1290,7 +1290,7 @@ static int apple_dart_resume(struct device *dev)
 		for (idx = 0; idx < dart->hw->ttbr_count; idx++)
 			writel_relaxed(dart->save_ttbr[sid][idx],
 				       dart->regs + DART_TTBR(dart, sid, idx));
-		writel_relaxed(dart->save_tcr[sid], dart->regs + DART_TCR(sid));
+		writel_relaxed(dart->save_tcr[sid], dart->regs + DART_TCR(dart, sid));
 	}
 
 	return 0;
