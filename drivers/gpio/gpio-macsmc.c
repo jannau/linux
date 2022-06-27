@@ -173,6 +173,7 @@ static int macsmc_gpio_init_valid_mask(struct gpio_chip *gc,
 	for (i = 0; i < count; i++) {
 		smc_key key;
 		int gpio_nr;
+		u32 val;
 		int ret = apple_smc_get_key_by_index(smcgp->smc, smcgp->first_index + i, &key);
 
 		if (ret < 0)
@@ -189,8 +190,9 @@ static int macsmc_gpio_init_valid_mask(struct gpio_chip *gc,
 
 		set_bit(gpio_nr, valid_mask);
 
-		/* Check for IRQ support and disable */
-		if (apple_smc_write_u32_atomic(smcgp->smc, key, CMD_IRQ_ENABLE | 0) >= 0)
+		/* Check for IRQ support */
+		ret = apple_smc_rw_u32(smcgp->smc, key, CMD_IRQ_MODE, &val);
+		if (!ret)
 			set_bit(gpio_nr, smcgp->irq_supported);
 	}
 
@@ -292,7 +294,7 @@ static void macsmc_gpio_irq_bus_sync_unlock(struct irq_data *d)
 
 	if (smcgp->irq_mode_shadow[offset] != smcgp->irq_mode[offset]) {
 		u32 cmd = CMD_IRQ_MODE | smcgp->irq_mode_shadow[offset];
-		if (apple_smc_write_u32_atomic(smcgp->smc, key, cmd) < 0)
+		if (apple_smc_write_u32(smcgp->smc, key, cmd) < 0)
 			dev_err(smcgp->dev, "GPIO IRQ config failed for %p4ch = 0x%x\n", &key, cmd);
 		else
 			smcgp->irq_mode_shadow[offset] = smcgp->irq_mode[offset];
@@ -300,7 +302,7 @@ static void macsmc_gpio_irq_bus_sync_unlock(struct irq_data *d)
 
 	val = test_bit(offset, smcgp->irq_enable_shadow);
 	if (test_bit(offset, smcgp->irq_enable) != val) {
-		if (apple_smc_write_u32_atomic(smcgp->smc, key, CMD_IRQ_ENABLE | val) < 0)
+		if (apple_smc_write_u32(smcgp->smc, key, CMD_IRQ_ENABLE | val) < 0)
 			dev_err(smcgp->dev, "GPIO IRQ en/disable failed for %p4ch\n", &key);
 		else
 			change_bit(offset, smcgp->irq_enable);
