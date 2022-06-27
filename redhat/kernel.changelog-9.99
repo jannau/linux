@@ -1,3 +1,8 @@
+* Mon Jun 27 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc4.32]
+- fedora: wireless: disable SiLabs and PureLiFi (Peter Robinson)
+- fedora: updates for 5.19 (Peter Robinson)
+Resolves: 
+
 * Fri Jun 24 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc3.92f20ff72066.29]
 - fedora: minor updates for Fedora configs (Peter Robinson)
 Resolves: 
