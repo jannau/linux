@@ -1,3 +1,11 @@
+* Tue Jun 28 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc4.941e3e791269.33]
+- Enable Marvell OcteonTX2 crypto device in ARK (Vladis Dronov)
+- redhat/Makefile: Remove --scratch from BUILD_TARGET (Prarit Bhargava)
+- redhat/Makefile: Fix dist-brew and distg-brew targets (Prarit Bhargava)
+- fedora: arm64: Initial support for TI Keystone 3 (ARCH_K3) (Peter Robinson)
+- fedora: arm: enable Hardware Timestamping Engine support (Peter Robinson)
+Resolves: 
+
 * Mon Jun 27 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc4.32]
 - fedora: wireless: disable SiLabs and PureLiFi (Peter Robinson)
 - fedora: updates for 5.19 (Peter Robinson)
