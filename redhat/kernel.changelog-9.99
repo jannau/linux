@@ -1,3 +1,11 @@
+* Thu Jun 30 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc4.d9b2ba67917c.34]
+- redhat/Makefile: Deprecate BUILD_SCRATCH_TARGET (Prarit Bhargava)
+- redhat: enable CONFIG_DEVTMPFS_SAFE (Mark Langsdorf)
+- redhat/Makefile: Remove deprecated variables and targets (Prarit Bhargava)
+- Split partner modules into a sub-package (Alice Mitchell)
+- Enable kAFS and it's dependancies in RHEL (Alice Mitchell)
+Resolves: 
+
 * Tue Jun 28 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc4.941e3e791269.33]
 - Enable Marvell OcteonTX2 crypto device in ARK (Vladis Dronov)
 - redhat/Makefile: Remove --scratch from BUILD_TARGET (Prarit Bhargava)
