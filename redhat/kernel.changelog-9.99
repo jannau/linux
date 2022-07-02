@@ -1,3 +1,7 @@
+* Sat Jul 02 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc4.089866061428.36]
+- fedora: arm: enable a couple of QCom drivers (Peter Robinson)
+Resolves: 
+
 * Thu Jun 30 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc4.d9b2ba67917c.34]
 - redhat/Makefile: Deprecate BUILD_SCRATCH_TARGET (Prarit Bhargava)
 - redhat: enable CONFIG_DEVTMPFS_SAFE (Mark Langsdorf)
