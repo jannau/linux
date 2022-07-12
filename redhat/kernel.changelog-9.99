@@ -1,3 +1,7 @@
+* Tue Jul 12 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc6.5a29232d870d.46]
+- redhat/configs: Enable QAT devices for arches other than x86 (Vladis Dronov)
+Resolves: 
+
 * Thu Jul 07 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc5.9f09069cde34.41]
 - Fedora 5.19 configs pt 1 (Justin M. Forbes)
 - redhat: Exclude cpufreq.h from kernel-headers (Patrick Talbert)
