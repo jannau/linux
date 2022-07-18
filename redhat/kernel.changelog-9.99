@@ -1,3 +1,7 @@
+* Mon Jul 18 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc7.52]
+- redhat: make kernel-zfcpdump-core to not provide kernel-core/kernel (Herton R. Krzesinski)
+Resolves: 
+
 * Tue Jul 12 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc6.5a29232d870d.46]
 - redhat/configs: Enable QAT devices for arches other than x86 (Vladis Dronov)
 Resolves: 
