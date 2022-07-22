@@ -1,3 +1,16 @@
+* Fri Jul 22 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc7.68e77ffbfd06.55]
+- create-data: Parallelize spec file data (Prarit Bhargava)
+- create-data.sh: Store SOURCES Makefile variable (Prarit Bhargava)
+- redhat/Makefile: Split up setup-source target (Prarit Bhargava)
+- create-data.sh: Redefine varfilename (Prarit Bhargava)
+- create-data.sh: Parallelize variable file creation (Prarit Bhargava)
+- redhat/configs: Enable CONFIG_LZ4_COMPRESS (Prarit Bhargava)
+- redhat/docs: Update brew information (Prarit Bhargava)
+- redhat/Makefile: Fix eln BUILD_TARGET (Prarit Bhargava)
+- redhat/Makefile: Set BUILD_TARGET for dist-brew (Prarit Bhargava)
+- kernel.spec.template: update (s390x) expoline.o path (Joe Lawrence)
+Resolves: 
+
 * Tue Jul 19 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc7.ca85855bdcae.53]
 - arm64: config: Enable DRM_V3D (Nicolas Saenz Julienne)
 - ARM: configs: Enable DRM_V3D (Peter Robinson)
