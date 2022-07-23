@@ -1,3 +1,11 @@
+* Sat Jul 23 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc7.70664fc10c0d.56]
+- .gitlab-ci.yaml: Add test for dist-get-buildreqs target (Prarit Bhargava)
+- redhat/docs: Add information on build dependencies (Prarit Bhargava)
+- redhat/Makefile: Add better pass message for dist-get-buildreqs (Prarit Bhargava)
+- redhat/Makefile: Provide a better message for system-sb-certs (Prarit Bhargava)
+- redhat/Makefile: Change dist-buildreq-check to a non-blocking target (Prarit Bhargava)
+Resolves: 
+
 * Fri Jul 22 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc7.68e77ffbfd06.55]
 - create-data: Parallelize spec file data (Prarit Bhargava)
 - create-data.sh: Store SOURCES Makefile variable (Prarit Bhargava)
