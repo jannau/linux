@@ -23,6 +23,7 @@
 #include <linux/usb/typec.h>
 #include <linux/usb/typec_altmode.h>
 #include <linux/usb/typec_dp.h>
+#include <linux/usb/typec_mux.h>
 #include <linux/usb/typec_tbt.h>
 
 #define rcdev_to_apple_atcphy(_rcdev) \
@@ -822,7 +823,7 @@ static int atcphy_probe_rcdev(struct apple_atcphy *atcphy)
 	return devm_reset_controller_register(atcphy->dev, &atcphy->rcdev);
 }
 
-static int atcphy_sw_set(struct typec_switch *sw,
+static int atcphy_sw_set(struct typec_switch_dev *sw,
 			 enum typec_orientation orientation)
 {
 	struct apple_atcphy *atcphy = typec_switch_get_drvdata(sw);
@@ -857,7 +858,7 @@ static int atcphy_probe_switch(struct apple_atcphy *atcphy)
 	return PTR_ERR_OR_ZERO(typec_switch_register(atcphy->dev, &sw_desc));
 }
 
-static int atcphy_mux_set(struct typec_mux *mux, struct typec_mux_state *state)
+static int atcphy_mux_set(struct typec_mux_dev *mux, struct typec_mux_state *state)
 {
 	struct apple_atcphy *atcphy = typec_mux_get_drvdata(mux);
 	unsigned long mode = state->mode;
