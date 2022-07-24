@@ -1697,6 +1697,20 @@ static struct extcon_dev *dwc3_get_extcon(struct dwc3 *dwc)
 	}
 	of_node_put(np_phy);
 
+	/*
+	 * extcon_find_edev_by_node() can not be used to test for the non-presence of
+	 * extcon devices. It will just return -EPROBE_DEFER. In this case check for
+	 * "usb-role-switch" if role switching is configured and assume no extcon
+	 * device exists.
+	 */
+	if (IS_ERR(edev) && PTR_ERR(edev) == -EPROBE_DEFER) {
+		if (IS_ENABLED(CONFIG_USB_ROLE_SWITCH) &&
+		    device_property_read_bool(dwc->dev, "usb-role-switch"))
+		{
+			return NULL;
+		}
+	}
+
 	return edev;
 }
 
