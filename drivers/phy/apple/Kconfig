@@ -4,6 +4,7 @@ config PHY_APPLE_ATC
 	depends on ARCH_APPLE || COMPILE_TEST
 	default ARCH_APPLE
 	select GENERIC_PHY
+	select TYPEC
 	help
 	  Enable this to add support for the Apple Type-C PHY, switch
 	  and mux found in Apple SoCs such as the M1.
