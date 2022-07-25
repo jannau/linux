@@ -1,3 +1,7 @@
+* Mon Jul 25 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc8.58]
+- fedora: armv7: enable MMC_STM32_SDMMC (Peter Robinson)
+Resolves: 
+
 * Sat Jul 23 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc7.70664fc10c0d.56]
 - .gitlab-ci.yaml: Add test for dist-get-buildreqs target (Prarit Bhargava)
 - redhat/docs: Add information on build dependencies (Prarit Bhargava)
