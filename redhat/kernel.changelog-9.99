@@ -1,3 +1,7 @@
+* Wed Jul 27 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc8.39c3c396f813.59]
+- redhat: Enable CONFIG_LZ4_COMPRESS on Fedora (Prarit Bhargava)
+Resolves: 
+
 * Mon Jul 25 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc8.58]
 - fedora: armv7: enable MMC_STM32_SDMMC (Peter Robinson)
 Resolves: 
