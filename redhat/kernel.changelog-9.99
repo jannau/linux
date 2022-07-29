@@ -1,3 +1,8 @@
+* Fri Jul 29 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc8.6e2c0490769e.61]
+- omit unused Provides (Dan Horák)
+- self-test: Add test for DIST=".eln" (Prarit Bhargava)
+Resolves: 
+
 * Wed Jul 27 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc8.39c3c396f813.59]
 - redhat: Enable CONFIG_LZ4_COMPRESS on Fedora (Prarit Bhargava)
 Resolves: 
