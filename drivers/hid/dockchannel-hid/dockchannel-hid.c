@@ -616,8 +616,13 @@ static void dchid_create_interface_work(struct work_struct *ws)
 	} else if (!strcmp(iface->name, "keyboard")) {
 		hid->type = HID_TYPE_SPI_KEYBOARD;
 
-		/* These country codes match what earlier Apple HID keyboards did */
-		switch (dchid->device_id.keyboard_type) {
+		/*
+		 * These country codes match what earlier Apple HID keyboards did.
+		 * Apple seems to allocate keyboard IDs in groups of 3 (for the 3
+		 * layout groups), hence the % 3.
+		 */
+		dev_info(iface->dchid->dev, "Keyboard type: %d\n", dchid->device_id.keyboard_type);
+		switch (dchid->device_id.keyboard_type % 3) {
 		case KEYBOARD_TYPE_ANSI:
 			hid->country = 33; // US-English
 			break;
