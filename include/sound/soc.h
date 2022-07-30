@@ -916,6 +916,9 @@ struct snd_soc_card {
 	int (*late_probe)(struct snd_soc_card *card);
 	int (*remove)(struct snd_soc_card *card);
 
+	int (*filter_controls)(struct snd_soc_card *card,
+			struct snd_kcontrol *kcontrol);
+
 	/* the pre and post PM functions are used to do any PM work before and
 	 * after the codec and DAI's do any PM work. */
 	int (*suspend_pre)(struct snd_soc_card *card);
@@ -1098,6 +1101,8 @@ struct snd_soc_pcm_runtime {
 #define asoc_rtd_to_codec(rtd, n) (rtd)->dais[n + (rtd)->num_cpus]
 #define asoc_substream_to_rtd(substream) \
 	(struct snd_soc_pcm_runtime *)snd_pcm_substream_chip(substream)
+#define asoc_pcm_to_rtd(pcm) \
+	((struct snd_soc_pcm_runtime *)pcm->private_data)
 
 #define for_each_rtd_components(rtd, i, component)			\
 	for ((i) = 0, component = NULL;					\

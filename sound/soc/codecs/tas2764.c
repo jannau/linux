@@ -16,6 +16,7 @@
 #include <linux/regmap.h>
 #include <linux/of.h>
 #include <linux/of_gpio.h>
+#include <linux/of_device.h>
 #include <linux/slab.h>
 #include <sound/soc.h>
 #include <sound/pcm.h>
@@ -25,13 +26,20 @@
 
 #include "tas2764.h"
 
+enum tas2764_devid {
+	DEVID_TAS2764  = 0,
+	DEVID_SN012776 = 1
+};
+
 struct tas2764_priv {
 	struct snd_soc_component *component;
 	struct gpio_desc *reset_gpio;
 	struct gpio_desc *sdz_gpio;
 	struct regmap *regmap;
 	struct device *dev;
-	
+
+	enum tas2764_devid devid;
+
 	int v_sense_slot;
 	int i_sense_slot;
 };
@@ -50,27 +58,47 @@ static void tas2764_reset(struct tas2764_priv *tas2764)
 	usleep_range(1000, 2000);
 }
 
+static int tas2764_set_power(struct tas2764_priv *tas2764, u8 mode)
+{
+	int ret;
+
+	// TODO: Does this only affect the SN012776 variant?
+	if (tas2764->devid == DEVID_SN012776 && mode == TAS2764_PWR_CTRL_MUTE) {
+		ret = snd_soc_component_update_bits(tas2764->component,
+						    TAS2764_PWR_CTRL,
+						    TAS2764_PWR_CTRL_MASK,
+						    TAS2764_PWR_CTRL_ACTIVE);
+		if (ret < 0)
+			return ret;
+	}
+
+	ret = snd_soc_component_update_bits(tas2764->component,
+					    TAS2764_PWR_CTRL,
+					    TAS2764_PWR_CTRL_MASK,
+					    mode);
+	if (ret < 0)
+		return ret;
+
+	return 0;
+}
+
+
 static int tas2764_set_bias_level(struct snd_soc_component *component,
 				 enum snd_soc_bias_level level)
 {
 	struct tas2764_priv *tas2764 = snd_soc_component_get_drvdata(component);
+	u8 mode;
 
 	switch (level) {
 	case SND_SOC_BIAS_ON:
-		snd_soc_component_update_bits(component, TAS2764_PWR_CTRL,
-					      TAS2764_PWR_CTRL_MASK,
-					      TAS2764_PWR_CTRL_ACTIVE);
+		mode = TAS2764_PWR_CTRL_ACTIVE;
 		break;
 	case SND_SOC_BIAS_STANDBY:
 	case SND_SOC_BIAS_PREPARE:
-		snd_soc_component_update_bits(component, TAS2764_PWR_CTRL,
-					      TAS2764_PWR_CTRL_MASK,
-					      TAS2764_PWR_CTRL_MUTE);
+		mode = TAS2764_PWR_CTRL_MUTE;
 		break;
 	case SND_SOC_BIAS_OFF:
-		snd_soc_component_update_bits(component, TAS2764_PWR_CTRL,
-					      TAS2764_PWR_CTRL_MASK,
-					      TAS2764_PWR_CTRL_SHUTDOWN);
+		mode = TAS2764_PWR_CTRL_SHUTDOWN;
 		break;
 
 	default:
@@ -79,7 +107,7 @@ static int tas2764_set_bias_level(struct snd_soc_component *component,
 		return -EINVAL;
 	}
 
-	return 0;
+	return tas2764_set_power(tas2764, mode);
 }
 
 #ifdef CONFIG_PM
@@ -88,10 +116,7 @@ static int tas2764_codec_suspend(struct snd_soc_component *component)
 	struct tas2764_priv *tas2764 = snd_soc_component_get_drvdata(component);
 	int ret;
 
-	ret = snd_soc_component_update_bits(component, TAS2764_PWR_CTRL,
-					    TAS2764_PWR_CTRL_MASK,
-					    TAS2764_PWR_CTRL_SHUTDOWN);
-
+	ret = tas2764_set_power(tas2764, TAS2764_PWR_CTRL_SHUTDOWN);
 	if (ret < 0)
 		return ret;
 
@@ -114,10 +139,7 @@ static int tas2764_codec_resume(struct snd_soc_component *component)
 		usleep_range(1000, 2000);
 	}
 
-	ret = snd_soc_component_update_bits(component, TAS2764_PWR_CTRL,
-					    TAS2764_PWR_CTRL_MASK,
-					    TAS2764_PWR_CTRL_ACTIVE);
-
+	ret = tas2764_set_power(tas2764, TAS2764_PWR_CTRL_ACTIVE);
 	if (ret < 0)
 		return ret;
 
@@ -146,28 +168,21 @@ static int tas2764_dac_event(struct snd_soc_dapm_widget *w,
 {
 	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
 	struct tas2764_priv *tas2764 = snd_soc_component_get_drvdata(component);
-	int ret;
+	u8 mode;
 
 	switch (event) {
 	case SND_SOC_DAPM_POST_PMU:
-		ret = snd_soc_component_update_bits(component, TAS2764_PWR_CTRL,
-						    TAS2764_PWR_CTRL_MASK,
-						    TAS2764_PWR_CTRL_MUTE);
+		mode = TAS2764_PWR_CTRL_MUTE;
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
-		ret = snd_soc_component_update_bits(component, TAS2764_PWR_CTRL,
-						    TAS2764_PWR_CTRL_MASK,
-						    TAS2764_PWR_CTRL_SHUTDOWN);
+		mode = TAS2764_PWR_CTRL_SHUTDOWN;
 		break;
 	default:
 		dev_err(tas2764->dev, "Unsupported event\n");
 		return -EINVAL;
 	}
 
-	if (ret < 0)
-		return ret;
-
-	return 0;
+	return tas2764_set_power(tas2764, mode);
 }
 
 static const struct snd_kcontrol_new isense_switch =
@@ -502,10 +517,16 @@ static struct snd_soc_dai_driver tas2764_dai_driver[] = {
 	},
 };
 
+static uint8_t sn012776_bop_presets[] = {
+	0x01, 0x32, 0x02, 0x22, 0x83, 0x2d, 0x80, 0x02, 0x06,
+	0x32, 0x46, 0x30, 0x02, 0x06, 0x38, 0x40, 0x30, 0x02,
+	0x06, 0x3e, 0x37, 0x30, 0xff, 0xe6
+};
+
 static int tas2764_codec_probe(struct snd_soc_component *component)
 {
 	struct tas2764_priv *tas2764 = snd_soc_component_get_drvdata(component);
-	int ret;
+	int ret, i;
 
 	tas2764->component = component;
 
@@ -531,6 +552,23 @@ static int tas2764_codec_probe(struct snd_soc_component *component)
 					    TAS2764_PWR_CTRL_MUTE);
 	if (ret < 0)
 		return ret;
+
+	if (tas2764->devid == DEVID_SN012776) {
+		ret = snd_soc_component_update_bits(component, TAS2764_PWR_CTRL,
+					TAS2764_PWR_CTRL_BOP_SRC,
+					TAS2764_PWR_CTRL_BOP_SRC);
+		if (ret < 0)
+			return ret;
+
+		for (i = 0; i < ARRAY_SIZE(sn012776_bop_presets); i++) {
+			ret = snd_soc_component_write(component,
+						TAS2764_BOP_CFG0 + i,
+						sn012776_bop_presets[i]);
+
+			if (ret < 0)
+				return ret;
+		}
+	}
 
 	return 0;
 }
@@ -631,15 +669,26 @@ static int tas2764_parse_dt(struct device *dev, struct tas2764_priv *tas2764)
 	return 0;
 }
 
+static const struct of_device_id tas2764_of_match[];
+
 static int tas2764_i2c_probe(struct i2c_client *client)
 {
 	struct tas2764_priv *tas2764;
+	const struct of_device_id *of_id = NULL;
 	int result;
 
 	tas2764 = devm_kzalloc(&client->dev, sizeof(struct tas2764_priv),
 			       GFP_KERNEL);
 	if (!tas2764)
 		return -ENOMEM;
+
+	if (client->dev.of_node)
+		of_id = of_match_device(tas2764_of_match, &client->dev);
+
+	if (of_id)
+		tas2764->devid = (enum tas2764_devid) of_id->data;
+	else
+		tas2764->devid = DEVID_TAS2764;
 
 	tas2764->dev = &client->dev;
 	i2c_set_clientdata(client, tas2764);
@@ -674,13 +723,12 @@ static const struct i2c_device_id tas2764_i2c_id[] = {
 };
 MODULE_DEVICE_TABLE(i2c, tas2764_i2c_id);
 
-#if defined(CONFIG_OF)
 static const struct of_device_id tas2764_of_match[] = {
-	{ .compatible = "ti,tas2764" },
+	{ .compatible = "ti,tas2764",  .data = (void*) DEVID_TAS2764 },
+	{ .compatible = "ti,sn012776", .data = (void*) DEVID_SN012776 },
 	{},
 };
 MODULE_DEVICE_TABLE(of, tas2764_of_match);
-#endif
 
 static struct i2c_driver tas2764_i2c_driver = {
 	.driver = {
