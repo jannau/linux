@@ -1,3 +1,13 @@
+* Tue Aug 02 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-65]
+- redhat/configs: Fix rm warning on config warnings (Eric Chanudet)
+- redhat/Makefile: Deprecate PREBUILD_GIT_ONLY variable (Prarit Bhargava)
+- redhat/Makefile: Deprecate SINGLE_TARBALL variable (Prarit Bhargava)
+- redhat/Makefile: Deprecate GIT variable (Prarit Bhargava)
+- Update CONFIG_LOCKDEP_CHAINS_BITS to 18 (cmurf)
+- Add new FIPS module name and version configs (Vladis Dronov)
+- redhat/configs/fedora: Make PowerPC's nx-gzip buildin (Jakub Čajka)
+Resolves: 
+
 * Fri Jul 29 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.19.0-0.rc8.6e2c0490769e.61]
 - omit unused Provides (Dan Horák)
 - self-test: Add test for DIST=".eln" (Prarit Bhargava)
