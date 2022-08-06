@@ -1,3 +1,7 @@
+* Sat Aug 06 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.20.0-0.rc0.6614a3c3164a.5]
+- redhat/configs: Sync up Retbleed configs with centos-stream (Waiman Long)
+Resolves: 
+
 * Fri Aug 05 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.20.0-0.rc0.b44f2fd87919.3]
 - Change CRYPTO_BLAKE2S_X86 from m to y (Justin M. Forbes)
 - Leave CONFIG_ACPI_VIDEO on for x86 only (Justin M. Forbes)
