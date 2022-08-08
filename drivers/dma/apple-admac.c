@@ -12,6 +12,7 @@
 #include <linux/module.h>
 #include <linux/of_device.h>
 #include <linux/of_dma.h>
+#include <linux/reset.h>
 #include <linux/interrupt.h>
 #include <linux/spinlock.h>
 
@@ -95,6 +96,7 @@ struct admac_data {
 	struct dma_device dma;
 	struct device *dev;
 	__iomem void *base;
+	struct reset_control *rstc;
 
 	int irq_index;
 	int nchannels;
@@ -736,6 +738,12 @@ static int admac_probe(struct platform_device *pdev)
 		return dev_err_probe(&pdev->dev, PTR_ERR(ad->base),
 				     "unable to obtain MMIO resource\n");
 
+	ad->rstc = devm_reset_control_get_shared(&pdev->dev, NULL);
+	if (IS_ERR(ad->rstc)) {
+		dev_dbg(&pdev->dev, "unable to obtain reset control: %pe\n", ad->rstc);
+		ad->rstc = NULL;
+	}
+
 	dma = &ad->dma;
 
 	dma_cap_set(DMA_PRIVATE, dma->cap_mask);
@@ -774,13 +782,18 @@ static int admac_probe(struct platform_device *pdev)
 		tasklet_setup(&adchan->tasklet, admac_chan_tasklet);
 	}
 
+	reset_control_deassert(ad->rstc);
+
 	err = dma_async_device_register(&ad->dma);
-	if (err)
+	if (err) {
+		reset_control_assert(ad->rstc);
 		return dev_err_probe(&pdev->dev, err, "failed to register DMA device\n");
+	}
 
 	err = of_dma_controller_register(pdev->dev.of_node, admac_dma_of_xlate, ad);
 	if (err) {
 		dma_async_device_unregister(&ad->dma);
+		reset_control_assert(ad->rstc);
 		return dev_err_probe(&pdev->dev, err, "failed to register with OF\n");
 	}
 
@@ -793,6 +806,7 @@ static int admac_remove(struct platform_device *pdev)
 
 	of_dma_controller_free(pdev->dev.of_node);
 	dma_async_device_unregister(&ad->dma);
+	reset_control_assert(ad->rstc);
 
 	return 0;
 }
