@@ -1,3 +1,11 @@
+* Fri Aug 12 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.20.0-0.rc0.3bc1bc0b59d0.8]
+- Add python3-setuptools buildreq for perf (Justin M. Forbes)
+- Add cros_kunit to mod-internal.list (Justin M. Forbes)
+- Add new tests to mod-internal.list (Justin M. Forbes)
+- Turn off some Kunit tests in pending (Justin M. Forbes)
+- Clean up a mismatch in Fedora configs (Justin M. Forbes)
+Resolves: 
+
 * Sat Aug 06 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.20.0-0.rc0.6614a3c3164a.5]
 - redhat/configs: Sync up Retbleed configs with centos-stream (Waiman Long)
 Resolves: 
