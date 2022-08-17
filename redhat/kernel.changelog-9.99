@@ -1,3 +1,10 @@
+* Wed Aug 17 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc1.3cc40a443a04.13]
+- redhat/Makefile: Clean linux tarballs (Prarit Bhargava)
+- redhat/configs: Cleanup CONFIG_ACPI_AGDI (Prarit Bhargava)
+- spec: add cpupower daemon reload on install/upgrade (Jarod Wilson)
+- redhat: properly handle binary files in patches (Ondrej Mosnacek)
+Resolves: 
+
 * Mon Aug 15 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc1.12]
 - Add python3-setuptools buildreq for perf (Justin M. Forbes)
 - Add cros_kunit to mod-internal.list (Justin M. Forbes)
