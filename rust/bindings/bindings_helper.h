@@ -11,6 +11,8 @@
 #include <linux/ktime.h>
 #include <linux/refcount.h>
 #include <linux/slab.h>
+#include <linux/soc/apple/rtkit.h>
+#include <linux/sysctl.h>
 #include <linux/timekeeping.h>
 #include <linux/xarray.h>
 #include <uapi/asm-generic/ioctl.h>
