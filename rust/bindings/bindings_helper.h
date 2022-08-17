@@ -32,6 +32,7 @@
 #include <linux/siphash.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
+#include <linux/soc/apple/rtkit.h>
 #include <linux/timekeeping.h>
 #include <linux/wait.h>
 #include <linux/workqueue.h>
