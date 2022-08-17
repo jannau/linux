@@ -20,6 +20,7 @@
 #include <linux/wait.h>
 #include <linux/siphash.h>
 #include <linux/sched.h>
+#include <linux/soc/apple/rtkit.h>
 #include <linux/timekeeping.h>
 #include <linux/workqueue.h>
 #include <linux/xarray.h>

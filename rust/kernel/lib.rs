@@ -48,6 +48,7 @@ pub mod net;
 pub mod prelude;
 pub mod print;
 pub mod siphash;
+pub mod soc;
 mod static_assert;
 #[doc(hidden)]
 pub mod std_vendor;
