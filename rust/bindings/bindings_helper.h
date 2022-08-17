@@ -12,6 +12,7 @@
 #include <linux/refcount.h>
 #include <linux/wait.h>
 #include <linux/sched.h>
+#include <linux/soc/apple/rtkit.h>
 #include <linux/timekeeping.h>
 #include <linux/xarray.h>
 
