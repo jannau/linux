@@ -153,6 +153,7 @@ pub mod security;
 pub mod seq_file;
 pub mod sizes;
 pub mod slice;
+pub mod soc;
 mod static_assert;
 #[doc(hidden)]
 pub mod std_vendor;
