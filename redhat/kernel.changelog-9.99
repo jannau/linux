@@ -1,3 +1,7 @@
+* Thu Aug 18 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc1.3b06a2755758.14]
+- redhat: configs: Disable FIE on arm (Jeremy Linton) [2012226]
+Resolves: rhbz#2012226
+
 * Wed Aug 17 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc1.3cc40a443a04.13]
 - redhat/Makefile: Clean linux tarballs (Prarit Bhargava)
 - redhat/configs: Cleanup CONFIG_ACPI_AGDI (Prarit Bhargava)
