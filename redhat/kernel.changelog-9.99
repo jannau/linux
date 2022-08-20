@@ -1,3 +1,17 @@
+* Sat Aug 20 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc1.50cd95ac4654.17]
+- redhat/docs: Add dist-brew BUILD_FLAGS information (Prarit Bhargava)
+- redhat: change the changelog item for upstream merges (Herton R. Krzesinski)
+- redhat: fix dist-release build number test (Herton R. Krzesinski)
+- redhat: fix release number bump when dist-release-changed runs (Herton R. Krzesinski)
+- redhat: use new genlog.sh script to detect changes for dist-release (Herton R. Krzesinski)
+- redhat: move changelog addition to the spec file back into genspec.sh (Herton R. Krzesinski)
+- redhat: always add a rebase entry when ark merges from upstream (Herton R. Krzesinski)
+- redhat: drop merge ark patches hack (Herton R. Krzesinski)
+- redhat: don't hardcode temporary changelog file (Herton R. Krzesinski)
+- redhat: split changelog generation from genspec.sh (Herton R. Krzesinski)
+- Linux v6.0.0-0.rc1.50cd95ac4654
+Resolves: 
+
 * Thu Aug 18 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc1.3b06a2755758.14]
 - redhat: configs: Disable FIE on arm (Jeremy Linton) [2012226]
 Resolves: rhbz#2012226
