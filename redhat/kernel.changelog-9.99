@@ -1,3 +1,7 @@
+* Sun Aug 21 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc1.15b3f48a4339.18]
+- Linux v6.0.0-0.rc1.15b3f48a4339
+Resolves: 
+
 * Sat Aug 20 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc1.50cd95ac4654.17]
 - redhat/docs: Add dist-brew BUILD_FLAGS information (Prarit Bhargava)
 - redhat: change the changelog item for upstream merges (Herton R. Krzesinski)
