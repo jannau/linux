@@ -1,3 +1,7 @@
+* Sun Aug 28 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc2.10d4879f9ef0.24]
+- Linux v6.0.0-0.rc2.10d4879f9ef0
+Resolves: 
+
 * Sat Aug 27 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc2.e022620b5d05.23]
 - Fedora: arm changes for 6.0, part 1, with some ACPI (Peter Robinson)
 - redhat/self-test: Fix shellcheck errors (Prarit Bhargava)
