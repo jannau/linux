@@ -9,7 +9,7 @@ int renesas_xhci_check_request_fw(struct pci_dev *dev,
 				  const struct pci_device_id *id);
 
 #else
-static int renesas_xhci_check_request_fw(struct pci_dev *dev,
+static inline int renesas_xhci_check_request_fw(struct pci_dev *dev,
 					 const struct pci_device_id *id)
 {
 	return 0;
