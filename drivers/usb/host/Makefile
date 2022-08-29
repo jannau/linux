@@ -70,6 +70,7 @@ obj-$(CONFIG_USB_XHCI_HCD)	+= xhci-hcd.o
 obj-$(CONFIG_USB_XHCI_PCI)	+= xhci-pci.o
 xhci-pci-y			+= xhci-pci-core.o
 xhci-pci-$(CONFIG_USB_XHCI_PCI_RENESAS)	+= xhci-pci-renesas.o
+xhci-pci-$(CONFIG_USB_XHCI_PCI_ASMEDIA)	+= xhci-pci-asmedia.o
 obj-$(CONFIG_USB_XHCI_PLATFORM) += xhci-plat-hcd.o
 obj-$(CONFIG_USB_XHCI_HISTB)	+= xhci-histb.o
 obj-$(CONFIG_USB_XHCI_RCAR)	+= xhci-rcar-hcd.o
