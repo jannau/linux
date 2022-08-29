@@ -1,3 +1,7 @@
+* Mon Aug 29 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc3.25]
+- Linux v6.0.0-0.rc3
+Resolves: 
+
 * Sun Aug 28 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc2.10d4879f9ef0.24]
 - Linux v6.0.0-0.rc2.10d4879f9ef0
 Resolves: 
