@@ -213,7 +213,7 @@
 / {
 	sound {
 		compatible = "apple,j375-macaudio", "apple,macaudio";
-		model = "Mac Studio J375 integrated audio";
+		model = "Mac Studio J375";
 
 		dai-link@0 {
 			link-name = "Speaker";
