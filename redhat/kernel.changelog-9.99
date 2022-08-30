@@ -1,3 +1,13 @@
+* Tue Aug 30 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc3.dcf8e5633e2e.26]
+- Add cpumask_kunit to mod-internal.list (Justin M. Forbes)
+- config - consolidate disabled MARCH options on s390x (Dan Horák)
+- move the baseline arch to z13 for s390x in F-37+ (Dan Horák)
+- redhat/scripts/rh-dist-git.sh: Fix outdated cvs reference (Prarit Bhargava)
+- redhat/scripts/expand_srpm.sh: Use Makefile variables (Prarit Bhargava)
+- redhat/scripts/clone_tree.sh: Use Makefile variables (Prarit Bhargava)
+- Linux v6.0.0-0.rc3.dcf8e5633e2e
+Resolves: 
+
 * Mon Aug 29 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc3.25]
 - Linux v6.0.0-0.rc3
 Resolves: 
