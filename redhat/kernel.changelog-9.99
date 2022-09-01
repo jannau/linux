@@ -1,3 +1,9 @@
+* Thu Sep 01 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc3.c5e4d5e99162.27]
+- redhat/Makefile: Always set UPSTREAM (Prarit Bhargava)
+- redhat/configs: aarch64: Turn on Apple Silicon configs for Fedora (Eric Curtin)
+- Linux v6.0.0-0.rc3.c5e4d5e99162
+Resolves: 
+
 * Tue Aug 30 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc3.dcf8e5633e2e.26]
 - Add cpumask_kunit to mod-internal.list (Justin M. Forbes)
 - config - consolidate disabled MARCH options on s390x (Dan Horák)
