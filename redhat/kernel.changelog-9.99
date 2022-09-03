@@ -1,3 +1,9 @@
+* Sat Sep 03 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc3.d895ec7938c4.29]
+- Add cpumask_kunit to mod-internal.list (Patrick Talbert)
+- redhat/configs: enable UINPUT on aarch64 (Benjamin Tissoires)
+- Linux v6.0.0-0.rc3.d895ec7938c4
+Resolves: 
+
 * Fri Sep 02 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc3.42e66b1cc3a0.28]
 - Fedora 6.0 configs part 1 (Justin M. Forbes)
 - Linux v6.0.0-0.rc3.42e66b1cc3a0
