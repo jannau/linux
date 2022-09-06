@@ -1096,7 +1096,6 @@ static struct snd_soc_dai_driver cs42l42_dai = {
 			.formats = CS42L42_FORMATS,
 		},
 		.symmetric_rate = 1,
-		.symmetric_sample_bits = 1,
 		.ops = &cs42l42_ops,
 };
 
