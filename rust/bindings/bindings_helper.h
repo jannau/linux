@@ -8,6 +8,7 @@
 
 #include <linux/delay.h>
 #include <linux/device.h>
+#include <linux/dma-mapping.h>
 #include <linux/io-pgtable.h>
 #include <linux/ktime.h>
 #include <linux/of.h>
