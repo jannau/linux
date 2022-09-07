@@ -438,6 +438,12 @@ int rust_helper_dma_set_mask_and_coherent(struct device *dev, u64 mask)
 }
 EXPORT_SYMBOL_GPL(rust_helper_dma_set_mask_and_coherent);
 
+resource_size_t rust_helper_resource_size(const struct resource *res)
+{
+	return resource_size(res);
+}
+EXPORT_SYMBOL_GPL(rust_helper_resource_size);
+
 /*
  * `bindgen` binds the C `size_t` type as the Rust `usize` type, so we can
  * use it in contexts where Rust expects a `usize` like slice (array) indices.
