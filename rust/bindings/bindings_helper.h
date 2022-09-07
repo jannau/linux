@@ -19,6 +19,7 @@
 #include <linux/ethtool.h>
 #include <linux/firmware.h>
 #include <linux/fs.h>
+#include <linux/io-pgtable.h>
 #include <linux/jiffies.h>
 #include <linux/ktime.h>
 #include <linux/lockdep.h>
