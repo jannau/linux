@@ -24,6 +24,7 @@
 #include <linux/bug.h>
 #include <linux/build_bug.h>
 #include <linux/device.h>
+#include <linux/dma-mapping.h>
 #include <linux/err.h>
 #include <linux/errname.h>
 #include <linux/instruction_pointer.h>
@@ -424,6 +425,12 @@ struct device_node *rust_helper_of_parse_phandle(const struct device_node *np,
 	return of_parse_phandle(np, phandle_name, index);
 }
 EXPORT_SYMBOL_GPL(rust_helper_of_parse_phandle);
+
+int rust_helper_dma_set_mask_and_coherent(struct device *dev, u64 mask)
+{
+	return dma_set_mask_and_coherent(dev, mask);
+}
+EXPORT_SYMBOL_GPL(rust_helper_dma_set_mask_and_coherent);
 
 /*
  * `bindgen` binds the C `size_t` type as the Rust `usize` type, so we can
