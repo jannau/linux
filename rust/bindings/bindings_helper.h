@@ -13,6 +13,7 @@
 #include <linux/mdio.h>
 #include <linux/phy.h>
 #include <linux/slab.h>
+#include <linux/io-pgtable.h>
 #include <linux/ktime.h>
 #include <linux/lockdep.h>
 #include <linux/refcount.h>
