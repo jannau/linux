@@ -216,6 +216,12 @@ impl Device {
         unsafe { container_of!(self.dev.as_raw(), bindings::platform_device, dev) }.cast_mut()
     }
 
+    /// Sets the DMA masks (normal and coherent) for a platform device.
+    pub fn set_dma_masks(&mut self, mask: u64) -> Result {
+        // SAFETY: `self.ptr` is valid by the type invariant.
+        to_result(unsafe { bindings::dma_set_mask_and_coherent(&mut (*self.ptr).dev, mask) })
+    }
+
     /// Gets a system resources of a platform device.
     pub fn get_resource(&mut self, rtype: IoResource, num: usize) -> Result<Resource> {
         // SAFETY: `self.ptr` is valid by the type invariant.
