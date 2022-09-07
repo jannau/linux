@@ -16,6 +16,7 @@
 #include "err.c"
 #include "io.c"
 #include "iomem.c"
+#include "ioport.c"
 #include "kunit.c"
 #include "lockdep.c"
 #include "mutex.c"
