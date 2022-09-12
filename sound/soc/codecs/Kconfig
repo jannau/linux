@@ -72,6 +72,7 @@ config SND_SOC_ALL_CODECS
 	imply SND_SOC_CS42L52
 	imply SND_SOC_CS42L56
 	imply SND_SOC_CS42L73
+	imply SND_SOC_CS42L84
 	imply SND_SOC_CS4234
 	imply SND_SOC_CS4265
 	imply SND_SOC_CS4270
@@ -712,6 +713,10 @@ config SND_SOC_CS42L56
 
 config SND_SOC_CS42L73
 	tristate "Cirrus Logic CS42L73 CODEC"
+	depends on I2C
+
+config SND_SOC_CS42L84
+	tristate "Cirrus Logic CS42L84 CODEC"
 	depends on I2C
 
 config SND_SOC_CS4234

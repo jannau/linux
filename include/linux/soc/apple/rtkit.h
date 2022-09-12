@@ -135,21 +135,15 @@ int apple_rtkit_send_message(struct apple_rtkit *rtk, u8 ep, u64 message,
 			     struct completion *completion, bool atomic);
 
 /*
- * Send a message to the given endpoint and wait until it has been submitted
- * to the hardware FIFO.
- * Will return zero on success and a negative error code on failure
- * (e.g. -ETIME when the message couldn't be written within the given
- * timeout)
+ * Process incoming messages in atomic context.
+ * This only guarantees that messages arrive as far as the recv_message_early
+ * callback; drivers expecting to handle incoming messages synchronously
+ * by calling this function must do it that way.
+ * Will return 1 if some data was processed, 0 if none was, or a
+ * negative error code on failure.
  *
  * @rtk:            RTKit reference
- * @ep:             target endpoint
- * @message:        message to be sent
- * @timeout:        timeout in milliseconds to allow the message transmission
- *                  to be completed
- * @atomic:         if set to true this function can be called from atomic
- *                  context.
  */
-int apple_rtkit_send_message_wait(struct apple_rtkit *rtk, u8 ep, u64 message,
-				  unsigned long timeout, bool atomic);
+int apple_rtkit_poll(struct apple_rtkit *rtk);
 
 #endif /* _LINUX_APPLE_RTKIT_H_ */

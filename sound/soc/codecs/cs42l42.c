@@ -1096,7 +1096,6 @@ static struct snd_soc_dai_driver cs42l42_dai = {
 			.formats = CS42L42_FORMATS,
 		},
 		.symmetric_rate = 1,
-		.symmetric_sample_bits = 1,
 		.ops = &cs42l42_ops,
 };
 
@@ -1624,7 +1623,7 @@ static irqreturn_t cs42l42_irq_thread(int irq, void *data)
 		return IRQ_NONE;
 	}
 
-	/* Read sticky registers to clear interurpt */
+	/* Read sticky registers to clear interrupt */
 	for (i = 0; i < ARRAY_SIZE(stickies); i++) {
 		regmap_read(cs42l42->regmap, irq_params_table[i].status_addr,
 				&(stickies[i]));
@@ -2272,13 +2271,10 @@ static int cs42l42_i2c_probe(struct i2c_client *i2c_client)
 		goto err_disable;
 	}
 
-	if (devid != CS42L42_CHIP_ID) {
-		ret = -ENODEV;
-		dev_err(&i2c_client->dev,
+	if (devid != CS42L42_CHIP_ID)
+		dev_warn(&i2c_client->dev,
 			"CS42L42 Device ID (%X). Expected %X\n",
 			devid, CS42L42_CHIP_ID);
-		goto err_disable;
-	}
 
 	ret = regmap_read(cs42l42->regmap, CS42L42_REVID, &reg);
 	if (ret < 0) {

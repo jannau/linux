@@ -655,7 +655,7 @@ static void set_work_pool_and_clear_pending(struct work_struct *work,
 {
 	/*
 	 * The following wmb is paired with the implied mb in
-	 * test_and_set_bit(PENDING) and ensures all updates to @work made
+	 * atomic_long_fetch_or(PENDING) and ensures all updates to @work made
 	 * here are visible to and precede any updates by the next PENDING
 	 * owner.
 	 */
@@ -673,7 +673,7 @@ static void set_work_pool_and_clear_pending(struct work_struct *work,
 	 *
 	 * 1  STORE event_indicated
 	 * 2  queue_work_on() {
-	 * 3    test_and_set_bit(PENDING)
+	 * 3    atomic_long_fetch_or(PENDING)
 	 * 4 }                             set_..._and_clear_pending() {
 	 * 5                                 set_work_data() # clear bit
 	 * 6                                 smp_mb()
@@ -688,6 +688,15 @@ static void set_work_pool_and_clear_pending(struct work_struct *work,
 	 * finish the queued @work.  Meanwhile CPU#1 does not see
 	 * event_indicated is set, because speculative LOAD was executed
 	 * before actual STORE.
+	 *
+	 * Line 3 requires barrier semantics, even on failure. If it were
+	 * implemented with test_and_set_bit() (which does not have
+	 * barrier semantics on failure), that would allow the STORE to
+	 * be reordered after it, and it could be observed by CPU#1 after
+	 * it has executed all the way through to line 8 (and cleared the
+	 * PENDING bit in the process). At this point, CPU#0 would not have
+	 * queued new work (having observed PENDING set), and CPU#1 would not
+	 * have observed the event_indicated store in the last work execution.
 	 */
 	smp_mb();
 }
@@ -1276,8 +1285,9 @@ static int try_to_grab_pending(struct work_struct *work, bool is_dwork,
 			return 1;
 	}
 
-	/* try to claim PENDING the normal way */
-	if (!test_and_set_bit(WORK_STRUCT_PENDING_BIT, work_data_bits(work)))
+	/* try to claim PENDING the normal way, see queue_work_on() */
+	if (!(atomic_long_fetch_or(WORK_STRUCT_PENDING, &work->data)
+			& WORK_STRUCT_PENDING))
 		return 0;
 
 	rcu_read_lock();
@@ -1541,7 +1551,14 @@ bool queue_work_on(int cpu, struct workqueue_struct *wq,
 
 	local_irq_save(flags);
 
-	if (!test_and_set_bit(WORK_STRUCT_PENDING_BIT, work_data_bits(work))) {
+	/*
+	 * We need unconditional barrier semantics, even on failure,
+	 * to avoid racing set_work_pool_and_clear_pending(). Hence,
+	 * this has to be atomic_long_fetch_or(), not test_and_set_bit()
+	 * which elides the barrier on failure.
+	 */
+	if (!(atomic_long_fetch_or(WORK_STRUCT_PENDING, &work->data)
+			& WORK_STRUCT_PENDING)) {
 		__queue_work(cpu, wq, work);
 		ret = true;
 	}
@@ -1623,7 +1640,9 @@ bool queue_work_node(int node, struct workqueue_struct *wq,
 
 	local_irq_save(flags);
 
-	if (!test_and_set_bit(WORK_STRUCT_PENDING_BIT, work_data_bits(work))) {
+	/* see queue_work_on() */
+	if (!(atomic_long_fetch_or(WORK_STRUCT_PENDING, &work->data)
+			& WORK_STRUCT_PENDING)) {
 		int cpu = workqueue_select_cpu_near(node);
 
 		__queue_work(cpu, wq, work);
@@ -1697,7 +1716,9 @@ bool queue_delayed_work_on(int cpu, struct workqueue_struct *wq,
 	/* read the comment in __queue_work() */
 	local_irq_save(flags);
 
-	if (!test_and_set_bit(WORK_STRUCT_PENDING_BIT, work_data_bits(work))) {
+	/* see queue_work_on() */
+	if (!(atomic_long_fetch_or(WORK_STRUCT_PENDING, &work->data)
+			& WORK_STRUCT_PENDING)) {
 		__queue_delayed_work(cpu, wq, dwork, delay);
 		ret = true;
 	}
@@ -1769,7 +1790,9 @@ bool queue_rcu_work(struct workqueue_struct *wq, struct rcu_work *rwork)
 {
 	struct work_struct *work = &rwork->work;
 
-	if (!test_and_set_bit(WORK_STRUCT_PENDING_BIT, work_data_bits(work))) {
+	/* see queue_work_on() */
+	if (!(atomic_long_fetch_or(WORK_STRUCT_PENDING, &work->data)
+			& WORK_STRUCT_PENDING)) {
 		rwork->wq = wq;
 		call_rcu(&rwork->rcu, rcu_work_rcufn);
 		return true;

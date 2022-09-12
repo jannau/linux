@@ -484,18 +484,23 @@ extern void wq_worker_comm(char *buf, size_t size, struct task_struct *task);
  * We queue the work to the CPU on which it was submitted, but if the CPU dies
  * it can be processed by another CPU.
  *
- * Memory-ordering properties:  If it returns %true, guarantees that all stores
- * preceding the call to queue_work() in the program order will be visible from
- * the CPU which will execute @work by the time such work executes, e.g.,
+ * Memory-ordering properties:  Guarantees that all stores preceding the call to
+ * queue_work() in the program order will be visible from the CPU which will
+ * execute @work by the time such work executes, e.g.,
  *
  * { x is initially 0 }
  *
  *   CPU0				CPU1
  *
  *   WRITE_ONCE(x, 1);			[ @work is being executed ]
- *   r0 = queue_work(wq, work);		  r1 = READ_ONCE(x);
+ *   queue_work(wq, work);		r0 = READ_ONCE(x);
  *
- * Forbids: r0 == true && r1 == 0
+ * Forbids: r0 == 0 for the currently pending execution of @work after
+ * queue_work() completes.
+ *
+ * If @work was already pending (ret == false), that execution is guaranteed
+ * to observe x == 1. If @work was newly queued (ret == true), the newly
+ * queued execution is guaranteed to observe x == 1.
  */
 static inline bool queue_work(struct workqueue_struct *wq,
 			      struct work_struct *work)
