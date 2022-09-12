@@ -1,3 +1,10 @@
+* Mon Sep 12 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc5.37]
+- configs/fedora: Make Fedora work with HNS3 network adapter (Zamir SUN)
+- redhat/configs/fedora/generic: Enable CONFIG_BLK_DEV_UBLK on Fedora (Richard W.M. Jones) [2122595]
+- fedora: disable IWLMEI (Peter Robinson)
+- Linux v6.0.0-0.rc5
+Resolves: rhbz#2122595
+
 * Sun Sep 11 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc4.b96fbd602d35.36]
 - Linux v6.0.0-0.rc4.b96fbd602d35
 Resolves: 
