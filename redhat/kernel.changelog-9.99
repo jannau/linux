@@ -1,3 +1,9 @@
+* Wed Sep 14 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc5.3245cb65fd91.39]
+- Fix up SND_CTL debug options (Justin M. Forbes)
+- Revert "Merge branch 'sort_configs' into 'os-build'" (Justin M. Forbes)
+- Linux v6.0.0-0.rc5.3245cb65fd91
+Resolves: 
+
 * Tue Sep 13 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc5.e839a756012b.38]
 - redhat: create /boot symvers link if it doesn't exist (Jan Stancek)
 - redhat: set LC_ALL=C before sorting config content (Frantisek Hrbata)
