@@ -1,3 +1,7 @@
+* Sat Sep 17 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc5.a335366bad13.40]
+- Linux v6.0.0-0.rc5.a335366bad13
+Resolves: 
+
 * Wed Sep 14 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc5.3245cb65fd91.39]
 - Fix up SND_CTL debug options (Justin M. Forbes)
 - Revert "Merge branch 'sort_configs' into 'os-build'" (Justin M. Forbes)
