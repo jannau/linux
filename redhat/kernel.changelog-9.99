@@ -1,3 +1,10 @@
+* Wed Sep 21 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc6.60891ec99e14.42]
+- redhat/self-test: Ignore .rhpkg.mk files (Prarit Bhargava)
+- redhat/configs: Enable CONFIG_PRINTK_INDEX on Fedora (Prarit Bhargava)
+- redhat/configs: Cleanup CONFIG_X86_KERNEL_IBT (Prarit Bhargava)
+- Linux v6.0.0-0.rc6.60891ec99e14
+Resolves: 
+
 * Mon Sep 19 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc6.41]
 - Linux v6.0.0-0.rc6
 Resolves: 
