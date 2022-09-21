@@ -280,6 +280,12 @@ void __iomem *rust_helper_ioremap(resource_size_t offset, unsigned long size)
 }
 EXPORT_SYMBOL_GPL(rust_helper_ioremap);
 
+void __iomem *rust_helper_ioremap_np(resource_size_t offset, unsigned long size)
+{
+	return ioremap_np(offset, size);
+}
+EXPORT_SYMBOL_GPL(rust_helper_ioremap_np);
+
 u8 rust_helper_readb(const volatile void __iomem *addr)
 {
 	return readb(addr);
