@@ -218,7 +218,7 @@ impl Device {
 
         // SAFETY: The pointer `res` is returned from `bindings::platform_get_resource`
         // above and checked if it is not a NULL.
-        unsafe { Resource::new((*res).start, (*res).end) }.ok_or(EINVAL)
+        unsafe { Resource::new((*res).start, (*res).end, (*res).flags) }.ok_or(EINVAL)
     }
 
     /// Ioremaps resources of a platform device.
