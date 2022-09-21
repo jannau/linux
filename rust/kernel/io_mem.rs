@@ -19,12 +19,14 @@ pub enum IoResource {
 pub struct Resource {
     offset: bindings::resource_size_t,
     size: bindings::resource_size_t,
+    flags: core::ffi::c_ulong,
 }
 
 impl Resource {
     pub(crate) fn new(
         start: bindings::resource_size_t,
         end: bindings::resource_size_t,
+        flags: core::ffi::c_ulong,
     ) -> Option<Self> {
         if start == 0 {
             return None;
@@ -32,6 +34,7 @@ impl Resource {
         Some(Self {
             offset: start,
             size: end.checked_sub(start)?.checked_add(1)?,
+            flags,
         })
     }
 }
@@ -160,8 +163,14 @@ impl<const SIZE: usize> IoMem<SIZE> {
         }
 
         // Try to map the resource.
-        // SAFETY: Just mapping the memory range.
-        let addr = unsafe { bindings::ioremap(res.offset, res.size as _) };
+        let addr = if res.flags & (bindings::IORESOURCE_MEM_NONPOSTED as core::ffi::c_ulong) != 0 {
+            // SAFETY: Just mapping the memory range.
+            unsafe { bindings::ioremap_np(res.offset, res.size as _) }
+        } else {
+            // SAFETY: Just mapping the memory range.
+            unsafe { bindings::ioremap(res.offset, res.size as _) }
+        };
+
         if addr.is_null() {
             Err(ENOMEM)
         } else {
