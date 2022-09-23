@@ -109,7 +109,6 @@ static phys_addr_t iopte_to_paddr(dart_iopte pte,
 static void *__dart_alloc_pages(size_t size, gfp_t gfp,
 				    struct io_pgtable_cfg *cfg)
 {
-	struct device *dev = cfg->iommu_dev;
 	int order = get_order(size);
 	struct page *p;
 
