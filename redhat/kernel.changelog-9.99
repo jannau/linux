@@ -1,3 +1,8 @@
+* Sat Sep 24 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc6.a63f2e7cb110.45]
+- Fedora 6.0 configs update (Justin M. Forbes)
+- Linux v6.0.0-0.rc6.a63f2e7cb110
+Resolves: 
+
 * Fri Sep 23 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc6.bf682942cd26.44]
 - Linux v6.0.0-0.rc6.bf682942cd26
 Resolves: 
