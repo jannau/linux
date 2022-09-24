@@ -227,8 +227,6 @@ struct apple_dart {
 	u32 force_bypass : 1;
 	u32 locked : 1;
 
-	DECLARE_BITMAP(reset_mask, DART_MAX_STREAMS);
-
 	struct iommu_group *sid2group[DART_MAX_STREAMS];
 	struct iommu_device iommu;
 
@@ -473,7 +471,6 @@ static int apple_dart_hw_reset(struct apple_dart *dart)
 	stream_map.dart = dart;
 	bitmap_zero(stream_map.sidmap, DART_MAX_STREAMS);
 	bitmap_set(stream_map.sidmap, 0, dart->num_streams);
-	bitmap_complement(stream_map.sidmap, dart->reset_mask, dart->num_streams);
 	apple_dart_hw_disable_dma(&stream_map);
 	apple_dart_hw_clear_all_ttbrs(&stream_map);
 
@@ -631,6 +628,74 @@ apple_dart_setup_translation(struct apple_dart_domain *domain,
 	stream_map->dart->hw->invalidate_tlb(stream_map);
 }
 
+static int apple_dart_of_reserved_regions(struct apple_dart *dart,
+					  struct device_node *node,
+					  u32 sid)
+{
+	struct device_node *mem_node;
+	struct resource res_pa;
+	struct device *dev = dart->dev;
+	int i, ret, count, idx = 0, coherent;
+
+	count = of_property_count_elems_of_size(node, "memory-region",
+						sizeof(phandle));
+	if (count <= 0)
+		return 0;
+
+	dart->resv_regions[sid] = kcalloc(count, sizeof(*dart->resv_regions[0]),
+					 GFP_KERNEL);
+	if (!dart->resv_regions[sid])
+		return -ENOMEM;
+
+	dart->num_resv_regions[sid] = count;
+
+	coherent = of_dma_is_coherent(node);
+
+	for (i = 0; i < count; i++) {
+		int j = 0;
+		struct of_phandle_args map_args;
+		mem_node = of_parse_phandle(node, "memory-region", i);
+		if (!of_device_is_available(mem_node))
+			continue;
+
+		ret = of_address_to_resource(mem_node, 0, &res_pa);
+		if (ret) {
+			dev_err(dev, "of_address_to_resource for %s failed\n",
+				mem_node->name);
+			of_node_put(mem_node);
+			continue;
+		}
+
+		while (!of_parse_phandle_with_fixed_args(mem_node,
+							 "iommu-addresses", 4,
+							 j, &map_args)) {
+			uintptr_t iova;
+			size_t size;
+
+			++j;
+			of_node_put(map_args.np);
+			if (node->phandle != map_args.np->phandle)
+				continue;
+
+			iova = (u64)map_args.args[0] << 32 | map_args.args[1];
+			size = (size_t)map_args.args[2] << 32 | map_args.args[3];
+
+			dev_info(dev, "reserved region: PA %pR IOVA 0x%08lx %zx\n",
+				 &res_pa, iova, size);
+
+			dart->resv_regions[sid][idx].iova = iova;
+			dart->resv_regions[sid][idx].paddr = res_pa.start;
+			dart->resv_regions[sid][idx].size = size;
+			dart->resv_regions[sid][idx].coherent = coherent;
+			++idx;
+		}
+		of_node_put(mem_node);
+	}
+	dart->num_resv_regions[sid] = idx;
+
+	return 0;
+}
+
 static int apple_dart_finalize_domain(struct iommu_domain *domain,
 				      struct apple_dart_master_cfg *cfg)
 {
@@ -757,6 +822,20 @@ static int apple_dart_attach_dev(struct iommu_domain *domain,
 		return -EINVAL;
 	if (dart0->locked && domain->type != IOMMU_DOMAIN_DMA)
 		return -EINVAL;
+
+	if (dart0->locked) {
+		unsigned long *sidmap;
+		int sid;
+
+		/* Locked DARTs can only have a single stream bound */
+		sidmap = cfg->stream_maps[0].sidmap;
+		sid = find_first_bit(sidmap, dart0->num_streams);
+
+		WARN_ON((sid < 0) || bitmap_weight(sidmap, dart0->num_streams) > 1);
+
+		if (dart0->num_resv_regions[sid] == 0)
+			apple_dart_of_reserved_regions(dart0, dev->of_node, sid);
+	}
 
 	ret = apple_dart_finalize_domain(domain, cfg);
 	if (ret)
@@ -1008,9 +1087,6 @@ static int apple_dart_def_domain_type(struct device *dev)
 static void apple_dart_get_resv_regions(struct device *dev,
 					struct list_head *head)
 {
-	struct apple_dart_master_cfg *cfg = dev_iommu_priv_get(dev);
-	int i;
-
 	if (IS_ENABLED(CONFIG_PCIE_APPLE) && dev_is_pci(dev)) {
 		struct iommu_resv_region *region;
 		int prot = IOMMU_WRITE | IOMMU_NOEXEC | IOMMU_MMIO;
@@ -1022,33 +1098,6 @@ static void apple_dart_get_resv_regions(struct device *dev,
 			return;
 
 		list_add_tail(&region->list, head);
-	}
-
-	for (i = 0; i < MAX_DARTS_PER_DEVICE; i++) {
-		struct apple_dart *dart = cfg->stream_maps[i].dart;
-		int sid, j;
-		if (!dart)
-			continue;
-
-		for_each_set_bit(sid, cfg->stream_maps[i].sidmap, DART_MAX_STREAMS) {
-
-			for (j = 0; j < dart->num_resv_regions[sid]; j++) {
-				struct iommu_resv_region *region;
-				phys_addr_t start = dart->resv_regions[sid][j].iova;
-				size_t size = dart->resv_regions[sid][j].size;
-				int prot = IOMMU_READ | IOMMU_WRITE | IOMMU_NOEXEC;
-
-				if (size == 0)
-					continue;
-
-				region = iommu_alloc_resv_region(start, size, prot,
-								IOMMU_RESV_RESERVED);
-				if (!region)
-					continue;
-
-				list_add_tail(&region->list, head);
-			}
-		}
 	}
 
 	iommu_dma_get_resv_regions(dev, head);
@@ -1175,120 +1224,6 @@ static int apple_dart_set_bus_ops(const struct iommu_ops *ops)
 	return 0;
 }
 
-static int apple_dart_of_reserved_regions(struct apple_dart *dart,
-					  struct device_node *node,
-					  u32 sid)
-{
-	struct device_node *mem_node;
-	struct resource res_pa;
-	struct device *dev = dart->dev;
-	int i, ret, count, idx = 0, coherent;
-
-	count = of_property_count_elems_of_size(node, "memory-region",
-						sizeof(phandle));
-	if (count <= 0)
-		return 0;
-
-	dart->resv_regions[sid] = kcalloc(count, sizeof(*dart->resv_regions[0]),
-					 GFP_KERNEL);
-	if (!dart->resv_regions[sid])
-		return -ENOMEM;
-
-	dart->num_resv_regions[sid] = count;
-
-	coherent = of_dma_is_coherent(node);
-
-	for (i = 0; i < count; i++) {
-		int j = 0;
-		struct of_phandle_args map_args;
-		mem_node = of_parse_phandle(node, "memory-region", i);
-		if (!of_device_is_available(mem_node))
-			continue;
-
-		ret = of_address_to_resource(mem_node, 0, &res_pa);
-		if (ret) {
-			dev_err(dev, "of_address_to_resource for %s failed\n",
-				mem_node->name);
-			of_node_put(mem_node);
-			continue;
-		}
-
-		while (!of_parse_phandle_with_fixed_args(mem_node,
-							 "iommu-addresses", 4,
-							 j, &map_args)) {
-			uintptr_t iova;
-			size_t size;
-
-			++j;
-			of_node_put(map_args.np);
-			if (node->phandle != map_args.np->phandle)
-				continue;
-
-			iova = (u64)map_args.args[0] << 32 | map_args.args[1];
-			size = (size_t)map_args.args[2] << 32 | map_args.args[3];
-
-			dev_info(dev, "reserved region: PA %pR IOVA 0x%08lx %zx\n",
-				 &res_pa, iova, size);
-
-			dart->resv_regions[sid][idx].iova = iova;
-			dart->resv_regions[sid][idx].paddr = res_pa.start;
-			dart->resv_regions[sid][idx].size = size;
-			dart->resv_regions[sid][idx].coherent = coherent;
-			++idx;
-		}
-		of_node_put(mem_node);
-	}
-	dart->num_resv_regions[sid] = idx;
-
-	return 0;
-}
-
-static int apple_dart_of_mapped_devices(struct apple_dart *dart)
-{
-	struct device *dev = dart->dev;
-        int i, num_devs;
-
-	num_devs = of_property_count_elems_of_size(dev->of_node, "mapped-devices",
-						   sizeof(phandle));
-
-	if (num_devs <= 0)
-		return 0;
-
-	for (i = 0; i < num_devs; i++) {
-		struct device_node *mapped_node;
-		struct of_phandle_args iommu_spec;
-		int idx = 0;
-
-		mapped_node = of_parse_phandle(dev->of_node, "mapped-devices", i);
-
-		while (!of_parse_phandle_with_args(mapped_node, "iommus",
-						"#iommu-cells",
-						idx, &iommu_spec)) {
-			u32 stream_id;
-
-			idx++;
-
-			if (dev->of_node->phandle != iommu_spec.np->phandle ||
-				iommu_spec.args[0] >= DART_MAX_STREAMS)
-			{
-				of_node_put(iommu_spec.np);
-				continue;
-			}
-			of_node_put(iommu_spec.np);
-
-			stream_id = iommu_spec.args[0];
-
-			apple_dart_of_reserved_regions(dart, mapped_node, stream_id);
-
-			if (dart->num_resv_regions[stream_id])
-				bitmap_set(dart->reset_mask, stream_id, 1);
-		}
-		of_node_put(mapped_node);
-	}
-
-	return 0;
-}
-
 static bool apple_dart_is_locked(struct apple_dart *dart)
 {
 	return !!(readl(dart->regs + dart->hw->lock) & dart->hw->lock_bit);
@@ -1331,9 +1266,6 @@ static int apple_dart_probe(struct platform_device *pdev)
 	ret = clk_bulk_prepare_enable(dart->num_clks, dart->clks);
 	if (ret)
 		return ret;
-
-	bitmap_zero(dart->reset_mask, DART_MAX_STREAMS);
-	apple_dart_of_mapped_devices(dart);
 
 	dart_params[0] = readl(dart->regs + DART_PARAMS1);
 	dart_params[1] = readl(dart->regs + DART_PARAMS2);
