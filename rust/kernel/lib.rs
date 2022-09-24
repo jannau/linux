@@ -30,6 +30,7 @@ compile_error!("Missing kernel configuration for conditional compilation");
 mod allocator;
 mod build_assert;
 pub mod error;
+pub mod ioctl;
 pub mod prelude;
 pub mod print;
 mod static_assert;
