@@ -1,3 +1,11 @@
+* Mon Sep 26 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc7.47]
+- all: cleanup dell config options (Peter Robinson)
+- redhat: Include more kunit tests (Nico Pache)
+- common: some minor cleanups/de-dupe (Peter Robinson)
+- common: enable INTEGRITY_MACHINE_KEYRING on all configuraitons (Peter Robinson)
+- Linux v6.0.0-0.rc7
+Resolves: 
+
 * Sun Sep 25 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc6.105a36f3694e.46]
 - Linux v6.0.0-0.rc6.105a36f3694e
 Resolves: 
