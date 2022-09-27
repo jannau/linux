@@ -1,3 +1,29 @@
+* Tue Sep 27 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc7.a1375562c0a8.48]
+- redhat: Set CONFIG_MAXLINEAR_GPHY to =m (Petr Oros)
+- redhat/configs enable CONFIG_INTEL_IFS (David Arcari)
+- redhat: Remove filter-i686.sh.rhel (Prarit Bhargava)
+- redhat/Makefile: Set PATCHLIST_URL to none for RHEL/cs9 (Prarit Bhargava)
+- redhat: remove GL_DISTGIT_USER, RHDISTGIT and unify dist-git cloning (Prarit Bhargava)
+- redhat/Makefile.variables: Add ADD_COMMITID_TO_VERSION (Prarit Bhargava)
+- kernel.spec: disable vmlinux.h generation for s390 zfcpdump config (Prarit Bhargava)
+- perf: Require libbpf 0.6.0 or newer (Prarit Bhargava)
+- kabi: add stablelist helpers (Prarit Bhargava)
+- Makefile: add kabi targets (Prarit Bhargava)
+- kabi: add support for symbol namespaces into check-kabi (Prarit Bhargava)
+- kabi: ignore new stablelist metadata in show-kabi (Prarit Bhargava)
+- redhat/Makefile: add dist-assert-tree-clean target (Prarit Bhargava)
+- redhat/kernel.spec.template: Specify vmlinux.h path when building samples/bpf (Prarit Bhargava) [2041365]
+- spec: Fix separate tools build (Prarit Bhargava) [2054579]
+- redhat/scripts: Update merge-subtrees.sh with new subtree location (Prarit Bhargava)
+- redhat/kernel.spec.template: enable dependencies generation (Prarit Bhargava)
+- redhat: build and include memfd to kernel-selftests-internal (Prarit Bhargava) [2027506]
+- redhat/kernel.spec.template: Link perf with --export-dynamic (Prarit Bhargava)
+- redhat: kernel.spec: selftests: abort on build failure (Prarit Bhargava)
+- redhat: configs: move CONFIG_SERIAL_MULTI_INSTANTIATE=m settings to common/x86 (Jaroslav Kysela)
+- configs: enable CONFIG_HP_ILO for aarch64 (Mark Salter)
+- Linux v6.0.0-0.rc7.a1375562c0a8
+Resolves: rhbz#2041365, rhbz#2054579, rhbz#2027506
+
 * Mon Sep 26 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc7.47]
 - all: cleanup dell config options (Peter Robinson)
 - redhat: Include more kunit tests (Nico Pache)
