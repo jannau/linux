@@ -1,3 +1,17 @@
+* Wed Sep 28 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc7.49c13ed0316d.49]
+- redhat/configs: Remove x86_64 from priority files (Prarit Bhargava)
+- redhat/configs/pending-ark: Remove x86_64 directory (Prarit Bhargava)
+- redhat/configs/pending-fedora: Remove x86_64 directory (Prarit Bhargava)
+- redhat/configs/fedora: Remove x86_64 directory (Prarit Bhargava)
+- redhat/configs/common: Remove x86_64 directory (Prarit Bhargava)
+- redhat/configs/ark: Remove x86_64 directory (Prarit Bhargava)
+- redhat/configs/custom-overrides: Remove x86_64 directory (Prarit Bhargava)
+- configs: use common CONFIG_ARM64_SME for ark and fedora (Mark Salter)
+- redhat/configs: Add a warning message to priority.common (Prarit Bhargava)
+- redhat/configs: Enable INIT_STACK_ALL_ZERO for Fedora (Miko Larsson)
+- Linux v6.0.0-0.rc7.49c13ed0316d
+Resolves: 
+
 * Tue Sep 27 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc7.a1375562c0a8.48]
 - redhat: Set CONFIG_MAXLINEAR_GPHY to =m (Petr Oros)
 - redhat/configs enable CONFIG_INTEL_IFS (David Arcari)
