@@ -13,8 +13,8 @@
 	aliases {
 		bluetooth0 = &bluetooth0;
 		dcp = &dcp;
-		dcp_piodma = &piodma;
 		disp0 = &disp0;
+		disp0_piodma = &disp0_piodma;
 		serial0 = &serial0;
 		serial2 = &serial2;
 		wifi0 = &wifi0;

@@ -333,6 +333,11 @@
 			#freq-domain-cells = <1>;
 		};
 
+		disp0_piodma: mapper@230000000 {
+			compatible = "apple,t8103-dcp-piodma", "apple,dcp-piodma";
+			iommus = <&disp0_dart 4>;
+		};
+
 		disp0_dart: iommu@231304000 {
 			compatible = "apple,t8103-dart";
 			reg = <0x2 0x31304000 0x0 0x4000>;
@@ -363,11 +368,6 @@
 			power-domains = <&ps_disp0_cpu0>;
 			resets = <&ps_disp0_cpu0>;
 		};
-		
-		piodma: piodma {
-			compatible = "apple,t8103-dcp-piodma", "apple,dcp-piodma";
-			iommus = <&disp0_dart 4>;
-		};
 
 		dcp: dcp@231c00000 {
 			compatible = "apple,t8103-dcp", "apple,dcp";
@@ -388,7 +388,7 @@
 			power-domains = <&ps_disp0_cpu0>;
 			clocks = <&clk_disp0>;
 			apple,asc-dram-mask = <0xf 0x00000000>;
-			apple,piodma-mapper = <&piodma>;
+			apple,piodma-mapper = <&disp0_piodma>;
 		};
 
 		disp0: display-subsystem {
