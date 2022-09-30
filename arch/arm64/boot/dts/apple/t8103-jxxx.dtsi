@@ -13,6 +13,7 @@
 	aliases {
 		bluetooth0 = &bluetooth0;
 		dcp = &dcp;
+		dcpext = &dcpext;
 		disp0 = &display;
 		disp0_piodma = &disp0_piodma;
 		serial0 = &serial0;
@@ -54,6 +55,10 @@
 
 &serial2 {
 	status = "okay";
+};
+
+&dcpext {
+	apple,connector-type = "USB-C";
 };
 
 &i2c0 {
