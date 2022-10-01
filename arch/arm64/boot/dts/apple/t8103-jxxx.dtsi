@@ -14,7 +14,7 @@
 		bluetooth0 = &bluetooth0;
 		dcp = &dcp;
 		dcpext = &dcpext;
-		disp0 = &disp0;
+		disp0 = &display;
 		disp0_piodma = &disp0_piodma;
 		serial0 = &serial0;
 		serial2 = &serial2;
