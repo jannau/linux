@@ -1,3 +1,7 @@
+* Sat Oct 01 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc7.ffb4d94b4314.52]
+- Linux v6.0.0-0.rc7.ffb4d94b4314
+Resolves: 
+
 * Fri Sep 30 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc7.987a926c1d8a.51]
 - Common config cleanup for 6.0 (Justin M. Forbes)
 - Linux v6.0.0-0.rc7.987a926c1d8a
