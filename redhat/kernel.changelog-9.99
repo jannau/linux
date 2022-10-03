@@ -1,3 +1,8 @@
+* Mon Oct 03 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-54]
+- redhat/configs: Move CONFIG_ARM_SMMU_QCOM_DEBUG to common (Jerry Snitselaar)
+- Linux v6.0.0
+Resolves: 
+
 * Sun Oct 02 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.0.0-0.rc7.b357fd1c2afc.53]
 - Linux v6.0.0-0.rc7.b357fd1c2afc
 Resolves: 
