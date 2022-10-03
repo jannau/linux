@@ -17,6 +17,10 @@
 	model = "Apple MacBook Pro (13-inch, M1, 2020)";
 };
 
+&dcp {
+	apple,connector-type = "eDP";
+};
+
 &wifi0 {
 	brcm,board-type = "apple,honshu";
 };
