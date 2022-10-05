@@ -1,3 +1,8 @@
+* Wed Oct 05 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc0.2bca25eaeba6.2]
+- Trim changelog with the reset (Justin M. Forbes)
+- Linux v6.1.0-0.rc0.2bca25eaeba6
+Resolves: 
+
 * Tue Oct 04 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc0.725737e7c21d.1]
 - Reset the RHEL_RELEASE in Makefile.rhelver (Justin M. Forbes)
 - Forgot too remove this from pending, it is set properly in ark (Justin M. Forbes)
