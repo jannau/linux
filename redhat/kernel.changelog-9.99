@@ -1,3 +1,11 @@
+* Fri Oct 07 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc0.4c86114194e6.4]
+- Add fortify_kunit to mod-internal.list (Justin M. Forbes)
+- Add module filters for Fedora as acpi video has new deps (Justin M. Forbes)
+- One more mismatch (Justin M. Forbes)
+- Fix up pending for mismatches (Justin M. Forbes)
+- Linux v6.1.0-0.rc0.4c86114194e6
+Resolves: 
+
 * Thu Oct 06 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc0.833477fce7a1.3]
 - Linux v6.1.0-0.rc0.833477fce7a1
 Resolves: 
