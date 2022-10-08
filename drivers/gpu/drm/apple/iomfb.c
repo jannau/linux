@@ -25,6 +25,7 @@
 #include "dcp-internal.h"
 #include "iomfb.h"
 #include "parser.h"
+#include "trace.h"
 
 /* Register defines used in bandwidth setup structure */
 #define REG_SCRATCH (0x14)
@@ -361,8 +362,7 @@ static u32 dcpep_cb_zero(struct apple_dcp *dcp)
 static void dcpep_cb_swap_complete(struct apple_dcp *dcp,
 				   struct dc_swap_complete_resp *resp)
 {
-	dev_dbg(dcp->dev, "swap complete for swap_id: %u vblank: %u",
-		resp->swap_id, dcp->ignore_swap_complete);
+	trace_iomfb_swap_complete(dcp, resp->swap_id);
 
 	if (!dcp->ignore_swap_complete)
 		dcp_drm_crtc_vblank(dcp->crtc);
@@ -1029,7 +1029,7 @@ static void
 dcpep_cb_swap_complete_intent_gated(struct apple_dcp *dcp,
 				    struct dcp_swap_complete_intent_gated *info)
 {
-	dev_dbg(dcp->dev, "swap_id:%u width:%u height:%u", info->swap_id,
+	trace_iomfb_swap_complete_intent_gated(dcp, info->swap_id,
 		info->width, info->height);
 }
 
@@ -1290,6 +1290,7 @@ static void dcp_swap_started(struct apple_dcp *dcp, void *data, void *cookie)
 
 	dcp->swap.swap.swap_id = resp->swap_id;
 
+	trace_iomfb_swap_submit(dcp, resp->swap_id);
 	dcp_swap_submit(dcp, false, &dcp->swap, dcp_swapped, NULL);
 }
 
