@@ -1,3 +1,7 @@
+* Tue Oct 11 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc0.60bb8154d1d7.8]
+- Linux v6.1.0-0.rc0.60bb8154d1d7
+Resolves: 
+
 * Mon Oct 10 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc0.493ffd6605b2.7]
 - Add acpi video to the filter_modules.sh for rhel (Justin M. Forbes)
 - Change acpi_bus_get_acpi_device to acpi_get_acpi_dev (Justin M. Forbes)
