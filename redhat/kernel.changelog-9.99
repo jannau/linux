@@ -1,3 +1,8 @@
+* Wed Oct 12 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc0.49da07006239.9]
+- Rename rename FORCE_MAX_ZONEORDER to ARCH_FORCE_MAX_ORDER in pending (Justin M. Forbes)
+- Linux v6.1.0-0.rc0.49da07006239
+Resolves: 
+
 * Tue Oct 11 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc0.60bb8154d1d7.8]
 - Linux v6.1.0-0.rc0.60bb8154d1d7
 Resolves: 
