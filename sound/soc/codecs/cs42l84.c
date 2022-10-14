@@ -878,7 +878,10 @@ static void cs42l84_setup_plug_detect(struct cs42l84_private *cs42l84)
 		      (CS42L84_TS_PLUG | CS42L84_TS_UNPLUG)) >>
 		      CS42L84_TS_PLUG_SHIFT;
 
-	/* Set up mic detection */
+	/* Set mic-detection threshold */
+	regmap_update_bits(cs42l84->regmap,
+		CS42L84_MIC_DET_CTL1, CS42L84_MIC_DET_CTL1_HS_DET_LEVEL,
+		FIELD_PREP(CS42L84_MIC_DET_CTL1_HS_DET_LEVEL, 0x2c)); /* ~1.9 V */
 
 	/* Disconnect HSBIAS (initially) */
 	regmap_write(cs42l84->regmap,
