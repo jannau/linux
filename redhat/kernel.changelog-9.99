@@ -1,3 +1,13 @@
+* Fri Oct 14 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc0.9c9155a3509a.11]
+- Add kasan_test to mod-internal.list (Justin M. Forbes)
+- redhat/Makefile.variables: Fix typo with RHDISTGIT_TMP (Prarit Bhargava)
+- spec: fix path to `installing_core` stamp file for subpackages (Jonathan Lebon)
+- Remove unused ci scripts (Don Zickus)
+- Rename rename FORCE_MAX_ZONEORDER to ARCH_FORCE_MAX_ORDER in configs (Justin M. Forbes)
+- redhat: Add new fortify_kunit & is_signed_type_kunit to mod-internal.list (Patrick Talbert)
+- Linux v6.1.0-0.rc0.9c9155a3509a
+Resolves: 
+
 * Thu Oct 13 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc0.a185a0995518.10]
 - Linux v6.1.0-0.rc0.a185a0995518
 Resolves: 
