@@ -727,12 +727,8 @@ static void cs42l84_detect_hs(struct cs42l84_private *cs42l84)
 		break;
 
 	case 0b00: /* open */
-		dev_dbg(cs42l84->dev, "Detected line-in\n");
-		cs42l84->hs_type = SND_JACK_HEADSET;
-		snd_soc_jack_report(cs42l84->jack, SND_JACK_HEADSET,
-				SND_JACK_HEADSET);
-		break;
-
+		dev_dbg(cs42l84->dev, "Detected open circuit on HS4\n");
+		fallthrough;
 	case 0b11: /* shorted */
 	default:
 		snd_soc_jack_report(cs42l84->jack, SND_JACK_HEADPHONE,
