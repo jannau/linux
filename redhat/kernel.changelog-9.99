@@ -1,3 +1,8 @@
+* Sat Oct 15 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc0.19d17ab7c68b.12]
+- Turn on Multi-Gen LRU for Fedora (Justin M. Forbes)
+- Linux v6.1.0-0.rc0.19d17ab7c68b
+Resolves: 
+
 * Fri Oct 14 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc0.9c9155a3509a.11]
 - Add kasan_test to mod-internal.list (Justin M. Forbes)
 - redhat/Makefile.variables: Fix typo with RHDISTGIT_TMP (Prarit Bhargava)
