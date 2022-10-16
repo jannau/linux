@@ -70,11 +70,15 @@ static int cs42l84_put_dac_vol(struct snd_kcontrol *kctl,
 			struct snd_ctl_elem_value *val)
 {
 	struct snd_soc_component *component = snd_soc_kcontrol_component(kctl);
-	unsigned int vola, volb;
+	struct soc_mixer_control *mc = (struct soc_mixer_control *) kctl->private_value;
+	int vola, volb;
 	int ret, ret2;
 
-	vola = val->value.integer.value[0];
-	volb = val->value.integer.value[1];
+	vola = val->value.integer.value[0] + mc->min;
+	volb = val->value.integer.value[1] + mc->min;
+
+	if (vola < mc->min || vola > mc->max || volb < mc->min || volb > mc->max)
+		return -EINVAL;
 
 	ret = snd_soc_component_update_bits(component, CS42L84_FRZ_CTL,
 					    CS42L84_FRZ_CTL_ENGAGE,
@@ -112,7 +116,8 @@ static int cs42l84_get_dac_vol(struct snd_kcontrol *kctl,
 			struct snd_ctl_elem_value *val)
 {
 	struct snd_soc_component *component = snd_soc_kcontrol_component(kctl);
-	unsigned int vola, volb;
+	struct soc_mixer_control *mc = (struct soc_mixer_control *) kctl->private_value;
+	int vola, volb;
 	int ret;
 
 	ret = snd_soc_component_read(component, CS42L84_DAC_CHA_VOL_LSB);
@@ -135,18 +140,23 @@ static int cs42l84_get_dac_vol(struct snd_kcontrol *kctl,
 		return ret;
 	volb |= (ret & 1) << 8;
 
-	val->value.integer.value[0] = vola;
-	val->value.integer.value[1] = volb;
+	if (vola & BIT(8))
+		vola |= ~((int)(BIT(8) - 1));
+	if (volb & BIT(8))
+		volb |= ~((int)(BIT(8) - 1));
+
+	val->value.integer.value[0] = vola - mc->min;
+	val->value.integer.value[1] = volb - mc->min;
 
 	return 0;
 }
 
 /* TODO */
-static const DECLARE_TLV_DB_SCALE(cs42l84_dac_tlv, -25600, 50, 1);
+static const DECLARE_TLV_DB_SCALE(cs42l84_dac_tlv, -12800, 50, true);
 
 static const struct snd_kcontrol_new cs42l84_snd_controls[] = {
-	SOC_DOUBLE_R_EXT_TLV("DAC Playback Volume", CS42L84_DAC_CHA_VOL_LSB,
-			CS42L84_DAC_CHB_VOL_LSB, 0, 511, 0,
+	SOC_DOUBLE_R_S_EXT_TLV("DAC Playback Volume", CS42L84_DAC_CHA_VOL_LSB,
+			CS42L84_DAC_CHB_VOL_LSB, 0, -256, 24, 8, 0,
 			cs42l84_get_dac_vol, cs42l84_put_dac_vol, cs42l84_dac_tlv),
 	SOC_SINGLE("ADC Preamp Gain", CS42L84_ADC_CTL1,
 			CS42L84_ADC_CTL1_PREAMP_GAIN_SHIFT, 2, 0),
