@@ -1,3 +1,7 @@
+* Sun Oct 16 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc0.1501278bb7ba.13]
+- Linux v6.1.0-0.rc0.1501278bb7ba
+Resolves: 
+
 * Sat Oct 15 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc0.19d17ab7c68b.12]
 - Turn on Multi-Gen LRU for Fedora (Justin M. Forbes)
 - Linux v6.1.0-0.rc0.19d17ab7c68b
