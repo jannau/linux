@@ -55,12 +55,37 @@ struct cs42l84_private {
 	int hs_type;
 };
 
+/*
+static const struct reg_default cs42l84_reg_defaults[] = {
+};
+*/
+
+static bool cs42l84_volatile_register(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case CS42L84_DEVID ... CS42L84_DEVID+5:
+	case CS42L84_TSRS_PLUG_INT_STATUS:
+	case CS42L84_PLL_LOCK_STATUS:
+	case CS42L84_TSRS_PLUG_STATUS:
+	case CS42L84_HS_DET_STATUS2:
+		return true;
+	default:
+		return false;
+	}
+}
+
 static const struct regmap_config cs42l84_regmap = {
 	.reg_bits = 16,
 	.val_bits = 8,
 
+	.volatile_reg = cs42l84_volatile_register,
+
 	.max_register = 0xffff,
-	.cache_type = REGCACHE_NONE,
+	/*
+	.reg_defaults = cs42l84_reg_defaults,
+	.num_reg_defaults = ARRAY_SIZE(cs42l84_reg_defaults),
+	*/
+	.cache_type = REGCACHE_RBTREE,
 
 	.use_single_read = true,
 	.use_single_write = true,
