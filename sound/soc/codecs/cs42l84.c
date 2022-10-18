@@ -97,7 +97,7 @@ static int cs42l84_put_dac_vol(struct snd_kcontrol *kctl,
 	struct snd_soc_component *component = snd_soc_kcontrol_component(kctl);
 	struct soc_mixer_control *mc = (struct soc_mixer_control *) kctl->private_value;
 	int vola, volb;
-	int ret, ret2;
+	int ret, ret2, updated = 0;
 
 	vola = val->value.integer.value[0] + mc->min;
 	volb = val->value.integer.value[1] + mc->min;
@@ -110,23 +110,31 @@ static int cs42l84_put_dac_vol(struct snd_kcontrol *kctl,
 					    CS42L84_FRZ_CTL_ENGAGE);
 	if (ret < 0)
 		goto bail;
+	updated |= ret;
 
 	ret = snd_soc_component_update_bits(component, CS42L84_DAC_CHA_VOL_LSB,
 					    0xff, vola & 0xff);
 	if (ret < 0)
 		goto bail;
+	updated |= ret;
+
 	ret = snd_soc_component_update_bits(component, CS42L84_DAC_CHA_VOL_MSB,
 					    0xff, (vola >> 8) & 0x01);
 	if (ret < 0)
 		goto bail;
+	updated |= ret;
+
 	ret = snd_soc_component_update_bits(component, CS42L84_DAC_CHB_VOL_LSB,
 					    0xff, volb & 0xff);
 	if (ret < 0)
 		goto bail;
+	updated |= ret;
+
 	ret = snd_soc_component_update_bits(component, CS42L84_DAC_CHB_VOL_MSB,
 					    0xff, (volb >> 8) & 0x01);
 	if (ret < 0)
 		goto bail;
+	ret |= updated;
 
 bail:
 	ret2 = snd_soc_component_update_bits(component, CS42L84_FRZ_CTL,
