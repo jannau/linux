@@ -6,10 +6,11 @@
  * Sorted alphabetically.
  */
 
-#include <linux/slab.h>
+#include <linux/ktime.h>
 #include <linux/refcount.h>
 #include <linux/wait.h>
 #include <linux/sched.h>
+#include <linux/timekeeping.h>
 
 /* `bindgen` gets confused at certain things. */
 const gfp_t BINDINGS_GFP_KERNEL = GFP_KERNEL;
