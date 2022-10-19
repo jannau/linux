@@ -32,6 +32,7 @@
 #include <linux/sched/signal.h>
 #include <linux/siphash.h>
 #include <linux/spinlock.h>
+#include <linux/timekeeping.h>
 #include <linux/wait.h>
 #include <linux/workqueue.h>
 
@@ -185,6 +186,21 @@ void rust_helper_lock_release_ret(struct lockdep_map *lock)
 	lock_release(lock, _RET_IP_);
 }
 EXPORT_SYMBOL_GPL(rust_helper_lock_release_ret);
+
+ktime_t rust_helper_ktime_get_real(void) {
+	return ktime_get_real();
+}
+EXPORT_SYMBOL_GPL(rust_helper_ktime_get_real);
+
+ktime_t rust_helper_ktime_get_boottime(void) {
+	return ktime_get_boottime();
+}
+EXPORT_SYMBOL_GPL(rust_helper_ktime_get_boottime);
+
+ktime_t rust_helper_ktime_get_clocktai(void) {
+	return ktime_get_clocktai();
+}
+EXPORT_SYMBOL_GPL(rust_helper_ktime_get_clocktai);
 
 /*
  * `bindgen` binds the C `size_t` type as the Rust `usize` type, so we can
