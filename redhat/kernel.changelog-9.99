@@ -1,3 +1,10 @@
+* Wed Oct 19 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc1.aae703b02f92.16]
+- Adjust FIPS module name in RHEL (Vladis Dronov)
+- spec: prevent git apply from searching for the .git directory (Ondrej Mosnacek)
+- redhat: Remove parallel_xz.sh (Prarit Bhargava)
+- Linux v6.1.0-0.rc1.aae703b02f92
+Resolves: 
+
 * Tue Oct 18 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc1.bb1a1146467a.15]
 - Linux v6.1.0-0.rc1.bb1a1146467a
 Resolves: 
