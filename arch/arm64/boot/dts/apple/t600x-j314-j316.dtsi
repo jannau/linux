@@ -13,6 +13,7 @@
 	aliases {
 		bluetooth0 = &bluetooth0;
 		dcp = &dcp;
+		dcpext0 = &dcpext0;
 		disp0 = &display;
 		disp0_piodma = &disp0_piodma;
 		serial0 = &serial0;

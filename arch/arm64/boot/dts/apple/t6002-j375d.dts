@@ -15,6 +15,10 @@
 / {
 	compatible = "apple,j375d", "apple,t6002", "apple,arm-platform";
 	model = "Apple Mac Studio (M1 Ultra, 2022)";
+
+	aliases {
+		dcpext4 = &dcpext0_die1;
+	};
 };
 
 /* USB Type C */
@@ -72,6 +76,11 @@
 			};
 		};
 	};
+};
+
+/* disable dcpext4 for now */
+&dcpext0_die1 {
+	status = "disabled";
 };
 
 /* USB controllers on die 1 */
