@@ -18,6 +18,7 @@
 	aliases {
 		atcphy4 = &atcphy0_die1;
 		atcphy5 = &atcphy1_die1;
+		dcpext4 = &dcpext0_die1;
 	};
 };
 
@@ -88,6 +89,11 @@
 			};
 		};
 	};
+};
+
+/* disable dcpext4 for now */
+&dcpext0_die1 {
+	status = "disabled";
 };
 
 /* USB controllers on die 1 */
