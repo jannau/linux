@@ -228,7 +228,7 @@
 
 	display: display-subsystem {
 		compatible = "apple,display-subsystem";
-		iommus = <&disp0_dart 0>;
+		iommus = <&disp0_dart 0>, <&dispext0_dart 0>;
 		/* generate phandle explicitly for use in loader */
 		phandle = <&display>;
 	};
