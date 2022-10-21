@@ -411,6 +411,20 @@ const struct of_device_id *rust_helper_of_match_device(
 }
 EXPORT_SYMBOL_GPL(rust_helper_of_match_device);
 
+bool rust_helper_of_node_is_root(const struct device_node *np)
+{
+	return of_node_is_root(np);
+}
+EXPORT_SYMBOL_GPL(rust_helper_of_node_is_root);
+
+struct device_node *rust_helper_of_parse_phandle(const struct device_node *np,
+		const char *phandle_name,
+		int index)
+{
+	return of_parse_phandle(np, phandle_name, index);
+}
+EXPORT_SYMBOL_GPL(rust_helper_of_parse_phandle);
+
 /*
  * `bindgen` binds the C `size_t` type as the Rust `usize` type, so we can
  * use it in contexts where Rust expects a `usize` like slice (array) indices.
