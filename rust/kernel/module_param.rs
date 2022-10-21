@@ -121,8 +121,8 @@ pub trait ModuleParam: core::fmt::Display + core::marker::Sized {
 /// Strings beginning with `0x`, `0o`, or `0b` are parsed as hex, octal, or
 /// binary respectively. Strings beginning with `0` otherwise are parsed as
 /// octal. Anything else is parsed as decimal. A leading `+` or `-` is also
-/// permitted. Any string parsed by [`kstrtol()`] or [`kstrtoul()`] will be
-/// successfully parsed.
+/// permitted. The string may contain a trailing newline. Any string parsed
+/// by [`kstrtol()`] or [`kstrtoul()`] will be successfully parsed.
 ///
 /// [`kstrtol()`]: https://www.kernel.org/doc/html/latest/core-api/kernel-api.html#c.kstrtol
 /// [`kstrtoul()`]: https://www.kernel.org/doc/html/latest/core-api/kernel-api.html#c.kstrtoul
@@ -131,6 +131,7 @@ trait ParseInt: Sized {
     fn checked_neg(self) -> Option<Self>;
 
     fn from_str_unsigned(src: &str) -> Result<Self, core::num::ParseIntError> {
+        let src = src.strip_suffix('\n').unwrap_or(src);
         let (radix, digits) = if let Some(n) = src.strip_prefix("0x") {
             (16, n)
         } else if let Some(n) = src.strip_prefix("0X") {
