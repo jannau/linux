@@ -25,6 +25,8 @@
 #include <linux/ktime.h>
 #include <linux/lockdep.h>
 #include <linux/mdio.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
 #include <linux/of_device.h>
 #include <linux/pci.h>
 #include <linux/phy.h>
