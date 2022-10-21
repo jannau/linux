@@ -8,7 +8,7 @@ use crate::{
     bindings,
     error::Result,
     macros::pin_data,
-    pin_init, pr_crit,
+    of, pin_init, pr_crit,
     str::CStr,
     sync::{lock::mutex, lock::Guard, LockClassKey, Mutex, UniqueArc},
 };
@@ -50,6 +50,13 @@ pub unsafe trait RawDevice {
         // case because the reference to `self` outlives the one of the returned `CStr` (enforced
         // by the compiler because of their lifetimes).
         unsafe { CStr::from_char_ptr(name) }
+    }
+
+    /// Gets the OpenFirmware node attached to this device
+    fn of_node(&self) -> Option<of::Node> {
+        let ptr = self.raw_device();
+
+        unsafe { of::Node::get_from_raw((*ptr).of_node) }
     }
 
     /// Prints an emergency-level message (level 0) prefixed with device information.
