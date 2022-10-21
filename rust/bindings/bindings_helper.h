@@ -10,6 +10,9 @@
 #include <linux/device.h>
 #include <linux/io-pgtable.h>
 #include <linux/ktime.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
 #include <linux/platform_device.h>
 #include <linux/poll.h>
 #include <linux/refcount.h>
