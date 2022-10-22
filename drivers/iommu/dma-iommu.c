@@ -572,8 +572,8 @@ static int iova_reserve_iommu_regions(struct device *dev,
 		if (region->type == IOMMU_RESV_SW_MSI)
 			continue;
 
-		lo = iova_pfn(iovad, region->start);
-		hi = iova_pfn(iovad, region->start + region->length - 1);
+		lo = iova_pfn(iovad, region->iova);
+		hi = iova_pfn(iovad, region->iova + region->length - 1);
 		reserve_iova(iovad, lo, hi);
 
 		if (region->type == IOMMU_RESV_MSI)
