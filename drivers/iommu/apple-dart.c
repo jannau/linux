@@ -33,6 +33,7 @@
 #include <linux/types.h>
 
 #include "dma-iommu.h"
+#include "io-pgtable-dart.h"
 
 #define DART_MAX_STREAMS 256
 #define DART_MAX_TTBR 4
@@ -557,17 +558,55 @@ apple_dart_setup_translation(struct apple_dart_domain *domain,
 	struct io_pgtable_cfg *pgtbl_cfg =
 		&io_pgtable_ops_to_pgtable(domain->pgtbl_ops)->cfg;
 
-	for (i = 0; i < pgtbl_cfg->apple_dart_cfg.n_ttbrs; ++i)
-		apple_dart_hw_set_ttbr(stream_map, i,
-				       pgtbl_cfg->apple_dart_cfg.ttbr[i]);
-	for (; i < stream_map->dart->hw->ttbr_count; ++i)
-		apple_dart_hw_clear_ttbr(stream_map, i);
+	/* Locked DARTs are set up by the bootloader. */
+	if (!stream_map->dart->locked) {
+		for (i = 0; i < pgtbl_cfg->apple_dart_cfg.n_ttbrs; ++i)
+			apple_dart_hw_set_ttbr(stream_map, i,
+					pgtbl_cfg->apple_dart_cfg.ttbr[i]);
+		for (; i < stream_map->dart->hw->ttbr_count; ++i)
+			apple_dart_hw_clear_ttbr(stream_map, i);
 
-	apple_dart_hw_enable_translation(stream_map);
+		apple_dart_hw_enable_translation(stream_map);
+	}
 	stream_map->dart->hw->invalidate_tlb(stream_map);
 }
 
+static int apple_dart_setup_resv_locked(struct iommu_domain *domain,
+					struct device *dev, size_t pgsize)
+{
+	struct iommu_resv_region *region;
+	LIST_HEAD(resv_regions);
+	int ret = 0;
+
+	of_iommu_get_resv_regions(dev, &resv_regions);
+	list_for_each_entry(region, &resv_regions, list) {
+		size_t mapped = 0;
+
+		/* Only map translated reserved regions */
+		if (region->type != IOMMU_RESV_TRANSLATED)
+			continue;
+
+		while (mapped < region->length) {
+			phys_addr_t paddr = region->start + mapped;
+			unsigned long iova = region->dva + mapped;
+			size_t length = region->length - mapped;
+			size_t pgcount = length / pgsize;
+
+			ret = apple_dart_map_pages(domain, iova,
+			      paddr, pgsize, pgcount,
+			      region->prot, GFP_KERNEL, &mapped);
+
+			if (ret)
+				goto end_put;
+		}
+	}
+end_put:
+	iommu_put_resv_regions(dev, &resv_regions);
+	return ret;
+}
+
 static int apple_dart_finalize_domain(struct iommu_domain *domain,
+				      struct device *dev,
 				      struct apple_dart_master_cfg *cfg)
 {
 	struct apple_dart_domain *dart_domain = to_dart_domain(domain);
@@ -633,6 +672,11 @@ static int apple_dart_finalize_domain(struct iommu_domain *domain,
 
 	dart_domain->finalized = true;
 
+	if (dart->locked) {
+		/* TODO: error handling */
+		ret = apple_dart_setup_resv_locked(domain, dev, dart->pgsize);
+		io_pgtable_dart_setup_locked(dart_domain->pgtbl_ops);
+	}
 done:
 	mutex_unlock(&dart_domain->init_lock);
 	return ret;
@@ -689,7 +733,7 @@ static int apple_dart_attach_dev(struct iommu_domain *domain,
 	if (dart0->locked && domain->type != IOMMU_DOMAIN_DMA)
 		return -EINVAL;
 
-	ret = apple_dart_finalize_domain(domain, cfg);
+	ret = apple_dart_finalize_domain(domain, dev, cfg);
 	if (ret)
 		return ret;
 

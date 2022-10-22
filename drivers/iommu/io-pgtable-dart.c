@@ -16,6 +16,7 @@
 #include <linux/atomic.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>
+#include "linux/export.h"
 #include <linux/io.h>
 #include <linux/io-pgtable.h>
 #include <linux/kernel.h>
@@ -24,6 +25,8 @@
 #include <linux/types.h>
 
 #include <asm/barrier.h>
+
+#include "io-pgtable-dart.h"
 
 #define DART1_MAX_ADDR_BITS	36
 
@@ -363,6 +366,32 @@ static phys_addr_t dart_iova_to_phys(struct io_pgtable_ops *ops,
 	return 0;
 }
 
+int io_pgtable_dart_setup_locked(struct io_pgtable_ops *ops)
+{
+	void *l1tbl;
+	struct dart_io_pgtable *data = io_pgtable_ops_to_data(ops);
+	struct io_pgtable_cfg *cfg = &data->iop.cfg;
+	size_t size;
+
+	if (!(cfg->quirks & IO_PGTABLE_QUIRK_APPLE_LOCKED))
+		return 0;
+
+	size = cfg->pgsize_bitmap;
+	l1tbl = devm_memremap(cfg->iommu_dev, cfg->apple_dart_cfg.ttbr[0], size,
+			      MEMREMAP_WB);
+	if (!l1tbl)
+		return -ENOMEM;
+
+	for (int entry = 0; entry < DART_PTES_PER_TABLE(data); entry++)
+		((dart_iopte *)l1tbl)[entry] = ((dart_iopte *)data->pgd[0])[entry];
+
+	free_pages((unsigned long)data->pgd[0], get_order(DART_GRANULE(data)));
+	data->pgd[0] = l1tbl;
+
+	return 0;
+}
+EXPORT_SYMBOL(io_pgtable_dart_setup_locked);
+
 static struct dart_io_pgtable *
 dart_alloc_pgtable(struct io_pgtable_cfg *cfg)
 {
@@ -418,22 +447,19 @@ apple_dart_alloc_pgtable(struct io_pgtable_cfg *cfg, void *cookie)
 
 	cfg->apple_dart_cfg.n_ttbrs = 1 << data->tbl_bits;
 
-	/* Locked DARTs can not modify the TTBR registers. The known locked
-	 * DARTs (dcp, dcpext0) use just a single TTBR so we do not have to
-	 * worry whether the pages are consecutive.
+	/* Locked DARTs can not modify the TTBR registers. Allocate first a shadow
+	 * page table so locked DARTs (disp0, dcp, dcpext*) can map their reserved
+	 * memory regions. They will be later in io_pgtable_dart_setup_locked()
+	 * copied to the locked L1 table.
 	 */
 	if (cfg->quirks & IO_PGTABLE_QUIRK_APPLE_LOCKED) {
-		size_t size = cfg->pgsize_bitmap;
 		if (cfg->apple_dart_cfg.n_ttbrs > 1)
 			goto out_free_data;
 
-		data->pgd[0] = devm_memremap(cfg->iommu_dev,
-					     cfg->apple_dart_cfg.ttbr[0],
-					     size, MEMREMAP_WB);
+		data->pgd[0] = __dart_alloc_pages(DART_GRANULE(data), GFP_KERNEL);
 		if (!data->pgd[0])
 			goto out_free_data;
-		/* start with an empty table */
-		memset(data->pgd[0], 0, size);
+
 		return &data->iop;
 	}
 
