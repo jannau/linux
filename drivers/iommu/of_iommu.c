@@ -187,9 +187,7 @@ iommu_resv_region_get_type(struct device *dev,
 	if (start == phys->start && end == phys->end)
 		return IOMMU_RESV_DIRECT;
 
-	dev_warn(dev, "treating non-direct mapping [%pr] -> [%pap-%pap] as reservation\n", phys,
-		 &start, &end);
-	return IOMMU_RESV_RESERVED;
+	return IOMMU_RESV_TRANSLATED;
 }
 
 /**
@@ -247,7 +245,7 @@ void of_iommu_get_resv_regions(struct device *dev, struct list_head *list)
 				int prot = IOMMU_READ | IOMMU_WRITE;
 				struct iommu_resv_region *region;
 				enum iommu_resv_type type;
-				phys_addr_t iova;
+				phys_addr_t iova, start;
 				size_t length;
 
 				if (of_dma_is_coherent(dev->of_node))
@@ -260,8 +258,12 @@ void of_iommu_get_resv_regions(struct device *dev, struct list_head *list)
 				}
 				type = iommu_resv_region_get_type(dev, &phys, iova, length);
 
-				region = iommu_alloc_resv_region(iova, length, prot, type,
-								 GFP_KERNEL);
+				start = type == IOMMU_RESV_TRANSLATED ? phys.start : iova;
+
+				region = iommu_alloc_resv_region_tr(start, iova, length,
+								    prot, type,
+								    GFP_KERNEL);
+
 				if (region)
 					list_add_tail(&region->list, list);
 			}
