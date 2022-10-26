@@ -1,3 +1,8 @@
+* Wed Oct 26 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc2.4dc12f37a8e9.22]
+- redhat/Makefile: Rename LOCALVERSION to DISTLOCALVERSION (Akihiko Odaki)
+- Linux v6.1.0-0.rc2.4dc12f37a8e9
+Resolves: 
+
 * Tue Oct 25 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc2.1a2dcbdde82e.21]
 - Linux v6.1.0-0.rc2.1a2dcbdde82e
 Resolves: 
