@@ -1,0 +1,10 @@
+blank_issues_enabled: true
+
+contact_links:
+  - name: Questions, help, feedback, etc.
+    url: https://github.com/Rust-for-Linux/linux/blob/rust/README.md
+    about: Please use the mailing list or the Zulip chat.
+
+  - name: Security vulnerability
+    url: https://www.kernel.org/doc/html/latest/admin-guide/security-bugs.html
+    about: If the code is already in mainline, read this link.
