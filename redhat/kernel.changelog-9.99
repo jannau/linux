@@ -1,3 +1,12 @@
+* Fri Oct 28 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc2.23758867219c.24]
+- redhat: method.py: change the output loop to use 'values' method (Patrick Talbert)
+- redhat: use 'update' method in merge.py (Patrick Talbert)
+- redhat: Use a context manager in merge.py for opening the config file for reading (Patrick Talbert)
+- redhat: automatically strip newlines in merge.py (Clark Williams)
+- redhat: python replacement for merge.pl (Clark Williams)
+- Linux v6.1.0-0.rc2.23758867219c
+Resolves: 
+
 * Thu Oct 27 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc2.b229b6ca5abb.23]
 - redhat/docs: Update with DISTLOCALVERSION (Prarit Bhargava)
 - Linux v6.1.0-0.rc2.b229b6ca5abb
