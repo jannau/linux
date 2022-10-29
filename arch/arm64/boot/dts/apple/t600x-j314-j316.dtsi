@@ -21,6 +21,7 @@
 		dcp = &dcp;
 		disp0 = &display;
 		disp0_piodma = &disp0_piodma;
+		nvram = &nvram;
 		serial0 = &serial0;
 		wifi0 = &wifi0;
 	};
@@ -262,18 +263,6 @@
 	clock-frequency = <1068000000>;
 };
 
-&spi1 {
-	status = "disabled";
-
-	flash@0 {
-		compatible = "jedec,spi-nor";
-		reg = <0x0>;
-		spi-max-frequency = <25000000>;
-		#address-cells = <1>;
-		#size-cells = <1>;
-	};
-};
-
 &spi3 {
 	status = "okay";
 
@@ -436,3 +425,5 @@
 		};
 	};
 };
+
+#include "spi1-nvram.dtsi"
