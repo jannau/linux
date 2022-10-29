@@ -199,6 +199,7 @@ enum dcpep_method {
 	dcpep_set_parameter_dcp,
 	dcpep_enable_disable_video_power_savings,
 	dcpep_is_main_display,
+	dcpep_swap_set_color_matrix,
 	dcpep_num_methods
 };
 
@@ -314,6 +315,19 @@ struct dcp_swap_submit_resp {
 	u8 unkoutbool;
 	u32 ret;
 	u8 padding[3];
+} __packed;
+
+struct dcpep_swap_set_color_matrix_req {
+    u64 matrix[5][3];
+    u32 func;
+    u32 unk;
+    u8 matrix_null;
+    u8 padding[3];
+} __packed;
+
+struct dcpep_swap_set_color_matrix_resp {
+    u64 matrix[5][3];
+    u32 ret;
 } __packed;
 
 struct dc_swap_complete_resp {

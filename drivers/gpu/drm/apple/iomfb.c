@@ -189,6 +189,7 @@ const struct dcp_method_entry dcp_methods[dcpep_num_methods] = {
 	DCP_METHOD("A410", dcpep_set_display_device),
 	DCP_METHOD("A411", dcpep_is_main_display),
 	DCP_METHOD("A412", dcpep_set_digital_out_mode),
+	DCP_METHOD("A438", dcpep_swap_set_color_matrix),
 	DCP_METHOD("A439", dcpep_set_parameter_dcp),
 	DCP_METHOD("A443", dcpep_create_default_fb),
 	DCP_METHOD("A447", dcpep_enable_disable_video_power_savings),
@@ -301,6 +302,10 @@ DCP_THUNK_IN(dcp_update_notify_clients_dcp, dcpep_update_notify_clients_dcp,
 
 DCP_THUNK_INOUT(dcp_set_parameter_dcp, dcpep_set_parameter_dcp,
 		struct dcp_set_parameter_dcp, u32);
+
+DCP_THUNK_INOUT(dcp_swap_set_color_matrix, dcpep_swap_set_color_matrix,
+		struct dcpep_swap_set_color_matrix_req,
+		struct dcpep_swap_set_color_matrix_resp);
 
 DCP_THUNK_INOUT(dcp_enable_disable_video_power_savings,
 		dcpep_enable_disable_video_power_savings, u32, int);
@@ -1283,6 +1288,49 @@ static void dcp_swapped(struct apple_dcp *dcp, void *data, void *cookie)
 	}
 }
 
+static void dcp_swapped_set_color_matrix(struct apple_dcp *dcp, void *data, void *cookie)
+{
+	struct dcp_wait_cookie *wait = cookie;
+
+	if (wait) {
+		complete(&wait->done);
+		kref_put(&wait->refcount, release_wait_cookie);
+	}
+}
+
+static void do_swap_set_color_matrix(struct apple_dcp *dcp)
+{
+	int ret;
+	struct dcp_wait_cookie *wait;
+	struct dcpep_swap_set_color_matrix_req swapmat = (struct dcpep_swap_set_color_matrix_req){
+	    .matrix = {
+		{0,         0,         0},
+		{1LU << 32, 0,         0},
+		{0,         1LU << 32, 0},
+		{0,         0,         1LU << 32},
+		{0,         0,         0}
+	    },
+	    .func = 2,
+	};
+
+	wait = kzalloc(sizeof(*wait), GFP_KERNEL);
+	if (!wait)
+		return;
+
+	init_completion(&wait->done);
+	kref_init(&wait->refcount);
+	/* increase refcount to ensure the receiver has a reference */
+	kref_get(&wait->refcount);
+
+	dcp_swap_set_color_matrix(dcp, false, &swapmat, &dcp_swapped_set_color_matrix, wait);
+
+	ret = wait_for_completion_timeout(&wait->done,
+					  msecs_to_jiffies(500));
+
+	kref_put(&wait->refcount, release_wait_cookie);
+	dcp->color_matrix_func = 2;
+}
+
 static void dcp_swap_started(struct apple_dcp *dcp, void *data, void *cookie)
 {
 	struct dcp_swap_start_resp *resp = data;
@@ -1432,6 +1480,7 @@ void dcp_flush(struct drm_crtc *crtc, struct drm_atomic_state *state)
 	int plane_idx, l;
 	int has_surface = 0;
 	bool modeset;
+	bool swap_set_color_matrix = false;
 	dev_dbg(dcp->dev, "%s", __func__);
 
 	crtc_state = drm_atomic_get_new_crtc_state(state, crtc);
@@ -1529,6 +1578,9 @@ void dcp_flush(struct drm_crtc *crtc, struct drm_atomic_state *state)
 			.has_planes = 1,
 		};
 
+		if (l == 0 && req->surf[l].colorspace == 2)
+		    swap_set_color_matrix = true;
+
 		l += 1;
 	}
 
@@ -1596,6 +1648,10 @@ void dcp_flush(struct drm_crtc *crtc, struct drm_atomic_state *state)
 		}
 
 		req->clear = 1;
+	}
+
+	if (swap_set_color_matrix && dcp->color_matrix_func != 2) {
+	    do_swap_set_color_matrix(dcp);
 	}
 	do_swap(dcp, NULL, NULL);
 }

@@ -121,6 +121,8 @@ struct apple_dcp {
 	bool valid_mode;
 	struct dcp_set_digital_out_mode_req mode;
 
+	u32 color_matrix_func;
+
 	/* Is the DCP booted? */
 	bool active;
 
