@@ -1,3 +1,9 @@
+* Sat Oct 29 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc2.576e61cea1e4.25]
+- configs: move CONFIG_INTEL_TDX_GUEST to common directory (Wander Lairson Costa)
+- redhat/Makefile: Use new BUILD_TARGET for RHEL dist[g]-brew target (Prarit Bhargava)
+- Linux v6.1.0-0.rc2.576e61cea1e4
+Resolves: 
+
 * Fri Oct 28 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc2.23758867219c.24]
 - redhat: method.py: change the output loop to use 'values' method (Patrick Talbert)
 - redhat: use 'update' method in merge.py (Patrick Talbert)
