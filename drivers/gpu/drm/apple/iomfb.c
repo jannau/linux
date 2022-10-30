@@ -724,7 +724,7 @@ static void boot_1_5(struct apple_dcp *dcp, void *out, void *cookie)
 /* Use special function signature to defer the ACK */
 static bool dcpep_cb_boot_1(struct apple_dcp *dcp, int tag, void *out, void *in)
 {
-	dev_dbg(dcp->dev, "Callback D%03d %s\n", tag, __func__);
+	trace_iomfb_callback(dcp, tag, __func__);
 	dcp_set_create_dfb(dcp, false, boot_1_5, NULL);
 	return false;
 }
