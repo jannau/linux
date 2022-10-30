@@ -201,6 +201,9 @@ enum dcpep_method {
 	iomfbep_a131_pmu_service_matched,
 	iomfbep_a132_backlight_service_matched,
 	iomfbep_a358_vi_set_temperature_hint,
+	iomfbep_set_matrix,
+	iomfbep_get_color_remap_mode,
+	iomfbep_setBrightnessCorrection,
 	dcpep_num_methods
 };
 
@@ -422,6 +425,22 @@ struct dcp_read_edt_data_req {
 struct dcp_read_edt_data_resp {
 	u32 value[8];
 	u8 ret;
+} __packed;
+
+struct iomfb_set_matrix_req {
+	u32 location;
+	u64 matrix[3][3];
+} __packed;
+
+struct iomfb_get_color_remap_mode_req {
+	u32 mode;
+	u8 mode_null;
+	u8 padding[3];
+} __packed;
+
+struct iomfb_get_color_remap_mode_resp {
+	u32 mode;
+	u32 ret;
 } __packed;
 
 #endif

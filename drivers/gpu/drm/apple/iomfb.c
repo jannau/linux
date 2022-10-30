@@ -180,6 +180,9 @@ const struct dcp_method_entry dcp_methods[dcpep_num_methods] = {
 	DCP_METHOD("A410", dcpep_set_display_device),
 	DCP_METHOD("A411", dcpep_is_main_display),
 	DCP_METHOD("A412", dcpep_set_digital_out_mode),
+	DCP_METHOD("A422", iomfbep_set_matrix),
+	DCP_METHOD("A426", iomfbep_get_color_remap_mode),
+	DCP_METHOD("A427", iomfbep_setBrightnessCorrection),
 	DCP_METHOD("A438", dcpep_swap_set_color_matrix),
 	DCP_METHOD("A439", dcpep_set_parameter_dcp),
 	DCP_METHOD("A443", dcpep_create_default_fb),
@@ -261,9 +264,22 @@ static void dcp_push(struct apple_dcp *dcp, bool oob, enum dcpep_method method,
 			 cb, cookie);                                         \
 	}
 
+#define IOMFB_THUNK_INOUT(name, T_in, T_out)                                      \
+	static void iomfb_ ## name(struct apple_dcp *dcp, bool oob, T_in *data,   \
+			 dcp_callback_t cb, void *cookie)                         \
+	{                                                                         \
+		dcp_push(dcp, oob, iomfbep_ ## name, sizeof(T_in), sizeof(T_out), \
+			 data,  cb, cookie);                                      \
+	}
+
 DCP_THUNK_OUT(iomfb_a131_pmu_service_matched, iomfbep_a131_pmu_service_matched, u32);
 DCP_THUNK_OUT(iomfb_a132_backlight_service_matched, iomfbep_a132_backlight_service_matched, u32);
 DCP_THUNK_OUT(iomfb_a358_vi_set_temperature_hint, iomfbep_a358_vi_set_temperature_hint, u32);
+
+IOMFB_THUNK_INOUT(set_matrix, struct iomfb_set_matrix_req, u32);
+IOMFB_THUNK_INOUT(get_color_remap_mode, struct iomfb_get_color_remap_mode_req,
+		struct iomfb_get_color_remap_mode_resp);
+IOMFB_THUNK_INOUT(setBrightnessCorrection, u32, u32);
 
 DCP_THUNK_INOUT(dcp_swap_submit, dcpep_swap_submit, struct dcp_swap_submit_req,
 		struct dcp_swap_submit_resp);
@@ -1409,14 +1425,33 @@ static void do_swap_set_color_matrix(struct apple_dcp *dcp)
 	dcp->color_matrix_func = 2;
 }
 
+static void dcp_swap_started_3(struct apple_dcp *dcp, void *data, void *cookie)
+{
+	trace_iomfb_swap_submit(dcp, dcp->swap.swap.swap_id);
+	dcp_swap_submit(dcp, false, &dcp->swap, dcp_swapped, NULL);
+}
+
+static void dcp_swap_started_2(struct apple_dcp *dcp, void *data, void *cookie)
+{
+	u32 brigthness_cor = 65536;
+	iomfb_setBrightnessCorrection(dcp, false, &brigthness_cor, dcp_swap_started_3, NULL);
+}
+
 static void dcp_swap_started(struct apple_dcp *dcp, void *data, void *cookie)
 {
+	struct iomfb_set_matrix_req matrix = (struct iomfb_set_matrix_req){
+		.location = 9,
+		.matrix = {
+			{1LU << 32, 0,         0},
+			{0,         1LU << 32, 0},
+			{0,         0,         1LU << 32},
+		},
+	};
 	struct dcp_swap_start_resp *resp = data;
 
 	dcp->swap.swap.swap_id = resp->swap_id;
 
-	trace_iomfb_swap_submit(dcp, resp->swap_id);
-	dcp_swap_submit(dcp, false, &dcp->swap, dcp_swapped, NULL);
+	iomfb_set_matrix(dcp, false, &matrix, dcp_swap_started_2, NULL);
 }
 
 /*
@@ -1778,9 +1813,14 @@ static void init_1(struct apple_dcp *dcp, void *out, void *cookie)
 
 static void dcp_started(struct apple_dcp *dcp, void *data, void *cookie)
 {
+	struct iomfb_get_color_remap_mode_req color_remap =
+		(struct iomfb_get_color_remap_mode_req){
+			.mode = 6,
+		};
+
 	dev_info(dcp->dev, "DCP booted\n");
 
-	init_1(dcp, data, cookie);
+	iomfb_get_color_remap_mode(dcp, false, &color_remap, init_1, NULL);
 }
 
 void iomfb_recv_msg(struct apple_dcp *dcp, u64 message)
