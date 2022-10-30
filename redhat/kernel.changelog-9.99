@@ -1,3 +1,7 @@
+* Sun Oct 30 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc2.882ad2a2a8ff.26]
+- Linux v6.1.0-0.rc2.882ad2a2a8ff
+Resolves: 
+
 * Sat Oct 29 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc2.576e61cea1e4.25]
 - configs: move CONFIG_INTEL_TDX_GUEST to common directory (Wander Lairson Costa)
 - redhat/Makefile: Use new BUILD_TARGET for RHEL dist[g]-brew target (Prarit Bhargava)
