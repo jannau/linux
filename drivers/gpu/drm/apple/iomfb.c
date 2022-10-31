@@ -443,6 +443,18 @@ static bool iomfbep_cb_match_backlight_service(struct apple_dcp *dcp, int tag, v
 	return false;
 }
 
+static void iomfb_cb_pr_publish(struct apple_dcp *dcp, struct iomfb_property *prop)
+{
+	switch (prop->id) {
+	case IOMFB_PROPERTY_NITS:
+		dcp->bl_nits = prop->value / dcp->brightness_scale;
+		dev_info(dcp->dev, "Backlight updated to %u nits\n", dcp->bl_nits);
+		break;
+	default:
+		dev_dbg(dcp->dev, "pr_publish: id: %d = %u\n", prop->id, prop->value);
+	}
+}
+
 static struct dcp_get_uint_prop_resp
 dcpep_cb_get_uint_prop(struct apple_dcp *dcp, struct dcp_get_uint_prop_req *req)
 {
@@ -1216,6 +1228,8 @@ TRAMPOLINE_IN(trampoline_hotplug, dcpep_cb_hotplug, u64);
 TRAMPOLINE_IN(trampoline_swap_complete_intent_gated,
 	      dcpep_cb_swap_complete_intent_gated,
 	      struct dcp_swap_complete_intent_gated);
+TRAMPOLINE_IN(trampoline_pr_publish, iomfb_cb_pr_publish,
+	      struct iomfb_property);
 
 bool (*const dcpep_cb_handlers[DCPEP_MAX_CB])(struct apple_dcp *, int, void *,
 					      void *) = {
@@ -1225,6 +1239,7 @@ bool (*const dcpep_cb_handlers[DCPEP_MAX_CB])(struct apple_dcp *, int, void *,
 	[3] = trampoline_rt_bandwidth,
 	[100] = iomfbep_cb_match_pmu_service,
 	[101] = trampoline_zero, /* get_display_default_stride */
+	[102] = trampoline_nop, /* set_number_property */
 	[103] = trampoline_nop, /* set_boolean_property */
 	[106] = trampoline_nop, /* remove_property */
 	[107] = trampoline_true, /* create_provider_service */
@@ -1245,7 +1260,7 @@ bool (*const dcpep_cb_handlers[DCPEP_MAX_CB])(struct apple_dcp *, int, void *,
 	[207] = iomfbep_cb_match_backlight_service,
 	[208] = trampoline_get_time,
 	[211] = trampoline_nop, /* update_backlight_factor_prop */
-	[300] = trampoline_nop, /* pr_publish */
+	[300] = trampoline_pr_publish,
 	[401] = trampoline_get_uint_prop,
 	[404] = trampoline_nop, /* sr_set_uint_prop */
 	[406] = trampoline_set_fx_prop,
@@ -1699,6 +1714,16 @@ void dcp_flush(struct drm_crtc *crtc, struct drm_atomic_state *state)
 
 	/* These fields should be set together */
 	req->swap.swap_completed = req->swap.swap_enabled;
+
+	/* update brightness if changed */
+	if (dcp->brightness != dcp->set_brightness) {
+		u32 brightness = dcp->bl_brightness_step * dcp->set_brightness;
+
+		req->swap.bl_flags = 1 << 16;
+		req->swap.bl_value = IOMFB_BRIGHTNESS_MIN + brightness;
+		req->swap.bl_power = 0x40;
+		dcp->brightness = dcp->set_brightness;
+	}
 
 	if (modeset) {
 		struct dcp_display_mode *mode;

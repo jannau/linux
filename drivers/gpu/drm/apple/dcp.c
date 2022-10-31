@@ -2,6 +2,7 @@
 /* Copyright 2021 Alyssa Rosenzweig <alyssa@rosenzweig.io> */
 
 #include <linux/bitmap.h>
+#include <linux/backlight.h>
 #include <linux/clk.h>
 #include <linux/module.h>
 #include <linux/slab.h>
@@ -22,6 +23,7 @@
 
 #include "dcp.h"
 #include "dcp-internal.h"
+#include "iomfb.h"
 #include "parser.h"
 #include "trace.h"
 
@@ -276,6 +278,49 @@ static int dcp_get_disp_regs(struct apple_dcp *dcp)
 	return 0;
 }
 
+static int dcp_get_brightness(struct backlight_device *bd)
+{
+       struct apple_dcp *dcp = bl_get_data(bd);
+
+       return dcp->brightness;
+}
+
+static int dcp_set_brightness(struct backlight_device *bd)
+{
+       struct apple_dcp *dcp = bl_get_data(bd);
+
+       bd->props.power = FB_BLANK_UNBLANK;
+       if (dcp->set_brightness != bd->props.brightness) {
+	       dcp->set_brightness = bd->props.brightness;
+       }
+
+       return 0;
+}
+
+static const struct backlight_ops dcp_backlight_ops = {
+	.get_brightness = dcp_get_brightness,
+	.update_status = dcp_set_brightness,
+};
+
+static int dcp_backlight_register(struct apple_dcp *dcp)
+{
+	struct backlight_properties props = {
+		.type = BACKLIGHT_PLATFORM,
+		.brightness = dcp->brightness,
+		.max_brightness = 500
+	};
+
+	struct device *dev = dcp->dev;
+	struct backlight_device *bd;
+
+	bd = devm_backlight_device_register(dev, "apple-panel-bl", dev, dcp,
+					    &dcp_backlight_ops, &props);
+	if (IS_ERR(bd))
+		return PTR_ERR(bd);
+
+	return 0;
+}
+
 static int dcp_platform_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
@@ -299,6 +344,15 @@ static int dcp_platform_probe(struct platform_device *pdev)
 		return PTR_ERR(dcp->coproc_reg);
 
 	of_platform_default_populate(dev->of_node, NULL, dev);
+
+	dcp->brightness_scale = 65536;
+	if (!of_property_read_u32(dcp->dev->of_node, "apple,max_brightness",
+		&dcp->bl_max_brightness)) {
+		ret = dcp_backlight_register(dcp);
+		if (ret)
+			return dev_err_probe(dev, ret, "Unable to register backlight device\n");
+		dcp->bl_brightness_step = (dcp->bl_max_brightness - IOMFB_BRIGHTNESS_MIN) / 500;
+	}
 
 	dcp->piodma = dcp_get_dev(dev, "apple,piodma-mapper");
 	if (!dcp->piodma) {

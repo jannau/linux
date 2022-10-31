@@ -142,6 +142,9 @@ struct apple_dcp {
 	 * on the next successfully completed swap.
 	 */
 	struct list_head swapped_out_fbs;
+
+	int brightness, set_brightness, brightness_scale;
+	u32 bl_max_brightness, bl_brightness_step, bl_nits;
 };
 
 #endif /* __APPLE_DCP_INTERNAL_H__ */
