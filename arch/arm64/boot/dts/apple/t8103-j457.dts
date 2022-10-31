@@ -23,6 +23,7 @@
 
 &dcp {
 	apple,connector-type = "eDP";
+	apple,max_brightness = <0x7F3FABC0>;
 };
 
 &wifi0 {
