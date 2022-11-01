@@ -17,8 +17,48 @@
 	model = "Apple MacBook Pro (13-inch, M1, 2020)";
 };
 
+&dcp {
+	apple,connector-type = "eDP";
+};
+
 &wifi0 {
 	brcm,board-type = "apple,honshu";
+};
+
+&bluetooth0 {
+	brcm,board-type = "apple,honshu";
+};
+
+/*
+ * Provide labels for the USB type C ports.
+ */
+
+&typec0 {
+	label = "USB-C Left-back";
+};
+
+&typec1 {
+	label = "USB-C Left-front";
+};
+
+&spi3 {
+	status = "okay";
+
+	hid-transport@0 {
+		compatible = "apple,spi-hid-transport";
+		reg = <0>;
+		spi-max-frequency = <8000000>;
+		/*
+		 * cs-setup and cs-hold delays are derived from Apple's ADT
+		 * Mac OS driver meta data secify 45 us for 'cs to clock' and
+		 * 'clock to cs' delays.
+		 */
+		spi-cs-setup-delay-ns = <20000>;
+		spi-cs-hold-delay-ns = <20000>;
+		spi-cs-inactive-delay-ns = <250000>;
+		spien-gpios = <&pinctrl_ap 195 0>;
+		interrupts-extended = <&pinctrl_nub 13 IRQ_TYPE_LEVEL_LOW>;
+	};
 };
 
 /*
@@ -36,10 +76,106 @@
 /delete-node/ &port01;
 /delete-node/ &port02;
 
+&i2c1 {
+	speaker_left_rear: codec@31 {
+		compatible = "ti,tas5770l", "ti,tas2770";
+		reg = <0x31>;
+		shutdown-gpios = <&pinctrl_ap 181 GPIO_ACTIVE_HIGH>;
+		#sound-dai-cells = <0>;
+		sound-name-prefix = "Left Rear";
+	};
+
+	speaker_left_front: codec@32 {
+		compatible = "ti,tas5770l", "ti,tas2770";
+		reg = <0x32>;
+		shutdown-gpios = <&pinctrl_ap 181 GPIO_ACTIVE_HIGH>;
+		#sound-dai-cells = <0>;
+		sound-name-prefix = "Left Front";
+	};
+};
+
 &i2c2 {
 	status = "okay";
+
+	jack_codec: codec@48 {
+		compatible = "cirrus,cs42l83";
+		reg = <0x48>;
+		reset-gpios = <&pinctrl_nub 11 GPIO_ACTIVE_HIGH>;
+		interrupt-parent = <&pinctrl_ap>;
+		interrupts = <183 IRQ_TYPE_LEVEL_LOW>;
+		#sound-dai-cells = <0>;
+		cirrus,ts-inv = <1>;
+		sound-name-prefix = "Jack";
+	};
+};
+
+&i2c3 {
+	speaker_right_rear: codec@34 {
+		compatible = "ti,tas5770l", "ti,tas2770";
+		reg = <0x34>;
+		shutdown-gpios = <&pinctrl_ap 181 GPIO_ACTIVE_HIGH>;
+		#sound-dai-cells = <0>;
+		sound-name-prefix = "Right Rear";
+	};
+
+	speaker_right_front: codec@35 {
+		compatible = "ti,tas5770l", "ti,tas2770";
+		reg = <0x35>;
+		shutdown-gpios = <&pinctrl_ap 181 GPIO_ACTIVE_HIGH>;
+		#sound-dai-cells = <0>;
+		sound-name-prefix = "Right Front";
+	};
 };
 
 &i2c4 {
 	status = "okay";
+};
+
+/ {
+	backlight: gpio-bl {
+		compatible = "gpio-backlight";
+		gpios = <&smc_gpio 18 GPIO_ACTIVE_HIGH>;
+		default-on;
+	};
+
+	sound {
+		compatible = "apple,j293-macaudio", "apple,macaudio";
+		model = "MacBook Pro J293";
+
+		dai-link@0 {
+			link-name = "Speakers";
+
+			/*
+			 * DANGER ZONE: You can blow your speakers!
+			 *
+			 * The drivers are not ready, and unless you are careful
+			 * to attenuate the audio stream, you run the risk of
+			 * blowing your speakers.
+			 */
+			status = "disabled";
+
+			cpu {
+				sound-dai = <&mca 0>, <&mca 1>;
+			};
+			codec {
+				sound-dai = <&speaker_left_front>, <&speaker_left_rear>,
+					    <&speaker_right_front>, <&speaker_right_rear>;
+			};
+		};
+
+		dai-link@1 {
+			link-name = "Headphone Jack";
+
+			cpu {
+				sound-dai = <&mca 2>;
+			};
+			codec {
+				sound-dai = <&jack_codec>;
+			};
+		};
+	};
+};
+
+&framebuffer0 {
+	backlight = <&backlight>;
 };

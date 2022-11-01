@@ -6,10 +6,10 @@ use kernel::prelude::*;
 
 module! {
     type: RustMinimal,
-    name: b"rust_minimal",
-    author: b"Rust for Linux Contributors",
-    description: b"Rust minimal sample",
-    license: b"GPL",
+    name: "rust_minimal",
+    author: "Rust for Linux Contributors",
+    description: "Rust minimal sample",
+    license: "GPL",
 }
 
 struct RustMinimal {
@@ -17,7 +17,7 @@ struct RustMinimal {
 }
 
 impl kernel::Module for RustMinimal {
-    fn init(_module: &'static ThisModule) -> Result<Self> {
+    fn init(_name: &'static CStr, _module: &'static ThisModule) -> Result<Self> {
         pr_info!("Rust minimal sample (init)\n");
         pr_info!("Am I built-in? {}\n", !cfg!(MODULE));
 
