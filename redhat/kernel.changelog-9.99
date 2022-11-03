@@ -1,3 +1,9 @@
+* Thu Nov 03 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc3.8e5423e991e8.30]
+- configs/fedora: Enable a few more drivers needed by the HP X2 Chromebook (Javier Martinez Canillas)
+- enable the rtc-rv8803 driver on RHEL and Fedora (David Arcari)
+- Linux v6.1.0-0.rc3.8e5423e991e8
+Resolves: 
+
 * Wed Nov 02 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc3.8f71a2b3f435.29]
 - redhat/Makefile: Remove BUILD_SCRATCH_TARGET (Prarit Bhargava)
 - Linux v6.1.0-0.rc3.8f71a2b3f435
