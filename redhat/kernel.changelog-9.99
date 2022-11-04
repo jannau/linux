@@ -1,3 +1,7 @@
+* Fri Nov 04 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc3.ee6050c8af96.31]
+- Linux v6.1.0-0.rc3.ee6050c8af96
+Resolves: 
+
 * Thu Nov 03 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc3.8e5423e991e8.30]
 - configs/fedora: Enable a few more drivers needed by the HP X2 Chromebook (Javier Martinez Canillas)
 - enable the rtc-rv8803 driver on RHEL and Fedora (David Arcari)
