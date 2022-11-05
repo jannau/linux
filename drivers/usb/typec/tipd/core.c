@@ -260,6 +260,26 @@ static void tps6598x_set_mux_safe_state(struct tps6598x *tps)
 	typec_mux_set(tps->mux, &tps->state);
 }
 
+static int tps6598x_update_dp_hpd(struct tps6598x *tps)
+{
+	struct tps6598x_dp_sid dp_sid;
+	bool hpd;
+	int ret;
+
+	ret = tps6598x_block_read(tps, TPS_REG_DP_SID, &dp_sid, sizeof(dp_sid));
+	if (ret) {
+		dev_warn(tps->dev, "Failed to read DP_SID: %d\n", ret);
+		return ret;
+	}
+
+	hpd = dp_sid.dp_status_rx & DP_STATUS_HPD_STATE;
+	if (IS_ENABLED(CONFIG_DRM) && tps->hpd != hpd && tps->connector_fwnode)
+		drm_connector_oob_hotplug_event(tps->connector_fwnode);
+	tps->hpd = hpd;
+
+	return 0;
+}
+
 static void tps6598x_update_mux_state_dp(struct tps6598x *tps)
 {
 	unsigned int dp_pins, typec_dp_state;
