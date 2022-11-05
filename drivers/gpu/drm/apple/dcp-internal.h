@@ -13,6 +13,7 @@
 #include "iomfb.h"
 #include "iomfb_v12_3.h"
 #include "iomfb_v13_2.h"
+#include "dptxep.h"
 
 #define DCP_MAX_PLANES 2
 
@@ -193,6 +194,13 @@ struct apple_dcp {
 
 	/* integrated panel if present */
 	struct dcp_panel panel;
+
+	struct apple_dcp_afkep *systemep;
+	struct completion systemep_done;
+
+	struct apple_dcp_afkep *dptxep;
+
+	struct dptx_port dptxport[2];
 };
 
 int dcp_backlight_register(struct apple_dcp *dcp);

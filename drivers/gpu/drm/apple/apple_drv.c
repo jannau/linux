@@ -13,6 +13,8 @@
 #include <linux/module.h>
 #include <linux/of_address.h>
 #include <linux/of_device.h>
+#include <linux/phy/phy.h>
+#include <linux/mux/consumer.h>
 
 #include <drm/drm_aperture.h>
 #include <drm/drm_atomic.h>
@@ -45,6 +47,8 @@
 
 struct apple_drm_private {
 	struct drm_device drm;
+	struct phy *atc1;
+	struct mux_control *xbar_atc1;
 };
 
 DEFINE_DRM_GEM_DMA_FOPS(apple_fops);
@@ -186,6 +190,18 @@ apple_connector_detect(struct drm_connector *connector, bool force)
 						  connector_status_disconnected;
 }
 
+static void apple_connector_oob_hotplug(struct drm_connector *connector)
+{
+	struct apple_connector *apple_connector = to_apple_connector(connector);
+
+	printk("########### HOTPLUG #########\n");
+
+	if (apple_connector->connected)
+		dcp_dptx_disconnect(apple_connector->dcp, 0);
+	else
+		dcp_dptx_connect(apple_connector->dcp, 0, apple_connector->priv->atc1);
+}
+
 static void apple_crtc_atomic_enable(struct drm_crtc *crtc,
 				     struct drm_atomic_state *state)
 {
@@ -294,6 +310,7 @@ static const struct drm_connector_funcs apple_connector_funcs = {
 	.atomic_duplicate_state	= drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state	= drm_atomic_helper_connector_destroy_state,
 	.detect			= apple_connector_detect,
+	.oob_hotplug_event	= apple_connector_oob_hotplug,
 };
 
 static const struct drm_connector_helper_funcs apple_connector_helper_funcs = {
@@ -345,6 +362,11 @@ static int apple_probe_per_dcp(struct device *dev,
 	drm_connector_helper_add(&connector->base,
 				 &apple_connector_helper_funcs);
 
+	// HACK:
+	if (num == 1)
+		connector->base.fwnode = fwnode_handle_get(dev->fwnode);
+	connector->priv = dev_get_drvdata(dev);
+
 	ret = drm_connector_init(drm, &connector->base, &apple_connector_funcs,
 				 dcp_get_connector_type(dcp));
 	if (ret)
@@ -358,6 +380,7 @@ static int apple_probe_per_dcp(struct device *dev,
 
 	crtc->dcp = dcp;
 	dcp_link(dcp, crtc, connector);
+	//dcp_hack(dcp, atc1, xbar);
 
 	return drm_connector_attach_encoder(&connector->base, &enc->base);
 }
@@ -396,6 +419,7 @@ err:
 
 static const struct of_device_id apple_dcp_id_tbl[] = {
 	{ .compatible = "apple,dcp" },
+	{ .compatible = "apple,dcpext" },
 	{},
 };
 
@@ -473,6 +497,23 @@ static int apple_drm_init(struct device *dev)
 		return PTR_ERR(apple);
 
 	dev_set_drvdata(dev, apple);
+
+	// <HACK>
+	apple->atc1 = devm_phy_get(dev, "atcphy1-dpphy");
+	if (IS_ERR(apple->atc1)) {
+		dev_err(dev, "Failed to get atcphy: %ld", PTR_ERR(apple->atc1));
+		return PTR_ERR(apple->atc1);
+	}
+	apple->xbar_atc1 = devm_mux_control_get(dev, "atcphy1-dpphy");
+	if (IS_ERR(apple->xbar_atc1)) {
+		dev_err(dev, "Failed to get atcphy-xbar: %ld", PTR_ERR(apple->xbar_atc1));
+		return PTR_ERR(apple->xbar_atc1);
+	}
+	ret = mux_control_select(apple->xbar_atc1, 0);
+	if (ret)
+		dev_warn(dev, "mux_control_select failed: %d\n", ret);
+	// </HACK>
+
 
 	ret = component_bind_all(dev, apple);
 	if (ret)
