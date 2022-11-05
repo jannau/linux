@@ -480,11 +480,12 @@ static irqreturn_t cd321x_interrupt(int irq, void *data)
 	struct tps6598x *tps = data;
 	u64 event;
 	u32 status;
-	int ret = IRQ_NONE;
+	int ret;
 
 	mutex_lock(&tps->lock);
 
-	if (tps6598x_read64(tps, TPS_REG_INT_EVENT1, &event)) {
+	ret = tps6598x_read64(tps, TPS_REG_INT_EVENT1, &event);
+	if (ret) {
 		dev_err(tps->dev, "%s: failed to read events\n", __func__);
 		goto err_unlock;
 	}
@@ -492,8 +493,6 @@ static irqreturn_t cd321x_interrupt(int irq, void *data)
 
 	if (!event)
 		goto err_unlock;
-
-	ret = IRQ_HANDLED;
 
 	if (!tps6598x_read_status(tps, &status))
 		goto err_clear_ints;
@@ -516,7 +515,9 @@ err_clear_ints:
 err_unlock:
 	mutex_unlock(&tps->lock);
 
-	return ret;
+	if (event)
+		return IRQ_HANDLED;
+	return IRQ_NONE;
 }
 
 static irqreturn_t tps6598x_interrupt(int irq, void *data)
@@ -525,12 +526,13 @@ static irqreturn_t tps6598x_interrupt(int irq, void *data)
 	u64 event1;
 	u64 event2;
 	u32 status;
-	int ret = IRQ_NONE;
+	int ret;
 
 	mutex_lock(&tps->lock);
 
-	if (tps6598x_read64(tps, TPS_REG_INT_EVENT1, &event1) ||
-	    tps6598x_read64(tps, TPS_REG_INT_EVENT2, &event2)) {
+	ret = tps6598x_read64(tps, TPS_REG_INT_EVENT1, &event1);
+	ret |= tps6598x_read64(tps, TPS_REG_INT_EVENT2, &event2);
+	if (ret) {
 		dev_err(tps->dev, "%s: failed to read events\n", __func__);
 		goto err_unlock;
 	}
@@ -538,8 +540,6 @@ static irqreturn_t tps6598x_interrupt(int irq, void *data)
 
 	if (!(event1 | event2))
 		goto err_unlock;
-
-	ret = IRQ_HANDLED;
 
 	if (!tps6598x_read_status(tps, &status))
 		goto err_clear_ints;
@@ -563,7 +563,9 @@ err_clear_ints:
 err_unlock:
 	mutex_unlock(&tps->lock);
 
-	return ret;
+	if (event1 | event2)
+		return IRQ_HANDLED;
+	return IRQ_NONE;
 }
 
 static int tps6598x_check_mode(struct tps6598x *tps)
