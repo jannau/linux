@@ -231,6 +231,13 @@
 		iommus = <&disp0_dart 0>, <&dispext0_dart 0>;
 		/* generate phandle explicitly for use in loader */
 		phandle = <&display>;
+
+		/* hacks */
+		phys = <&atcphy1 PHY_TYPE_DP>;
+		phy-names = "atcphy1-dpphy";
+		mux-controls = <&atcphy1_xbar 0>;
+		mux-control-names = "atcphy1-dpphy";
+		displayport;
 	};
 
 	sio_dart_0: iommu@39b004000 {
