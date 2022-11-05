@@ -9,6 +9,8 @@
 
 /dts-v1/;
 
+#define ENABLE_DCPEXT_TYPEC
+
 #include "t6020.dtsi"
 
 #define NO_PCIE_SDHC
@@ -67,7 +69,11 @@
 	status = "disabled";
 };
 &display {
+#ifdef ENABLE_DCPEXT_TYPEC
+	iommus = <&dispext0_dart 0>, <&dispext1_dart 0>;
+#else
 	iommus = <&dispext0_dart 0>;
+#endif
 };
 &dispext0_dart {
 	status = "okay";
