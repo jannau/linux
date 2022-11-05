@@ -122,6 +122,12 @@
 						remote-endpoint = <&typec1_usb_ss>;
 					};
 				};
+				port@2 {
+					reg = <2>;
+					typec1_con_dp: endpoint {
+						remote-endpoint = <&typec1_dp>;
+					};
+				};
 			};
 		};
 	};
@@ -187,6 +193,14 @@
 					};
 				};
 			};
+		};
+	};
+};
+
+&display {
+	port {
+		typec1_dp: endpoint {
+			remote-endpoint = <&typec1_con_dp>;
 		};
 	};
 };

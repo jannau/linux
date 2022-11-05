@@ -60,7 +60,7 @@
 	};
 
 	DIE_NODE(dcpext0):  dcp@289c00000 {
-		compatible = "apple,t6000-dcp", "apple,dcp";
+		compatible = "apple,t6000-dcpext", "apple,dcpext";
 		mboxes = <&DIE_NODE(dcpext0_mbox)>;
 		mbox-names = "mbox";
 		iommus = <&DIE_NODE(dcpext0_dart) 0>;
@@ -470,6 +470,12 @@
 		resets = <&DIE_NODE(atcphy1)>;
 		phys = <&DIE_NODE(atcphy1) PHY_TYPE_USB2>, <&DIE_NODE(atcphy1) PHY_TYPE_USB3>;
 		phy-names = "usb2-phy", "usb3-phy";
+	};
+
+	DIE_NODE(atcphy1_xbar): mux@b0304c000 {
+		compatible = "apple,t6000-display-crossbar";
+		reg = <0xb 0x0304c000 0x0 0x4000>;
+		#mux-control-cells = <1>;
 	};
 
 	DIE_NODE(atcphy1): phy@b03000000 {
