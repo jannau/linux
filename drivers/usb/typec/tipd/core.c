@@ -94,7 +94,9 @@ struct tps6598x {
 	struct power_supply_desc psy_desc;
 	enum power_supply_usb_type usb_type;
 
+	u32 status;
 	u16 pwr_status;
+	u32 data_status;
 };
 
 static enum power_supply_property tps6598x_psy_props[] = {
@@ -232,7 +234,7 @@ static void tps6598x_set_data_role(struct tps6598x *tps,
 	typec_set_data_role(tps->port, role);
 }
 
-static int tps6598x_connect(struct tps6598x *tps, u32 status)
+static int tps6598x_connect(struct tps6598x *tps)
 {
 	struct typec_partner_desc desc;
 	enum typec_pwr_opmode mode;
@@ -255,13 +257,15 @@ static int tps6598x_connect(struct tps6598x *tps, u32 status)
 	}
 
 	typec_set_pwr_opmode(tps->port, mode);
-	typec_set_pwr_role(tps->port, TPS_STATUS_TO_TYPEC_PORTROLE(status));
-	typec_set_vconn_role(tps->port, TPS_STATUS_TO_TYPEC_VCONN(status));
-	if (TPS_STATUS_TO_UPSIDE_DOWN(status))
+	typec_set_pwr_role(tps->port,
+			   TPS_STATUS_TO_TYPEC_PORTROLE(tps->status));
+	typec_set_vconn_role(tps->port, TPS_STATUS_TO_TYPEC_VCONN(tps->status));
+	if (TPS_STATUS_TO_UPSIDE_DOWN(tps->status))
 		typec_set_orientation(tps->port, TYPEC_ORIENTATION_REVERSE);
 	else
 		typec_set_orientation(tps->port, TYPEC_ORIENTATION_NORMAL);
-	tps6598x_set_data_role(tps, TPS_STATUS_TO_TYPEC_DATAROLE(status), true);
+	tps6598x_set_data_role(tps, TPS_STATUS_TO_TYPEC_DATAROLE(tps->status),
+			       true);
 
 	tps->partner = typec_register_partner(tps->port, &desc);
 	if (IS_ERR(tps->partner))
@@ -417,16 +421,18 @@ static const struct typec_operations tps6598x_ops = {
 	.pr_set = tps6598x_pr_set,
 };
 
-static bool tps6598x_read_status(struct tps6598x *tps, u32 *status)
+static bool tps6598x_read_status(struct tps6598x *tps)
 {
 	int ret;
+	u32 status;
 
-	ret = tps6598x_read32(tps, TPS_REG_STATUS, status);
+	ret = tps6598x_read32(tps, TPS_REG_STATUS, &status);
 	if (ret) {
 		dev_err(tps->dev, "%s: failed to read status: %d\n", __func__, ret);
 		return false;
 	}
-	trace_tps6598x_status(*status);
+	tps->status = status;
+	trace_tps6598x_status(status);
 
 	return true;
 }
@@ -441,6 +447,7 @@ static bool tps6598x_read_data_status(struct tps6598x *tps)
 		dev_err(tps->dev, "failed to read data status: %d\n", ret);
 		return false;
 	}
+	tps->data_status = data_status;
 	trace_tps6598x_data_status(data_status);
 
 	return true;
@@ -462,16 +469,16 @@ static bool tps6598x_read_power_status(struct tps6598x *tps)
 	return true;
 }
 
-static void tps6598x_handle_plug_event(struct tps6598x *tps, u32 status)
+static void tps6598x_handle_plug_event(struct tps6598x *tps)
 {
 	int ret;
 
-	if (status & TPS_STATUS_PLUG_PRESENT) {
-		ret = tps6598x_connect(tps, status);
+	if (tps->status & TPS_STATUS_PLUG_PRESENT) {
+		ret = tps6598x_connect(tps);
 		if (ret)
 			dev_err(tps->dev, "failed to register partner\n");
 	} else {
-		tps6598x_disconnect(tps, status);
+		tps6598x_disconnect(tps, tps->status);
 	}
 }
 
@@ -479,7 +486,6 @@ static irqreturn_t cd321x_interrupt(int irq, void *data)
 {
 	struct tps6598x *tps = data;
 	u64 event = 0;
-	u32 status;
 	int ret;
 
 	mutex_lock(&tps->lock);
@@ -494,7 +500,7 @@ static irqreturn_t cd321x_interrupt(int irq, void *data)
 	if (!event)
 		goto err_unlock;
 
-	if (!tps6598x_read_status(tps, &status))
+	if (!tps6598x_read_status(tps))
 		goto err_clear_ints;
 
 	if (event & APPLE_CD_REG_INT_POWER_STATUS_UPDATE)
@@ -507,7 +513,7 @@ static irqreturn_t cd321x_interrupt(int irq, void *data)
 
 	/* Handle plug insert or removal */
 	if (event & APPLE_CD_REG_INT_PLUG_EVENT)
-		tps6598x_handle_plug_event(tps, status);
+		tps6598x_handle_plug_event(tps);
 
 err_clear_ints:
 	tps6598x_write64(tps, TPS_REG_INT_CLEAR1, event);
@@ -525,7 +531,6 @@ static irqreturn_t tps6598x_interrupt(int irq, void *data)
 	struct tps6598x *tps = data;
 	u64 event1 = 0;
 	u64 event2 = 0;
-	u32 status;
 	int ret;
 
 	mutex_lock(&tps->lock);
@@ -541,7 +546,7 @@ static irqreturn_t tps6598x_interrupt(int irq, void *data)
 	if (!(event1 | event2))
 		goto err_unlock;
 
-	if (!tps6598x_read_status(tps, &status))
+	if (!tps6598x_read_status(tps))
 		goto err_clear_ints;
 
 	if ((event1 | event2) & TPS_REG_INT_POWER_STATUS_UPDATE)
@@ -554,7 +559,7 @@ static irqreturn_t tps6598x_interrupt(int irq, void *data)
 
 	/* Handle plug insert or removal */
 	if ((event1 | event2) & TPS_REG_INT_PLUG_EVENT)
-		tps6598x_handle_plug_event(tps, status);
+		tps6598x_handle_plug_event(tps);
 
 err_clear_ints:
 	tps6598x_write64(tps, TPS_REG_INT_CLEAR1, event1);
@@ -699,7 +704,6 @@ static int tps6598x_probe(struct i2c_client *client)
 	struct typec_capability typec_cap = { };
 	struct tps6598x *tps;
 	struct fwnode_handle *fwnode;
-	u32 status;
 	u32 conf;
 	u32 vid;
 	int ret;
@@ -755,10 +759,10 @@ static int tps6598x_probe(struct i2c_client *client)
 	if (ret)
 		return ret;
 
-	ret = tps6598x_read32(tps, TPS_REG_STATUS, &status);
-	if (ret < 0)
+	if (!tps6598x_read_status(tps)) {
+		ret = -ENXIO;
 		goto err_clear_mask;
-	trace_tps6598x_status(status);
+	}
 
 	ret = tps6598x_read32(tps, TPS_REG_SYSTEM_CONF, &conf);
 	if (ret < 0)
@@ -826,13 +830,13 @@ static int tps6598x_probe(struct i2c_client *client)
 		goto err_role_put;
 	}
 
-	if (status & TPS_STATUS_PLUG_PRESENT) {
+	if (tps->status & TPS_STATUS_PLUG_PRESENT) {
 		ret = tps6598x_read16(tps, TPS_REG_POWER_STATUS, &tps->pwr_status);
 		if (ret < 0) {
 			dev_err(tps->dev, "failed to read power status: %d\n", ret);
 			goto err_unregister_port;
 		}
-		ret = tps6598x_connect(tps, status);
+		ret = tps6598x_connect(tps);
 		if (ret)
 			dev_err(&client->dev, "failed to register partner\n");
 	}
