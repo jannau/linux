@@ -23,11 +23,14 @@ struct apple_crtc {
 
 void dcp_hotplug(struct work_struct *work);
 
+struct apple_drm_private;
+
 struct apple_connector {
 	struct drm_connector base;
 	bool connected;
 
 	struct platform_device *dcp;
+	struct apple_drm_private *drm;
 
 	/* Workqueue for sending hotplug events to the associated device */
 	struct work_struct hotplug_wq;
@@ -40,6 +43,7 @@ void dcp_poweron(struct platform_device *pdev);
 int dcp_crtc_atomic_check(struct drm_crtc *crtc, struct drm_atomic_state *state);
 void dcp_link(struct platform_device *pdev, struct apple_crtc *apple,
 	      struct apple_connector *connector);
+void dcp_hack(struct platform_device *pdev, struct phy *phy, struct mux_control *mux);
 int dcp_start(struct platform_device *pdev);
 void dcp_flush(struct drm_crtc *crtc, struct drm_atomic_state *state);
 bool dcp_is_initialized(struct platform_device *pdev);
@@ -51,9 +55,15 @@ int dcp_mode_valid(struct drm_connector *connector,
 void dcp_set_dimensions(struct apple_dcp *dcp);
 void dcp_send_message(struct apple_dcp *dcp, u8 endpoint, u64 message);
 
+int dcp_dptx_connect(struct platform_device *pdev, u32 port, struct phy *phy);
+int dcp_dptx_disconnect(struct platform_device *pdev, u32 port);
+
 int iomfb_start_rtkit(struct apple_dcp *dcp);
 void iomfb_shutdown(struct apple_dcp *dcp);
 /* rtkit message handler for IOMFB messages */
 void iomfb_recv_msg(struct apple_dcp *dcp, u64 message);
+void iomfb_resume(struct apple_dcp *dcp);
 
+int systemep_init(struct apple_dcp *dcp);
+int dptxep_init(struct apple_dcp *dcp);
 #endif

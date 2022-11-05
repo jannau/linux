@@ -7,6 +7,7 @@
 #include <linux/string.h>
 #include <linux/slab.h>
 #include "parser.h"
+#include "trace.h"
 
 #define DCP_PARSE_HEADER 0xd3
 
@@ -212,11 +213,6 @@ int parse(void *blob, size_t size, struct dcp_parse_ctx *ctx)
 	return 0;
 }
 
-struct dimension {
-	s64 total, front_porch, sync_width, active;
-	s64 precise_sync_rate;
-};
-
 static int parse_dimension(struct dcp_parse_ctx *handle, struct dimension *dim)
 {
 	struct iterator it;
@@ -334,9 +330,14 @@ static int parse_mode(struct dcp_parse_ctx *handle,
 		else
 			skip(it.handle);
 
-		if (ret)
+		if (ret) {
+			trace_iomfb_parse_mode_fail(id, &horiz, &vert, best_color_mode, is_virtual, *score);
 			return ret;
+		}
 	}
+
+	
+	trace_iomfb_parse_mode_success(id, &horiz, &vert, best_color_mode, is_virtual, *score);
 
 	/*
 	 * Reject modes without valid color mode.
@@ -456,4 +457,66 @@ int parse_display_attributes(struct dcp_parse_ctx *handle, int *width_mm,
 	*height_mm = 10 * height_cm;
 
 	return 0;
+}
+
+int parse_epic_service_init(struct dcp_parse_ctx *handle, const char **name,
+			    const char **class, s64 *unit)
+{
+	int ret = 0;
+	struct iterator it;
+	bool parsed_unit = false;
+	bool parsed_name = false;
+	bool parsed_class = false;
+
+	*name = ERR_PTR(-ENOENT);
+	*class = ERR_PTR(-ENOENT);
+
+	dcp_parse_foreach_in_dict(handle, it) {
+		char *key = parse_string(it.handle);
+
+		if (IS_ERR(key)) {
+			ret = PTR_ERR(key);
+			break;
+		}
+
+		if (!strcmp(key, "EPICName")) {
+			*name = parse_string(it.handle);
+			if (IS_ERR(*name))
+				ret = PTR_ERR(*name);
+			else
+				parsed_name = true;
+		} else if (!strcmp(key, "EPICProviderClass")) {
+			*class = parse_string(it.handle);
+			if (IS_ERR(*class))
+				ret = PTR_ERR(*class);
+			else
+				parsed_class = true;
+		} else if (!strcmp(key, "EPICUnit")) {
+			ret = parse_int(it.handle, unit);
+			if (!ret)
+				parsed_unit = true;
+		} else {
+			skip(it.handle);
+		}
+
+		kfree(key);
+		if (ret)
+			break;
+	}
+
+	if (!parsed_unit || !parsed_name || !parsed_class)
+		ret = -ENOENT;
+
+	if (ret) {
+		if (!IS_ERR(*name)) {
+			kfree(*name);
+			*name = ERR_PTR(ret);
+		}
+		if (!IS_ERR(*class)) {
+			kfree(*class);
+			*class = ERR_PTR(ret);
+		}
+	}
+
+	return ret;
 }

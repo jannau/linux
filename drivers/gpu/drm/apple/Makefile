@@ -4,7 +4,7 @@ CFLAGS_trace.o = -I$(src)
 
 appledrm-y := apple_drv.o
 
-apple_dcp-y := dcp.o iomfb.o parser.o
+apple_dcp-y := afk.o dcp.o dptxep.o iomfb.o parser.o systemep.o
 apple_dcp-$(CONFIG_TRACING) += trace.o
 
 apple_piodma-y := dummy-piodma.o

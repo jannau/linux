@@ -9,10 +9,12 @@
 #include <linux/scatterlist.h>
 
 #include "iomfb.h"
+#include "dptxep.h"
 
 #define DCP_MAX_PLANES 2
 
 struct apple_dcp;
+struct apple_dcp_afkep;
 
 enum {
 	SYSTEM_ENDPOINT = 0x20,
@@ -145,6 +147,13 @@ struct apple_dcp {
 	 * on the next successfully completed swap.
 	 */
 	struct list_head swapped_out_fbs;
+
+	struct apple_dcp_afkep *systemep;
+	struct completion systemep_done;
+
+	struct apple_dcp_afkep *dptxep;
+
+	struct dptx_port dptxport[2];
 };
 
 #endif /* __APPLE_DCP_INTERNAL_H__ */
