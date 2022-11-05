@@ -410,6 +410,7 @@
 			/* generate phandle explicitly for use in loader */
 			phandle = <&display>;
 
+			displayport;
 			/* hacks */
 			phys = <&atcphy1 PHY_TYPE_DP>;
 			phy-names = "atcphy1-dpphy";
@@ -915,7 +916,7 @@
 		};
 
 		dcpext: dcp@271c00000 {
-			compatible = "apple,t8103-dcp", "apple,dcp";
+			compatible = "apple,t8103-dcpext", "apple,dcpext";
 			mboxes = <&dcpext_mbox>;
 			mbox-names = "mbox";
 			iommus = <&dcpext_dart 0>;
