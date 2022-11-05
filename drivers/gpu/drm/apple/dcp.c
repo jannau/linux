@@ -21,6 +21,7 @@
 #include <drm/drm_probe_helper.h>
 #include <drm/drm_vblank.h>
 
+#include "afk.h"
 #include "dcp.h"
 #include "dcp-internal.h"
 #include "iomfb.h"
@@ -93,6 +94,12 @@ static void dcp_recv_msg(void *cookie, u8 endpoint, u64 message)
 	switch (endpoint) {
 	case IOMFB_ENDPOINT:
 		return iomfb_recv_msg(dcp, message);
+	case SYSTEM_ENDPOINT:
+		afk_receive_message(dcp->systemep, message);
+		return;
+	case DPTX_ENDPOINT:
+		afk_receive_message(dcp->dptxep, message);
+		return;
 	default:
 		WARN(endpoint, "unknown DCP endpoint %hhu", endpoint);
 	}
@@ -175,7 +182,7 @@ void dcp_send_message(struct apple_dcp *dcp, u8 endpoint, u64 message)
 {
 	trace_dcp_send_msg(dcp, endpoint, message);
 	apple_rtkit_send_message(dcp->rtk, endpoint, message, NULL,
-				 false);
+				 true);
 }
 
 int dcp_crtc_atomic_check(struct drm_crtc *crtc, struct drm_atomic_state *state)
@@ -224,6 +231,40 @@ int dcp_get_connector_type(struct platform_device *pdev)
 }
 EXPORT_SYMBOL_GPL(dcp_get_connector_type);
 
+void dcp_hack(struct platform_device *pdev, struct phy *phy, struct mux_control *mux)
+{
+	struct apple_dcp *dcp = platform_get_drvdata(pdev);
+
+	dcp->dptxport[0].atcphy = phy;
+	dcp->dptxport[0].mux = mux;
+}
+EXPORT_SYMBOL_GPL(dcp_hack);
+
+int dcp_dptx_connect(struct platform_device *pdev, u32 port, struct phy *phy)
+{
+	struct apple_dcp *dcp = platform_get_drvdata(pdev);
+
+	dcp->dptxport[port].atcphy = phy;
+	dptxport_validate_connection(dcp->dptxport[port].service, 0, 1, 0);
+	dptxport_connect(dcp->dptxport[port].service, 0, 1, 0);
+	dptxport_request_display(dcp->dptxport[port].service);
+	dptxport_set_hpd(dcp->dptxport[port].service, true);
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(dcp_dptx_connect);
+
+int dcp_dptx_disconnect(struct platform_device *pdev, u32 port)
+{
+	struct apple_dcp *dcp = platform_get_drvdata(pdev);
+
+	dptxport_release_display(dcp->dptxport[port].service);
+	dptxport_set_hpd(dcp->dptxport[port].service, false);
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(dcp_dptx_disconnect);
+
 void dcp_link(struct platform_device *pdev, struct apple_crtc *crtc,
 	      struct apple_connector *connector)
 {
@@ -240,9 +281,25 @@ int dcp_start(struct platform_device *pdev)
 	int ret;
 
 	/* start RTKit endpoints */
+	ret = systemep_init(dcp);
+	if (ret) {
+		dev_err(dcp->dev, "Failed to start system endpoint: %d", ret);
+		return ret;
+	}
+	
+	
+	if (of_device_is_compatible(pdev->dev.of_node, "apple,dcpext")) {
+		ret = dptxep_init(dcp);
+		if (ret) {
+			dev_err(dcp->dev, "Failed to start DPTX endpoint: %d", ret);
+			return ret;
+		}
+	}
+
 	ret = iomfb_start_rtkit(dcp);
-	if (ret)
+	if (ret) {
 		dev_err(dcp->dev, "Failed to start IOMFB endpoint: %d", ret);
+	}
 
 	return ret;
 }
@@ -464,7 +521,6 @@ static int dcp_platform_probe(struct platform_device *pdev)
 	if (ret)
 		return dev_err_probe(dev, PTR_ERR(dcp->rtk),
 				     "Failed to boot RTKit: %d", ret);
-
 	return ret;
 }
 
@@ -482,6 +538,7 @@ static void dcp_platform_shutdown(struct platform_device *pdev)
 
 static const struct of_device_id of_match[] = {
 	{ .compatible = "apple,dcp" },
+	{ .compatible = "apple,dcpext" },
 	{}
 };
 MODULE_DEVICE_TABLE(of, of_match);
