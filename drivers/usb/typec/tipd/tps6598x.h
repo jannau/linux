@@ -188,6 +188,9 @@
 #define TPS_DATA_STATUS_TBT_CABLE_GEN \
 	TPS_FIELD_GET(TPS_DATA_STATUS_TBT_CABLE_GEN_MASK, (x))
 
+/* Apple TPS_REG_DATA_STATUS additional bits */
+#define APPLE_CD_DATA_STATUS_DP_HPD		     BIT(15)
+
 /* Map data status to DP spec assignments */
 #define TPS_DATA_STATUS_DP_SPEC_PIN_ASSIGNMENT(x) \
 	((TPS_DATA_STATUS_DP_PIN_ASSIGNMENT(x) << 1) | \

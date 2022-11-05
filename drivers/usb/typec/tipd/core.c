@@ -14,7 +14,12 @@
 #include <linux/regmap.h>
 #include <linux/interrupt.h>
 #include <linux/usb/typec.h>
+#include <linux/usb/typec_altmode.h>
+#include <linux/usb/typec_dp.h>
+#include <linux/usb/typec_mux.h>
+#include <linux/usb/typec_tbt.h>
 #include <linux/usb/role.h>
+#include <drm/drm_connector.h>
 
 #include "tps6598x.h"
 #include "trace.h"
@@ -36,6 +41,8 @@
 #define TPS_REG_CTRL_CONF		0x29
 #define TPS_REG_POWER_STATUS		0x3f
 #define TPS_REG_RX_IDENTITY_SOP		0x48
+#define TPS_REG_DP_SID			0x58
+#define TPS_REG_INTEL_VID		0x59
 #define TPS_REG_DATA_STATUS		0x5f
 
 /* TPS_REG_SYSTEM_CONF bits */
@@ -55,6 +62,25 @@ enum {
 struct tps6598x_rx_identity_reg {
 	u8 status;
 	struct usb_pd_identity identity;
+} __packed;
+
+/* TPS_REG_DP_SID */
+struct tps6598x_dp_sid {
+	u8 status;
+	__le32 dp_status_tx;
+	__le32 dp_status_rx;
+	__le32 dp_configure;
+	__le32 dp_mode_data;
+} __packed;
+
+/* TPS_REG_INTEL_VID */
+struct tps6598x_intel_vid {
+	u8 status;
+	__le32 tbt_attention_data;
+	__le16 tbt_enter_mode_data;
+	__le16 tbt_discover_mode_sop;
+	__le16 tbt_discover_mode_sopp;
+	__le16 _reserved;
 } __packed;
 
 /* Standard Task return codes */
@@ -90,6 +116,11 @@ struct tps6598x {
 	struct usb_role_switch *role_sw;
 	struct typec_capability typec_cap;
 
+	struct typec_mux *mux;
+	struct typec_mux_state state;
+	struct typec_altmode *altmode_dp;
+	struct typec_altmode *altmode_tbt;
+
 	struct power_supply *psy;
 	struct power_supply_desc psy_desc;
 	enum power_supply_usb_type usb_type;
@@ -97,6 +128,9 @@ struct tps6598x {
 	u32 status;
 	u16 pwr_status;
 	u32 data_status;
+
+	struct fwnode_handle *connector_fwnode;
+	bool hpd;
 };
 
 static enum power_supply_property tps6598x_psy_props[] = {
@@ -111,6 +145,8 @@ static enum power_supply_usb_type tps6598x_psy_usb_types[] = {
 
 static const char *tps6598x_psy_name_prefix = "tps6598x-source-psy-";
 
+static void tps6598x_set_data_role(struct tps6598x *tps,
+				   enum typec_data_role role, bool connected);
 /*
  * Max data bytes for Data1, Data2, and other registers. See ch 1.3.2:
  * https://www.ti.com/lit/ug/slvuan1a/slvuan1a.pdf
@@ -217,6 +253,116 @@ static int tps6598x_read_partner_identity(struct tps6598x *tps)
 	return 0;
 }
 
+static void tps6598x_set_mux_safe_state(struct tps6598x *tps)
+{
+	tps->state.alt = NULL;
+	tps->state.mode = TYPEC_STATE_SAFE;
+	typec_mux_set(tps->mux, &tps->state);
+}
+
+static void tps6598x_update_mux_state_dp(struct tps6598x *tps)
+{
+	unsigned int dp_pins, typec_dp_state;
+	struct typec_displayport_data dp_data;
+	struct tps6598x_dp_sid dp_sid;
+	int ret;
+
+	ret = tps6598x_block_read(tps, TPS_REG_DP_SID, &dp_sid, sizeof(dp_sid));
+	if (ret) {
+		dev_warn(tps->dev, "Failed to read DP_SID: %d\n", ret);
+		dp_data.status = 0;
+		dp_data.conf = 0;
+	} else {
+		dp_data.status = le32_to_cpu(dp_sid.dp_status_rx);
+		dp_data.conf = le32_to_cpu(dp_sid.dp_configure);	
+	}
+
+	dp_pins = TPS_DATA_STATUS_DP_SPEC_PIN_ASSIGNMENT(tps->data_status);
+	switch (dp_pins) {
+	case TPS_DATA_STATUS_DP_SPEC_PIN_ASSIGNMENT_A:
+		typec_dp_state = TYPEC_DP_STATE_A;
+		break;
+	case TPS_DATA_STATUS_DP_SPEC_PIN_ASSIGNMENT_B:
+		typec_dp_state = TYPEC_DP_STATE_B;
+		break;
+	case TPS_DATA_STATUS_DP_SPEC_PIN_ASSIGNMENT_C:
+		typec_dp_state = TYPEC_DP_STATE_C;
+		break;
+	case TPS_DATA_STATUS_DP_SPEC_PIN_ASSIGNMENT_D:
+		typec_dp_state = TYPEC_DP_STATE_D;
+		break;
+	case TPS_DATA_STATUS_DP_SPEC_PIN_ASSIGNMENT_E:
+		typec_dp_state = TYPEC_DP_STATE_E;
+		break;
+	case TPS_DATA_STATUS_DP_SPEC_PIN_ASSIGNMENT_F:
+		typec_dp_state = TYPEC_DP_STATE_F;
+		break;
+	default:
+		dev_warn(tps->dev, "Unknown DP pin assigment %x\n", dp_pins);
+		tps->state.mode = TYPEC_STATE_SAFE;
+		typec_mux_set(tps->mux, &tps->state);
+		return;
+	}
+
+	if (!tps->state.alt) {
+		tps->state.alt = tps->altmode_dp;
+		tps->state.mode = TYPEC_STATE_SAFE;
+		// TODO: do this less hacky/more generic
+		tps6598x_set_data_role(tps, 0, false);
+		typec_mux_set(tps->mux, &tps->state);
+	}
+
+	if (tps->state.alt == tps->altmode_dp &&
+	    tps->state.mode == typec_dp_state)
+	    return;
+
+	tps->state.mode = typec_dp_state;
+	tps->state.data = &dp_data;
+	typec_mux_set(tps->mux, &tps->state);
+	tps->state.data = NULL;
+
+	tps6598x_set_data_role(tps, TPS_STATUS_TO_TYPEC_DATAROLE(tps->status),
+		true);
+}
+
+static void tps6598x_update_mux_state_tbt(struct tps6598x *tps)
+{
+	//struct typec_thunderbolt_data tbt_data;
+
+	if (!tps->state.alt) {
+		tps->state.alt = tps->altmode_tbt;
+		tps->state.mode = TYPEC_STATE_SAFE;
+		typec_mux_set(tps->mux, &tps->state);
+	}
+
+	if (tps->state.alt == tps->altmode_dp &&
+	    tps->state.mode == TYPEC_TBT_MODE)
+	    return;
+
+	tps->state.mode = TYPEC_TBT_MODE;
+	typec_mux_set(tps->mux, &tps->state);
+}
+
+static void tps6598x_update_mux_state(struct tps6598x *tps)
+{
+	if (!(tps->status & TPS_STATUS_PLUG_PRESENT))
+		return tps6598x_set_mux_safe_state(tps);
+
+	if (tps->data_status & TPS_DATA_STATUS_DP_CONNECTION)
+		return tps6598x_update_mux_state_dp(tps);
+
+	if (tps->data_status & TPS_DATA_STATUS_TBT_CONNECTION)
+		return tps6598x_update_mux_state_tbt(tps);
+
+	/* fall back to USB if nothing else was negotiated */
+	if (!tps->state.alt && tps->state.mode == TYPEC_STATE_USB)
+		    return;
+
+	tps->state.alt = NULL;
+	tps->state.mode = TYPEC_STATE_USB;
+	typec_mux_set(tps->mux, &tps->state);
+}
+
 static void tps6598x_set_data_role(struct tps6598x *tps,
 				   enum typec_data_role role, bool connected)
 {
@@ -264,6 +410,7 @@ static int tps6598x_connect(struct tps6598x *tps)
 		typec_set_orientation(tps->port, TYPEC_ORIENTATION_REVERSE);
 	else
 		typec_set_orientation(tps->port, TYPEC_ORIENTATION_NORMAL);
+	tps6598x_update_mux_state(tps);
 	tps6598x_set_data_role(tps, TPS_STATUS_TO_TYPEC_DATAROLE(tps->status),
 			       true);
 
@@ -289,6 +436,7 @@ static void tps6598x_disconnect(struct tps6598x *tps, u32 status)
 	typec_set_vconn_role(tps->port, TPS_STATUS_TO_TYPEC_VCONN(status));
 	typec_set_orientation(tps->port, TYPEC_ORIENTATION_NONE);
 	tps6598x_set_data_role(tps, TPS_STATUS_TO_TYPEC_DATAROLE(status), false);
+	tps6598x_set_mux_safe_state(tps);
 
 	power_supply_changed(tps->psy);
 }
@@ -487,6 +635,8 @@ static irqreturn_t cd321x_interrupt(int irq, void *data)
 	struct tps6598x *tps = data;
 	u64 event = 0;
 	int ret;
+	bool hpd;
+	bool hpd_event = false;
 
 	mutex_lock(&tps->lock);
 
@@ -496,27 +646,49 @@ static irqreturn_t cd321x_interrupt(int irq, void *data)
 		goto err_unlock;
 	}
 	trace_cd321x_irq(event);
-
 	if (!event)
 		goto err_unlock;
 
+	/*
+	 * ack interrupts before reading updated registers to ensure
+	 * we don't miss anything
+	 */
+	tps6598x_write64(tps, TPS_REG_INT_CLEAR1, event);
+
 	if (!tps6598x_read_status(tps))
-		goto err_clear_ints;
+		goto err_unlock;
 
 	if (event & APPLE_CD_REG_INT_POWER_STATUS_UPDATE)
 		if (!tps6598x_read_power_status(tps))
-			goto err_clear_ints;
+			goto err_unlock;
 
-	if (event & APPLE_CD_REG_INT_DATA_STATUS_UPDATE)
+	if (event & APPLE_CD_REG_INT_DATA_STATUS_UPDATE) {
 		if (!tps6598x_read_data_status(tps))
-			goto err_clear_ints;
+			goto err_unlock;
+
+		/*
+		 * Check for changes in DP HPD and defer the OOB hotplug
+		 * notification until after we've handled potential plug
+		 * insertion/removal events.
+		 */
+		hpd = tps->data_status & APPLE_CD_DATA_STATUS_DP_HPD;
+		if (hpd != tps->hpd)
+			hpd_event = true;
+		tps->hpd = hpd;
+	}
 
 	/* Handle plug insert or removal */
 	if (event & APPLE_CD_REG_INT_PLUG_EVENT)
 		tps6598x_handle_plug_event(tps);
+	/*
+	 * We may need to update the mux state if a new mode was negotiated
+	 * without plug insertion or removal.
+	 */
+	else if (event & APPLE_CD_REG_INT_DATA_STATUS_UPDATE)
+		tps6598x_update_mux_state(tps);
 
-err_clear_ints:
-	tps6598x_write64(tps, TPS_REG_INT_CLEAR1, event);
+	if (IS_ENABLED(CONFIG_DRM) && hpd_event && tps->connector_fwnode)
+		drm_connector_oob_hotplug_event(tps->connector_fwnode);
 
 err_unlock:
 	mutex_unlock(&tps->lock);
@@ -560,6 +732,12 @@ static irqreturn_t tps6598x_interrupt(int irq, void *data)
 	/* Handle plug insert or removal */
 	if ((event1 | event2) & TPS_REG_INT_PLUG_EVENT)
 		tps6598x_handle_plug_event(tps);
+	/*
+	 * We may need to update the mux state if a new mode was negotiated
+	 * without plug insertion or removal.
+	 */
+	else if ((event1 | event2) & TPS_REG_INT_DATA_STATUS_UPDATE)
+		tps6598x_update_mux_state(tps);
 
 err_clear_ints:
 	tps6598x_write64(tps, TPS_REG_INT_CLEAR1, event1);
@@ -697,6 +875,43 @@ static int devm_tps6598_psy_register(struct tps6598x *tps)
 	return PTR_ERR_OR_ZERO(tps->psy);
 }
 
+static int tps6598x_register_altmodes(struct tps6598x *tps)
+{
+	struct typec_altmode_desc desc;
+
+	memset(&desc, 0, sizeof(desc));
+	desc.svid = USB_TYPEC_DP_SID;
+	desc.mode = USB_TYPEC_DP_MODE;
+	desc.vdo = (DP_CAP_DFP_D |
+			DP_CONF_SET_PIN_ASSIGN(
+				BIT(DP_PIN_ASSIGN_A) | BIT(DP_PIN_ASSIGN_B) |
+				BIT(DP_PIN_ASSIGN_C) | BIT(DP_PIN_ASSIGN_D) |
+				BIT(DP_PIN_ASSIGN_E) | BIT(DP_PIN_ASSIGN_F)
+			)
+		);
+	tps->altmode_dp = typec_port_register_altmode(tps->port, &desc);
+	if (IS_ERR(tps->altmode_dp))
+		return PTR_ERR(tps->altmode_dp);
+
+	memset(&desc, 0, sizeof(desc));
+	desc.svid = USB_TYPEC_TBT_SID;
+	desc.mode = TYPEC_ANY_MODE;
+	tps->altmode_tbt = typec_port_register_altmode(tps->port, &desc);
+	if (IS_ERR(tps->altmode_tbt))
+		return PTR_ERR(tps->altmode_tbt);
+
+	return 0;
+}
+
+// TODO: this shold probably be moved into drm
+static void *fwnode_match_property(struct fwnode_handle *fwnode, const char *id,
+			     void *data)
+{
+	if (fwnode_property_present(fwnode, id))
+		return fwnode;
+	return NULL;
+}
+
 static int tps6598x_probe(struct i2c_client *client)
 {
 	irq_handler_t irq_handler = tps6598x_interrupt;
@@ -704,6 +919,7 @@ static int tps6598x_probe(struct i2c_client *client)
 	struct typec_capability typec_cap = { };
 	struct tps6598x *tps;
 	struct fwnode_handle *fwnode;
+	bool check_hpd = false;
 	u32 conf;
 	u32 vid;
 	int ret;
@@ -743,6 +959,7 @@ static int tps6598x_probe(struct i2c_client *client)
 			APPLE_CD_REG_INT_PLUG_EVENT;
 
 		irq_handler = cd321x_interrupt;
+		check_hpd = true;
 	} else {
 		/* Enable power status, data status and plug event interrupts */
 		mask1 = TPS_REG_INT_POWER_STATUS_UPDATE |
@@ -830,15 +1047,43 @@ static int tps6598x_probe(struct i2c_client *client)
 		goto err_role_put;
 	}
 
+	tps->mux = fwnode_typec_mux_get(fwnode, NULL);
+	if (IS_ERR(tps->mux)) {
+		ret = PTR_ERR(tps->mux);
+		goto err_unregister_port;
+	}
+	tps->state.mode = TYPEC_STATE_SAFE;
+
+	ret = tps6598x_register_altmodes(tps);
+	if (ret)
+		goto err_mux_put;
+
+	tps->connector_fwnode = fwnode_connection_find_match(fwnode,
+					"displayport", NULL,
+					fwnode_match_property);
+	if (IS_ERR(tps->connector_fwnode))
+		tps->connector_fwnode = NULL;
+	// TODO: EPROBE_DEFER if connector not ready yet
+
 	if (tps->status & TPS_STATUS_PLUG_PRESENT) {
-		ret = tps6598x_read16(tps, TPS_REG_POWER_STATUS, &tps->pwr_status);
-		if (ret < 0) {
-			dev_err(tps->dev, "failed to read power status: %d\n", ret);
-			goto err_unregister_port;
+		if (!tps6598x_read_power_status(tps)) {
+			ret = -EINVAL;
+			goto err_unregister_altmodes;
 		}
+		if (!tps6598x_read_data_status(tps)) {
+			ret = -EINVAL;
+			goto err_unregister_altmodes;
+		}
+
 		ret = tps6598x_connect(tps);
 		if (ret)
 			dev_err(&client->dev, "failed to register partner\n");
+
+		if (IS_ENABLED(CONFIG_DRM) && check_hpd) {
+			tps->hpd = tps->data_status & APPLE_CD_DATA_STATUS_DP_HPD;
+			if (tps->hpd && tps->connector_fwnode)
+				drm_connector_oob_hotplug_event(tps->connector_fwnode);
+		}
 	}
 
 	ret = devm_request_threaded_irq(&client->dev, client->irq, NULL,
@@ -855,6 +1100,16 @@ static int tps6598x_probe(struct i2c_client *client)
 
 err_disconnect:
 	tps6598x_disconnect(tps, 0);
+err_unregister_altmodes:
+	if (tps->connector_fwnode) {
+		if (IS_ENABLED(CONFIG_DRM) && tps->hpd)
+			drm_connector_oob_hotplug_event(tps->connector_fwnode);
+		fwnode_handle_put(tps->connector_fwnode);
+	}
+	typec_unregister_altmode(tps->altmode_dp);
+	typec_unregister_altmode(tps->altmode_tbt);
+err_mux_put:
+	typec_mux_put(tps->mux);
 err_unregister_port:
 	typec_unregister_port(tps->port);
 err_role_put:
@@ -873,6 +1128,12 @@ static void tps6598x_remove(struct i2c_client *client)
 	tps6598x_disconnect(tps, 0);
 	typec_unregister_port(tps->port);
 	usb_role_switch_put(tps->role_sw);
+
+	if (tps->connector_fwnode) {
+		if (IS_ENABLED(CONFIG_DRM) && tps->hpd)
+			drm_connector_oob_hotplug_event(tps->connector_fwnode);
+		fwnode_handle_put(tps->connector_fwnode);
+	}
 }
 
 static const struct of_device_id tps6598x_of_match[] = {
