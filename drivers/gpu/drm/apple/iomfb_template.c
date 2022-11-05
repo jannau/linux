@@ -33,11 +33,12 @@
 #include "version_utils.h"
 
 /* Register defines used in bandwidth setup structure */
-#define REG_SCRATCH (0x14)
-#define REG_SCRATCH_T600X (0x988)
-#define REG_SCRATCH_T602X (0x1208)
+#define REG_SCRATCH(idx) (0x14 + (idx) * 4)
+#define REG_SCRATCH_T600X(idx) (0x988 + (idx) * 8)
+#define REG_SCRATCH_T602X(idx) (0x1208 + (idx) * 8)
+#define REG_SCRATCH_T8112(idx) (0x5e0 + (idx) * 4)
 #define REG_DOORBELL (0x0)
-#define REG_DOORBELL_BIT (2)
+#define REG_DOORBELL_BIT(idx) (2 + (idx))
 
 struct dcp_wait_cookie {
 	struct kref refcount;
@@ -668,17 +669,21 @@ static struct dcp_rt_bandwidth dcpep_cb_rt_bandwidth(struct apple_dcp *dcp)
 	if (dcp->disp_registers[5] && dcp->disp_registers[6]) {
 		return (struct dcp_rt_bandwidth){
 			.reg_scratch =
-				dcp->disp_registers[5]->start + REG_SCRATCH,
+				dcp->disp_registers[5]->start + REG_SCRATCH(dcp->index),
 			.reg_doorbell =
 				dcp->disp_registers[6]->start + REG_DOORBELL,
-			.doorbell_bit = REG_DOORBELL_BIT,
+			.doorbell_bit = REG_DOORBELL_BIT(dcp->index),
 
 			.padding[3] = 0x4, // XXX: required by 11.x firmware
 		};
 	} else if (dcp->disp_registers[4]) {
-		u32 offset = REG_SCRATCH_T600X;
-		if (of_device_is_compatible(dcp->dev->of_node, "apple,t6020-dcp"))
-			offset = REG_SCRATCH_T602X;
+		u32 offset = REG_SCRATCH_T600X(dcp->index);
+		if (of_device_is_compatible(dcp->dev->of_node, "apple,t6020-dcp") ||
+		    of_device_is_compatible(dcp->dev->of_node, "apple,t6020-dcpext"))
+			offset = REG_SCRATCH_T602X(dcp->index);
+		else if (of_device_is_compatible(dcp->dev->of_node, "apple,t8112-dcp") ||
+			 of_device_is_compatible(dcp->dev->of_node, "apple,t8112-dcpext"))
+			offset = REG_SCRATCH_T8112(dcp->index);
 
 		return (struct dcp_rt_bandwidth){
 			.reg_scratch = dcp->disp_registers[4]->start +
