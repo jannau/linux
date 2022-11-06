@@ -458,7 +458,7 @@ static void apple_rtkit_syslog_rx_log(struct apple_rtkit *rtk, u64 msg)
 
 	log_context[sizeof(log_context) - 1] = 0;
 	rtk->syslog_msg_buffer[rtk->syslog_msg_size - 1] = 0;
-	dev_info(rtk->dev, "RTKit: syslog message: %s: %s\n", log_context,
+	dev_info(rtk->dev, "RTKit: syslog message: %s: %s", log_context,
 		 rtk->syslog_msg_buffer);
 
 done:
