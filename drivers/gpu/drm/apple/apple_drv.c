@@ -59,7 +59,7 @@ static const struct drm_driver apple_drm_driver = {
 	DRM_GEM_DMA_DRIVER_OPS_WITH_DUMB_CREATE(apple_drm_gem_dumb_create),
 	.name			= DRIVER_NAME,
 	.desc			= DRIVER_DESC,
-	.date			= "20210901",
+	.date			= "20221106",
 	.major			= 1,
 	.minor			= 0,
 	.driver_features	= DRIVER_MODESET | DRIVER_GEM | DRIVER_ATOMIC,
