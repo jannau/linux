@@ -2324,6 +2324,9 @@ static const struct of_device_id atcphy_match[] = {
 	{
 		.compatible = "apple,t8103-atcphy",
 	},
+	{
+		.compatible = "apple,t6000-atcphy",
+	},
 	{},
 };
 MODULE_DEVICE_TABLE(of, atcphy_match);
