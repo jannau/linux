@@ -1,3 +1,9 @@
+* Mon Nov 07 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc4.34]
+- redhat/configs: move CONFIG_ACPI_VIDEO to common/generic (Mark Langsdorf)
+- enable imx8xm I2C configs properly (Al Stone)
+- Linux v6.1.0-0.rc4
+Resolves: 
+
 * Sun Nov 06 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc3.2f5065a0bc9d.33]
 - Linux v6.1.0-0.rc3.2f5065a0bc9d
 Resolves: 
