@@ -1,3 +1,12 @@
+* Tue Nov 08 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc4.59f2f4b8a757.35]
+- Enable configs for imx8m PHYs (Al Stone)
+- configs/fedora: Build some SC7180 clock controllers as modules (Javier Martinez Canillas)
+- redhat/configs: Disable fbdev drivers and use simpledrm everywhere (Javier Martinez Canillas) [1986223]
+- redhat: fix the branch we pull from the documentation tree (Herton R. Krzesinski)
+- redhat/configs: change so watchdog is module versus builtin (Steve Best)
+- Linux v6.1.0-0.rc4.59f2f4b8a757
+Resolves: rhbz#1986223
+
 * Mon Nov 07 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc4.34]
 - redhat/configs: move CONFIG_ACPI_VIDEO to common/generic (Mark Langsdorf)
 - enable imx8xm I2C configs properly (Al Stone)
