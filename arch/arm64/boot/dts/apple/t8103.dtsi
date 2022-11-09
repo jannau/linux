@@ -408,14 +408,17 @@
 
 		uat_handoff: uat-handoff {
 			reg = <0x9 0xfff74000 0 0x4000>;
+			no-map;
 		};
 
 		uat_pagetables: uat-pagetables {
 			reg = <0x9 0xfff78000 0 0x40000>;
+			no-map;
 		};
 
 		uat_ttbs: uat-ttbs {
 			reg = <0x9 0xfffb8000 0 0x4000>;
+			no-map;
 		};
 	};
 
