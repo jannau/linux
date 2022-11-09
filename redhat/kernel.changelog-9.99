@@ -1,3 +1,12 @@
+* Wed Nov 09 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc4.f141df371335.36]
+- redhat/configs: enable HP_WATCHDOG for aarch64 (Mark Salter)
+- redhat: disable Kfence Kunit Test (Nico Pache)
+- configs: enable CONFIG_LRU_GEN_ENABLED everywhere (Patrick Talbert)
+- redhat: Enable WWAN feature and support for Intel, Qualcomm and Mediatek devices (Jose Ignacio Tornos Martinez)
+- Turn on dln2 support (RHBZ 2110372) (Justin M. Forbes)
+- Linux v6.1.0-0.rc4.f141df371335
+Resolves: 
+
 * Tue Nov 08 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc4.59f2f4b8a757.35]
 - Enable configs for imx8m PHYs (Al Stone)
 - configs/fedora: Build some SC7180 clock controllers as modules (Javier Martinez Canillas)
