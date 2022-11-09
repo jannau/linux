@@ -11,12 +11,12 @@
  * Author: Will Deacon <will.deacon@arm.com>
  */
 
-#include "linux/export.h"
 #define pr_fmt(fmt)	"dart io-pgtable: " fmt
 
 #include <linux/atomic.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>
+#include "linux/export.h"
 #include <linux/io.h>
 #include <linux/io-pgtable.h>
 #include <linux/kernel.h>
@@ -25,6 +25,8 @@
 #include <linux/types.h>
 
 #include <asm/barrier.h>
+
+#include "io-pgtable-dart.h"
 
 #define DART1_MAX_ADDR_BITS	36
 

@@ -33,6 +33,7 @@
 #include <linux/types.h>
 
 #include "dma-iommu.h"
+#include "io-pgtable-dart.h"
 
 #define DART_MAX_STREAMS 256
 #define DART_MAX_TTBR 4
@@ -549,7 +550,26 @@ static size_t apple_dart_unmap_pages(struct iommu_domain *domain,
 	return ops->unmap_pages(ops, iova, pgsize, pgcount, gather);
 }
 
+static void
+apple_dart_setup_translation(struct apple_dart_domain *domain,
+			     struct apple_dart_stream_map *stream_map)
+{
+	int i;
+	struct io_pgtable_cfg *pgtbl_cfg =
+		&io_pgtable_ops_to_pgtable(domain->pgtbl_ops)->cfg;
 
+	/* Locked DARTs are set up by the bootloader. */
+	if (!stream_map->dart->locked) {
+		for (i = 0; i < pgtbl_cfg->apple_dart_cfg.n_ttbrs; ++i)
+			apple_dart_hw_set_ttbr(stream_map, i,
+					pgtbl_cfg->apple_dart_cfg.ttbr[i]);
+		for (; i < stream_map->dart->hw->ttbr_count; ++i)
+			apple_dart_hw_clear_ttbr(stream_map, i);
+
+		apple_dart_hw_enable_translation(stream_map);
+	}
+	stream_map->dart->hw->invalidate_tlb(stream_map);
+}
 
 static int apple_dart_setup_resv_locked(struct iommu_domain *domain,
 					struct device *dev, size_t pgsize)
@@ -558,7 +578,7 @@ static int apple_dart_setup_resv_locked(struct iommu_domain *domain,
 	LIST_HEAD(resv_regions);
 	int ret = 0;
 
-	iommu_get_resv_regions(dev, &resv_regions);
+	of_iommu_get_resv_regions(dev, &resv_regions);
 	list_for_each_entry(region, &resv_regions, list) {
 		size_t mapped = 0;
 
@@ -583,29 +603,6 @@ static int apple_dart_setup_resv_locked(struct iommu_domain *domain,
 end_put:
 	iommu_put_resv_regions(dev, &resv_regions);
 	return ret;
-}
-
-extern int io_pgtable_dart_setup_locked(struct io_pgtable_ops *ops);
-
-static void
-apple_dart_setup_translation(struct apple_dart_domain *domain,
-			     struct apple_dart_stream_map *stream_map)
-{
-	int i;
-	struct io_pgtable_cfg *pgtbl_cfg =
-		&io_pgtable_ops_to_pgtable(domain->pgtbl_ops)->cfg;
-
-	/* Locked DARTs are set up by the bootloader. */
-	if (!stream_map->dart->locked) {
-		for (i = 0; i < pgtbl_cfg->apple_dart_cfg.n_ttbrs; ++i)
-			apple_dart_hw_set_ttbr(stream_map, i,
-					pgtbl_cfg->apple_dart_cfg.ttbr[i]);
-		for (; i < stream_map->dart->hw->ttbr_count; ++i)
-			apple_dart_hw_clear_ttbr(stream_map, i);
-
-		apple_dart_hw_enable_translation(stream_map);
-	}
-	stream_map->dart->hw->invalidate_tlb(stream_map);
 }
 
 static int apple_dart_finalize_domain(struct iommu_domain *domain,
