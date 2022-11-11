@@ -1,3 +1,7 @@
+* Fri Nov 11 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc4.4bbf3422df78.38]
+- Linux v6.1.0-0.rc4.4bbf3422df78
+Resolves: 
+
 * Thu Nov 10 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc4.f67dd6ce0723.37]
 - redhat: fix selftest git command so it picks the right commit (Patrick Talbert)
 - Linux v6.1.0-0.rc4.f67dd6ce0723
