@@ -520,6 +520,14 @@ impl<T> UniqueArc<MaybeUninit<T>> {
     /// Converts a `UniqueArc<MaybeUninit<T>>` into a `UniqueArc<T>` by writing a value into it.
     pub fn write(mut self, value: T) -> UniqueArc<T> {
         self.deref_mut().write(value);
+        unsafe { self.assume_init() }
+    }
+
+    /// Returns a UniqueArc<T>, assuming the MaybeUninit<T> has already been initialized.
+    ///
+    /// # Safety
+    /// The contents of the UniqueArc must have already been fully initialized.
+    pub unsafe fn assume_init(self) -> UniqueArc<T> {
         let inner = ManuallyDrop::new(self).inner.ptr;
         UniqueArc {
             // SAFETY: The new `Arc` is taking over `ptr` from `self.inner` (which won't be
