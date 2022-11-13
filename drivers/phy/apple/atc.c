@@ -524,8 +524,8 @@ static const struct {
 		},
 		.swapped = {
 			.crossbar = ACIOPHY_CROSSBAR_PROTOCOL_DP,
-			.crossbar_dp_single_pma = ACIOPHY_CROSSBAR_DP_SINGLE_PMA_UNK100,
-			.crossbar_dp_both_pma = true,
+			.crossbar_dp_single_pma = ACIOPHY_CROSSBAR_DP_SINGLE_PMA_UNK008,
+			.crossbar_dp_both_pma = false,
 			.lane_mode = {ACIOPHY_LANE_MODE_DP, ACIOPHY_LANE_MODE_DP},
 			.dp_lane = {true, true},
 			.set_swap = false, /* intentionally false */
