@@ -247,6 +247,7 @@ int dcp_dptx_connect(struct platform_device *pdev, u32 port, struct phy *phy)
 	dptxport_set_hpd(dcp->dptxport[port].service, true);
 
 	return 0;
+}
 EXPORT_SYMBOL_GPL(dcp_dptx_connect);
 
 int dcp_dptx_disconnect(struct platform_device *pdev, u32 port)
