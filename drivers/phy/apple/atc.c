@@ -1552,7 +1552,7 @@ static int atcphy_usb3_power_off(struct phy *phy)
 
 	mutex_lock(&atcphy->lock);
 
-	atcphy_configure_pipehandler(atcphy, APPLE_ATCPHY_MODE_USB2);
+	atcphy_configure_pipehandler(atcphy, ATCPHY_PIPEHANDLER_STATE_USB2);
 
 	WARN_ON(!atcphy->dwc3_online);
 	atcphy->dwc3_online = false;
