@@ -1,3 +1,13 @@
+* Tue Nov 15 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc5.e01d50cbd6ee.40]
+- redhat: avoid picking up stray editor backups when processing configs (Clark Williams)
+- CI: Remove old configs (Veronika Kabatova)
+- redhat: override `make help` to include dist-help (Jonathan Toppins)
+- redhat: make RHTEST stricter (Jonathan Toppins)
+- redhat: Enable support for SN2201 system (Ivan Vecera)
+- redhat/docs/index.rst: Add FLAVOR information to generate configs for local builds (Enric Balletbo i Serra)
+- Linux v6.1.0-0.rc5.e01d50cbd6ee
+Resolves: 
+
 * Mon Nov 14 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc5.39]
 - Linux v6.1.0-0.rc5
 Resolves: 
