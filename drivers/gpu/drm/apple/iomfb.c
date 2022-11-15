@@ -1608,7 +1608,7 @@ void dcp_flush(struct drm_crtc *crtc, struct drm_atomic_state *state)
 		req->surf_null[l] = false;
 		has_surface = 1;
 
-		if (fb->format->has_alpha ||
+		if (!fb->format->has_alpha ||
 		    new_state->plane->type == DRM_PLANE_TYPE_PRIMARY)
 		    opaque = true;
 		drm_rect_fp_to_int(&src_rect, &new_state->src);
