@@ -248,9 +248,8 @@ int dcp_start(struct platform_device *pdev)
 	ret = iomfb_start_rtkit(dcp);
 	if (ret)
 		dev_err(dcp->dev, "Failed to start IOMFB endpoint: %d", ret);
-		return ret;
 
-	return 0;
+	return ret;
 }
 EXPORT_SYMBOL(dcp_start);
 
