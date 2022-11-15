@@ -11,6 +11,8 @@
 
 / {
 	aliases {
+		atcphy0 = &atcphy0;
+		atcphy1 = &atcphy1;
 		serial0 = &serial0;
 		serial2 = &serial2;
 	};
@@ -66,6 +68,12 @@
 						remote-endpoint = <&typec0_usb_hs>;
 					};
 				};
+				port@1 {
+					reg = <1>;
+					typec0_con_ss: endpoint {
+						remote-endpoint = <&typec0_usb_ss>;
+					};
+				};
 			};
 		};
 	};
@@ -91,6 +99,12 @@
 						remote-endpoint = <&typec1_usb_hs>;
 					};
 				};
+				port@1 {
+					reg = <1>;
+					typec1_con_ss: endpoint {
+						remote-endpoint = <&typec1_usb_ss>;
+					};
+				};
 			};
 		};
 	};
@@ -109,6 +123,23 @@
 	port {
 		typec1_usb_hs: endpoint {
 			remote-endpoint = <&typec1_con_hs>;
+		};
+	};
+};
+
+/* Type-C PHYs */
+&atcphy0 {
+	port {
+		typec0_usb_ss: endpoint {
+			remote-endpoint = <&typec0_con_ss>;
+		};
+	};
+};
+
+&atcphy1 {
+	port {
+		typec1_usb_ss: endpoint {
+			remote-endpoint = <&typec1_con_ss>;
 		};
 	};
 };
