@@ -966,11 +966,12 @@
 			resets = <&ps_ans2>;
 		};
 
-		efuse@3d2bc000 {
+		efuse@23d2bc000 {
 			compatible = "apple,t8103-efuses", "apple,efuses";
 			reg = <0x2 0x3d2bc000 0x0 0x1000>;
 			#address-cells = <1>;
 			#size-cells = <1>;
+
 			atcphy0_auspll_rodco_bias_adjust: efuse@430,26 {
 				reg = <0x430 4>;
 				bits = <26 3>;
