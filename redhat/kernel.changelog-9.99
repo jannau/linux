@@ -1,3 +1,7 @@
+* Wed Nov 16 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc5.59d0d52c30d4.41]
+- Linux v6.1.0-0.rc5.59d0d52c30d4
+Resolves: 
+
 * Tue Nov 15 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc5.e01d50cbd6ee.40]
 - redhat: avoid picking up stray editor backups when processing configs (Clark Williams)
 - CI: Remove old configs (Veronika Kabatova)
