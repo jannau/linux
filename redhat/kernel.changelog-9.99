@@ -1,3 +1,11 @@
+* Thu Nov 17 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc5.cc675d22e422.42]
+- redhat: Force remove tmp file (Prarit Bhargava)
+- redhat/configs: ALSA - cleanups for the CentOS 9.2 update (Jaroslav Kysela)
+- CI: Use CKI container images from quay.io (Veronika Kabatova)
+- redhat: clean up the partial-kgcov-snip.config file (Patrick Talbert)
+- Linux v6.1.0-0.rc5.cc675d22e422
+Resolves: 
+
 * Wed Nov 16 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc5.59d0d52c30d4.41]
 - Linux v6.1.0-0.rc5.59d0d52c30d4
 Resolves: 
