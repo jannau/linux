@@ -1,3 +1,8 @@
+* Fri Nov 18 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc5.84368d882b96.43]
+- redhat/Makefile: Fix RHJOBS grep warning (Prarit Bhargava)
+- Linux v6.1.0-0.rc5.84368d882b96
+Resolves: 
+
 * Thu Nov 17 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc5.cc675d22e422.42]
 - redhat: Force remove tmp file (Prarit Bhargava)
 - redhat/configs: ALSA - cleanups for the CentOS 9.2 update (Jaroslav Kysela)
