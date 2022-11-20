@@ -215,6 +215,7 @@ struct apple_dart {
 
 	spinlock_t lock;
 
+	u32 ias;
 	u32 oas;
 	u32 pgsize;
 	u32 num_streams;
@@ -629,7 +630,7 @@ static int apple_dart_finalize_domain(struct iommu_domain *domain,
 
 	pgtbl_cfg = (struct io_pgtable_cfg){
 		.pgsize_bitmap = dart->pgsize,
-		.ias = 32,
+		.ias = dart->ias,
 		.oas = dart->oas,
 		.coherent_walk = 1,
 		.iommu_dev = dart->dev,
@@ -667,7 +668,7 @@ static int apple_dart_finalize_domain(struct iommu_domain *domain,
 
 	domain->pgsize_bitmap = pgtbl_cfg.pgsize_bitmap;
 	domain->geometry.aperture_start = 0;
-	domain->geometry.aperture_end = DMA_BIT_MASK(32);
+	domain->geometry.aperture_end = DMA_BIT_MASK(dart->ias);
 	domain->geometry.force_aperture = true;
 
 	dart_domain->finalized = true;
@@ -1155,6 +1156,7 @@ static int apple_dart_probe(struct platform_device *pdev)
 	switch (dart->hw->type) {
 	case DART_T8020:
 	case DART_T6000:
+		dart->ias = 32;
 		dart->oas = dart->hw->oas;
 		dart->num_streams = dart->hw->max_sid_count;
 		break;
@@ -1162,6 +1164,7 @@ static int apple_dart_probe(struct platform_device *pdev)
 	case DART_T8110:
 		dart_params[2] = readl(dart->regs + DART_T8110_PARAMS3);
 		dart_params[3] = readl(dart->regs + DART_T8110_PARAMS4);
+		dart->ias = FIELD_GET(DART_T8110_PARAMS3_VA_WIDTH, dart_params[2]);
 		dart->oas = FIELD_GET(DART_T8110_PARAMS3_PA_WIDTH, dart_params[2]);
 		dart->num_streams = FIELD_GET(DART_T8110_PARAMS4_NUM_SIDS, dart_params[3]);
 		break;
