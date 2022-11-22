@@ -84,9 +84,9 @@ static u32 brightness_part2[] = {
 
 static int dcp_get_brightness(struct backlight_device *bd)
 {
-       struct apple_dcp *dcp = bl_get_data(bd);
+	struct apple_dcp *dcp = bl_get_data(bd);
 
-       return dcp->brightness.nits;
+	return dcp->brightness.nits;
 }
 
 #define SCALE_FACTOR (1 << 10)
