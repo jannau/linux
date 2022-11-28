@@ -675,11 +675,11 @@ static int apple_dart_finalize_domain(struct iommu_domain *domain,
 
 	dart_domain->finalized = true;
 
-	if (dart->locked) {
-		/* TODO: error handling */
-		ret = apple_dart_setup_resv_locked(domain, dev, dart->pgsize);
+	ret = apple_dart_setup_resv_locked(domain, dev, dart->pgsize);
+	/* TODO: error handling */
+
+	if (dart->locked)
 		io_pgtable_dart_setup_locked(dart_domain->pgtbl_ops);
-	}
 done:
 	mutex_unlock(&dart_domain->init_lock);
 	return ret;
