@@ -8,6 +8,8 @@
 
 #include <linux/bits.h>
 #include <linux/bitfield.h>
+#include <linux/power_supply.h>
+#include <linux/usb/typec.h>
 
 #ifndef __TPS6598X_H__
 #define __TPS6598X_H__
@@ -198,5 +200,65 @@
 #define TPS_DATA_STATUS_DP_SPEC_PIN_ASSIGNMENT_D    (BIT(1) | BIT(0))
 #define TPS_DATA_STATUS_DP_SPEC_PIN_ASSIGNMENT_A    BIT(2)
 #define TPS_DATA_STATUS_DP_SPEC_PIN_ASSIGNMENT_B    (BIT(2) | BIT(1))
+
+/* Register offsets */
+#define TPS_REG_VID			0x00
+#define TPS_REG_MODE			0x03
+#define TPS_REG_CMD1			0x08
+#define TPS_REG_DATA1			0x09
+#define TPS_REG_INT_EVENT1		0x14
+#define TPS_REG_INT_EVENT2		0x15
+#define TPS_REG_INT_MASK1		0x16
+#define TPS_REG_INT_MASK2		0x17
+#define TPS_REG_INT_CLEAR1		0x18
+#define TPS_REG_INT_CLEAR2		0x19
+#define TPS_REG_SYSTEM_POWER_STATE	0x20
+#define TPS_REG_STATUS			0x1a
+#define TPS_REG_SYSTEM_CONF		0x28
+#define TPS_REG_CTRL_CONF		0x29
+#define TPS_REG_POWER_STATUS		0x3f
+#define TPS_REG_RX_IDENTITY_SOP		0x48
+#define TPS_REG_DP_SID_CONFIG		0x51
+#define TPS_REG_DP_SID_STATUS		0x58
+#define TPS_REG_DATA_STATUS		0x5f
+
+/* TPS_REG_SYSTEM_CONF bits */
+#define TPS_SYSCONF_PORTINFO(c)		((c) & 7)
+
+enum {
+	TPS_PORTINFO_SINK,
+	TPS_PORTINFO_SINK_ACCESSORY,
+	TPS_PORTINFO_DRP_UFP,
+	TPS_PORTINFO_DRP_UFP_DRD,
+	TPS_PORTINFO_DRP_DFP,
+	TPS_PORTINFO_DRP_DFP_DRD,
+	TPS_PORTINFO_SOURCE,
+};
+
+/* TPS_REG_RX_IDENTITY_SOP */
+struct tps6598x_rx_identity_reg {
+	u8 status;
+	struct usb_pd_identity identity;
+} __packed;
+
+struct tps6598x {
+	struct device *dev;
+	struct regmap *regmap;
+	struct mutex lock; /* device lock */
+	u8 i2c_protocol:1;
+	u8 cd321x:1;
+
+	struct typec_port *port;
+	struct typec_partner *partner;
+	struct usb_pd_identity partner_identity;
+	struct usb_role_switch *role_sw;
+	struct typec_capability typec_cap;
+
+	struct power_supply *psy;
+	struct power_supply_desc psy_desc;
+	enum power_supply_usb_type usb_type;
+
+	u16 pwr_status;
+};
 
 #endif /* __TPS6598X_H__ */

@@ -20,44 +20,6 @@
 #include "tps6598x.h"
 #include "trace.h"
 
-/* Register offsets */
-#define TPS_REG_VID			0x00
-#define TPS_REG_MODE			0x03
-#define TPS_REG_CMD1			0x08
-#define TPS_REG_DATA1			0x09
-#define TPS_REG_INT_EVENT1		0x14
-#define TPS_REG_INT_EVENT2		0x15
-#define TPS_REG_INT_MASK1		0x16
-#define TPS_REG_INT_MASK2		0x17
-#define TPS_REG_INT_CLEAR1		0x18
-#define TPS_REG_INT_CLEAR2		0x19
-#define TPS_REG_SYSTEM_POWER_STATE	0x20
-#define TPS_REG_STATUS			0x1a
-#define TPS_REG_SYSTEM_CONF		0x28
-#define TPS_REG_CTRL_CONF		0x29
-#define TPS_REG_POWER_STATUS		0x3f
-#define TPS_REG_RX_IDENTITY_SOP		0x48
-#define TPS_REG_DATA_STATUS		0x5f
-
-/* TPS_REG_SYSTEM_CONF bits */
-#define TPS_SYSCONF_PORTINFO(c)		((c) & 7)
-
-enum {
-	TPS_PORTINFO_SINK,
-	TPS_PORTINFO_SINK_ACCESSORY,
-	TPS_PORTINFO_DRP_UFP,
-	TPS_PORTINFO_DRP_UFP_DRD,
-	TPS_PORTINFO_DRP_DFP,
-	TPS_PORTINFO_DRP_DFP_DRD,
-	TPS_PORTINFO_SOURCE,
-};
-
-/* TPS_REG_RX_IDENTITY_SOP */
-struct tps6598x_rx_identity_reg {
-	u8 status;
-	struct usb_pd_identity identity;
-} __packed;
-
 /* Standard Task return codes */
 #define TPS_TASK_TIMEOUT		1
 #define TPS_TASK_REJECTED		3
@@ -78,26 +40,7 @@ static const char *const modes[] = {
 
 /* Unrecognized commands will be replaced with "!CMD" */
 #define INVALID_CMD(_cmd_)		(_cmd_ == 0x444d4321)
-
-struct tps6598x {
-	struct device *dev;
-	struct regmap *regmap;
-	struct mutex lock; /* device lock */
-	u8 i2c_protocol:1;
-
-	struct typec_port *port;
-	struct typec_partner *partner;
-	struct usb_pd_identity partner_identity;
-	struct usb_role_switch *role_sw;
-	struct typec_capability typec_cap;
-
-	struct power_supply *psy;
-	struct power_supply_desc psy_desc;
-	enum power_supply_usb_type usb_type;
-
 	int wakeup;
-	u16 pwr_status;
-};
 
 static enum power_supply_property tps6598x_psy_props[] = {
 	POWER_SUPPLY_PROP_USB_TYPE,
