@@ -87,8 +87,7 @@ static const char *tps6598x_psy_name_prefix = "tps6598x-source-psy-";
  */
 #define TPS_MAX_LEN	64
 
-static int
-tps6598x_block_read(struct tps6598x *tps, u8 reg, void *val, size_t len)
+int tps6598x_block_read(struct tps6598x *tps, u8 reg, void *val, size_t len)
 {
 	u8 data[TPS_MAX_LEN + 1];
 	int ret;
@@ -245,6 +244,7 @@ static int tps6598x_connect(struct tps6598x *tps, u32 status)
 
 static void tps6598x_disconnect(struct tps6598x *tps, u32 status)
 {
+	tps6598x_displayport_unregister_partner(tps);
 	if (!IS_ERR(tps->partner))
 		typec_unregister_partner(tps->partner);
 	tps->partner = NULL;
@@ -495,6 +495,9 @@ static irqreturn_t cd321x_interrupt(int irq, void *data)
 	if (event & APPLE_CD_REG_INT_PLUG_EVENT)
 		tps6598x_handle_plug_event(tps, status);
 
+	if (event & APPLE_CD_REG_INT_DP_SID_STATUS_UPDATE)
+		tps6598x_displayport_update_dp_sid(tps);
+
 err_unlock:
 	mutex_unlock(&tps->lock);
 
@@ -617,6 +620,10 @@ static irqreturn_t tps6598x_interrupt(int irq, void *data)
 	/* Handle plug insert or removal */
 	if ((event1[0] | event2[0]) & TPS_REG_INT_PLUG_EVENT)
 		tps6598x_handle_plug_event(tps, status);
+
+	/* DATA_STATUS_UPDATE is our best proxy for DP SID STATUS changes */
+	if ((event1[0] | event2[0]) & TPS_REG_INT_DATA_STATUS_UPDATE)
+		tps6598x_displayport_update_dp_sid(tps);
 
 err_unlock:
 	mutex_unlock(&tps->lock);
@@ -1247,6 +1254,7 @@ static int tps6598x_probe(struct i2c_client *client)
 		return -ENOMEM;
 
 	mutex_init(&tps->lock);
+	mutex_init(&tps->dp_lock);
 	tps->dev = &client->dev;
 
 	tps->reset = devm_gpiod_get_optional(tps->dev, "reset", GPIOD_OUT_LOW);
@@ -1279,11 +1287,12 @@ static int tps6598x_probe(struct i2c_client *client)
 		if (ret)
 			return ret;
 
-		/* CD321X chips have all interrupts masked initially */
 		mask1 = APPLE_CD_REG_INT_POWER_STATUS_UPDATE |
 			APPLE_CD_REG_INT_DATA_STATUS_UPDATE |
-			APPLE_CD_REG_INT_PLUG_EVENT;
+			APPLE_CD_REG_INT_PLUG_EVENT |
+			APPLE_CD_REG_INT_DP_SID_STATUS_UPDATE;
 
+		tps->cd321x = true;
 	} else {
 		/* Enable power status, data status and plug event interrupts */
 		mask1 = TPS_REG_INT_POWER_STATUS_UPDATE |
@@ -1340,15 +1349,21 @@ static int tps6598x_probe(struct i2c_client *client)
 	if (ret)
 		goto err_role_put;
 
+	ret = tps6598x_displayport_register_port(tps);
+	if (ret)
+		goto err_unregister_port;
+
 	if (status & TPS_STATUS_PLUG_PRESENT) {
 		ret = tps6598x_read16(tps, TPS_REG_POWER_STATUS, &tps->pwr_status);
 		if (ret < 0) {
 			dev_err(tps->dev, "failed to read power status: %d\n", ret);
-			goto err_unregister_port;
+			goto err_unregister_dp_altmode;
 		}
 		ret = tps6598x_connect(tps, status);
 		if (ret)
 			dev_err(&client->dev, "failed to register partner\n");
+
+		tps6598x_displayport_update_dp_sid(tps);
 	}
 
 	if (client->irq) {
@@ -1379,6 +1394,8 @@ static int tps6598x_probe(struct i2c_client *client)
 
 err_disconnect:
 	tps6598x_disconnect(tps, 0);
+err_unregister_dp_altmode:
+	tps6598x_displayport_unregister_port(tps);
 err_unregister_port:
 	typec_unregister_port(tps->port);
 err_role_put:
@@ -1403,6 +1420,7 @@ static void tps6598x_remove(struct i2c_client *client)
 
 	devm_free_irq(tps->dev, client->irq, tps);
 	tps6598x_disconnect(tps, 0);
+	tps6598x_displayport_unregister_port(tps);
 	typec_unregister_port(tps->port);
 	usb_role_switch_put(tps->role_sw);
 

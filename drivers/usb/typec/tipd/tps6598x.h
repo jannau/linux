@@ -12,6 +12,8 @@
 #include <linux/mutex_types.h>
 #include <linux/power_supply.h>
 #include <linux/usb/typec.h>
+#include <linux/usb/typec_altmode.h>
+#include <linux/usb/typec_dp.h>
 #include <linux/workqueue.h>
 
 #ifndef __TPS6598X_H__
@@ -136,6 +138,7 @@
 #define TPS_REG_INT_PD_SOFT_RESET			BIT(0)
 
 /* Apple-specific TPS_REG_INT_* bits */
+#define APPLE_CD_REG_INT_DP_SID_STATUS_UPDATE		(BIT_ULL(36) | BIT_ULL(37))
 #define APPLE_CD_REG_INT_DATA_STATUS_UPDATE		BIT(10)
 #define APPLE_CD_REG_INT_POWER_STATUS_UPDATE		BIT(9)
 #define APPLE_CD_REG_INT_STATUS_UPDATE			BIT(8)
@@ -312,6 +315,28 @@ struct tps6598x_rx_identity_reg {
 	u8 status;
 	struct usb_pd_identity identity;
 } __packed;
+/* TPS_REG_DP_SID_CONFIG */
+struct tps6598x_dp_sid_config {
+#define TPS_DP_SID_ENABLE_DP_SID BIT(0)
+#define TPS_DP_SID_ENABLE_DP_MODE BIT(1)
+	u8 config;
+	u8 capabilities;
+	u8 dfp_d_assignments;
+	u8 ufp_d_assignments;
+	u8 multifunction_config;
+	u8 autoentry_config;
+} __packed;
+
+/* TPS_REG_DP_SID_STATUS */
+struct tps6598x_dp_sid_status {
+#define TPS_DP_SID_DETECTED BIT(0)
+#define TPS_DP_SID_ACTIVE BIT(1)
+	u8 status;
+	__le32 dp_status_tx;
+	__le32 dp_status_rx;
+	__le32 dp_configure;
+	__le32 dp_mode;
+} __packed;
 
 struct tps6598x;
 
@@ -330,7 +355,7 @@ struct tps6598x {
 	struct regmap *regmap;
 	struct mutex lock; /* device lock */
 	u8 i2c_protocol:1;
-	u8 cd321x:1;
+	u8 cd321x:1; /* enable Apple CD321x quirks */
 
 	struct gpio_desc *reset;
 	struct typec_port *port;
@@ -349,6 +374,23 @@ struct tps6598x {
 	struct delayed_work	wq_poll;
 
 	const struct tipd_data *data;
+
+	/* DisplayPort alternate mode */
+	struct mutex dp_lock;
+	struct tps6598x_dp_sid_status dp_status;
+	bool dp_configured;
+	struct typec_altmode *dp_port;
+	struct typec_altmode *dp_partner;
+	struct work_struct dp_work;
+	u32 dp_vdo_header;
+	bool dp_vdo_send_status;
 };
+
+int tps6598x_block_read(struct tps6598x *tps, u8 reg, void *val, size_t len);
+
+void tps6598x_displayport_update_dp_sid(struct tps6598x *tps);
+int tps6598x_displayport_register_port(struct tps6598x *tps);
+void tps6598x_displayport_unregister_port(struct tps6598x *tps);
+void tps6598x_displayport_unregister_partner(struct tps6598x *tps);
 
 #endif /* __TPS6598X_H__ */
