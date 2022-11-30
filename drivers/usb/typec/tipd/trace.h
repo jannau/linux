@@ -72,7 +72,8 @@
 		{ APPLE_CD_REG_INT_PLUG_EVENT,			"PLUG_EVENT" }, \
 		{ APPLE_CD_REG_INT_POWER_STATUS_UPDATE,		"POWER_STATUS_UPDATE" }, \
 		{ APPLE_CD_REG_INT_DATA_STATUS_UPDATE,		"DATA_STATUS_UPDATE" }, \
-		{ APPLE_CD_REG_INT_STATUS_UPDATE,		"STATUS_UPDATE" })
+		{ APPLE_CD_REG_INT_STATUS_UPDATE,		"STATUS_UPDATE" }, \
+		{ APPLE_CD_REG_INT_DP_SID_STATUS_UPDATE,	"DP_SID_STATUS_UPDATE" })
 
 #define TPS6598X_STATUS_FLAGS_MASK (GENMASK(31, 0) ^ (TPS_STATUS_CONN_STATE_MASK | \
 						      TPS_STATUS_PP_5V0_SWITCH_MASK | \
@@ -293,6 +294,48 @@ TRACE_EVENT(tps6598x_data_status,
 		      show_data_status_flags(__entry->data_status),
 		      __entry->data_status & TPS_DATA_STATUS_DP_CONNECTION ? ", DP pinout " : "",
 		      maybe_show_data_status_dp_pin_assignment(__entry->data_status)
+		    )
+);
+
+TRACE_EVENT(tps6598x_dp_sid_status,
+	    TP_PROTO(struct tps6598x_dp_sid_status *status),
+	    TP_ARGS(status),
+
+	    TP_STRUCT__entry(
+			     __field_struct(struct tps6598x_dp_sid_status, status)
+			     ),
+
+	    TP_fast_assign(
+			   __entry->status = *status;
+			   ),
+
+	    TP_printk("Mode Status: 0x%x Status (rx): 0x%x Status (tx): 0x%x Configure: 0x%x Mode Data: 0x%x",
+		      __entry->status.status,
+		      le32_to_cpu(__entry->status.dp_status_tx),
+		      le32_to_cpu(__entry->status.dp_status_rx),
+		      le32_to_cpu(__entry->status.dp_configure),
+		      le32_to_cpu(__entry->status.dp_mode)
+		    )
+);
+
+TRACE_EVENT(tps6598x_dp_sid_config,
+	    TP_PROTO(struct tps6598x_dp_sid_config *config),
+	    TP_ARGS(config),
+
+	    TP_STRUCT__entry(
+			     __field_struct(struct tps6598x_dp_sid_config, config)
+			     ),
+
+	    TP_fast_assign(
+			   __entry->config = *config;
+			   ),
+
+	    TP_printk("Config: 0x%x Capabilities: 0x%x DFP_D Pins: 0x%x UFP_D Pins: 0x%x Multifunction: 0x%x Autoentry: 0x%x",
+		      __entry->config.config, __entry->config.capabilities,
+		      __entry->config.dfp_d_assignments,
+		      __entry->config.ufp_d_assignments,
+		      __entry->config.multifunction_config,
+		      __entry->config.autoentry_config
 		    )
 );
 
