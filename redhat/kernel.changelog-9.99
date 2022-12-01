@@ -1,3 +1,10 @@
+* Thu Dec 01 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc7.ef4d3ea40565.54]
+- Adjust path to compressed vmlinux kernel image for s390x (Justin M. Forbes) [2149273]
+- Fedora config updates for 6.1 (Justin M. Forbes)
+- redhat: genlog.sh should expect genlog.py in the current directory (Patrick Talbert)
+- Linux v6.1.0-0.rc7.ef4d3ea40565
+Resolves: rhbz#2149273
+
 * Mon Nov 21 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc6.46]
 - Linux v6.1.0-0.rc6
 Resolves: 
