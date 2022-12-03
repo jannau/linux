@@ -590,6 +590,13 @@
 			iommus = <&disp0_dart 0>, <&dispext0_dart 0>;
 			/* generate phandle explicitly for use in loader */
 			phandle = <&display>;
+
+			displayport;
+			/* hacks */
+			phys = <&atcphy1 PHY_TYPE_DP>;
+			phy-names = "atcphy1-dpphy";
+			mux-controls = <&atcphy1_xbar 0>;
+			mux-control-names = "atcphy1-dpphy";
 		};
 
 		sio_dart: iommu@235004000 {
@@ -1390,6 +1397,13 @@
 			interrupt-parent = <&aic>;
 			interrupts = <AIC_IRQ 861 IRQ_TYPE_LEVEL_HIGH>;
 			#iommu-cells = <1>;
+			power-domains = <&ps_atc1_usb>;
+		};
+
+		atcphy1_xbar: mux@50304c000 {
+			compatible = "apple,t8103-display-crossbar";
+			reg = <0x5 0x0304c000 0x0 0x4000>;
+			#mux-control-cells = <1>;
 			power-domains = <&ps_atc1_usb>;
 		};
 
