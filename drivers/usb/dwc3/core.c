@@ -116,9 +116,6 @@ void dwc3_set_prtcap(struct dwc3 *dwc, u32 mode)
 	dwc->current_dr_role = mode;
 }
 
-static void dwc3_core_exit(struct dwc3 *dwc);
-static int dwc3_core_init_for_resume(struct dwc3 *dwc);
-
 static void __dwc3_set_mode(struct work_struct *work)
 {
 	struct dwc3 *dwc = work_to_dwc(work);
@@ -133,11 +130,10 @@ static void __dwc3_set_mode(struct work_struct *work)
 	if (dwc->current_dr_role == DWC3_GCTL_PRTCAP_OTG)
 		dwc3_otg_update(dwc, 0);
 
-	if (!dwc->desired_dr_role && !dwc->role_switch_reset_quirk)
+	if (!dwc->desired_dr_role)
 		goto out;
 
-	if (dwc->desired_dr_role == dwc->current_dr_role &&
-			!dwc->role_switch_reset_quirk)
+	if (dwc->desired_dr_role == dwc->current_dr_role)
 		goto out;
 
 	if (dwc->desired_dr_role == DWC3_GCTL_PRTCAP_OTG && dwc->edev)
@@ -162,32 +158,13 @@ static void __dwc3_set_mode(struct work_struct *work)
 		break;
 	}
 
-	if (dwc->role_switch_reset_quirk) {
-		if (dwc->current_dr_role) {
-			dwc->current_dr_role = 0;
-			dwc3_core_exit(dwc);
-		}
-
-		if (dwc->desired_dr_role) {
-			ret = dwc3_core_init_for_resume(dwc);
-			if (ret) {
-				dev_err(dwc->dev,
-				    "failed to reinitialize core\n");
-				goto out;
-			}
-		} else {
-			goto out;
-		}
-	}
-
 	/*
 	 * When current_dr_role is not set, there's no role switching.
 	 * Only perform GCTL.CoreSoftReset when there's DRD role switching.
 	 */
-	if (dwc->role_switch_reset_quirk ||
-		(dwc->current_dr_role && ((DWC3_IP_IS(DWC3) ||
+	if (dwc->current_dr_role && ((DWC3_IP_IS(DWC3) ||
 			DWC3_VER_IS_PRIOR(DWC31, 190A)) &&
-			dwc->desired_dr_role != DWC3_GCTL_PRTCAP_OTG))) {
+			dwc->desired_dr_role != DWC3_GCTL_PRTCAP_OTG)) {
 		reg = dwc3_readl(dwc->regs, DWC3_GCTL);
 		reg |= DWC3_GCTL_CORESOFTRESET;
 		dwc3_writel(dwc->regs, DWC3_GCTL, reg);
@@ -1419,18 +1396,6 @@ static int dwc3_core_init_mode(struct dwc3 *dwc)
 		ret = dwc3_drd_init(dwc);
 		if (ret)
 			return dev_err_probe(dev, ret, "failed to initialize dual-role\n");
-
-		/*
-		 * If the role switch reset quirk is required the first role
-		 * switch notification will initialize the core such that we
-		 * have to shut it down here. Make sure that the dwc3_set_mode
-		 * called by dwc3_drd_init has completed before since it
-		 * may still try to access MMIO.
-		 */
-		if (dwc->role_switch_reset_quirk) {
-			flush_work(&dwc->drd_work);
-			dwc3_core_exit(dwc);
-		}
 		break;
 	default:
 		dev_err(dev, "Unsupported mode of operation %d\n", dwc->dr_mode);
@@ -1880,19 +1845,6 @@ static int dwc3_probe(struct platform_device *pdev)
 				goto put_usb_psy;
 			}
 		}
-
-		if (of_device_is_compatible(dev->of_node, "apple,dwc3")) {
-			if (!IS_ENABLED(CONFIG_USB_ROLE_SWITCH) ||
-			    dwc->dr_mode != USB_DR_MODE_OTG) {
-				dev_err(dev,
-				    "Apple DWC3 requires role switch support.\n"
-				    );
-				ret = -EINVAL;
-				goto put_usb_psy;
-			}
-
-			dwc->role_switch_reset_quirk = true;
-		}
 	}
 
 	ret = reset_control_deassert(dwc->reset);
@@ -2035,6 +1987,7 @@ static int dwc3_remove(struct platform_device *pdev)
 	return 0;
 }
 
+#ifdef CONFIG_PM
 static int dwc3_core_init_for_resume(struct dwc3 *dwc)
 {
 	int ret;
@@ -2061,7 +2014,6 @@ assert_reset:
 	return ret;
 }
 
-#ifdef CONFIG_PM
 static int dwc3_suspend_common(struct dwc3 *dwc, pm_message_t msg)
 {
 	unsigned long	flags;
