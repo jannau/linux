@@ -307,17 +307,58 @@ static int dcp_get_disp_regs(struct apple_dcp *dcp)
 	return 0;
 }
 
+static enum dcp_firmware_version dcp_get_firmware_version(struct device *dev,
+							  const char *name)
+{
+	u32 fw_version[3];
+	int ret;
+
+	ret = of_property_read_u32_array(dev->of_node, name, fw_version, 3);
+	if (ret != 0) {
+		dev_warn(dev, "Could not read '%s': %d\n", name, ret);
+		return DCP_FIRMWARE_UNKNOWN;
+	}
+
+	if (fw_version[0] == 12) {
+		switch (fw_version[1]) {
+		case 3:
+			return DCP_FIRMWARE_V_12_3;
+		case 4:
+			return DCP_FIRMWARE_V_12_4;
+		default:
+			break;
+		}
+	}
+
+	dev_err(dev, "'%s' %u.%u.%u is not supported\n", name, fw_version[0],
+		fw_version[1], fw_version[2]);
+
+	return DCP_FIRMWARE_UNKNOWN;
+}
+
 static int dcp_platform_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct device_node *panel_np;
 	struct apple_dcp *dcp;
+	enum dcp_firmware_version fw_version, fw_compat;
 	u32 cpu_ctrl;
 	int ret;
+
+	fw_version = dcp_get_firmware_version(dev, "apple,firmware-version");
+	if (fw_version == DCP_FIRMWARE_UNKNOWN)
+		return -ENODEV;
+
+	fw_compat = dcp_get_firmware_version(dev, "apple,firmware-compat");
+	if (fw_compat == DCP_FIRMWARE_UNKNOWN)
+		return -ENODEV;
 
 	dcp = devm_kzalloc(dev, sizeof(*dcp), GFP_KERNEL);
 	if (!dcp)
 		return -ENOMEM;
+
+	dcp->fw_version = fw_version;
+	dcp->fw_compat = fw_compat;
 
 	platform_set_drvdata(pdev, dcp);
 	dcp->dev = dev;
