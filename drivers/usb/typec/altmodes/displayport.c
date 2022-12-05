@@ -537,6 +537,14 @@ static const struct attribute_group dp_altmode_group = {
 	.attrs = dp_altmode_attrs,
 };
 
+static void *dp_match(const struct fwnode_handle *fwnode, const char *id,
+                                   void *data)
+{
+	if (fwnode_property_present(fwnode, id))
+		return (void *)fwnode;
+	return NULL;
+}
+
 int dp_altmode_probe(struct typec_altmode *alt)
 {
 	const struct typec_altmode *port = typec_altmode_get_partner(alt);
@@ -570,7 +578,7 @@ int dp_altmode_probe(struct typec_altmode *alt)
 	alt->ops = &dp_altmode_ops;
 
 	fwnode = dev_fwnode(alt->dev.parent->parent); /* typec_port fwnode */
-	dp->connector_fwnode = fwnode_find_reference(fwnode, "displayport", 0);
+	dp->connector_fwnode = fwnode_connection_find_match(fwnode, "displayport", NULL, dp_match);
 	if (IS_ERR(dp->connector_fwnode))
 		dp->connector_fwnode = NULL;
 
