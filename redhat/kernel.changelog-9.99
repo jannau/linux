@@ -1,3 +1,12 @@
+* Tue Dec 06 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc8.bce9332220bd.59]
+- redhat/configs: move CONFIG_TEGRA186_GPC_DMA config (Mark Salter)
+- Check for kernel config git-push failures (Don Zickus)
+- redhat: genlog.sh failures should interrupt the recipe (Patrick Talbert)
+- Turn CONFIG_GNSS back on for Fedora (Justin M. Forbes)
+- redhat/configs: enable CONFIG_GNSS for RHEL (Michal Schmidt)
+- Linux v6.1.0-0.rc8.bce9332220bd
+Resolves: 
+
 * Mon Dec 05 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc8.58]
 - Linux v6.1.0-0.rc8
 Resolves: 
