@@ -1,3 +1,9 @@
+* Wed Dec 07 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc8.8ed710da2873.60]
+- redhat/configs: update CXL-related options to match what RHEL will use (John W. Linville)
+- Clean up the config for the Tegra186 timer (Al Stone)
+- Linux v6.1.0-0.rc8.8ed710da2873
+Resolves: 
+
 * Tue Dec 06 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc8.bce9332220bd.59]
 - redhat/configs: move CONFIG_TEGRA186_GPC_DMA config (Mark Salter)
 - Check for kernel config git-push failures (Don Zickus)
