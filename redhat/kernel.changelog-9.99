@@ -1,3 +1,9 @@
+* Thu Dec 08 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc8.479174d402bc.61]
+- Fedora config updates for 6.1 (Justin M. Forbes)
+- redhat: Remove cpupower files (Prarit Bhargava)
+- Linux v6.1.0-0.rc8.479174d402bc
+Resolves: 
+
 * Wed Dec 07 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc8.8ed710da2873.60]
 - redhat/configs: update CXL-related options to match what RHEL will use (John W. Linville)
 - Clean up the config for the Tegra186 timer (Al Stone)
