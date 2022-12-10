@@ -1,3 +1,8 @@
+* Sat Dec 10 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc8.3ecc37918c80.63]
+- Handle automated case when config generation works correctly (Don Zickus)
+- Linux v6.1.0-0.rc8.3ecc37918c80
+Resolves: 
+
 * Fri Dec 09 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc8.0d1409e4ff08.62]
 - Turn off CONFIG_CRYPTO_ARIA_AESNI_AVX_X86_64 (Justin M. Forbes)
 - Turn off CONFIG_EFI_ZBOOT as it makes CKI choke (Justin M. Forbes)
