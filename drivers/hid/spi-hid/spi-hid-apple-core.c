@@ -667,7 +667,7 @@ static void spihid_process_message(struct spihid_apple *spihid, u8 *data,
 #endif
 }
 
-static void spihid_assemble_meesage(struct spihid_apple *spihid,
+static void spihid_assemble_message(struct spihid_apple *spihid,
 				    struct spihid_transfer_packet *pkt)
 {
 	size_t length, offset, remain;
@@ -775,7 +775,7 @@ static void spihid_process_read(struct spihid_apple *spihid)
 		spihid_process_message(spihid, pkt->data, length, pkt->device,
 				       pkt->flags);
 	} else {
-		spihid_assemble_meesage(spihid, pkt);
+		spihid_assemble_message(spihid, pkt);
 	}
 }
 
