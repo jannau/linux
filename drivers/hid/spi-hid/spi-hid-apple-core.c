@@ -748,8 +748,9 @@ static void spihid_process_read(struct spihid_apple *spihid)
 			}
 		} else {
 			dev_info(dev, "R short packet: len:%zu\n", length);
-			print_hex_dump_debug("spihid pkt:", DUMP_PREFIX_OFFSET, 16, 1,
-					pkt->data, length, false);
+			print_hex_dump(KERN_INFO, "spihid pkt:",
+				       DUMP_PREFIX_OFFSET, 16, 1, pkt->data,
+				       length, false);
 		}
 		return;
 	}
