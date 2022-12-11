@@ -1112,7 +1112,7 @@ static const struct hid_device_id apple_devices[] = {
 	{ HID_SPI_DEVICE(SPI_VENDOR_ID_APPLE, HID_ANY_ID),
 		.driver_data = APPLE_HAS_FN | APPLE_ISO_TILDE_QUIRK },
 	{ HID_DEVICE(BUS_HOST, HID_GROUP_ANY, HOST_VENDOR_ID_APPLE,
-                     HID_ANY_ID), .driver_data = APPLE_HAS_FN },
+                     HID_ANY_ID), .driver_data = APPLE_HAS_FN | APPLE_ISO_TILDE_QUIRK },
 
 	{ }
 };
