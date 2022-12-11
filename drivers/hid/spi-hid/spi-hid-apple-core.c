@@ -653,7 +653,7 @@ static void spihid_process_message(struct spihid_apple *spihid, u8 *data,
 			hdr->unknown0, hdr->unknown1, hdr->unknown2, hdr->id,
 			hdr->length);
 		print_hex_dump_debug("spihid msg: ", DUMP_PREFIX_OFFSET, 16, 1,
-				     payload, le16_to_cpu(hdr->length)), true);
+				     payload, le16_to_cpu(hdr->length), true);
 	}
 #else
 	if (!handled) {
