@@ -31,7 +31,7 @@
 
 #include "spi-hid-apple.h"
 
-#define SPIHID_DEF_WAIT msecs_to_jiffies(100)
+#define SPIHID_DEF_WAIT msecs_to_jiffies(1000)
 
 #define SPIHID_MAX_INPUT_REPORT_SIZE 0x800
 
