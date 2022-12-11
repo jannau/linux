@@ -71,8 +71,6 @@ static int spihid_apple_of_probe(struct spi_device *spi)
 	struct spihid_apple_of *spihid_of;
 	int err;
 
-	dev_warn(dev, "%s:%d", __func__, __LINE__);
-
 	spihid_of = devm_kzalloc(dev, sizeof(*spihid_of), GFP_KERNEL);
 	if (!spihid_of)
 		return -ENOMEM;
