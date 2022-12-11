@@ -1,3 +1,7 @@
+* Sun Dec 11 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc8.4cee37b3a4e6.64]
+- Linux v6.1.0-0.rc8.4cee37b3a4e6
+Resolves: 
+
 * Sat Dec 10 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.1.0-0.rc8.3ecc37918c80.63]
 - Handle automated case when config generation works correctly (Don Zickus)
 - Linux v6.1.0-0.rc8.3ecc37918c80
