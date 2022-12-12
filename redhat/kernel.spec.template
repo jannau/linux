@@ -303,6 +303,8 @@ Summary: The Linux kernel
 # No realtime fedora variants
 %define with_realtime 0
 %define with_arm64_64k 0
+# for debugging issues with build process
+%define with_verbose 1
 %endif
 
 # No arm64-16k flavor for now
