@@ -28,6 +28,7 @@
 #include <linux/of_platform.h>
 #include <linux/pci.h>
 #include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
 #include <linux/slab.h>
 #include <linux/swab.h>
 #include <linux/types.h>
@@ -491,7 +492,9 @@ static void apple_dart_domain_flush_tlb(struct apple_dart_domain *domain)
 		for (j = 0; j < BITS_TO_LONGS(stream_map.dart->num_streams); j++)
 			stream_map.sidmap[j] = atomic_long_read(&domain_stream_map->sidmap[j]);
 
+		WARN_ON(pm_runtime_get_sync(stream_map.dart->dev) < 0);
 		stream_map.dart->hw->invalidate_tlb(&stream_map);
+		pm_runtime_put(stream_map.dart->dev);
 	}
 }
 
@@ -733,16 +736,19 @@ static int apple_dart_attach_dev(struct iommu_domain *domain,
 	if (dart0->locked && domain->type != IOMMU_DOMAIN_DMA)
 		return -EINVAL;
 
+	for_each_stream_map(i, cfg, stream_map)
+		WARN_ON(pm_runtime_get_sync(stream_map->dart->dev) < 0);
+
 	ret = apple_dart_finalize_domain(domain, dev, cfg);
 	if (ret)
-		return ret;
+		goto err;
 
 	switch (domain->type) {
 	case IOMMU_DOMAIN_DMA:
 	case IOMMU_DOMAIN_UNMANAGED:
 		ret = apple_dart_domain_add_streams(dart_domain, cfg);
 		if (ret)
-			return ret;
+			goto err;
 
 		for_each_stream_map(i, cfg, stream_map)
 			apple_dart_setup_translation(dart_domain, stream_map);
@@ -757,9 +763,18 @@ static int apple_dart_attach_dev(struct iommu_domain *domain,
 		break;
 	}
 
+err:
+	for_each_stream_map(i, cfg, stream_map)
+		pm_runtime_put(stream_map->dart->dev);
 	return ret;
 }
 
+		WARN_ON(pm_runtime_get_sync(stream_map->dart->dev) < 0);
+
+	for_each_stream_map(i, cfg, stream_map)
+
+	for_each_stream_map(i, cfg, stream_map)
+		pm_runtime_put(stream_map->dart->dev);
 static struct iommu_device *apple_dart_probe_device(struct device *dev)
 {
 	struct apple_dart_master_cfg *cfg = dev_iommu_priv_get(dev);
@@ -1169,6 +1184,14 @@ static int apple_dart_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
+	pm_runtime_get_noresume(dev);
+	pm_runtime_set_active(dev);
+	pm_runtime_irq_safe(dev);
+
+	ret = devm_pm_runtime_enable(dev);
+	if (ret)
+		goto err_clk_disable;
+
 	dart_params[0] = readl(dart->regs + DART_PARAMS1);
 	dart_params[1] = readl(dart->regs + DART_PARAMS2);
 	dart->pgsize = 1 << FIELD_GET(DART_PARAMS1_PAGE_SHIFT, dart_params[0]);
@@ -1223,6 +1246,8 @@ static int apple_dart_probe(struct platform_device *pdev)
 	if (ret)
 		goto err_sysfs_remove;
 
+	pm_runtime_put(dev);
+
 	dev_info(
 		&pdev->dev,
 		"DART [pagesize %x, %d streams, bypass support: %d, bypass forced: %d, locked: %d] initialized\n",
@@ -1234,6 +1259,7 @@ err_sysfs_remove:
 err_free_irq:
 	free_irq(dart->irq, dart);
 err_clk_disable:
+	pm_runtime_put(dev);
 	clk_bulk_disable_unprepare(dart->num_clks, dart->clks);
 
 	return ret;
@@ -1373,7 +1399,7 @@ static __maybe_unused int apple_dart_resume(struct device *dev)
 	return 0;
 }
 
-DEFINE_SIMPLE_DEV_PM_OPS(apple_dart_pm_ops, apple_dart_suspend, apple_dart_resume);
+DEFINE_RUNTIME_DEV_PM_OPS(apple_dart_pm_ops, apple_dart_suspend, apple_dart_resume, NULL);
 
 static const struct of_device_id apple_dart_of_match[] = {
 	{ .compatible = "apple,t8103-dart", .data = &apple_dart_hw_t8103 },
@@ -1388,7 +1414,7 @@ static struct platform_driver apple_dart_driver = {
 		.name			= "apple-dart",
 		.of_match_table		= apple_dart_of_match,
 		.suppress_bind_attrs    = true,
-		.pm			= pm_sleep_ptr(&apple_dart_pm_ops),
+		.pm			= pm_ptr(&apple_dart_pm_ops),
 	},
 	.probe	= apple_dart_probe,
 	.remove	= apple_dart_remove,
