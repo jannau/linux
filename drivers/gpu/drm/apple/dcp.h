@@ -68,4 +68,6 @@ void iomfb_shutdown(struct apple_dcp *dcp);
 /* rtkit message handler for IOMFB messages */
 void iomfb_recv_msg(struct apple_dcp *dcp, u64 message);
 
+void dcp_sleep(struct apple_dcp *dcp);
+
 #endif

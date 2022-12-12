@@ -14,6 +14,7 @@
 #include <linux/apple-mailbox.h>
 #include <linux/soc/apple/rtkit.h>
 #include <linux/completion.h>
+#include <linux/pm_runtime.h>
 
 #include <drm/drm_fb_dma_helper.h>
 #include <drm/drm_fourcc.h>
@@ -189,6 +190,7 @@ const struct dcp_method_entry dcp_methods[dcpep_num_methods] = {
 	DCP_METHOD("A460", dcpep_set_display_refresh_properties),
 	DCP_METHOD("A463", dcpep_flush_supports_power),
 	DCP_METHOD("A468", dcpep_set_power_state),
+	DCP_METHOD("A500", dcpep_set_dcp_power),
 };
 
 /* Call a DCP function given by a tag */
@@ -198,6 +200,10 @@ static void dcp_push(struct apple_dcp *dcp, bool oob, enum dcpep_method method,
 {
 	enum dcp_context_id context = dcp_call_context(dcp, oob);
 	struct dcp_channel *ch = dcp_get_channel(dcp, context);
+	u8 depth;
+	u16 offset;
+	void *out, *out_data;
+	size_t data_len;
 
 	struct dcp_packet_header header = {
 		.in_len = in_len,
@@ -210,12 +216,19 @@ static void dcp_push(struct apple_dcp *dcp, bool oob, enum dcpep_method method,
 		.tag[3] = dcp_methods[method].tag[0],
 	};
 
-	u8 depth = dcp_push_depth(&ch->depth);
-	u16 offset = dcp_packet_start(ch, depth);
+	if (!dcp->sleeping && !dcp_channel_busy(ch)) {
+		if (pm_runtime_get_sync(dcp->dev) < 0) {
+			dev_err(dcp->dev, "failed to resume DCP\n");
+			return;
+		}
+	}
 
-	void *out = dcp->shmem + dcp_tx_offset(context) + offset;
-	void *out_data = out + sizeof(header);
-	size_t data_len = sizeof(header) + in_len + out_len;
+	depth = dcp_push_depth(&ch->depth);
+	offset = dcp_packet_start(ch, depth);
+
+	out = dcp->shmem + dcp_tx_offset(context) + offset;
+	out_data = out + sizeof(header);
+	data_len = sizeof(header) + in_len + out_len;
 
 	memcpy(out, &header, sizeof(header));
 
@@ -287,6 +300,8 @@ DCP_THUNK_INOUT(dcp_set_power_state, dcpep_set_power_state,
 		struct dcp_set_power_state_req,
 		struct dcp_set_power_state_resp);
 
+DCP_THUNK_IN(dcp_set_dcp_power, dcpep_set_dcp_power, u32);
+
 DCP_THUNK_INOUT(dcp_set_digital_out_mode, dcpep_set_digital_out_mode,
 		struct dcp_set_digital_out_mode_req, u32);
 
@@ -342,6 +357,12 @@ static void dcp_ack(struct apple_dcp *dcp, enum dcp_context_id context)
 	dcp_pop_depth(&ch->depth);
 	dcp_send_message(dcp, IOMFB_ENDPOINT,
 			 dcpep_ack(context));
+
+	if (!dcp->sleeping && !dcp_channel_busy(ch)) {
+		pm_runtime_mark_last_busy(dcp->dev);
+		if (pm_runtime_put_autosuspend(dcp->dev) < 0)
+			dev_err(dcp->dev, "failed to suspend DCP\n");
+	}
 }
 
 /* DCP callback handlers */
@@ -995,7 +1016,16 @@ void dcp_poweron(struct platform_device *pdev)
 	struct dcp_wait_cookie *cookie;
 	int ret;
 	u32 handle;
+	dev_err(dcp->dev, "dcp_poweron() starting\n");
+
 	dev_dbg(dcp->dev, "%s", __func__);
+	if (!dcp->awake) {
+		if (pm_runtime_get_sync(dcp->dev) < 0) {
+			dev_err(dcp->dev, "failed to resume DCP\n");
+			return;
+		}
+		dcp->awake = true;
+	}
 
 	cookie = kzalloc(sizeof(*cookie), GFP_KERNEL);
 	if (!cookie)
@@ -1114,8 +1144,49 @@ void dcp_poweroff(struct platform_device *pdev)
 
 	kref_put(&poff_cookie->refcount, release_wait_cookie);
 	dev_dbg(dcp->dev, "%s: setPowerState(0) done", __func__);
+
+	if (dcp->awake) {
+		pm_runtime_mark_last_busy(dcp->dev);
+		if (pm_runtime_put_autosuspend(dcp->dev) >= 0)
+			dcp->awake = false;
+	}
+
+	dev_err(dcp->dev, "dcp_poweroff() done\n");
 }
 EXPORT_SYMBOL(dcp_poweroff);
+
+void dcp_sleep(struct apple_dcp *dcp)
+{
+	u32 arg = 0;
+	int ret;
+
+	struct dcp_wait_cookie *cookie;
+
+	cookie = kzalloc(sizeof(*cookie), GFP_KERNEL);
+	if (!cookie)
+		return;
+	init_completion(&cookie->done);
+	kref_init(&cookie->refcount);
+	/* increase refcount to ensure the receiver has a reference */
+	kref_get(&cookie->refcount);
+
+	dcp->sleeping = true;
+
+	dcp_set_dcp_power(dcp, false, &arg, complete_set_powerstate,
+			  cookie);
+	ret = wait_for_completion_timeout(&cookie->done,
+					  msecs_to_jiffies(1000));
+
+	if (ret == 0)
+		dev_warn(dcp->dev, "setDCPPower(0) timeout %u ms", 1000);
+
+	kref_put(&cookie->refcount, release_wait_cookie);
+	dev_dbg(dcp->dev, "%s: setDCPPower(0) done", __func__);
+
+	dev_err(dcp->dev, "dcp_sleep() done\n");
+
+	dcp->sleeping = false;
+}
 
 /*
  * Helper to send a DRM hotplug event. The DCP is accessed from a single
@@ -1363,6 +1434,13 @@ static void dcpep_handle_cb(struct apple_dcp *dcp, enum dcp_context_id context,
 	if (hdr->out_len)
 		memset(out, 0, hdr->out_len);
 
+	if (!dcp->sleeping && !dcp_channel_busy(ch)) {
+		if (pm_runtime_get_sync(dcp->dev) < 0) {
+			dev_err(dcp->dev, "failed to resume DCP\n");
+			return;
+		}
+	}
+
 	depth = dcp_push_depth(&ch->depth);
 	ch->output[depth] = out;
 	ch->end[depth] = offset + ALIGN(length, DCP_PACKET_ALIGNMENT);
@@ -1378,13 +1456,14 @@ static void dcpep_handle_ack(struct apple_dcp *dcp, enum dcp_context_id context,
 	struct dcp_channel *ch = dcp_get_channel(dcp, context);
 	void *cookie;
 	dcp_callback_t cb;
+	u8 depth;
 
 	if (!ch) {
 		dev_warn(dcp->dev, "ignoring ack on context %X\n", context);
 		return;
 	}
 
-	dcp_pop_depth(&ch->depth);
+	depth = dcp_pop_depth(&ch->depth);
 
 	cb = ch->callbacks[ch->depth];
 	cookie = ch->cookies[ch->depth];
@@ -1394,6 +1473,12 @@ static void dcpep_handle_ack(struct apple_dcp *dcp, enum dcp_context_id context,
 
 	if (cb)
 		cb(dcp, data + sizeof(*header) + header->in_len, cookie);
+
+	if (!dcp->sleeping && !depth) {
+		pm_runtime_mark_last_busy(dcp->dev);
+		if (pm_runtime_put_autosuspend(dcp->dev) < 0)
+			dev_err(dcp->dev, "failed to suspend DCP\n");
+	}
 }
 
 static void dcpep_got_msg(struct apple_dcp *dcp, u64 message)
@@ -1863,7 +1948,11 @@ void iomfb_recv_msg(struct apple_dcp *dcp, u64 message)
 int iomfb_start_rtkit(struct apple_dcp *dcp)
 {
 	dma_addr_t shmem_iova;
-	apple_rtkit_start_ep(dcp->rtk, IOMFB_ENDPOINT);
+	int ret;
+
+	ret = apple_rtkit_start_ep(dcp->rtk, IOMFB_ENDPOINT);
+	if (ret < 0)
+		return ret;
 
 	dcp->shmem = dma_alloc_coherent(dcp->dev, DCP_SHMEM_SIZE, &shmem_iova,
 					GFP_KERNEL);
