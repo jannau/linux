@@ -26,6 +26,7 @@
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
 #include <linux/spinlock.h>
 #include <linux/types.h>
 
@@ -404,6 +405,10 @@ static int apple_mbox_probe(struct platform_device *pdev)
 
 	ret = devm_request_irq(dev, mbox->irq_send_empty, apple_mbox_send_empty_irq,
 			       IRQF_NO_AUTOEN | IRQF_NO_SUSPEND, irqname, mbox);
+	if (ret)
+		return ret;
+
+	ret = devm_pm_runtime_enable(dev);
 	if (ret)
 		return ret;
 
