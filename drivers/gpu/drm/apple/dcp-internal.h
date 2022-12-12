@@ -140,6 +140,15 @@ struct apple_dcp {
 	/* Is the DCP booted? */
 	bool active;
 
+	/* Is the IOMFB endpoint active? */
+	bool iomfb_started;
+
+	/* Is the DCP awake? */
+	bool awake;
+
+	/* Is the DCP in the process of going to sleep? */
+	bool sleeping;
+
 	/* eDP display without DP-HDMI conversion */
 	bool main_display;
 

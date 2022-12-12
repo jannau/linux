@@ -215,6 +215,7 @@ enum dcpep_method {
 	dcpep_set_parameter_dcp,
 	dcpep_enable_disable_video_power_savings,
 	dcpep_is_main_display,
+	dcpep_set_dcp_power,
 	iomfbep_a131_pmu_service_matched,
 	iomfbep_a132_backlight_service_matched,
 	iomfbep_a358_vi_set_temperature_hint,
