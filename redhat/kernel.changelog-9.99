@@ -1,3 +1,8 @@
+* Wed Dec 14 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc0.e2ca6ba6ba01.3]
+- Fix up configs for Fedora so we don't have a mismatch (Justin M. Forbes)
+- Linux v6.2.0-0.rc0.e2ca6ba6ba01
+Resolves: 
+
 * Wed Dec 14 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc0.764822972d64.2]
 - Turn on CONFIG_SQUASHFS_DECOMP_SINGLE in pending (Justin M. Forbes)
 - Trim changelog for 6.2 cycle (Justin M. Forbes)
