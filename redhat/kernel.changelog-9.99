@@ -1,3 +1,7 @@
+* Thu Dec 15 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc0.041fae9c105a.4]
+- Linux v6.2.0-0.rc0.041fae9c105a
+Resolves: 
+
 * Wed Dec 14 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc0.e2ca6ba6ba01.3]
 - Fix up configs for Fedora so we don't have a mismatch (Justin M. Forbes)
 - Linux v6.2.0-0.rc0.e2ca6ba6ba01
