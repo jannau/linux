@@ -1,3 +1,9 @@
+* Fri Dec 16 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc0.84e57d292203.5]
+- Add siphash_kunit and strscpy_kunit to mod-internal.list (Justin M. Forbes)
+- Add drm_kunit_helpers to mod-internal.list (Justin M. Forbes)
+- Linux v6.2.0-0.rc0.84e57d292203
+Resolves: 
+
 * Thu Dec 15 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc0.041fae9c105a.4]
 - Linux v6.2.0-0.rc0.041fae9c105a
 Resolves: 
