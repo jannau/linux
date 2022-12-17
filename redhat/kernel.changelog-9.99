@@ -1,3 +1,8 @@
+* Sat Dec 17 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc0.77856d911a8c.6]
+- config: enable RCU_TRACE for debug kernels (Wander Lairson Costa)
+- Linux v6.2.0-0.rc0.77856d911a8c
+Resolves: 
+
 * Fri Dec 16 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc0.84e57d292203.5]
 - Add siphash_kunit and strscpy_kunit to mod-internal.list (Justin M. Forbes)
 - Add drm_kunit_helpers to mod-internal.list (Justin M. Forbes)
