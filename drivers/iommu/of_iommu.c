@@ -176,17 +176,8 @@ const struct iommu_ops *of_iommu_configure(struct device *dev,
 static inline bool check_direct_mapping(struct device *dev, struct resource *phys,
 					phys_addr_t start, phys_addr_t end)
 {
-	if (start != phys->start || end != phys->end)
-		return false;
-
-	return true;
-}
-
-static inline bool check_translated_mapping(struct device *dev, struct resource *phys,
-					phys_addr_t start, phys_addr_t end)
-{
-	if (end - start != phys->end - phys->start) {
-		dev_warn(dev, "treating non-overlapping mapping [%pr] -> [%pap-%pap] as reservation\n",
+	if (start != phys->start || end != phys->end) {
+		dev_warn(dev, "treating non-direct mapping [%pr] -> [%pap-%pap] as reservation\n",
 			 &phys, &start, &end);
 		return false;
 	}
@@ -267,16 +258,13 @@ void of_iommu_get_resv_regions(struct device *dev, struct list_head *list)
 
 					if (check_direct_mapping(dev, &res, start, end))
 						type = IOMMU_RESV_DIRECT_RELAXABLE;
-					else if (check_translated_mapping(dev, &res, start, end))
-						type = IOMMU_RESV_TRANSLATED;
 					else
 						type = IOMMU_RESV_RESERVED;
 				} else {
 					type = IOMMU_RESV_RESERVED;
 				}
 
-				region = iommu_alloc_resv_region_tr(res.start, start, length, prot, type,
-								    GFP_KERNEL);
+				region = iommu_alloc_resv_region(start, length, prot, type);
 				if (region)
 					list_add_tail(&region->list, list);
 			}
