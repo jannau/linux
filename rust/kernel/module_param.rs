@@ -451,6 +451,7 @@ pub enum StringParam {
 impl StringParam {
     fn bytes(&self) -> &[u8] {
         match self {
+            #[allow(clippy::explicit_auto_deref)]
             StringParam::Ref(bytes) => *bytes,
             StringParam::Owned(vec) => &vec[..],
         }
