@@ -34,6 +34,11 @@ struct macsmc_power {
 	bool shutdown_started;
 
 	struct delayed_work dbg_log_work;
+
+	struct delayed_work charge_control_work;
+	int charge_start;
+	int charge_stop;
+
 };
 
 static int macsmc_log_power_set(const char *val, const struct kernel_param *kp);
@@ -48,6 +53,7 @@ module_param_cb(log_power, &macsmc_log_power_ops, &log_power, 0644);
 MODULE_PARM_DESC(log_power, "Periodically log power consumption for debugging");
 
 #define POWER_LOG_INTERVAL (HZ)
+#define CHARGE_CONTROL_INTERVAL (30 * HZ)
 
 static struct macsmc_power *g_power;
 
@@ -71,6 +77,11 @@ static struct macsmc_power *g_power;
 
 #define ACSt_CAN_BOOT_AP	BIT(2)
 #define ACSt_CAN_BOOT_IBOOT	BIT(1)
+
+#define MIN_CHARGE_START	50
+#define MAX_CHARGE_START	100
+#define MIN_CHARGE_STOP		50
+#define MAX_CHARGE_STOP		100
 
 static int macsmc_battery_get_status(struct macsmc_power *power)
 {
@@ -267,6 +278,12 @@ static int macsmc_battery_get_property(struct power_supply *psy,
 		val->intval = macsmc_battery_get_charge_behaviour(power);
 		ret = val->intval < 0 ? val->intval : 0;
 		break;
+	case POWER_SUPPLY_PROP_CHARGE_CONTROL_START_THRESHOLD:
+		val->intval = power->charge_start;
+		return 0;
+	case POWER_SUPPLY_PROP_CHARGE_CONTROL_END_THRESHOLD:
+		val->intval = power->charge_stop;
+		return 0;
 	case POWER_SUPPLY_PROP_TIME_TO_EMPTY_NOW:
 		ret = apple_smc_read_u16(power->smc, SMC_KEY(B0TE), &vu16);
 		val->intval = vu16 == 0xffff ? 0 : vu16 * 60;
@@ -379,6 +396,18 @@ static int macsmc_battery_set_property(struct power_supply *psy,
 	switch (psp) {
 	case POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR:
 		return macsmc_battery_set_charge_behaviour(power, val->intval);
+	case POWER_SUPPLY_PROP_CHARGE_CONTROL_START_THRESHOLD:
+		if (val->intval < MIN_CHARGE_START || val->intval > MAX_CHARGE_START)
+			return -EINVAL;
+		power->charge_start = val->intval;
+		schedule_delayed_work(&power->charge_control_work, 0);
+		return 0;
+	case POWER_SUPPLY_PROP_CHARGE_CONTROL_END_THRESHOLD:
+		if (val->intval < MIN_CHARGE_STOP || val->intval > MAX_CHARGE_STOP)
+			return -EINVAL;
+		power->charge_stop = val->intval;
+		schedule_delayed_work(&power->charge_control_work, 0);
+		return 0;
 	default:
 		return -EINVAL;
 	}
@@ -389,6 +418,8 @@ static int macsmc_battery_property_is_writeable(struct power_supply *psy,
 {
 	switch (psp) {
 	case POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR:
+	case POWER_SUPPLY_PROP_CHARGE_CONTROL_START_THRESHOLD:
+	case POWER_SUPPLY_PROP_CHARGE_CONTROL_END_THRESHOLD:
 		return true;
 	default:
 		return false;
@@ -407,6 +438,8 @@ static enum power_supply_property macsmc_battery_props[] = {
 	POWER_SUPPLY_PROP_CURRENT_NOW,
 	POWER_SUPPLY_PROP_POWER_NOW,
 	POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN,
+	POWER_SUPPLY_PROP_CHARGE_CONTROL_START_THRESHOLD,
+	POWER_SUPPLY_PROP_CHARGE_CONTROL_END_THRESHOLD,
 	POWER_SUPPLY_PROP_CHARGE_TERM_CURRENT,
 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT,
 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX,
@@ -483,6 +516,34 @@ static const struct power_supply_desc macsmc_ac_desc = {
 	.properties		= macsmc_ac_props,
 	.num_properties		= ARRAY_SIZE(macsmc_ac_props),
 };
+
+static void macsmc_charge_control_work(struct work_struct *wrk)
+{
+	struct macsmc_power *power = container_of(to_delayed_work(wrk),
+						  struct macsmc_power, charge_control_work);
+	int ret;
+	u8 cur;
+
+	ret = apple_smc_read_u8(power->smc, SMC_KEY(BUIC), &cur);
+	if (ret < 0) {
+		dev_warn(power->dev, "Failed to read battery charge state: %d\n", ret);
+		goto maybe_reschedule;
+	}
+
+	if (cur < power->charge_start || power->charge_start >= 100)
+		ret = apple_smc_write_u8(power->smc, SMC_KEY(CH0B), 0);
+	else if (cur >= power->charge_stop)
+		ret = apple_smc_write_u8(power->smc, SMC_KEY(CH0B), 1);
+	else
+		goto maybe_reschedule;
+
+	if (ret < 0)
+		dev_warn(power->dev, "Failed to update charger state: %d\n", ret);
+
+maybe_reschedule:
+	if (power->charge_start < 100)
+		schedule_delayed_work(&power->charge_control_work, CHARGE_CONTROL_INTERVAL);
+}
 
 static int macsmc_log_power_set(const char *val, const struct kernel_param *kp)
 {
@@ -641,6 +702,8 @@ static int macsmc_power_probe(struct platform_device *pdev)
 
 	power->dev = &pdev->dev;
 	power->smc = smc;
+	power->charge_start = 100;
+	power->charge_stop = 100;
 	dev_set_drvdata(&pdev->dev, power);
 
 	/* Ignore devices without a charger/battery */
@@ -679,6 +742,7 @@ static int macsmc_power_probe(struct platform_device *pdev)
 
 	INIT_WORK(&power->critical_work, macsmc_power_critical_work);
 	INIT_DELAYED_WORK(&power->dbg_log_work, macsmc_dbg_work);
+	INIT_DELAYED_WORK(&power->charge_control_work, macsmc_charge_control_work);
 
 	g_power = power;
 
@@ -694,6 +758,7 @@ static int macsmc_power_remove(struct platform_device *pdev)
 
 	cancel_work(&power->critical_work);
 	cancel_delayed_work(&power->dbg_log_work);
+	cancel_delayed_work(&power->charge_control_work);
 
 	g_power = NULL;
 
