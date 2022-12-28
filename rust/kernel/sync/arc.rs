@@ -343,6 +343,9 @@ pub struct ArcBorrow<'a, T: ?Sized + 'a> {
 // This is to allow [`ArcBorrow`] (and variants) to be used as the type of `self`.
 impl<T: ?Sized> core::ops::Receiver for ArcBorrow<'_, T> {}
 
+// This is to allow [`ArcBorrow`] (and variants) to be used as the type of `self`.
+impl<T: ?Sized> core::ops::Receiver for ArcBorrow<'_, T> {}
+
 // This is to allow `ArcBorrow<U>` to be dispatched on when `ArcBorrow<T>` can be coerced into
 // `ArcBorrow<U>`.
 impl<T: ?Sized + Unsize<U>, U: ?Sized> core::ops::DispatchFromDyn<ArcBorrow<'_, U>>
