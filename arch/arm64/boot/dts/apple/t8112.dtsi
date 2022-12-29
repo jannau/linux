@@ -482,7 +482,7 @@
 			apple,firmware-compat = <12 4 0>;
 
 			operating-points-v2 = <&gpu_opp>;
-			apple,perf-base-pstate = <1>;
+			apple,perf-base-pstate = <8>;
 			apple,min-sram-microvolt = <780000>;
 			apple,avg-power-filter-tc-ms = <300>;
 			apple,avg-power-ki-only = <9.375>;
