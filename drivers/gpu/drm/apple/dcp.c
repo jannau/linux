@@ -117,6 +117,7 @@ static void dcp_rtk_crashed(void *cookie)
 		dcp->connector->connected = 0;
 		schedule_work(&dcp->connector->hotplug_wq);
 	}
+	complete(&dcp->start_done);
 }
 
 static int dcp_rtk_shmem_setup(void *cookie, struct apple_rtkit_shmem *bfr)
@@ -248,6 +249,8 @@ int dcp_start(struct platform_device *pdev)
 	struct apple_dcp *dcp = platform_get_drvdata(pdev);
 	int ret;
 
+	init_completion(&dcp->start_done);
+
 	/* start RTKit endpoints */
 	ret = iomfb_start_rtkit(dcp);
 	if (ret)
@@ -256,6 +259,29 @@ int dcp_start(struct platform_device *pdev)
 	return ret;
 }
 EXPORT_SYMBOL(dcp_start);
+
+int dcp_wait_ready(struct platform_device *pdev, u64 timeout)
+{
+	struct apple_dcp *dcp = platform_get_drvdata(pdev);
+	int ret;
+
+	if (dcp->crashed)
+		return -ENODEV;
+	if (dcp->active)
+		return 0;
+	if (timeout <= 0)
+		return -ETIMEDOUT;
+
+	ret = wait_for_completion_timeout(&dcp->start_done, timeout);
+	if (ret < 0)
+		return ret;
+
+	if (dcp->crashed)
+		return -ENODEV;
+
+	return dcp->active ? 0 : -ETIMEDOUT;
+}
+EXPORT_SYMBOL(dcp_wait_ready);
 
 static void dcp_work_register_backlight(struct work_struct *work)
 {
