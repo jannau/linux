@@ -1,3 +1,8 @@
+* Tue Jan 03 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc2.69b41ac87e4a.18]
+- redhat/docs: Add FAQ entry for booting between Fedora & ELN/RHEL kernels (Prarit Bhargava)
+- Linux v6.2.0-0.rc2.69b41ac87e4a
+Resolves: 
+
 * Mon Jan 02 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc2.17]
 - Linux v6.2.0-0.rc2
 Resolves: 
