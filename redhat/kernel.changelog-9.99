@@ -1,3 +1,9 @@
+* Fri Jan 06 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc2.1f5abbd77e2c.20]
+- general: arm: cleanup ASPEED options (Peter Robinson)
+- redhat/configs: ALSA - cleanups for the AMD Pink Sardine DMIC driver (Jaroslav Kysela)
+- Linux v6.2.0-0.rc2.1f5abbd77e2c
+Resolves: 
+
 * Thu Jan 05 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc2.41c03ba9beea.19]
 - Linux v6.2.0-0.rc2.41c03ba9beea
 Resolves: 
