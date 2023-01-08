@@ -1964,45 +1964,68 @@ static void dcp_started(struct apple_dcp *dcp, void *data, void *cookie)
 	iomfb_get_color_remap_mode(dcp, false, &color_remap, init_1, cookie);
 }
 
+static void dcp_shmem_info(struct apple_dcp *dcp, u64 dcp_dva)
+{
+	dma_addr_t shmem_iova;
+
+	if (dcp_dva != 0 && dcp->shmem_iova == (dcp_dva & ~dcp->asc_dram_mask))
+		return;
+
+	dcp->shmem = dma_alloc_coherent(dcp->dev, DCP_SHMEM_SIZE,
+					&dcp->shmem_iova, GFP_KERNEL);
+
+	shmem_iova = dcp->shmem_iova | dcp->asc_dram_mask;
+	dcp_send_message(dcp, IOMFB_ENDPOINT, dcpep_set_shmem(shmem_iova));
+
+	if (dcp_dva != 0)
+		dcp_send_message(dcp, IOMFB_ENDPOINT,
+				 FIELD_PREP(IOMFB_MESSAGE_TYPE,
+					    IOMFB_MESSAGE_TYPE_INITIALIZED));
+}
+
 void iomfb_recv_msg(struct apple_dcp *dcp, u64 message)
 {
 	enum dcpep_type type = FIELD_GET(IOMFB_MESSAGE_TYPE, message);
 
-	if (type == IOMFB_MESSAGE_TYPE_INITIALIZED)
+	switch (type) {
+	case IOMFB_MESSAGE_TYPE_SET_SHMEM:
+		dcp_shmem_info(dcp, FIELD_GET(IOMFB_SHMEM_DVA, message));
+		break;
+	case IOMFB_MESSAGE_TYPE_INITIALIZED:
 		dcp_start_signal(dcp, false, dcp_started, NULL);
-	else if (type == IOMFB_MESSAGE_TYPE_MSG)
+		break;
+	case IOMFB_MESSAGE_TYPE_MSG:
 		dcpep_got_msg(dcp, message);
-	else
-		dev_warn(dcp->dev, "Ignoring unknown message %llx\n", message);
+		break;
+	default:
+		dev_warn(dcp->dev, "Ignoring unknown type:%x msg:%llx\n", type,
+			 message);
+		break;
+	}
 }
 
 int iomfb_start_rtkit(struct apple_dcp *dcp)
 {
-	dma_addr_t shmem_iova;
 	int ret;
 
 	ret = apple_rtkit_start_ep(dcp->rtk, IOMFB_ENDPOINT);
 	if (ret < 0)
 		return ret;
 
-	dcp->shmem = dma_alloc_coherent(dcp->dev, DCP_SHMEM_SIZE, &shmem_iova,
-					GFP_KERNEL);
-
-	shmem_iova |= dcp->asc_dram_mask;
-	dcp_send_message(dcp, IOMFB_ENDPOINT, dcpep_set_shmem(shmem_iova));
+	/*
+	* Query current shared memory IOVA used for iomfb message passing
+	*/
+	dcp_send_message(dcp, IOMFB_ENDPOINT,
+				FIELD_PREP(IOMFB_MESSAGE_TYPE, IOMFB_MESSAGE_TYPE_SET_SHMEM) |
+				FIELD_PREP(IOMFB_SHMEM_FLAG, 0)
+	);
 
 	return 0;
 }
 
-void iomfb_shutdown(struct apple_dcp *dcp)
+void iomfb_stop_rtkit(struct apple_dcp *dcp)
 {
-	struct dcp_set_power_state_req req = {
-		/* defaults are ok */
-	};
-
-	/* We're going down */
-	dcp->active = false;
-	dcp->valid_mode = false;
-
-	dcp_set_power_state(dcp, false, &req, NULL, NULL);
+	dma_free_coherent(dcp->dev, DCP_SHMEM_SIZE, dcp->shmem, dcp->shmem_iova);
+	dcp->shmem = NULL;
+	dcp->shmem_iova = 0;
 }

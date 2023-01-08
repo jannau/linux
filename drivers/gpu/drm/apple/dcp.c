@@ -14,6 +14,7 @@
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/of_device.h>
+#include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/soc/apple/rtkit.h>
 #include <linux/string.h>
@@ -422,7 +423,11 @@ static int dcp_comp_bind(struct device *dev, struct device *main, void *data)
 	if (IS_ERR(dcp->coproc_reg))
 		return PTR_ERR(dcp->coproc_reg);
 
-	of_platform_default_populate(dev->of_node, NULL, dev);
+	dcp->reset = devm_reset_control_array_get_exclusive(dev);
+	if (IS_ERR(dcp->reset)) {
+		return dev_err_probe(dev, PTR_ERR(dcp->reset),
+				     "Failed to get reset control");
+	}
 
 	if (!show_notch)
 		ret = of_property_read_u32(dev->of_node, "apple,notch-height",
@@ -509,13 +514,19 @@ static int dcp_comp_bind(struct device *dev, struct device *main, void *data)
 		return dev_err_probe(dev, PTR_ERR(dcp->rtk),
 				     "Failed to intialize RTKit");
 
-	ret = devm_pm_runtime_enable(dev);
+	/* calling pm_runtime_force_resume() is equivalent to pm_runtime_enable
+	 * if pm_runtime_force_suspend was not previously called
+	 */
+	ret = pm_runtime_force_resume(dev);
 	if (ret)
-		return ret;
+		dev_err_probe(dev, ret, "pm_runtime_force_resume failed!\n");
 
 	ret = pm_runtime_resume_and_get(dev);
-	if (ret)
-		return ret;
+	if (ret) {
+		devm_apple_rtkit_free(dev, dcp->rtk);
+		dcp->rtk = NULL;
+		return dev_err_probe(dev, ret, "pm_runtime_resume_and_get failed!\n");
+	}
 
 	pm_runtime_set_autosuspend_delay(dev, 50);
 	pm_runtime_use_autosuspend(dev);
@@ -542,15 +553,37 @@ static int dcp_comp_bind(struct device *dev, struct device *main, void *data)
 static void dcp_comp_unbind(struct device *dev, struct device *main, void *data)
 {
 	struct apple_dcp *dcp = dev_get_drvdata(dev);
+	int ret;
 
-	if (dcp && dcp->shmem)
-		iomfb_shutdown(dcp);
+	/*
+	 * Get device but limit resume to RTKit
+	 */
+	dcp->iomfb_started = false;
+	ret = pm_runtime_resume_and_get(dev);
+	if (ret)
+		dev_err(dev, "pm_runtime_resume_and_get failed: %d\n", ret);
+	pm_runtime_dont_use_autosuspend(dev);
+
+	/*
+	 * force_suspend and shutdown RTKit
+	 */
+	dcp->active = true;
+	dcp->shutdown = true;
+
+	ret = pm_runtime_force_suspend(dev);
+	if (ret)
+		dev_err(dev, "pm_runtime_put_sync_suspend failed: %d\n", ret);
+
+	dcp->rtk = NULL;
+
+	dcp->shutdown = false;
+	dcp->active = false;
 
 	platform_device_put(dcp->piodma);
 	dcp->piodma = NULL;
-
-	devm_clk_put(dev, dcp->clk);
 	dcp->clk = NULL;
+	dcp->coproc_reg = NULL;
+	iomfb_stop_rtkit(dcp);
 }
 
 static const struct component_ops dcp_comp_ops = {
@@ -563,10 +596,15 @@ static int dcp_platform_probe(struct platform_device *pdev)
 	enum dcp_firmware_version fw_compat;
 	struct device *dev = &pdev->dev;
 	struct apple_dcp *dcp;
+	int ret;
 
 	fw_compat = dcp_check_firmware_version(dev);
 	if (fw_compat == DCP_FIRMWARE_UNKNOWN)
 		return -ENODEV;
+
+	ret = devm_pm_runtime_enable(dev);
+	if (ret)
+		return ret;
 
 	dcp = devm_kzalloc(dev, sizeof(*dcp), GFP_KERNEL);
 	if (!dcp)
@@ -576,6 +614,11 @@ static int dcp_platform_probe(struct platform_device *pdev)
 	dcp->dev = dev;
 
 	platform_set_drvdata(pdev, dcp);
+
+	/* force suspend for symmetry with dcp_comp_unbind */
+	ret = pm_runtime_force_suspend(dev);
+	if (ret)
+		dev_err(dev, "pm_runtime_put_sync_suspend failed: %d\n", ret);
 
 	return component_add(&pdev->dev, &dcp_comp_ops);
 }
@@ -598,9 +641,15 @@ static int __maybe_unused dcp_runtime_suspend(struct device *dev)
 	u32 cpu_ctrl;
 	int ret;
 
+	if (!dcp->rtk || !dcp->coproc_reg)
+		return 0;
+
 	dcp_sleep(dcp);
 
-	ret = apple_rtkit_idle(dcp->rtk);
+	if (dcp->shutdown)
+		ret = apple_rtkit_shutdown(dcp->rtk);
+	else
+		ret = apple_rtkit_idle(dcp->rtk);
 	if (ret) {
 		dev_err(dev, "Failed to shut down RTKit: %d", ret);
 		return ret;
@@ -622,12 +671,29 @@ static int __maybe_unused dcp_runtime_resume(struct device *dev)
 	u32 cpu_ctrl;
 	int ret;
 
+	if (!dcp->rtk || !dcp->coproc_reg)
+		return -ENODEV;
+
 	cpu_ctrl =
 		readl_relaxed(dcp->coproc_reg + APPLE_DCP_COPROC_CPU_CONTROL);
 	writel_relaxed(cpu_ctrl | APPLE_DCP_COPROC_CPU_CONTROL_RUN,
 		       dcp->coproc_reg + APPLE_DCP_COPROC_CPU_CONTROL);
 
 	ret = apple_rtkit_wake(dcp->rtk);
+	if (ret == -ETIME) {
+		dev_err(dev, "RTKit wakeup timed out, trying reset. Please do not report bugs");
+		add_taint(TAINT_FIRMWARE_WORKAROUND, LOCKDEP_STILL_OK);
+
+		ret = reset_control_assert(dcp->reset);
+		if (ret)
+			dev_warn(dev, "reset_control_assert failed: %d\n", ret);
+
+		ret = reset_control_deassert(dcp->reset);
+		if (ret)
+			dev_warn(dev, "reset_control_deassert failed: %d\n", ret);
+
+		ret = apple_rtkit_wake(dcp->rtk);
+	}
 	if (ret) {
 		dev_err(dev, "Failed to wake up RTKit: %d", ret);
 		return ret;
@@ -651,9 +717,7 @@ static const struct of_device_id of_match[] = {
 };
 MODULE_DEVICE_TABLE(of, of_match);
 
-static const struct dev_pm_ops dcp_pm_ops = {
-        SET_RUNTIME_PM_OPS(dcp_runtime_suspend, dcp_runtime_resume, NULL)
-};
+DEFINE_RUNTIME_DEV_PM_OPS(dcp_pm_ops, dcp_runtime_suspend, dcp_runtime_resume, NULL);
 
 static struct platform_driver dcp_driver = {
 	.probe		= dcp_platform_probe,

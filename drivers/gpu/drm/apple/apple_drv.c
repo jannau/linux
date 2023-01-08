@@ -406,6 +406,8 @@ static int apple_drm_init_dcp(struct device *dev)
 	int i, ret, num_dcp = 0;
 
 	for_each_matching_node(np, apple_dcp_id_tbl) {
+		struct device_link *link;
+
 		if (!of_device_is_available(np)) {
 			of_node_put(np);
 			continue;
@@ -415,6 +417,13 @@ static int apple_drm_init_dcp(struct device *dev)
 		of_node_put(np);
 		if (!dcp[num_dcp])
 			continue;
+	
+		link = device_link_add(dev, &dcp[num_dcp]->dev,
+			     DL_FLAG_PM_RUNTIME | DL_FLAG_AUTOREMOVE_SUPPLIER);
+
+		if (IS_ERR(link))
+			dev_warn(dev, "dcp[%d] device link failed:%d\n",
+				 num_dcp, PTR_ERR(link));
 
 		ret = apple_probe_per_dcp(dev, &apple->drm, dcp[num_dcp],
 					  num_dcp);

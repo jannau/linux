@@ -8,6 +8,7 @@
 #include <linux/device.h>
 #include <linux/mutex.h>
 #include <linux/platform_device.h>
+#include <linux/reset.h>
 #include <linux/scatterlist.h>
 
 #include "iomfb.h"
@@ -87,6 +88,7 @@ struct apple_dcp {
 	struct apple_rtkit *rtk;
 	struct apple_crtc *crtc;
 	struct apple_connector *connector;
+	struct reset_control *reset;
 
 	/* firmware version and compatible firmware version */
 	enum dcp_firmware_version fw_compat;
@@ -110,6 +112,7 @@ struct apple_dcp {
 
 	/* DCP shared memory */
 	void *shmem;
+	dma_addr_t shmem_iova;
 
 	/* Display registers mappable to the DCP */
 	struct resource *disp_registers[MAX_DISP_REGISTERS];
@@ -145,6 +148,9 @@ struct apple_dcp {
 
 	/* Is the DCP awake? */
 	bool awake;
+
+	/* Is the DCP shutting down? */
+	bool shutdown;
 
 	/* Is the DCP in the process of going to sleep? */
 	bool sleeping;
