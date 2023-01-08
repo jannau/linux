@@ -187,6 +187,7 @@ const struct dcp_method_entry dcp_methods[dcpep_num_methods] = {
 	DCP_METHOD("A443", dcpep_create_default_fb),
 	DCP_METHOD("A447", dcpep_enable_disable_video_power_savings),
 	DCP_METHOD("A454", dcpep_first_client_open),
+	DCP_METHOD("A455", iomfbep_last_client_close),
 	DCP_METHOD("A460", dcpep_set_display_refresh_properties),
 	DCP_METHOD("A463", dcpep_flush_supports_power),
 	DCP_METHOD("A468", dcpep_set_power_state),
@@ -291,6 +292,7 @@ DCP_THUNK_OUT(iomfb_a132_backlight_service_matched, iomfbep_a132_backlight_servi
 DCP_THUNK_OUT(iomfb_a358_vi_set_temperature_hint, iomfbep_a358_vi_set_temperature_hint, u32);
 
 IOMFB_THUNK_INOUT(get_color_remap_mode);
+IOMFB_THUNK_INOUT(last_client_close);
 
 DCP_THUNK_INOUT(dcp_swap_submit, dcpep_swap_submit, struct dcp_swap_submit_req,
 		struct dcp_swap_submit_resp);
@@ -1070,13 +1072,20 @@ static void complete_set_powerstate(struct apple_dcp *dcp, void *out,
 	}
 }
 
+static void last_client_closed_poff(struct apple_dcp *dcp, void *out, void *cookie)
+{
+	struct dcp_set_power_state_req power_req = {
+		.unklong = 0,
+	};
+	dcp_set_power_state(dcp, false, &power_req, complete_set_powerstate,
+			    cookie);
+}
+
 void dcp_poweroff(struct platform_device *pdev)
 {
 	struct apple_dcp *dcp = platform_get_drvdata(pdev);
 	int ret, swap_id;
-	struct dcp_set_power_state_req power_req = {
-		.unklong = 0,
-	};
+	struct iomfb_last_client_close_req last_client_req = {};
 	struct dcp_swap_cookie *cookie;
 	struct dcp_wait_cookie *poff_cookie;
 	struct dcp_swap_start_req swap_req = { 0 };
@@ -1132,8 +1141,8 @@ void dcp_poweroff(struct platform_device *pdev)
 	/* increase refcount to ensure the receiver has a reference */
 	kref_get(&poff_cookie->refcount);
 
-	dcp_set_power_state(dcp, false, &power_req, complete_set_powerstate,
-			    poff_cookie);
+	iomfb_last_client_close(dcp, false, &last_client_req,
+				last_client_closed_poff, poff_cookie);
 	ret = wait_for_completion_timeout(&poff_cookie->done,
 					  msecs_to_jiffies(1000));
 
@@ -1157,10 +1166,25 @@ void dcp_poweroff(struct platform_device *pdev)
 }
 EXPORT_SYMBOL(dcp_poweroff);
 
+static void last_client_closed_sleep(struct apple_dcp *dcp, void *out, void *cookie)
+{
+	if (dcp->shutdown) {
+		struct dcp_set_power_state_req power_req = {
+			.unklong = 0,
+		};
+		dcp_set_power_state(dcp, false, &power_req,
+				    complete_set_powerstate, cookie);
+	} else {
+		u32 arg = 0;
+		dcp_set_dcp_power(dcp, false, &arg, complete_set_powerstate,
+				  cookie);
+	}
+}
+
 void dcp_sleep(struct apple_dcp *dcp)
 {
-	u32 arg = 0;
 	int ret;
+	struct iomfb_last_client_close_req req = {};
 
 	struct dcp_wait_cookie *cookie;
 
@@ -1174,8 +1198,8 @@ void dcp_sleep(struct apple_dcp *dcp)
 
 	dcp->sleeping = true;
 
-	dcp_set_dcp_power(dcp, false, &arg, complete_set_powerstate,
-			  cookie);
+	iomfb_last_client_close(dcp, false, &req, last_client_closed_sleep,
+				cookie);
 	ret = wait_for_completion_timeout(&cookie->done,
 					  msecs_to_jiffies(1000));
 

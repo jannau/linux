@@ -211,6 +211,7 @@ enum dcpep_method {
 	dcpep_flush_supports_power,
 	dcpep_set_power_state,
 	dcpep_first_client_open,
+	iomfbep_last_client_close,
 	dcpep_update_notify_clients_dcp,
 	dcpep_set_parameter_dcp,
 	dcpep_enable_disable_video_power_savings,
@@ -452,6 +453,15 @@ struct iomfb_get_color_remap_mode_req {
 struct iomfb_get_color_remap_mode_resp {
 	u32 mode;
 	u32 ret;
+} __packed;
+
+struct iomfb_last_client_close_req {
+	u8 unkint_null;
+	u8 padding[3];
+} __packed;
+
+struct iomfb_last_client_close_resp {
+	u32 unkint;
 } __packed;
 
 #endif
