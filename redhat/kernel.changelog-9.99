@@ -1,3 +1,8 @@
+* Tue Jan 10 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc3.5a41237ad1d4.24]
+- redhat/configs: Enable CRYPTO_CURVE25519 in ark (Prarit Bhargava)
+- Linux v6.2.0-0.rc3.5a41237ad1d4
+Resolves: 
+
 * Mon Jan 09 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc3.1fe4fd6f5cad.23]
 - Linux v6.2.0-0.rc3.1fe4fd6f5cad
 Resolves: 
