@@ -41,6 +41,7 @@ pub mod str;
 pub mod sync;
 pub mod time;
 pub mod types;
+pub mod xarray;
 
 #[doc(hidden)]
 pub use bindings;
