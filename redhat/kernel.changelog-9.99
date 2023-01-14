@@ -1,3 +1,7 @@
+* Sat Jan 14 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc3.97ec4d559d93.28]
+- Linux v6.2.0-0.rc3.97ec4d559d93
+Resolves: 
+
 * Fri Jan 13 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc3.d9fc1511728c.27]
 - kernel/rh_messages.c: gcc12 warning on redundant NULL test (Eric Chanudet) [2142658]
 - Linux v6.2.0-0.rc3.d9fc1511728c
