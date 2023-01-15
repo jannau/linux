@@ -433,6 +433,8 @@ static int cs42l84_pll_config(struct snd_soc_component *component)
 		break;
 	}
 
+	snd_soc_component_update_bits(component, CS42L84_PLL_CTL1, CS42L84_PLL_CTL1_EN, 0);
+
 	if (pll_ratio_table[i].mclk_src_sel) {
 		/* Configure PLL */
 		snd_soc_component_update_bits(component,
@@ -456,10 +458,6 @@ static int cs42l84_pll_config(struct snd_soc_component *component)
 		snd_soc_component_write(component,
 			CS42L84_PLL_DIVOUT,
 			pll_ratio_table[i].pll_divout);
-
-		snd_soc_component_update_bits(component,
-			CS42L84_PLL_CTL1, CS42L84_PLL_CTL1_EN,
-			CS42L84_PLL_CTL1_EN);
 	}
 
 	return 0;
@@ -632,6 +630,9 @@ static int cs42l84_mute_stream(struct snd_soc_dai *dai, int mute, int stream)
 							       CS42L84_PLL_LOCK_TIMEOUT_US);
 				if (ret < 0)
 					dev_warn(component->dev, "PLL failed to lock: %d\n", ret);
+
+				if (regval & CS42L84_PLL_LOCK_STATUS_ERROR)
+					dev_warn(component->dev, "PLL lock error\n");
 
 				/* PLL must be running to drive glitchless switch logic */
 				snd_soc_component_update_bits(component,
