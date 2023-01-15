@@ -687,12 +687,15 @@ int cs42l42_pll_config(struct snd_soc_component *component, unsigned int clk,
 					(pll_ratio_table[i].mclk_int !=
 					24000000)) <<
 					CS42L42_INTERNAL_FS_SHIFT);
-			if (pll_ratio_table[i].mclk_src_sel == 0) {
-				/* Pass the clock straight through */
-				snd_soc_component_update_bits(component,
-					CS42L42_PLL_CTL1,
-					CS42L42_PLL_START_MASK,	0);
-			} else {
+			/* Ensure the PLL is disconnected and off before reconfiguring */
+			snd_soc_component_update_bits(component,
+				CS42L42_MCLK_SRC_SEL,
+				CS42L42_MCLK_SRC_SEL_MASK, 0);
+			usleep_range(100, 200);
+			snd_soc_component_update_bits(component,
+				CS42L42_PLL_CTL1,
+				CS42L42_PLL_START_MASK, 0);
+			if (pll_ratio_table[i].mclk_src_sel != 0) {
 				/* Configure PLL per table 4-5 */
 				snd_soc_component_update_bits(component,
 					CS42L42_PLL_DIV_CFG1,
