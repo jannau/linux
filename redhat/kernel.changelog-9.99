@@ -1,3 +1,9 @@
+* Tue Jan 17 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc4.6e50979a9c87.31]
+- CI: Do a full build for non-bot runs (Veronika Kabatova)
+- Fix up configs with SND_SOC_NAU8315 mismatch (Justin M. Forbes)
+- Linux v6.2.0-0.rc4.6e50979a9c87
+Resolves: 
+
 * Mon Jan 16 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc4.30]
 - Linux v6.2.0-0.rc4
 Resolves: 
