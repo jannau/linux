@@ -1,3 +1,11 @@
+* Thu Jan 19 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc4.7287904c8771.33]
+- modules-core: use %%posttrans (Gerd Hoffmann)
+- split sub-rpm kernel-modules-core from kernel-core (Gerd Hoffmann)
+- Turn off CONFIG_MTK_T7XX for S390x (Justin M. Forbes)
+- CI: add variable for variant handling (Veronika Kabatova)
+- Linux v6.2.0-0.rc4.7287904c8771
+Resolves: 
+
 * Wed Jan 18 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc4.c1649ec55708.32]
 - Fix up configs with SND_SOC_NAU8315 mismatch (Justin M. Forbes)
 - Linux v6.2.0-0.rc4.c1649ec55708
