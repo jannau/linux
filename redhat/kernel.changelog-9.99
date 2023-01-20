@@ -1,3 +1,7 @@
+* Fri Jan 20 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc4.d368967cb103.34]
+- Linux v6.2.0-0.rc4.d368967cb103
+Resolves: 
+
 * Thu Jan 19 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc4.7287904c8771.33]
 - modules-core: use %%posttrans (Gerd Hoffmann)
 - split sub-rpm kernel-modules-core from kernel-core (Gerd Hoffmann)
