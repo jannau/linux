@@ -1,3 +1,9 @@
+* Sat Jan 21 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc4.f883675bf652.35]
+- fedora: Updates for 6.2 merge (Peter Robinson)
+- fedora: Updates for 6.1 merge (Peter Robinson)
+- Linux v6.2.0-0.rc4.f883675bf652
+Resolves: 
+
 * Fri Jan 20 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc4.d368967cb103.34]
 - Linux v6.2.0-0.rc4.d368967cb103
 Resolves: 
