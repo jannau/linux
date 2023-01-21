@@ -425,6 +425,13 @@
 		clock-output-names = "clk_120m";
 	};
 
+	clk_24m: clock-24m {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <24000000>;
+		clock-output-names = "clk_24m";
+	};
+
 	/* Pixel clock? frequency in Hz (compare: 4K@60 VGA clock 533.250 MHz) */
 	clk_disp0: clock-disp0 {
 		compatible = "fixed-clock";
@@ -755,9 +762,9 @@
 			reg = <0x2 0x3510c000 0x0 0x4000>;
 			interrupt-parent = <&aic>;
 			interrupts = <AIC_IRQ 751 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&clk_120m>;
-			pinctrl-0 = <&spi3_pins>;
-			pinctrl-names = "default";
+			clocks = <&clk_24m>;
+			// pinctrl-0 = <&spi3_pins>;
+			// pinctrl-names = "default";
 			power-domains = <&ps_spi3>;
 			#address-cells = <1>;
 			#size-cells = <0>;

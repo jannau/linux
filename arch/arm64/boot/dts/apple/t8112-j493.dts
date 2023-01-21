@@ -21,6 +21,7 @@
 		bluetooth0 = &bluetooth0;
 		wifi0 = &wifi0;
 		keyboard = &keyboard;
+		touchbar0 = &touchbar0;
 	};
 };
 
@@ -187,6 +188,23 @@
 
 &framebuffer0 {
 	backlight = <&backlight>;
+};
+
+&spi3 {
+	status = "okay";
+
+	touchbar0: touchbar@0 {
+		compatible = "apple,z2-touchscreen";
+		reg = <0>;
+		spi-max-frequency = <11500000>;
+		reset-gpios = <&pinctrl_ap 170 0>;
+		cs-gpios = <&pinctrl_ap 96 0>;
+		interrupts-extended = <&pinctrl_ap 174 IRQ_TYPE_EDGE_FALLING>;
+		firmware-name = "apple/dfrmtfw-j493.bin";
+		touchscreen-size-x = <23045>;
+		touchscreen-size-y = <640>;
+		apple,z2-device-name = "Mac14,7 Touch Bar";
+       };
 };
 
 &mtp {
