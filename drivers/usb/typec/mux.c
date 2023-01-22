@@ -419,6 +419,7 @@ int typec_mux_set(struct typec_mux *mux, struct typec_mux_state *state)
 
 	for (i = 0; i < mux->num_mux_devs; i++) {
 		mux_dev = mux->mux_devs[i];
+		dev_warn(&mux_dev->dev, "%s: 0x%02x\n", __func__, state->mode);
 
 		ret = mux_dev->set(mux_dev, state);
 		if (ret)
