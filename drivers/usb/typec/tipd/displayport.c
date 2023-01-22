@@ -40,10 +40,13 @@ static int tps6598x_displayport_register_partner(struct tps6598x *tps, u32 vdo)
 void tps6598x_displayport_update_dp_sid(struct tps6598x *tps)
 {
 	struct tps6598x_dp_sid_status status;
+	u32 dp;
 	int ret;
 
-	if (!tps->dp_port)
+	if (!tps->dp_port) {
+		dev_err(tps->dev, "%s: no dp_port\n", __func__);
 		return;
+	}
 
 	ret = tps6598x_block_read(tps, TPS_REG_DP_SID_STATUS, &status,
 				  sizeof(status));
@@ -62,6 +65,7 @@ void tps6598x_displayport_update_dp_sid(struct tps6598x *tps)
 	 * control anyway.
 	 */
 	if (!(status.status & TPS_DP_SID_ACTIVE)) {
+		dev_err(tps->dev, "%s: TPS_DP_SID_ACTIVE not set\n", __func__);
 		tps6598x_displayport_unregister_partner(tps);
 		return;
 	}
@@ -75,6 +79,11 @@ void tps6598x_displayport_update_dp_sid(struct tps6598x *tps)
 			return;
 		}
 	}
+	dp = le32_to_cpu(status.dp_status_rx);
+	dev_err(tps->dev, "%s: dp_status_rx: %s %s %s (0x%02x)\n", __func__,
+		dp & DP_STATUS_SWITCH_TO_USB ? "SW_USB" : "",
+		dp & DP_STATUS_EXIT_DP_MODE ? "EXIT_DP" : "",
+		dp & DP_STATUS_HPD_STATE ? "HPD" : "", dp);
 
 	if (!tps->dp_configured)
 		return;
@@ -85,6 +94,12 @@ static int tps6598x_displayport_enter(struct typec_altmode *alt, u32 *vdo)
 {
 	struct tps6598x *tps = typec_altmode_get_drvdata(alt);
 	int svdm_version, ret = 0;
+
+	{
+		const struct typec_altmode *partner =
+			typec_altmode_get_partner(alt);
+		dev_warn(&partner->dev, "%s:\n", __func__);
+	}
 
 	mutex_lock(&tps->dp_lock);
 	if (tps->dp_configured) {
@@ -136,6 +151,8 @@ static int tps6598x_displayport_vdm(struct typec_altmode *alt, u32 header,
 	int cmd = PD_VDO_CMD(header);
 	int svdm_version;
 	int ret = 0;
+
+	dev_warn(&partner->dev, "%s: cmd: %d\n", __func__, cmd);
 
 	mutex_lock(&tps->dp_lock);
 
@@ -190,6 +207,7 @@ static int tps6598x_displayport_vdm(struct typec_altmode *alt, u32 header,
 		tps->dp_vdo_header |= VDO_CMDT(CMDT_RSP_NAK);
 		break;
 	}
+	dev_warn(&partner->dev, "%s: done\n", __func__);
 
 	schedule_work(&tps->dp_work);
 

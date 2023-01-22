@@ -154,6 +154,8 @@ static int dp_altmode_status_update(struct dp_altmode *dp)
 	u8 con = DP_STATUS_CONNECTION(dp->data.status);
 	int ret = 0;
 
+	printk(KERN_ERR "%s: status: %02x\n", __func__, dp->data.status);
+
 	if (configured && (dp->data.status & DP_STATUS_SWITCH_TO_USB)) {
 		dp->data.conf = 0;
 		dp->data_prime.conf = 0;
@@ -352,6 +354,8 @@ static int dp_altmode_vdm(struct typec_altmode *alt,
 	int cmd_type = PD_VDO_CMDT(hdr);
 	int cmd = PD_VDO_CMD(hdr);
 	int ret = 0;
+
+	dev_err(&alt->dev, "%s: cmd: 0x0%x\n", __func__, cmd);
 
 	mutex_lock(&dp->lock);
 
