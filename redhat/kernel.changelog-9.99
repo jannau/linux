@@ -1,3 +1,8 @@
+* Sun Jan 22 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc5.36]
+- Update module filters for nvmem_u-boot-env (Justin M. Forbes)
+- Linux v6.2.0-0.rc5
+Resolves: 
+
 * Sat Jan 21 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc4.f883675bf652.35]
 - fedora: Updates for 6.2 merge (Peter Robinson)
 - fedora: Updates for 6.1 merge (Peter Robinson)
