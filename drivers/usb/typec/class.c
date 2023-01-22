@@ -294,6 +294,8 @@ void typec_altmode_update_active(struct typec_altmode *adev, bool active)
 	if (adev->active == active)
 		return;
 
+	dev_warn(&adev->dev, "%s\n", __func__);
+
 	if (!is_typec_port(adev->dev.parent) && adev->dev.driver) {
 		if (!active)
 			module_put(adev->dev.driver->owner);

@@ -40,7 +40,10 @@ static int tps6598x_displayport_register_partner(struct tps6598x *tps, u32 vdo)
 void tps6598x_displayport_update_dp_sid(struct tps6598x *tps)
 {
 	struct tps6598x_dp_sid_status status;
+	u32 dp;
 	int ret;
+
+	dev_err(tps->dev, "%s\n", __func__);
 
 	if (!tps->dp_port)
 		return;
@@ -75,6 +78,11 @@ void tps6598x_displayport_update_dp_sid(struct tps6598x *tps)
 			return;
 		}
 	}
+	dp = le32_to_cpu(status.dp_status_rx);
+	dev_err(tps->dev, "%s: dp_status_rx: %s %s %s (0x%02x)\n", __func__,
+		dp & DP_STATUS_SWITCH_TO_USB ? "SW_USB" : "",
+		dp & DP_STATUS_EXIT_DP_MODE ? "EXIT_DP" : "",
+		dp & DP_STATUS_HPD_STATE ? "HPD" : "", dp);
 
 	if (!tps->dp_configured)
 		return;
@@ -86,6 +94,12 @@ static int tps6598x_displayport_enter(struct typec_altmode *alt, u32 *vdo)
 	struct tps6598x *tps = typec_altmode_get_drvdata(alt);
 	int svdm_version, ret = 0;
 
+	{
+		const struct typec_altmode *partner =
+			typec_altmode_get_partner(alt);
+		dev_warn(&partner->dev, "%s:\n", __func__);
+	}
+
 	mutex_lock(&tps->dp_lock);
 	if (tps->dp_configured) {
 		const struct typec_altmode *p = typec_altmode_get_partner(alt);
@@ -96,14 +110,6 @@ static int tps6598x_displayport_enter(struct typec_altmode *alt, u32 *vdo)
 		ret = -EOPNOTSUPP;
 		goto out_unlock;
 	}
-
-	/*
-	 * On Apple Silicon platforms we have to switch to USB_ROLE_NONE before
-	 * setting up the alternate mode to shut down dwc3 and prevent it from
-	 * locking up.
-	 */
-	if (tps->cd321x)
-		usb_role_switch_set_role(tps->role_sw, USB_ROLE_NONE);
 
 	svdm_version = typec_altmode_get_svdm_version(tps->dp_port);
 	if (svdm_version < 0) {
@@ -137,15 +143,17 @@ static int tps6598x_displayport_vdm(struct typec_altmode *alt, u32 header,
 	int svdm_version;
 	int ret = 0;
 
+	dev_warn(&partner->dev, "%s: cmd: %d\n", __func__, cmd);
+
 	mutex_lock(&tps->dp_lock);
 
-	if (tps->dp_configured) {
-		dev_warn(
-			&partner->dev,
-			"Firmware doesn't support alternate mode overriding\n");
-		ret = -EOPNOTSUPP;
-		goto out_unlock;
-	}
+	// if (tps->dp_configured) {
+	// 	dev_warn(
+	// 		&partner->dev,
+	// 		"Firmware doesn't support alternate mode overriding\n");
+	// 	ret = -EOPNOTSUPP;
+	// 	goto out_unlock;
+	// }
 
 	svdm_version = typec_altmode_get_svdm_version(alt);
 	if (svdm_version < 0) {
@@ -182,14 +190,15 @@ static int tps6598x_displayport_vdm(struct typec_altmode *alt, u32 header,
 		 * before setting up the alternate mode and have to bring dwc3
 		 * back up here.
 		 */
-		if (tps->cd321x)
-			usb_role_switch_set_role(tps->role_sw, USB_ROLE_HOST);
+		// if (tps->cd321x)
+		// 	usb_role_switch_set_role(tps->role_sw, USB_ROLE_HOST);
 		break;
 	default:
 		dev_warn(&partner->dev, "Unexpected VDM cmd: 0x%08x\n", cmd);
 		tps->dp_vdo_header |= VDO_CMDT(CMDT_RSP_NAK);
 		break;
 	}
+	dev_warn(&partner->dev, "%s: done\n", __func__);
 
 	schedule_work(&tps->dp_work);
 
@@ -198,9 +207,30 @@ out_unlock:
 	return ret;
 }
 
+int tps6598x_displayport_notify(struct typec_altmode *alt, unsigned long conf,
+				void *data)
+{
+	const struct typec_altmode *partner = typec_altmode_get_partner(alt);
+	struct tps6598x *tps = typec_altmode_get_drvdata(alt);
+
+	if (!tps->cd321x)
+		return 0;
+
+	/*
+	 * On Apple Silicon platforms we have to switch to USB_ROLE_NONE before
+	 * setting up the alternate mode to shut down dwc3 and prevent it from
+	 * locking up.
+	 */
+	usb_role_switch_set_role(tps->role_sw, USB_ROLE_NONE);
+	usb_role_switch_set_role(tps->role_sw, USB_ROLE_HOST);
+
+	return 0;
+}
+
 static const struct typec_altmode_ops tps6598x_displayport_ops = {
 	.enter = tps6598x_displayport_enter,
 	.vdm = tps6598x_displayport_vdm,
+	.notify = tps6598x_displayport_notify,
 };
 
 static void tps6598x_displayport_work(struct work_struct *work)
