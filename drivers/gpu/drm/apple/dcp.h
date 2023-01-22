@@ -78,4 +78,6 @@ void dcp_sleep(struct apple_dcp *dcp);
 
 int systemep_init(struct apple_dcp *dcp);
 int dptxep_init(struct apple_dcp *dcp);
+int dptxep_sleep(struct apple_dcp *dcp);
+int dptxep_wake(struct apple_dcp *dcp);
 #endif

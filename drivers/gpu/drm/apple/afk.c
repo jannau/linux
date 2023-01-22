@@ -97,6 +97,19 @@ int afk_start(struct apple_dcp_afkep *ep)
 		return 0;
 }
 
+int afk_stop(struct apple_dcp_afkep *ep)
+{
+	int ret;
+
+	afk_send(ep, FIELD_PREP(RBEP_TYPE, RBEP_SHUTDOWN));
+
+	ret = wait_for_completion_timeout(&ep->stopped, msecs_to_jiffies(1000));
+	if (ret <= 0)
+		return -ETIMEDOUT;
+	else
+		return 0;
+}
+
 static void afk_getbuf(struct apple_dcp_afkep *ep, u64 message)
 {
 	u16 size = FIELD_GET(GETBUF_SIZE, message) << BLOCK_SHIFT;

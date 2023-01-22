@@ -422,3 +422,26 @@ int dptxep_init(struct apple_dcp *dcp)
 
 	return 0;
 }
+
+int dptxep_wake(struct apple_dcp *dcp)
+{
+	int ret;
+
+	reinit_completion(&dcp->dptxport[0].enable_completion);
+	reinit_completion(&dcp->dptxport[1].enable_completion);
+
+	ret = afk_start(dcp->dptxep);
+	if (ret)
+		return ret;
+
+	// TOOD: timeout
+	wait_for_completion(&dcp->dptxport[0].enable_completion);
+	wait_for_completion(&dcp->dptxport[1].enable_completion);
+
+	return 0;
+}
+
+int dptxep_sleep(struct apple_dcp *dcp)
+{
+	return afk_stop(dcp->dptxep);
+}
