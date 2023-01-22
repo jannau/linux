@@ -665,6 +665,7 @@
 		label = "dispext_cpu0";
 		power-domains = <&ps_dispext_fe>;
 		apple,min-state = <4>;
+		apple,always-on;
 	};
 
 	ps_jpg: power-controller@3c0 {
