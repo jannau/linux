@@ -1,3 +1,8 @@
+* Wed Jan 25 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc5.948ef7bb70c4.39]
+- gitlab-ci: use CI templates from production branch (Michael Hofmann)
+- Linux v6.2.0-0.rc5.948ef7bb70c4
+Resolves: 
+
 * Tue Jan 24 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc5.7bf70dbb1882.38]
 - redhat/kernel.spec.template: Fix internal "File listed twice" errors (Prarit Bhargava)
 - redhat: Remove stale .tmp_versions code and comments (Prarit Bhargava)
