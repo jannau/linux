@@ -65,9 +65,11 @@ endif
 
 ifeq ($(CONFIG_ARM64_BTI_KERNEL),y)
   KBUILD_CFLAGS += -mbranch-protection=pac-ret+bti
+  KBUILD_RUSTFLAGS += -Z branch-protection=bti,pac-ret,leaf
 else ifeq ($(CONFIG_ARM64_PTR_AUTH_KERNEL),y)
   ifeq ($(CONFIG_CC_HAS_BRANCH_PROT_PAC_RET),y)
     KBUILD_CFLAGS += -mbranch-protection=pac-ret
+    KBUILD_RUSTFLAGS += -Z branch-protection=pac-ret,leaf
   else
     KBUILD_CFLAGS += -msign-return-address=non-leaf
   endif
