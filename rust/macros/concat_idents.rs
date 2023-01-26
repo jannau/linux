@@ -15,7 +15,7 @@ fn expect_ident(it: &mut token_stream::IntoIter) -> Ident {
 pub(crate) fn concat_idents(ts: TokenStream) -> TokenStream {
     let mut it = ts.into_iter();
     let a = expect_ident(&mut it);
-    assert_eq!(expect_punct(&mut it), ',');
+    assert_eq!(expect_punct(&mut it).as_char(), ',');
     let b = expect_ident(&mut it);
     assert!(it.next().is_none(), "only two idents can be concatenated");
     let res = Ident::new(&format!("{a}{b}"), b.span());

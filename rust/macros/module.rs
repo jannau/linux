@@ -104,7 +104,7 @@ impl ModuleInfo {
                 );
             }
 
-            assert_eq!(expect_punct(it), ':');
+            assert_eq!(expect_punct(it).as_char(), ':');
 
             match key.as_str() {
                 "type" => info.type_ = expect_ident(it),
@@ -119,7 +119,7 @@ impl ModuleInfo {
                 ),
             }
 
-            assert_eq!(expect_punct(it), ',');
+            assert_eq!(expect_punct(it).as_char(), ',');
 
             seen_keys.push(key);
         }
