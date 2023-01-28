@@ -1,3 +1,15 @@
+* Sat Jan 28 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc5.5af6ce704936.41]
+- redhat/configs: Turn on CONFIG_SPI_TEGRA210_QUAD for RHEL (Mark Salter)
+- ark: aarch64: drop CONFIG_SMC911X (Peter Robinson)
+- all: cleanup and de-dupe CDROM_PKTCDVD options. (Peter Robinson)
+- all: remove CRYPTO_GF128MUL (Peter Robinson)
+- all: cleanup UEFI options (Peter Robinson)
+- common: arm64: Enable Ampere Altra SMpro Hardware Monitoring (Peter Robinson)
+- fedora: enable STACKPROTECTOR_STRONG (Peter Robinson)
+- fedora: enable STACKPROTECTOR on arm platforms (Peter Robinson)
+- Linux v6.2.0-0.rc5.5af6ce704936
+Resolves: 
+
 * Thu Jan 26 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc5.7c46948a6e9c.40]
 - redhat/self-test: Update data with ENABLE_WERROR (Prarit Bhargava)
 - redhat/Makefile.variables: Add ENABLE_WERROR (Prarit Bhargava)
