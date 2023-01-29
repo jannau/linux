@@ -1,3 +1,7 @@
+* Sun Jan 29 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc5.c96618275234.42]
+- Linux v6.2.0-0.rc5.c96618275234
+Resolves: 
+
 * Sat Jan 28 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc5.5af6ce704936.41]
 - redhat/configs: Turn on CONFIG_SPI_TEGRA210_QUAD for RHEL (Mark Salter)
 - ark: aarch64: drop CONFIG_SMC911X (Peter Robinson)
