@@ -1,3 +1,9 @@
+* Wed Feb 01 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc6.c0b67534c95c.45]
+- Update rebase notes for Fedora (Justin M. Forbes)
+- Update CONFIG_LOCKDEP_CHAINS_BITS to 19 (cmurf)
+- Linux v6.2.0-0.rc6.c0b67534c95c
+Resolves: 
+
 * Tue Jan 31 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc6.22b8077d0fce.44]
 - Linux v6.2.0-0.rc6.22b8077d0fce
 Resolves: 
