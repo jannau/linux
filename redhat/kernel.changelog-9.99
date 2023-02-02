@@ -1,3 +1,20 @@
+* Thu Feb 02 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc6.9f266ccaa2f5.46]
+- redhat/configs: Enable CONFIG_SENSORS_LM90 for RHEL (Mark Salter)
+- Fix up SQUASHFS decompression configs (Justin M. Forbes)
+- redhat/configs: enable CONFIG_OCTEON_EP as a module in ARK (Michal Schmidt) [2041990]
+- redhat: ignore rpminspect runpath report on urandom_read selftest binaries (Herton R. Krzesinski)
+- kernel.spec: add llvm-devel build requirement (Scott Weaver)
+- Update self-test data to not expect debugbuildsenabled 0 (Justin M. Forbes)
+- Turn off forced debug builds (Justin M. Forbes)
+- Turn on debug builds for aarch64 Fedora (Justin M. Forbes)
+- redhat/configs:  modify merge.py to match old overrides input (Clark Williams)
+- redhat:  fixup pylint complaints (Clark Williams)
+- redhat: remove merge.pl and references to it (Clark Williams)
+- redhat: update merge.py to handle merge.pl corner cases (Clark Williams)
+- Revert "redhat: fix elf got hardening for vm tools" (Don Zickus)
+- Linux v6.2.0-0.rc6.9f266ccaa2f5
+Resolves: rhbz#2041990
+
 * Wed Feb 01 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc6.c0b67534c95c.45]
 - Update rebase notes for Fedora (Justin M. Forbes)
 - Update CONFIG_LOCKDEP_CHAINS_BITS to 19 (cmurf)
