@@ -20,6 +20,7 @@
  * Sorted alphabetically.
  */
 
+#include <drm/drm_gem.h>
 #include <kunit/test-bug.h>
 #include <linux/bug.h>
 #include <linux/build_bug.h>
@@ -490,6 +491,28 @@ void rust_helper_dma_resv_unlock(struct dma_resv *obj)
 	dma_resv_unlock(obj);
 }
 EXPORT_SYMBOL_GPL(rust_helper_dma_resv_unlock);
+
+#endif
+
+#ifdef CONFIG_DRM
+
+void rust_helper_drm_gem_object_get(struct drm_gem_object *obj)
+{
+	drm_gem_object_get(obj);
+}
+EXPORT_SYMBOL_GPL(rust_helper_drm_gem_object_get);
+
+void rust_helper_drm_gem_object_put(struct drm_gem_object *obj)
+{
+	drm_gem_object_put(obj);
+}
+EXPORT_SYMBOL_GPL(rust_helper_drm_gem_object_put);
+
+__u64 rust_helper_drm_vma_node_offset_addr(struct drm_vma_offset_node *node)
+{
+	return drm_vma_node_offset_addr(node);
+}
+EXPORT_SYMBOL_GPL(rust_helper_drm_vma_node_offset_addr);
 
 #endif
 
