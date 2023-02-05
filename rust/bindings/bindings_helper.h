@@ -10,12 +10,14 @@
 #include <drm/drm_drv.h>
 #include <drm/drm_file.h>
 #include <drm/drm_gem.h>
+#include <drm/drm_gem_shmem_helper.h>
 #include <drm/drm_ioctl.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/dma-mapping.h>
 #include <linux/fs.h>
 #include <linux/io-pgtable.h>
+#include <linux/iosys-map.h>
 #include <linux/ktime.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
