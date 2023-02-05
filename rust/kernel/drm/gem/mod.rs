@@ -3,6 +3,9 @@
 //! DRM GEM API
 //!
 //! C header: [`include/linux/drm/drm_gem.h`](srctree/include/linux/drm/drm_gem.h)
+#[cfg(CONFIG_DRM_GEM_SHMEM_HELPER = "y")]
+pub mod shmem;
+
 
 use crate::{
     alloc::flags::*,
@@ -197,8 +200,6 @@ impl<T: IntoGEMObject> BaseObject for T {}
 #[pin_data]
 pub struct Object<T: DriverObject> {
     obj: bindings::drm_gem_object,
-    // The DRM core ensures the Device exists as long as its objects exist, so we don't need to
-    // manage the reference count here.
     dev: *const bindings::drm_device,
     #[pin]
     inner: T,

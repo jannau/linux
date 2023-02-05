@@ -29,6 +29,7 @@
 #include "rbtree.c"
 #include "rcu.c"
 #include "refcount.c"
+#include "scatterlist.c"
 #include "signal.c"
 #include "siphash.c"
 #include "slab.c"
