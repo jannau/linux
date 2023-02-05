@@ -6,6 +6,7 @@
  * Sorted alphabetically.
  */
 
+#include <drm/drm_ioctl.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/dma-mapping.h>
@@ -23,6 +24,7 @@
 #include <linux/timekeeping.h>
 #include <linux/xarray.h>
 #include <uapi/asm-generic/ioctl.h>
+#include <uapi/drm/drm.h>
 
 /* `bindgen` gets confused at certain things. */
 const gfp_t BINDINGS_GFP_KERNEL = GFP_KERNEL;

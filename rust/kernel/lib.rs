@@ -37,6 +37,8 @@ mod build_assert;
 pub mod delay;
 pub mod device;
 pub mod driver;
+#[cfg(CONFIG_DRM = "y")]
+pub mod drm;
 pub mod error;
 pub mod io_buffer;
 pub mod io_mem;
