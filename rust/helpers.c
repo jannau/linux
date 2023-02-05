@@ -21,6 +21,7 @@
  */
 
 #include <drm/drm_gem.h>
+#include <drm/drm_gem_shmem_helper.h>
 #include <kunit/test-bug.h>
 #include <linux/bug.h>
 #include <linux/build_bug.h>
@@ -494,6 +495,18 @@ EXPORT_SYMBOL_GPL(rust_helper_dma_resv_unlock);
 
 #endif
 
+dma_addr_t rust_helper_sg_dma_address(const struct scatterlist *sg)
+{
+	return sg_dma_address(sg);
+}
+EXPORT_SYMBOL_GPL(rust_helper_sg_dma_address);
+
+int rust_helper_sg_dma_len(const struct scatterlist *sg)
+{
+	return sg_dma_len(sg);
+}
+EXPORT_SYMBOL_GPL(rust_helper_sg_dma_len);
+
 #ifdef CONFIG_DRM
 
 void rust_helper_drm_gem_object_get(struct drm_gem_object *obj)
@@ -514,6 +527,60 @@ __u64 rust_helper_drm_vma_node_offset_addr(struct drm_vma_offset_node *node)
 }
 EXPORT_SYMBOL_GPL(rust_helper_drm_vma_node_offset_addr);
 
+#ifdef CONFIG_DRM_GEM_SHMEM_HELPER
+
+void rust_helper_drm_gem_shmem_object_free(struct drm_gem_object *obj)
+{
+	return drm_gem_shmem_object_free(obj);
+}
+EXPORT_SYMBOL_GPL(rust_helper_drm_gem_shmem_object_free);
+
+void rust_helper_drm_gem_shmem_object_print_info(struct drm_printer *p, unsigned int indent,
+						   const struct drm_gem_object *obj)
+{
+	drm_gem_shmem_object_print_info(p, indent, obj);
+}
+EXPORT_SYMBOL_GPL(rust_helper_drm_gem_shmem_object_print_info);
+
+int rust_helper_drm_gem_shmem_object_pin(struct drm_gem_object *obj)
+{
+	return drm_gem_shmem_object_pin(obj);
+}
+EXPORT_SYMBOL_GPL(rust_helper_drm_gem_shmem_object_pin);
+
+void rust_helper_drm_gem_shmem_object_unpin(struct drm_gem_object *obj)
+{
+	drm_gem_shmem_object_unpin(obj);
+}
+EXPORT_SYMBOL_GPL(rust_helper_drm_gem_shmem_object_unpin);
+
+struct sg_table *rust_helper_drm_gem_shmem_object_get_sg_table(struct drm_gem_object *obj)
+{
+	return drm_gem_shmem_object_get_sg_table(obj);
+}
+EXPORT_SYMBOL_GPL(rust_helper_drm_gem_shmem_object_get_sg_table);
+
+int rust_helper_drm_gem_shmem_object_vmap(struct drm_gem_object *obj,
+					    struct iosys_map *map)
+{
+	return drm_gem_shmem_object_vmap(obj, map);
+}
+EXPORT_SYMBOL_GPL(rust_helper_drm_gem_shmem_object_vmap);
+
+void rust_helper_drm_gem_shmem_object_vunmap(struct drm_gem_object *obj,
+					       struct iosys_map *map)
+{
+	drm_gem_shmem_object_vunmap(obj, map);
+}
+EXPORT_SYMBOL_GPL(rust_helper_drm_gem_shmem_object_vunmap);
+
+int rust_helper_drm_gem_shmem_object_mmap(struct drm_gem_object *obj, struct vm_area_struct *vma)
+{
+	return drm_gem_shmem_object_mmap(obj, vma);
+}
+EXPORT_SYMBOL_GPL(rust_helper_drm_gem_shmem_object_mmap);
+
+#endif
 #endif
 
 /*
