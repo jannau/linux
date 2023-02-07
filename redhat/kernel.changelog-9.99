@@ -1,3 +1,9 @@
+* Tue Feb 07 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc7.05ecb680708a.51]
+- redhat/configs: Enable CONFIG_PCIE_PTM generically (Corinna Vinschen)
+- redhat: Add sub-RPM with a EFI unified kernel image for virtual machines (Vitaly Kuznetsov)
+- Linux v6.2.0-0.rc7.05ecb680708a
+Resolves: 
+
 * Mon Feb 06 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc7.d2d11f342b17.50]
 - redhat/Makefile: Remove GIT deprecated message (Prarit Bhargava)
 - Revert "redhat: configs: Disable xtables and ipset" (Phil Sutter)
