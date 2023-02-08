@@ -1,3 +1,9 @@
+* Wed Feb 08 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc7.0983f6bf2bfc.52]
+- redhat/configs: enable CONFIG_INET_DIAG_DESTROY (Andrea Claudi)
+- Enable TDX Guest driver (Vitaly Kuznetsov)
+- Linux v6.2.0-0.rc7.0983f6bf2bfc
+Resolves: 
+
 * Tue Feb 07 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc7.05ecb680708a.51]
 - redhat/configs: Enable CONFIG_PCIE_PTM generically (Corinna Vinschen)
 - redhat: Add sub-RPM with a EFI unified kernel image for virtual machines (Vitaly Kuznetsov)
