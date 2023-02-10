@@ -1,3 +1,8 @@
+* Fri Feb 10 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc7.38c1e0c65865.53]
+- redhat: Repair ELN build broken by the recent UKI changes (Vitaly Kuznetsov)
+- Linux v6.2.0-0.rc7.38c1e0c65865
+Resolves: 
+
 * Wed Feb 08 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc7.0983f6bf2bfc.52]
 - redhat/configs: enable CONFIG_INET_DIAG_DESTROY (Andrea Claudi)
 - Enable TDX Guest driver (Vitaly Kuznetsov)
