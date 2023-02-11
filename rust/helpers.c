@@ -22,6 +22,7 @@
 
 #include <drm/drm_gem.h>
 #include <drm/drm_gem_shmem_helper.h>
+#include <drm/drm_syncobj.h>
 #include <kunit/test-bug.h>
 #include <linux/bug.h>
 #include <linux/build_bug.h>
@@ -526,6 +527,24 @@ __u64 rust_helper_drm_vma_node_offset_addr(struct drm_vma_offset_node *node)
 	return drm_vma_node_offset_addr(node);
 }
 EXPORT_SYMBOL_GPL(rust_helper_drm_vma_node_offset_addr);
+
+void rust_helper_drm_syncobj_get(struct drm_syncobj *obj)
+{
+	drm_syncobj_get(obj);
+}
+EXPORT_SYMBOL_GPL(rust_helper_drm_syncobj_get);
+
+void rust_helper_drm_syncobj_put(struct drm_syncobj *obj)
+{
+	drm_syncobj_put(obj);
+}
+EXPORT_SYMBOL_GPL(rust_helper_drm_syncobj_put);
+
+struct dma_fence *rust_helper_drm_syncobj_fence_get(struct drm_syncobj *syncobj)
+{
+	return drm_syncobj_fence_get(syncobj);
+}
+EXPORT_SYMBOL_GPL(rust_helper_drm_syncobj_fence_get);
 
 #ifdef CONFIG_DRM_GEM_SHMEM_HELPER
 
