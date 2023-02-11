@@ -248,6 +248,10 @@ impl<T: DriverObject> gem::IntoGEMObject for Object<T> {
         &self.obj.base
     }
 
+    fn mut_gem_obj(&mut self) -> &mut bindings::drm_gem_object {
+        &mut self.obj.base
+    }
+
     fn from_gem_obj(obj: *mut bindings::drm_gem_object) -> *mut Object<T> {
         let shmem = crate::container_of!(obj, bindings::drm_gem_shmem_object, base)
             as *mut bindings::drm_gem_shmem_object;
