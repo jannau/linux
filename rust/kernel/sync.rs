@@ -7,12 +7,14 @@
 
 mod arc;
 mod guard;
+mod revocable;
 
 use crate::{bindings, str::CStr};
 use core::{cell::UnsafeCell, mem::MaybeUninit, pin::Pin};
 
 pub use arc::{Arc, ArcBorrow, UniqueArc};
 pub use guard::{Guard, Lock, LockFactory, LockInfo, LockIniter, ReadLock, WriteLock};
+pub use revocable::{Revocable, RevocableGuard};
 
 /// Represents a lockdep class. It's a wrapper around C's `lock_class_key`.
 #[repr(transparent)]
