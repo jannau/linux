@@ -23,6 +23,8 @@
 #include <linux/bug.h>
 #include <linux/build_bug.h>
 #include <linux/device.h>
+#include <linux/dma-fence.h>
+#include <linux/dma-fence-chain.h>
 #include <linux/dma-mapping.h>
 #include <linux/err.h>
 #include <linux/errname.h>
@@ -370,6 +372,51 @@ int rust_helper_sg_dma_len(const struct scatterlist *sg)
 	return sg_dma_len(sg);
 }
 EXPORT_SYMBOL_GPL(rust_helper_sg_dma_len);
+
+void rust_helper___spin_lock_init(spinlock_t *lock, const char *name,
+				  struct lock_class_key *key)
+{
+#ifdef CONFIG_DEBUG_SPINLOCK
+	__spin_lock_init(lock, name, key);
+#else
+	spin_lock_init(lock);
+#endif
+}
+EXPORT_SYMBOL_GPL(rust_helper___spin_lock_init);
+
+#ifdef CONFIG_DMA_SHARED_BUFFER
+
+void rust_helper_dma_fence_get(struct dma_fence *fence)
+{
+	dma_fence_get(fence);
+}
+EXPORT_SYMBOL_GPL(rust_helper_dma_fence_get);
+
+void rust_helper_dma_fence_put(struct dma_fence *fence)
+{
+	dma_fence_put(fence);
+}
+EXPORT_SYMBOL_GPL(rust_helper_dma_fence_put);
+
+struct dma_fence_chain *rust_helper_dma_fence_chain_alloc(void)
+{
+	return dma_fence_chain_alloc();
+}
+EXPORT_SYMBOL_GPL(rust_helper_dma_fence_chain_alloc);
+
+void rust_helper_dma_fence_chain_free(struct dma_fence_chain *chain)
+{
+	dma_fence_chain_free(chain);
+}
+EXPORT_SYMBOL_GPL(rust_helper_dma_fence_chain_free);
+
+void rust_helper_dma_fence_set_error(struct dma_fence *fence, int error)
+{
+	dma_fence_set_error(fence, error);
+}
+EXPORT_SYMBOL_GPL(rust_helper_dma_fence_set_error);
+
+#endif
 
 #ifdef CONFIG_DRM
 
