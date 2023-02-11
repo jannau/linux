@@ -43,6 +43,8 @@ mod allocator;
 mod build_assert;
 pub mod delay;
 pub mod device;
+#[cfg(CONFIG_DMA_SHARED_BUFFER)]
+pub mod dma_fence;
 pub mod driver;
 pub mod error;
 pub mod init;
