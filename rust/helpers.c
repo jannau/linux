@@ -450,6 +450,12 @@ resource_size_t rust_helper_resource_size(const struct resource *res)
 }
 EXPORT_SYMBOL_GPL(rust_helper_resource_size);
 
+unsigned long rust_helper_msecs_to_jiffies(const unsigned int m)
+{
+	return msecs_to_jiffies(m);
+}
+EXPORT_SYMBOL_GPL(rust_helper_msecs_to_jiffies);
+
 #ifdef CONFIG_DMA_SHARED_BUFFER
 
 void rust_helper_dma_fence_get(struct dma_fence *fence)
