@@ -9,6 +9,7 @@
 #include <linux/device.h>
 #include <linux/io-pgtable.h>
 #include <linux/ktime.h>
+#include <linux/poll.h>
 #include <linux/refcount.h>
 #include <linux/slab.h>
 #include <linux/soc/apple/rtkit.h>
@@ -36,3 +37,8 @@ const xa_mark_t BINDINGS_XA_MARK_2 = XA_MARK_2;
 const xa_mark_t BINDINGS_XA_PRESENT = XA_PRESENT;
 const xa_mark_t BINDINGS_XA_MARK_MAX = XA_MARK_MAX;
 const xa_mark_t BINDINGS_XA_FREE_MARK = XA_FREE_MARK;
+
+const __poll_t BINDINGS_EPOLLIN = EPOLLIN;
+const __poll_t BINDINGS_EPOLLOUT = EPOLLOUT;
+const __poll_t BINDINGS_EPOLLERR = EPOLLERR;
+const __poll_t BINDINGS_EPOLLHUP = EPOLLHUP;
