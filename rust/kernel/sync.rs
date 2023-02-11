@@ -6,6 +6,7 @@
 //! wrapped for usage by Rust code in the kernel.
 
 mod arc;
+mod guard;
 
 use crate::{bindings, str::CStr};
 use core::{cell::UnsafeCell, mem::MaybeUninit, pin::Pin};
