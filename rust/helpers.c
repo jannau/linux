@@ -385,6 +385,12 @@ void rust_helper___spin_lock_init(spinlock_t *lock, const char *name,
 }
 EXPORT_SYMBOL_GPL(rust_helper___spin_lock_init);
 
+unsigned long rust_helper_msecs_to_jiffies(const unsigned int m)
+{
+	return msecs_to_jiffies(m);
+}
+EXPORT_SYMBOL_GPL(rust_helper_msecs_to_jiffies);
+
 #ifdef CONFIG_DMA_SHARED_BUFFER
 
 void rust_helper_dma_fence_get(struct dma_fence *fence)
