@@ -234,6 +234,10 @@ impl<T: DriverObject> gem::IntoGEMObject for Object<T> {
         &self.obj.base
     }
 
+    fn mut_gem_obj(&mut self) -> &mut bindings::drm_gem_object {
+        &mut self.obj.base
+    }
+
     fn from_gem_obj(obj: *mut bindings::drm_gem_object) -> *mut Object<T> {
         crate::container_of!(obj, Object<T>, obj) as *mut Object<T>
     }
