@@ -1,3 +1,7 @@
+* Sun Feb 12 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc7.f339c2597ebb.55]
+- Linux v6.2.0-0.rc7.f339c2597ebb
+Resolves: 
+
 * Sat Feb 11 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc7.420b2d431d18.54]
 - Fedora configs for 6.2 (Justin M. Forbes)
 - Linux v6.2.0-0.rc7.420b2d431d18
