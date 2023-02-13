@@ -87,6 +87,9 @@ int systemep_init(struct apple_dcp *dcp)
 
 	if (!enable_verbose_logging)
 		return 0;
+	/* TODO: figure out why the verbose log request crashes */
+	dev_err(dcp->dev, "systemep: Ignoring verbose logs request\n");
+	return 0;
 
 	/*
 	 * Timeouts aren't really fatal here: in the worst case we just weren't
