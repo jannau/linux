@@ -223,6 +223,8 @@ struct apple_dcp {
 
 	struct dptx_port dptxport[2];
 
+	struct dentry *debugfs_root;
+
 	/* these fields are output port specific */
 	struct phy *phy;
 	struct mux_control *xbar;
