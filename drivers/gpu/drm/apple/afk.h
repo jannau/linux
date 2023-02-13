@@ -46,6 +46,11 @@ struct apple_epic_service {
 	bool enabled;
 
 	void *cookie;
+
+    struct {
+        struct dentry *root;
+        u8 *scratch;
+    } debugfs;
 };
 
 struct apple_epic_service_ops {
@@ -164,6 +169,8 @@ struct apple_dcp_afkep {
 
 	const struct apple_epic_service_ops *ops;
 	struct apple_epic_service services[AFK_MAX_CHANNEL];
+
+    struct dentry *debugfs_root;
 };
 
 struct apple_dcp_afkep *afk_init(struct apple_dcp *dcp, u32 endpoint,

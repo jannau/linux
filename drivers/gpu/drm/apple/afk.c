@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only OR MIT
 /* Copyright 2022 Sven Peter <sven@svenpeter.dev> */
 
+#include <linux/debugfs.h>
 #include <linux/dma-mapping.h>
 #include <linux/slab.h>
 #include <linux/workqueue.h>
@@ -198,6 +199,8 @@ afk_match_service(struct apple_dcp_afkep *ep, char *name)
 	return NULL;
 }
 
+static void afk_populate_service_debugfs(struct apple_epic_service *srv);
+
 static void afk_recv_handle_init(struct apple_dcp_afkep *ep, u32 channel,
 				 u8 *payload, size_t payload_size)
 {
@@ -232,6 +235,8 @@ static void afk_recv_handle_init(struct apple_dcp_afkep *ep, u32 channel,
 	ops->init(&ep->services[channel], props, props_size);
 	dev_info(ep->dcp->dev, "AFK: new service %s on channel %d\n", name,
 		 channel);
+
+	afk_populate_service_debugfs(&ep->services[channel]);
 }
 
 static void afk_recv_handle_reply(struct apple_dcp_afkep *ep, u32 channel,
@@ -859,4 +864,129 @@ int afk_service_call(struct apple_epic_service *service, u16 group, u32 command,
 out:
 	kfree(bfr);
 	return ret;
+}
+
+#define AFK_DEBUGFS_MAX_REPLY 8192
+
+static ssize_t service_call_write_file(struct file *file, const char __user *user_buf,
+				       size_t count, loff_t *ppos)
+{
+	struct apple_epic_service *srv = file->private_data;
+	void *buf;
+	int ret;
+	struct {
+		u32 group;
+		u32 command;
+	} call_info;
+
+	if (count < sizeof(call_info))
+		return -EINVAL;
+	if (!srv->debugfs.scratch) {
+		srv->debugfs.scratch = \
+			devm_kzalloc(srv->ep->dcp->dev, AFK_DEBUGFS_MAX_REPLY, GFP_KERNEL);
+		if (!srv->debugfs.scratch)
+			return -ENOMEM;
+	}
+
+	ret = copy_from_user(&call_info, user_buf, sizeof(call_info));
+	if (ret == sizeof(call_info))
+		return -EFAULT;
+	user_buf += sizeof(call_info);
+	count -= sizeof(call_info);
+
+	buf = kmalloc(count, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
+	ret = copy_from_user(buf, user_buf, count);
+	if (ret == count) {
+		kfree(buf);
+		return -EFAULT;
+	}
+
+	memset(srv->debugfs.scratch, 0, AFK_DEBUGFS_MAX_REPLY);
+	dma_mb();
+
+	ret = afk_service_call(srv, call_info.group, call_info.command, buf, count, 0,
+			       srv->debugfs.scratch, AFK_DEBUGFS_MAX_REPLY, 0);
+	kfree(buf);
+
+	if (ret < 0)
+		return ret;
+
+	return count + sizeof(call_info);
+}
+
+static ssize_t service_call_read_file(struct file *file, char __user *user_buf,
+				      size_t count, loff_t *ppos)
+{
+	struct apple_epic_service *srv = file->private_data;
+
+	if (!srv->debugfs.scratch)
+		return -EINVAL;
+
+	return simple_read_from_buffer(user_buf, count, ppos,
+				       srv->debugfs.scratch, AFK_DEBUGFS_MAX_REPLY);
+}
+
+static const struct file_operations service_call_fops = {
+	.open = simple_open,
+	.write = service_call_write_file,
+	.read = service_call_read_file,
+};
+
+static ssize_t service_raw_call_write_file(struct file *file, const char __user *user_buf,
+					   size_t count, loff_t *ppos)
+{
+	struct apple_epic_service *srv = file->private_data;
+	u32 retcode;
+	int ret;
+
+	if (!srv->debugfs.scratch) {
+		srv->debugfs.scratch = \
+			devm_kzalloc(srv->ep->dcp->dev, AFK_DEBUGFS_MAX_REPLY, GFP_KERNEL);
+		if (!srv->debugfs.scratch)
+			return -ENOMEM;
+	}
+
+	memset(srv->debugfs.scratch, 0, AFK_DEBUGFS_MAX_REPLY);
+	ret = copy_from_user(srv->debugfs.scratch, user_buf, count);
+	if (ret == count)
+		return -EFAULT;
+
+	ret = afk_send_command(srv, EPIC_SUBTYPE_STD_SERVICE, srv->debugfs.scratch, count,
+			       srv->debugfs.scratch, AFK_DEBUGFS_MAX_REPLY, &retcode);
+	if (ret < 0)
+		return ret;
+	if (retcode)
+		return -EINVAL;
+
+	return count;
+}
+
+static ssize_t service_raw_call_read_file(struct file *file, char __user *user_buf,
+					  size_t count, loff_t *ppos)
+{
+	struct apple_epic_service *srv = file->private_data;
+
+	if (!srv->debugfs.scratch)
+		return -EINVAL;
+
+	return simple_read_from_buffer(user_buf, count, ppos,
+				       srv->debugfs.scratch, AFK_DEBUGFS_MAX_REPLY);
+}
+
+static const struct file_operations service_raw_call_fops = {
+	.open = simple_open,
+	.write = service_raw_call_write_file,
+	.read = service_raw_call_read_file,
+};
+
+static void afk_populate_service_debugfs(struct apple_epic_service *srv)
+{
+	srv->debugfs.root = debugfs_create_dir(srv->ops->name,
+					       srv->ep->debugfs_root);
+	debugfs_create_file("call", 0600, srv->debugfs.root, srv,
+			    &service_call_fops);
+	debugfs_create_file("raw_call", 0600, srv->debugfs.root, srv,
+			    &service_raw_call_fops);
 }

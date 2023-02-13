@@ -201,6 +201,8 @@ struct apple_dcp {
 	struct apple_dcp_afkep *dptxep;
 
 	struct dptx_port dptxport[2];
+
+	struct dentry *debugfs_root;
 };
 
 int dcp_backlight_register(struct apple_dcp *dcp);
