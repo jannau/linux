@@ -31,6 +31,7 @@ enum {
 	TEST_ENDPOINT = 0x21,
 	DCP_EXPERT_ENDPOINT = 0x22,
 	DISP0_ENDPOINT = 0x23,
+	AV_ENDPOINT = 0x29,
 	DPTX_ENDPOINT = 0x2a,
 	HDCP_ENDPOINT = 0x2b,
 	REMOTE_ALLOC_ENDPOINT = 0x2d,
@@ -84,6 +85,8 @@ struct dcp_brightness {
 	int scale;
 	bool update;
 };
+
+struct audiosrv_data;
 
 /** laptop/AiO integrated panel parameters from DT */
 struct dcp_panel {
@@ -197,6 +200,9 @@ struct apple_dcp {
 
 	struct apple_dcp_afkep *systemep;
 	struct completion systemep_done;
+
+	struct apple_dcp_afkep *avep;
+	struct audiosrv_data *audiosrv;
 
 	struct apple_dcp_afkep *dptxep;
 

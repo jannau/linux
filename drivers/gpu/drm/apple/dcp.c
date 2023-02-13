@@ -111,6 +111,9 @@ static void dcp_recv_msg(void *cookie, u8 endpoint, u64 message)
 	switch (endpoint) {
 	case IOMFB_ENDPOINT:
 		return iomfb_recv_msg(dcp, message);
+	case AV_ENDPOINT:
+		afk_receive_message(dcp->avep, message);
+		return;
 	case SYSTEM_ENDPOINT:
 		afk_receive_message(dcp->systemep, message);
 		return;
@@ -304,6 +307,12 @@ int dcp_start(struct platform_device *pdev)
 	ret = systemep_init(dcp);
 	if (ret) {
 		dev_err(dcp->dev, "Failed to start system endpoint: %d", ret);
+		return ret;
+	}
+	
+	ret = avep_init(dcp);
+	if (ret) {
+		dev_err(dcp->dev, "Failed to start AV endpoint: %d", ret);
 		return ret;
 	}
 
