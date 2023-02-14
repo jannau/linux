@@ -1,3 +1,13 @@
+* Tue Feb 14 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc8.f6feea56f66d.57]
+- redhat/configs: update scripts and docs for ark -> rhel rename (Clark Williams)
+- redhat/configs: rename ark configs dir to rhel (Clark Williams)
+- Turn off CONFIG_DEBUG_INFO_COMPRESSED_ZLIB for ppc64le (Justin M. Forbes)
+- kernel.spec: package unstripped kselftests/bpf/test_progs (Jan Stancek)
+- kernel.spec: allow to package some binaries as unstripped (Jan Stancek)
+- redhat/configs: Make merge.py portable for older python (Desnes Nunes)
+- Linux v6.2.0-0.rc8.f6feea56f66d
+Resolves: 
+
 * Mon Feb 13 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc8.56]
 - Linux v6.2.0-0.rc8
 Resolves: 
