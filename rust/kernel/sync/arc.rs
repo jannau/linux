@@ -22,6 +22,7 @@ use crate::{
 };
 use alloc::boxed::Box;
 use core::{
+    any::Any,
     fmt,
     marker::{PhantomData, Unsize},
     mem::{ManuallyDrop, MaybeUninit},
@@ -224,6 +225,25 @@ impl<T: 'static> ForeignOwnable for Arc<T> {
         // a previous call to `Arc::into_foreign`, which guarantees that `ptr` is valid and
         // holds a reference count increment that is transferrable to us.
         unsafe { Self::from_inner(NonNull::new(ptr as _).unwrap()) }
+    }
+}
+
+impl Arc<dyn Any + Send + Sync> {
+    /// Attempt to downcast the `Arc<dyn Any + Send + Sync>` to a concrete type.
+    pub fn downcast<T>(self) -> core::result::Result<Arc<T>, Self>
+    where
+        T: Any + Send + Sync,
+    {
+        if (*self).is::<T>() {
+            // SAFETY: We have just checked that the type is correct, so we can cast the pointer.
+            unsafe {
+                let ptr = self.ptr.cast::<ArcInner<T>>();
+                core::mem::forget(self);
+                Ok(Arc::from_inner(ptr))
+            }
+        } else {
+            Err(self)
+        }
     }
 }
 
