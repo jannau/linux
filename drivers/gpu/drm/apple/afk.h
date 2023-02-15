@@ -61,6 +61,8 @@ struct apple_epic_service_ops {
 	int (*call)(struct apple_epic_service *service, u32 idx,
 		    const void *data, size_t data_size, void *reply,
 		    size_t reply_size);
+    int (*report)(struct apple_epic_service *service, u32 idx,
+            const void *data, size_t data_size);
 };
 
 struct afk_ringbuffer_header {
