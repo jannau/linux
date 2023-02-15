@@ -38,4 +38,24 @@ int parse_display_attributes(struct dcp_parse_ctx *handle, int *width_mm,
 			     int *height_mm);
 int parse_epic_service_init(struct dcp_parse_ctx *handle, const char **name,
 			    const char **class, s64 *unit);
+
+struct dcp_sound_format_mask {
+	u64 formats;			/* SNDRV_PCM_FMTBIT_* */
+	unsigned int rates;		/* SNDRV_PCM_RATE_* */
+	unsigned int nchans;
+};
+
+struct dcp_sound_cookie {
+	u8 data[24];
+};
+
+struct snd_pcm_chmap_elem;
+int parse_sound_constraints(struct dcp_parse_ctx *handle,
+			    struct dcp_sound_format_mask *sieve,
+			    struct dcp_sound_format_mask *hits);
+int parse_sound_mode(struct dcp_parse_ctx *handle,
+		     struct dcp_sound_format_mask *sieve,
+		     struct snd_pcm_chmap_elem *chmap,
+		     struct dcp_sound_cookie *cookie);
+
 #endif
