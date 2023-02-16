@@ -35,6 +35,7 @@
 #include <linux/timekeeping.h>
 #include <linux/xarray.h>
 #include <uapi/asm-generic/ioctl.h>
+#include <uapi/drm/asahi_drm.h>
 #include <uapi/drm/drm.h>
 
 /* `bindgen` gets confused at certain things. */
