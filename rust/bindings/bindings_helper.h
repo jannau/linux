@@ -9,6 +9,7 @@
 #include <linux/device.h>
 #include <linux/io-pgtable.h>
 #include <linux/ktime.h>
+#include <linux/platform_device.h>
 #include <linux/refcount.h>
 #include <linux/wait.h>
 #include <linux/sched.h>
