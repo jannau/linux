@@ -9,6 +9,7 @@ mod helpers;
 mod module;
 mod pin_data;
 mod pinned_drop;
+mod versions;
 mod vtable;
 
 use proc_macro::TokenStream;
@@ -75,6 +76,12 @@ use proc_macro::TokenStream;
 #[proc_macro]
 pub fn module(ts: TokenStream) -> TokenStream {
     module::module(ts)
+}
+
+/// Declares multiple variants of a structure or impl code
+#[proc_macro_attribute]
+pub fn versions(attr: TokenStream, item: TokenStream) -> TokenStream {
+    versions::versions(attr, item)
 }
 
 /// Declares or implements a vtable trait.
