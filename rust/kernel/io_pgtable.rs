@@ -344,6 +344,11 @@ iopt_cfg!(
     amd,
     io_pgtable_cfg__bindgen_ty_1__bindgen_ty_6
 );
+iopt_cfg!(
+    AppleUATCfg,
+    apple_uat_cfg,
+    io_pgtable_cfg__bindgen_ty_1__bindgen_ty_6
+);
 
 iopt_type!(ARM32LPAES1, ARMLPAES1Cfg, io_pgtable_fmt_ARM_32_LPAE_S1);
 iopt_type!(ARM32LPAES2, ARMLPAES2Cfg, io_pgtable_fmt_ARM_32_LPAE_S2);
@@ -354,3 +359,4 @@ iopt_type!(ARMMaliLPAE, ARMMaliLPAECfg, io_pgtable_fmt_ARM_MALI_LPAE);
 iopt_type!(AMDIOMMUV1, (), io_pgtable_fmt_AMD_IOMMU_V1);
 iopt_type!(AppleDART, AppleDARTCfg, io_pgtable_fmt_APPLE_DART);
 iopt_type!(AppleDART2, AppleDARTCfg, io_pgtable_fmt_APPLE_DART2);
+iopt_type!(AppleUAT, AppleUATCfg, io_pgtable_fmt_APPLE_UAT);
