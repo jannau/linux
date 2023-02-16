@@ -56,6 +56,10 @@ pub(crate) fn expect_string_ascii(it: &mut token_stream::IntoIter) -> String {
     string
 }
 
+pub(crate) fn expect_literal(it: &mut token_stream::IntoIter) -> String {
+    try_literal(it).expect("Expected Literal")
+}
+
 pub(crate) fn expect_group(it: &mut token_stream::IntoIter) -> Group {
     if let TokenTree::Group(group) = it.next().expect("Reached end of token stream for Group") {
         group
@@ -68,4 +72,20 @@ pub(crate) fn expect_end(it: &mut token_stream::IntoIter) {
     if it.next().is_some() {
         panic!("Expected end");
     }
+}
+
+pub(crate) fn get_literal(it: &mut token_stream::IntoIter, expected_name: &str) -> String {
+    assert_eq!(expect_ident(it), expected_name);
+    assert_eq!(expect_punct(it), ':');
+    let literal = expect_literal(it);
+    assert_eq!(expect_punct(it), ',');
+    literal
+}
+
+pub(crate) fn get_string(it: &mut token_stream::IntoIter, expected_name: &str) -> String {
+    assert_eq!(expect_ident(it), expected_name);
+    assert_eq!(expect_punct(it), ':');
+    let string = expect_string(it);
+    assert_eq!(expect_punct(it), ',');
+    string
 }
