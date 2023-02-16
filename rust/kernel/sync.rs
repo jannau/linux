@@ -9,6 +9,7 @@ mod arc;
 mod condvar;
 mod guard;
 mod mutex;
+pub mod rcu;
 mod revocable;
 
 use crate::{bindings, str::CStr};

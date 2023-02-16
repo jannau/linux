@@ -22,6 +22,7 @@
 #include <linux/build_bug.h>
 #include <linux/device.h>
 #include <linux/err.h>
+#include <linux/rcupdate.h>
 #include <linux/refcount.h>
 #include <linux/xarray.h>
 
@@ -150,6 +151,24 @@ unsigned long rust_helper_clear_user(void __user *to, unsigned long n)
 	return clear_user(to, n);
 }
 EXPORT_SYMBOL_GPL(rust_helper_clear_user);
+
+void rust_helper_rcu_read_lock(void)
+{
+	rcu_read_lock();
+}
+EXPORT_SYMBOL_GPL(rust_helper_rcu_read_lock);
+
+void rust_helper_rcu_read_unlock(void)
+{
+	rcu_read_unlock();
+}
+EXPORT_SYMBOL_GPL(rust_helper_rcu_read_unlock);
+
+void rust_helper_synchronize_rcu(void)
+{
+	synchronize_rcu();
+}
+EXPORT_SYMBOL_GPL(rust_helper_synchronize_rcu);
 
 /*
  * We use `bindgen`'s `--size_t-is-usize` option to bind the C `size_t` type
