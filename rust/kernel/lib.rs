@@ -16,6 +16,8 @@
 #![feature(coerce_unsized)]
 #![feature(const_maybe_uninit_zeroed)]
 #![feature(const_mut_refs)]
+#![feature(const_refs_to_cell)]
+#![feature(const_trait_impl)]
 #![feature(dispatch_from_dyn)]
 #![feature(new_uninit)]
 #![feature(offset_of)]
@@ -38,6 +40,7 @@ mod allocator;
 
 mod build_assert;
 pub mod device;
+pub mod driver;
 pub mod error;
 pub mod init;
 pub mod io_buffer;
