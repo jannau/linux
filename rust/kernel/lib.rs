@@ -37,6 +37,7 @@ pub mod error;
 pub mod io_buffer;
 pub mod io_pgtable;
 pub mod ioctl;
+pub mod module_param;
 pub mod prelude;
 pub mod print;
 pub mod soc;
