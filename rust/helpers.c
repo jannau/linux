@@ -23,6 +23,7 @@
 #include <linux/device.h>
 #include <linux/dma-mapping.h>
 #include <linux/err.h>
+#include <linux/errname.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
 #include <linux/platform_device.h>
@@ -133,6 +134,12 @@ void rust_helper_put_task_struct(struct task_struct *t)
 	put_task_struct(t);
 }
 EXPORT_SYMBOL_GPL(rust_helper_put_task_struct);
+
+const char *rust_helper_errname(int err)
+{
+	return errname(err);
+}
+EXPORT_SYMBOL_GPL(rust_helper_errname);
 
 void rust_helper_xa_init_flags(struct xarray *xa, gfp_t flags)
 {
