@@ -19,6 +19,7 @@
 #![feature(const_refs_to_cell)]
 #![feature(const_trait_impl)]
 #![feature(dispatch_from_dyn)]
+#![feature(duration_constants)]
 #![feature(new_uninit)]
 #![feature(pin_macro)]
 #![feature(receiver_trait)]
@@ -37,6 +38,7 @@ extern crate self as kernel;
 mod allocator;
 
 mod build_assert;
+pub mod delay;
 pub mod device;
 pub mod driver;
 pub mod error;
