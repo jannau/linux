@@ -33,6 +33,7 @@ mod allocator;
 mod build_assert;
 pub mod device;
 pub mod error;
+pub mod io_buffer;
 pub mod io_pgtable;
 pub mod ioctl;
 pub mod prelude;
