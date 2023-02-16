@@ -6,6 +6,7 @@
  * Sorted alphabetically.
  */
 
+#include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/io-pgtable.h>
 #include <linux/ktime.h>
