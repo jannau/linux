@@ -351,6 +351,12 @@ resource_size_t rust_helper_resource_size(const struct resource *res)
 }
 EXPORT_SYMBOL_GPL(rust_helper_resource_size);
 
+void rust_helper_init_completion(struct completion *c)
+{
+	init_completion(c);
+}
+EXPORT_SYMBOL_GPL(rust_helper_init_completion);
+
 /*
  * We use `bindgen`'s `--size_t-is-usize` option to bind the C `size_t` type
  * as the Rust `usize` type, so we can use it in contexts where Rust

@@ -11,6 +11,7 @@ mod guard;
 mod mutex;
 pub mod rcu;
 mod revocable;
+pub mod smutex;
 
 use crate::{bindings, str::CStr};
 use core::{cell::UnsafeCell, mem::MaybeUninit, pin::Pin};
