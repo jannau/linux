@@ -46,6 +46,7 @@ pub mod str;
 pub mod sync;
 pub mod time;
 pub mod types;
+pub mod user_ptr;
 pub mod xarray;
 
 #[doc(hidden)]
