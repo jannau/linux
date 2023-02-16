@@ -13,6 +13,7 @@
 
 #![no_std]
 #![feature(allocator_api)]
+#![feature(associated_type_defaults)]
 #![feature(coerce_unsized)]
 #![feature(const_maybe_uninit_zeroed)]
 #![feature(const_mut_refs)]
@@ -53,6 +54,7 @@ pub mod module_param;
 #[cfg(CONFIG_NET)]
 pub mod net;
 pub mod of;
+pub mod platform;
 pub mod prelude;
 pub mod print;
 pub mod siphash;
