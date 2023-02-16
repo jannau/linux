@@ -40,6 +40,7 @@ pub mod io_mem;
 pub mod io_pgtable;
 pub mod ioctl;
 pub mod module_param;
+pub mod of;
 pub mod prelude;
 pub mod print;
 pub mod revocable;
