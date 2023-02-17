@@ -6,6 +6,8 @@
 
 #include <linux/types.h>
 
+#include "version_utils.h"
+
 /* Fixed size of shared memory between DCP and AP */
 #define DCP_SHMEM_SIZE 0x100000
 
@@ -106,35 +108,6 @@ struct dcp_rect {
  */
 #define IOMFB_SET_BACKGROUND	BIT(31)
 
-struct dcp_swap {
-	u64 ts1;
-	u64 ts2;
-	u64 unk_10[6];
-	u64 flags1;
-	u64 flags2;
-
-	u32 swap_id;
-
-	u32 surf_ids[SWAP_SURFACES];
-	struct dcp_rect src_rect[SWAP_SURFACES];
-	u32 surf_flags[SWAP_SURFACES];
-	u32 surf_unk[SWAP_SURFACES];
-	struct dcp_rect dst_rect[SWAP_SURFACES];
-	u32 swap_enabled;
-	u32 swap_completed;
-
-	u32 bg_color;
-	u8 unk_110[0x1b8];
-	u32 unk_2c8;
-	u8 unk_2cc[0x14];
-	u32 unk_2e0;
-	u16 unk_2e2;
-	u64 bl_unk;
-	u32 bl_value; // min value is 0x10000000
-	u8  bl_power; // constant 0x40 for on
-	u8 unk_2f3[0x2d];
-} __packed;
-
 /* Information describing a plane of a planar compressed surface */
 struct dcp_plane_info {
 	u32 width;
@@ -152,38 +125,6 @@ struct dcp_plane_info {
 struct dcp_component_types {
 	u8 count;
 	u8 types[7];
-} __packed;
-
-/* Information describing a surface */
-struct dcp_surface {
-	u8 is_tiled;
-	u8 is_tearing_allowed;
-	u8 is_premultiplied;
-	u32 plane_cnt;
-	u32 plane_cnt2;
-	u32 format; /* DCP fourcc */
-	u32 ycbcr_matrix;
-	u8 xfer_func;
-	u8 colorspace;
-	u32 stride;
-	u16 pix_size;
-	u8 pel_w;
-	u8 pel_h;
-	u32 offset;
-	u32 width;
-	u32 height;
-	u32 buf_size;
-	u64 protection_opts;
-	u32 surface_id;
-	struct dcp_component_types comp_types[MAX_PLANES];
-	u64 has_comp;
-	struct dcp_plane_info planes[MAX_PLANES];
-	u64 has_planes;
-	u32 compression_info[MAX_PLANES][13];
-	u64 has_compr_info;
-	u32 unk_num;
-	u32 unk_denom;
-	u8 padding[7];
 } __packed;
 
 struct dcp_rt_bandwidth {
@@ -221,10 +162,17 @@ enum dcpep_method {
 	dcpep_num_methods
 };
 
+#define IOMFB_METHOD(tag, name) [name] = { #name, tag }
+
 struct dcp_method_entry {
 	const char *name;
 	char tag[4];
 };
+
+#define IOMFB_MAX_CB (1000)
+struct apple_dcp;
+
+typedef bool (*iomfb_cb_handler)(struct apple_dcp *, int, void *, void *);
 
 /* Prototypes */
 
@@ -314,34 +262,6 @@ struct dcp_swap_start_resp {
 	u32 swap_id;
 	struct dcp_iouserclient client;
 	u32 ret;
-} __packed;
-
-struct dcp_swap_submit_req {
-	struct dcp_swap swap;
-	struct dcp_surface surf[SWAP_SURFACES];
-	u64 surf_iova[SWAP_SURFACES];
-	u8 unkbool;
-	u64 unkdouble;
-	u32 clear; // or maybe switch to default fb?
-	u8 swap_null;
-	u8 surf_null[SWAP_SURFACES];
-	u8 unkoutbool_null;
-	u8 padding[1];
-} __packed;
-
-struct dcp_swap_submit_resp {
-	u8 unkoutbool;
-	u32 ret;
-	u8 padding[3];
-} __packed;
-
-struct dc_swap_complete_resp {
-	u32 swap_id;
-	u8 unkbool;
-	u64 swap_data;
-	u8 swap_info[0x6c4];
-	u32 unkint;
-	u8 swap_info_null;
 } __packed;
 
 struct dcp_get_uint_prop_req {
