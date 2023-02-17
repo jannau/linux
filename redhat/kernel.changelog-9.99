@@ -1,3 +1,7 @@
+* Fri Feb 17 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc8.ec35307e18ba.60]
+- Linux v6.2.0-0.rc8.ec35307e18ba
+Resolves: 
+
 * Thu Feb 16 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc8.033c40a89f55.59]
 - Fix underline mark-up after text change (Justin M. Forbes)
 - Turn on CONFIG_XFS_RT for Fedora (Justin M. Forbes)
