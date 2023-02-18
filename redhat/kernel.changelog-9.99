@@ -1,3 +1,8 @@
+* Sat Feb 18 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc8.38f8ccde04a3.61]
+- redhat/configs: Enable UCSI_CCG support (David Marlin)
+- Linux v6.2.0-0.rc8.38f8ccde04a3
+Resolves: 
+
 * Fri Feb 17 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.2.0-0.rc8.ec35307e18ba.60]
 - Linux v6.2.0-0.rc8.ec35307e18ba
 Resolves: 
