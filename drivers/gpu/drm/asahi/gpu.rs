@@ -1012,8 +1012,13 @@ impl GpuManager for GpuManager::ver {
         dev_err!(self.dev, "** GPU timeout nya~!!!!! **\n");
         dev_err!(self.dev, "  Event slot: {}\n", event_slot);
         dev_err!(self.dev, "  Timeout count: {}\n", counter);
-        self.get_fault_info();
-        self.mark_pending_events(Some(event_slot), workqueue::WorkError::Timeout);
+
+        // If we have fault info, consider it a fault.
+        let error = match self.get_fault_info() {
+            Some(info) => workqueue::WorkError::Fault(info),
+            None => workqueue::WorkError::Timeout,
+        };
+        self.mark_pending_events(Some(event_slot), error);
         self.recover();
     }
 
