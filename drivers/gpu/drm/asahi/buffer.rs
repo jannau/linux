@@ -243,6 +243,20 @@ impl Scene::ver {
     pub(crate) fn seq_buf_pointer(&self) -> GpuPointer<'_, &'_ [u64]> {
         self.object.seq_buf.gpu_pointer()
     }
+
+    /// Returns the number of TVB bytes used for this scene.
+    pub(crate) fn used_bytes(&self) -> usize {
+        self.object
+            .with(|raw, _inner| raw.total_page_count.load(Ordering::Relaxed) as usize * PAGE_SIZE)
+    }
+
+    /// Returns whether the TVB overflowed while rendering this scene.
+    pub(crate) fn overflowed(&self) -> bool {
+        self.object.with(|raw, _inner| {
+            raw.total_page_count.load(Ordering::Relaxed)
+                > raw.pass_page_count.load(Ordering::Relaxed)
+        })
+    }
 }
 
 #[versions(AGX)]
@@ -404,6 +418,11 @@ impl Buffer::ver {
     /// Returns the total block count allocated to this Buffer.
     pub(crate) fn block_count(&self) -> u32 {
         self.inner.lock().blocks.len() as u32
+    }
+
+    /// Returns the total size in bytes allocated to this Buffer.
+    pub(crate) fn size(&self) -> usize {
+        self.block_count() as usize * BLOCK_SIZE
     }
 
     /// Automatically grow the Buffer based on feedback from the statistics.
@@ -590,13 +609,14 @@ impl Buffer::ver {
             Ok(place!(
                 ptr,
                 buffer::raw::Scene {
-                    unk_0: U64(0),
+                    pass_page_count: AtomicU32::new(0),
+                    unk_4: 0,
                     unk_8: U64(0),
                     unk_10: U64(0),
                     user_buffer: inner.user_buffer.gpu_pointer(),
                     unk_20: 0,
                     stats: stats_pointer,
-                    unk_2c: 0,
+                    total_page_count: AtomicU32::new(0),
                     unk_30: U64(0),
                     unk_38: U64(0),
                 }

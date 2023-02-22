@@ -84,13 +84,14 @@ pub(crate) mod raw {
     #[derive(Debug)]
     #[repr(C)]
     pub(crate) struct Scene<'a> {
-        pub(crate) unk_0: U64,
+        pub(crate) pass_page_count: AtomicU32,
+        pub(crate) unk_4: u32,
         pub(crate) unk_8: U64,
         pub(crate) unk_10: U64,
         pub(crate) user_buffer: GpuPointer<'a, &'a [u8]>,
         pub(crate) unk_20: u32,
         pub(crate) stats: GpuWeakPointer<super::Stats>,
-        pub(crate) unk_2c: u32,
+        pub(crate) total_page_count: AtomicU32,
         pub(crate) unk_30: U64, // pad
         pub(crate) unk_38: U64, // pad
     }
