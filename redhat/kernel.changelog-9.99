@@ -1,3 +1,7 @@
+* Wed Feb 22 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc0.5b7c4cabbb65.3]
+- Linux v6.3.0-0.rc0.5b7c4cabbb65
+Resolves: 
+
 * Wed Feb 22 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc0.89f5349e0673.2]
 - Trim Changelog for 6.3 series (Justin M. Forbes)
 Resolves: 
