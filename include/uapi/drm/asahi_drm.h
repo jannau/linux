@@ -27,6 +27,7 @@ extern "C" {
 #define DRM_ASAHI_QUEUE_CREATE			0x06
 #define DRM_ASAHI_QUEUE_DESTROY			0x07
 #define DRM_ASAHI_SUBMIT			0x08
+#define DRM_ASAHI_GET_TIME			0x09
 
 #define DRM_ASAHI_MAX_CLUSTERS	32
 
@@ -66,6 +67,9 @@ struct drm_asahi_params_global {
 	__u32 min_frequency_khz;
 	__u32 max_frequency_khz;
 	__u32 max_power_mw;
+
+	__u32 result_render_size;
+	__u32 result_compute_size;
 };
 
 /*
@@ -422,6 +426,119 @@ struct drm_asahi_cmd_compute {
 	__u32 iogpu_unk_44;
 };
 
+enum drm_asahi_status {
+	DRM_ASAHI_STATUS_PENDING = 0,
+	DRM_ASAHI_STATUS_COMPLETE,
+	DRM_ASAHI_STATUS_UNKNOWN_ERROR,
+	DRM_ASAHI_STATUS_TIMEOUT,
+	DRM_ASAHI_STATUS_FAULT,
+	DRM_ASAHI_STATUS_KILLED,
+	DRM_ASAHI_STATUS_NO_DEVICE,
+};
+
+enum drm_asahi_fault {
+	DRM_ASAHI_FAULT_NONE = 0,
+	DRM_ASAHI_FAULT_UNKNOWN,
+	DRM_ASAHI_FAULT_UNMAPPED,
+	DRM_ASAHI_FAULT_AF_FAULT,
+	DRM_ASAHI_FAULT_WRITE_ONLY,
+	DRM_ASAHI_FAULT_READ_ONLY,
+	DRM_ASAHI_FAULT_NO_ACCESS,
+};
+
+struct drm_asahi_result_info {
+	/** @status: One of enum drm_asahi_status */
+	__u32 status;
+
+	/** @reason: One of drm_asahi_fault_type */
+	__u32 fault_type;
+
+	/** @unit: Unit number, hardware dependent */
+	__u32 unit;
+
+	/** @sideband: Sideband information, hardware dependent */
+	__u32 sideband;
+
+	/** @level: Page table level at which the fault occurred, hardware dependent */
+	__u8 level;
+
+	/** @read: Fault was a read */
+	__u8 is_read;
+
+	/** @pad: MBZ */
+	__u16 pad;
+
+	/** @unk_5: Extra bits, hardware dependent */
+	__u32 extra;
+
+	/** @address: Fault address, cache line aligned */
+	__u64 address;
+};
+
+#define DRM_ASAHI_RESULT_RENDER_TVB_GROW_OVF (1UL << 0)
+#define DRM_ASAHI_RESULT_RENDER_TVB_GROW_MIN (1UL << 1)
+#define DRM_ASAHI_RESULT_RENDER_TVB_OVERFLOWED (1UL << 2)
+
+struct drm_asahi_result_render {
+	/** @address: Common result information */
+	struct drm_asahi_result_info info;
+
+	/** @flags: Zero or more of of DRM_ASAHI_RESULT_RENDER_* */
+	__u64 flags;
+
+	/** @vertex_ts_start: Timestamp of the start of vertex processing */
+	__u64 vertex_ts_start;
+
+	/** @vertex_ts_end: Timestamp of the end of vertex processing */
+	__u64 vertex_ts_end;
+
+	/** @fragment_ts_start: Timestamp of the start of fragment processing */
+	__u64 fragment_ts_start;
+
+	/** @fragment_ts_end: Timestamp of the end of fragment processing */
+	__u64 fragment_ts_end;
+
+	/** @tvb_size_bytes: TVB size at the start of this render */
+	__u64 tvb_size_bytes;
+
+	/** @tvb_usage_bytes: Total TVB usage in bytes for this render */
+	__u64 tvb_usage_bytes;
+
+	/** @num_tvb_overflows: Number of TVB overflows that occurred for this render */
+	__u32 num_tvb_overflows;
+};
+
+struct drm_asahi_result_compute {
+	/** @address: Common result information */
+	struct drm_asahi_result_info info;
+
+	/** @flags: Zero or more of of DRM_ASAHI_RESULT_COMPUTE_* */
+	__u64 flags;
+
+	/** @ts_start: Timestamp of the start of this compute command */
+	__u64 ts_start;
+
+	/** @vertex_ts_end: Timestamp of the end of this compute command */
+	__u64 ts_end;
+};
+
+struct drm_asahi_get_time {
+	/** @extensions: Pointer to the first extension struct, if any */
+	__u64 extensions;
+
+	/** @flags: MBZ. */
+	__u64 flags;
+
+	/** @tv_sec: On return, seconds part of a point in time */
+	__s64 tv_sec;
+
+	/** @tv_nsec: On return, nanoseconds part of a point in time */
+	__s64 tv_nsec;
+
+	/** @gpu_timestamp: On return, the GPU timestamp at that point in time */
+	__u64 gpu_timestamp;
+};
+
 /* Note: this is an enum so that it can be resolved by Rust bindgen. */
 enum {
    DRM_IOCTL_ASAHI_GET_PARAMS       = DRM_IOWR(DRM_COMMAND_BASE + DRM_ASAHI_GET_PARAMS, struct drm_asahi_get_params),
@@ -433,6 +550,7 @@ enum {
    DRM_IOCTL_ASAHI_QUEUE_CREATE     = DRM_IOWR(DRM_COMMAND_BASE + DRM_ASAHI_QUEUE_CREATE, struct drm_asahi_queue_create),
    DRM_IOCTL_ASAHI_QUEUE_DESTROY    = DRM_IOW(DRM_COMMAND_BASE + DRM_ASAHI_QUEUE_DESTROY, struct drm_asahi_queue_destroy),
    DRM_IOCTL_ASAHI_SUBMIT           = DRM_IOW(DRM_COMMAND_BASE + DRM_ASAHI_SUBMIT, struct drm_asahi_submit),
+   DRM_IOCTL_ASAHI_GET_TIME         = DRM_IOWR(DRM_COMMAND_BASE + DRM_ASAHI_GET_TIME, struct drm_asahi_get_time),
 };
 
 #if defined(__cplusplus)
