@@ -496,35 +496,39 @@ impl super::Queue::ver {
                     notifier_buf: inner_weak_ptr!(notifier.weak_pointer(), state.unk_buf),
                 })?;
 
-                builder.add(microseq::Timestamp::ver {
-                    header: microseq::op::Timestamp::new(true),
-                    cur_ts: inner_weak_ptr!(ptr, cur_ts),
-                    start_ts: inner_weak_ptr!(ptr, start_ts),
-                    update_ts: inner_weak_ptr!(ptr, start_ts),
-                    work_queue: ev_frag.info_ptr,
-                    unk_24: U64(0),
-                    #[ver(V >= V13_0B4)]
-                    unk_ts: inner_weak_ptr!(ptr, unk_ts),
-                    uuid: uuid_3d,
-                    unk_30_padding: 0,
-                })?;
+                if frag_result.is_some() {
+                    builder.add(microseq::Timestamp::ver {
+                        header: microseq::op::Timestamp::new(true),
+                        cur_ts: inner_weak_ptr!(ptr, cur_ts),
+                        start_ts: inner_weak_ptr!(ptr, start_ts),
+                        update_ts: inner_weak_ptr!(ptr, start_ts),
+                        work_queue: ev_frag.info_ptr,
+                        unk_24: U64(0),
+                        #[ver(V >= V13_0B4)]
+                        unk_ts: inner_weak_ptr!(ptr, unk_ts),
+                        uuid: uuid_3d,
+                        unk_30_padding: 0,
+                    })?;
+                }
 
                 builder.add(microseq::WaitForIdle {
                     header: microseq::op::WaitForIdle::new(microseq::Pipe::Fragment),
                 })?;
 
-                builder.add(microseq::Timestamp::ver {
-                    header: microseq::op::Timestamp::new(false),
-                    cur_ts: inner_weak_ptr!(ptr, cur_ts),
-                    start_ts: inner_weak_ptr!(ptr, start_ts),
-                    update_ts: inner_weak_ptr!(ptr, end_ts),
-                    work_queue: ev_frag.info_ptr,
-                    unk_24: U64(0),
-                    #[ver(V >= V13_0B4)]
-                    unk_ts: inner_weak_ptr!(ptr, unk_ts),
-                    uuid: uuid_3d,
-                    unk_30_padding: 0,
-                })?;
+                if frag_result.is_some() {
+                    builder.add(microseq::Timestamp::ver {
+                        header: microseq::op::Timestamp::new(false),
+                        cur_ts: inner_weak_ptr!(ptr, cur_ts),
+                        start_ts: inner_weak_ptr!(ptr, start_ts),
+                        update_ts: inner_weak_ptr!(ptr, end_ts),
+                        work_queue: ev_frag.info_ptr,
+                        unk_24: U64(0),
+                        #[ver(V >= V13_0B4)]
+                        unk_ts: inner_weak_ptr!(ptr, unk_ts),
+                        uuid: uuid_3d,
+                        unk_30_padding: 0,
+                    })?;
+                }
 
                 let off = builder.offset_to(start_frag);
                 builder.add(microseq::FinalizeFragment::ver {
@@ -897,35 +901,39 @@ impl super::Queue::ver {
                     unk_178: 0x0, // padding?
                 })?;
 
-                builder.add(microseq::Timestamp::ver {
-                    header: microseq::op::Timestamp::new(true),
-                    cur_ts: inner_weak_ptr!(ptr, cur_ts),
-                    start_ts: inner_weak_ptr!(ptr, start_ts),
-                    update_ts: inner_weak_ptr!(ptr, start_ts),
-                    work_queue: ev_vtx.info_ptr,
-                    unk_24: U64(0),
-                    #[ver(V >= V13_0B4)]
-                    unk_ts: inner_weak_ptr!(ptr, unk_ts),
-                    uuid: uuid_ta,
-                    unk_30_padding: 0,
-                })?;
+                if vtx_result.is_some() {
+                    builder.add(microseq::Timestamp::ver {
+                        header: microseq::op::Timestamp::new(true),
+                        cur_ts: inner_weak_ptr!(ptr, cur_ts),
+                        start_ts: inner_weak_ptr!(ptr, start_ts),
+                        update_ts: inner_weak_ptr!(ptr, start_ts),
+                        work_queue: ev_vtx.info_ptr,
+                        unk_24: U64(0),
+                        #[ver(V >= V13_0B4)]
+                        unk_ts: inner_weak_ptr!(ptr, unk_ts),
+                        uuid: uuid_ta,
+                        unk_30_padding: 0,
+                    })?;
+                }
 
                 builder.add(microseq::WaitForIdle {
                     header: microseq::op::WaitForIdle::new(microseq::Pipe::Vertex),
                 })?;
 
-                builder.add(microseq::Timestamp::ver {
-                    header: microseq::op::Timestamp::new(false),
-                    cur_ts: inner_weak_ptr!(ptr, cur_ts),
-                    start_ts: inner_weak_ptr!(ptr, start_ts),
-                    update_ts: inner_weak_ptr!(ptr, end_ts),
-                    work_queue: ev_vtx.info_ptr,
-                    unk_24: U64(0),
-                    #[ver(V >= V13_0B4)]
-                    unk_ts: inner_weak_ptr!(ptr, unk_ts),
-                    uuid: uuid_ta,
-                    unk_30_padding: 0,
-                })?;
+                if vtx_result.is_some() {
+                    builder.add(microseq::Timestamp::ver {
+                        header: microseq::op::Timestamp::new(false),
+                        cur_ts: inner_weak_ptr!(ptr, cur_ts),
+                        start_ts: inner_weak_ptr!(ptr, start_ts),
+                        update_ts: inner_weak_ptr!(ptr, end_ts),
+                        work_queue: ev_vtx.info_ptr,
+                        unk_24: U64(0),
+                        #[ver(V >= V13_0B4)]
+                        unk_ts: inner_weak_ptr!(ptr, unk_ts),
+                        uuid: uuid_ta,
+                        unk_30_padding: 0,
+                    })?;
+                }
 
                 let off = builder.offset_to(start_vtx);
                 builder.add(microseq::FinalizeVertex::ver {

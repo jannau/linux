@@ -163,35 +163,39 @@ impl super::Queue::ver {
                     notifier_buf: inner_weak_ptr!(notifier.weak_pointer(), state.unk_buf),
                 })?;
 
-                builder.add(microseq::Timestamp::ver {
-                    header: microseq::op::Timestamp::new(true),
-                    cur_ts: inner_weak_ptr!(ptr, cur_ts),
-                    start_ts: inner_weak_ptr!(ptr, start_ts),
-                    update_ts: inner_weak_ptr!(ptr, start_ts),
-                    work_queue: ev_comp.info_ptr,
-                    unk_24: U64(0),
-                    #[ver(V >= V13_0B4)]
-                    unk_ts: inner_weak_ptr!(ptr, unk_ts),
-                    uuid,
-                    unk_30_padding: 0,
-                })?;
+                if result_writer.is_some() {
+                    builder.add(microseq::Timestamp::ver {
+                        header: microseq::op::Timestamp::new(true),
+                        cur_ts: inner_weak_ptr!(ptr, cur_ts),
+                        start_ts: inner_weak_ptr!(ptr, start_ts),
+                        update_ts: inner_weak_ptr!(ptr, start_ts),
+                        work_queue: ev_comp.info_ptr,
+                        unk_24: U64(0),
+                        #[ver(V >= V13_0B4)]
+                        unk_ts: inner_weak_ptr!(ptr, unk_ts),
+                        uuid,
+                        unk_30_padding: 0,
+                    })?;
+                }
 
                 builder.add(microseq::WaitForIdle {
                     header: microseq::op::WaitForIdle::new(microseq::Pipe::Compute),
                 })?;
 
-                builder.add(microseq::Timestamp::ver {
-                    header: microseq::op::Timestamp::new(false),
-                    cur_ts: inner_weak_ptr!(ptr, cur_ts),
-                    start_ts: inner_weak_ptr!(ptr, start_ts),
-                    update_ts: inner_weak_ptr!(ptr, end_ts),
-                    work_queue: ev_comp.info_ptr,
-                    unk_24: U64(0),
-                    #[ver(V >= V13_0B4)]
-                    unk_ts: inner_weak_ptr!(ptr, unk_ts),
-                    uuid,
-                    unk_30_padding: 0,
-                })?;
+                if result_writer.is_some() {
+                    builder.add(microseq::Timestamp::ver {
+                        header: microseq::op::Timestamp::new(false),
+                        cur_ts: inner_weak_ptr!(ptr, cur_ts),
+                        start_ts: inner_weak_ptr!(ptr, start_ts),
+                        update_ts: inner_weak_ptr!(ptr, end_ts),
+                        work_queue: ev_comp.info_ptr,
+                        unk_24: U64(0),
+                        #[ver(V >= V13_0B4)]
+                        unk_ts: inner_weak_ptr!(ptr, unk_ts),
+                        uuid,
+                        unk_30_padding: 0,
+                    })?;
+                }
 
                 let off = builder.offset_to(start_comp);
                 builder.add(microseq::FinalizeCompute::ver {
