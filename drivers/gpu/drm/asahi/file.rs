@@ -225,6 +225,9 @@ impl File {
             min_frequency_khz: gpu.get_dyncfg().pwr.min_frequency_khz(),
             max_frequency_khz: gpu.get_dyncfg().pwr.max_frequency_khz(),
             max_power_mw: gpu.get_dyncfg().pwr.max_power_mw,
+
+            result_render_size: core::mem::size_of::<bindings::drm_asahi_result_render>() as u32,
+            result_compute_size: core::mem::size_of::<bindings::drm_asahi_result_compute>() as u32,
         };
 
         for (i, mask) in gpu.get_dyncfg().id.core_masks.iter().enumerate() {

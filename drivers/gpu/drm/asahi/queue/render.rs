@@ -15,12 +15,14 @@ use crate::driver::AsahiDevice;
 use crate::fw::types::*;
 use crate::gpu::GpuManager;
 use crate::util::*;
+use crate::workqueue::WorkError;
 use crate::{alloc, buffer, channel, event, file, fw, gpu, microseq, mmu, workqueue};
 use crate::{box_in_place, inner_ptr, inner_weak_ptr, place};
 use core::mem::MaybeUninit;
 use core::sync::atomic::Ordering;
 use kernel::bindings;
 use kernel::dma_fence::RawDmaFence;
+use kernel::drm::gem::shmem::VMap;
 use kernel::drm::sched::Job;
 use kernel::io_buffer::IoBufferReader;
 use kernel::prelude::*;
@@ -34,6 +36,38 @@ const DEBUG_CLASS: DebugFlags = DebugFlags::Render;
 /// overhead of clustering/merging would exceed the time it takes to just run the job on one
 /// cluster.
 const TILECTL_DISABLE_CLUSTERING: u32 = 1u32 << 0;
+
+struct RenderResult {
+    result: bindings::drm_asahi_result_render,
+    vtx_complete: bool,
+    frag_complete: bool,
+    vtx_error: Option<workqueue::WorkError>,
+    frag_error: Option<workqueue::WorkError>,
+    writer: super::ResultWriter,
+}
+
+impl RenderResult {
+    fn commit(&mut self) {
+        if !self.vtx_complete || !self.frag_complete {
+            return;
+        }
+
+        let mut error = self.vtx_error.take();
+        if let Some(frag_error) = self.frag_error.take() {
+            if error.is_none() || error == Some(WorkError::Killed) {
+                error = Some(frag_error);
+            }
+        }
+
+        if let Some(err) = error {
+            self.result.info = err.into();
+        } else {
+            self.result.info.status = bindings::drm_asahi_status_DRM_ASAHI_STATUS_COMPLETE;
+        }
+
+        self.writer.write(self.result);
+    }
+}
 
 #[versions(AGX)]
 impl super::Queue::ver {
@@ -162,6 +196,7 @@ impl super::Queue::ver {
         &self,
         job: &mut Job<super::QueueJob::ver>,
         cmd: &bindings::drm_asahi_command,
+        result_writer: Option<super::ResultWriter>,
         id: u64,
         flush_stamps: bool,
     ) -> Result {
@@ -384,6 +419,31 @@ impl super::Queue::ver {
             _ => return Err(EINVAL),
         };
 
+        let frag_result = result_writer
+            .map(|writer| {
+                let mut result = RenderResult {
+                    result: Default::default(),
+                    vtx_complete: false,
+                    frag_complete: false,
+                    vtx_error: None,
+                    frag_error: None,
+                    writer,
+                };
+
+                if tvb_autogrown {
+                    result.result.flags |= bindings::DRM_ASAHI_RESULT_RENDER_TVB_GROW_OVF as u64;
+                }
+                if tvb_grown {
+                    result.result.flags |= bindings::DRM_ASAHI_RESULT_RENDER_TVB_GROW_MIN as u64;
+                }
+                result.result.tvb_size_bytes = buffer.size() as u64;
+
+                Arc::try_new(Mutex::new(result))
+            })
+            .transpose()?;
+
+        let vtx_result = frag_result.clone();
+
         // TODO: check
         #[ver(V >= V13_0B4)]
         let count_frag = self.counter.fetch_add(2, Ordering::Relaxed);
@@ -436,7 +496,6 @@ impl super::Queue::ver {
                     notifier_buf: inner_weak_ptr!(notifier.weak_pointer(), state.unk_buf),
                 })?;
 
-                /*
                 builder.add(microseq::Timestamp::ver {
                     header: microseq::op::Timestamp::new(true),
                     cur_ts: inner_weak_ptr!(ptr, cur_ts),
@@ -449,13 +508,11 @@ impl super::Queue::ver {
                     uuid: uuid_3d,
                     unk_30_padding: 0,
                 })?;
-                */
 
                 builder.add(microseq::WaitForIdle {
                     header: microseq::op::WaitForIdle::new(microseq::Pipe::Fragment),
                 })?;
 
-                /*
                 builder.add(microseq::Timestamp::ver {
                     header: microseq::op::Timestamp::new(false),
                     cur_ts: inner_weak_ptr!(ptr, cur_ts),
@@ -468,7 +525,6 @@ impl super::Queue::ver {
                     uuid: uuid_3d,
                     unk_30_padding: 0,
                 })?;
-                */
 
                 let off = builder.offset_to(start_frag);
                 builder.add(microseq::FinalizeFragment::ver {
@@ -747,9 +803,22 @@ impl super::Queue::ver {
 
         mod_dev_dbg!(self.dev, "[Submission {}] Add Frag\n", id);
         fence.add_command();
+
         frag_job.add_cb(frag, vm_bind.slot(), move |cmd, error| {
             if let Some(err) = error {
-                fence.set_error(err.into())
+                fence.set_error(err.into());
+            }
+            if let Some(mut res) = frag_result.as_ref().map(|a| a.lock()) {
+                cmd.timestamps.with(|raw, _inner| {
+                    res.result.fragment_ts_start = raw.frag.start.load(Ordering::Relaxed);
+                    res.result.fragment_ts_end = raw.frag.end.load(Ordering::Relaxed);
+                });
+                cmd.with(|raw, _inner| {
+                    res.result.num_tvb_overflows = raw.tvb_overflow_count;
+                });
+                res.frag_error = error;
+                res.frag_complete = true;
+                res.commit();
             }
             fence.command_complete();
         })?;
@@ -828,7 +897,6 @@ impl super::Queue::ver {
                     unk_178: 0x0, // padding?
                 })?;
 
-                /*
                 builder.add(microseq::Timestamp::ver {
                     header: microseq::op::Timestamp::new(true),
                     cur_ts: inner_weak_ptr!(ptr, cur_ts),
@@ -841,13 +909,11 @@ impl super::Queue::ver {
                     uuid: uuid_ta,
                     unk_30_padding: 0,
                 })?;
-                */
 
                 builder.add(microseq::WaitForIdle {
                     header: microseq::op::WaitForIdle::new(microseq::Pipe::Vertex),
                 })?;
 
-                /*
                 builder.add(microseq::Timestamp::ver {
                     header: microseq::op::Timestamp::new(false),
                     cur_ts: inner_weak_ptr!(ptr, cur_ts),
@@ -860,7 +926,6 @@ impl super::Queue::ver {
                     uuid: uuid_ta,
                     unk_30_padding: 0,
                 })?;
-                */
 
                 let off = builder.offset_to(start_vtx);
                 builder.add(microseq::FinalizeVertex::ver {
@@ -1071,6 +1136,19 @@ impl super::Queue::ver {
         vtx_job.add_cb(vtx, vm_bind.slot(), move |cmd, error| {
             if let Some(err) = error {
                 fence.set_error(err.into())
+            }
+            if let Some(mut res) = vtx_result.as_ref().map(|a| a.lock()) {
+                cmd.timestamps.with(|raw, _inner| {
+                    res.result.vertex_ts_start = raw.vtx.start.load(Ordering::Relaxed);
+                    res.result.vertex_ts_end = raw.vtx.end.load(Ordering::Relaxed);
+                });
+                res.result.tvb_usage_bytes = cmd.scene.used_bytes() as u64;
+                if cmd.scene.overflowed() {
+                    res.result.flags |= bindings::DRM_ASAHI_RESULT_RENDER_TVB_OVERFLOWED as u64;
+                }
+                res.vtx_error = error;
+                res.vtx_complete = true;
+                res.commit();
             }
             fence.command_complete();
         })?;

@@ -35,6 +35,7 @@ impl super::Queue::ver {
         &self,
         job: &mut Job<super::QueueJob::ver>,
         cmd: &bindings::drm_asahi_command,
+        result_writer: Option<super::ResultWriter>,
         id: u64,
         flush_stamps: bool,
     ) -> Result {
@@ -162,7 +163,6 @@ impl super::Queue::ver {
                     notifier_buf: inner_weak_ptr!(notifier.weak_pointer(), state.unk_buf),
                 })?;
 
-                /*
                 builder.add(microseq::Timestamp::ver {
                     header: microseq::op::Timestamp::new(true),
                     cur_ts: inner_weak_ptr!(ptr, cur_ts),
@@ -175,13 +175,11 @@ impl super::Queue::ver {
                     uuid,
                     unk_30_padding: 0,
                 })?;
-                */
 
                 builder.add(microseq::WaitForIdle {
                     header: microseq::op::WaitForIdle::new(microseq::Pipe::Compute),
                 })?;
 
-                /*
                 builder.add(microseq::Timestamp::ver {
                     header: microseq::op::Timestamp::new(false),
                     cur_ts: inner_weak_ptr!(ptr, cur_ts),
@@ -194,7 +192,6 @@ impl super::Queue::ver {
                     uuid,
                     unk_30_padding: 0,
                 })?;
-                */
 
                 let off = builder.offset_to(start_comp);
                 builder.add(microseq::FinalizeCompute::ver {
@@ -338,6 +335,23 @@ impl super::Queue::ver {
             if let Some(err) = error {
                 fence.set_error(err.into())
             }
+            if let Some(mut rw) = result_writer {
+                let mut result: bindings::drm_asahi_result_compute = Default::default();
+
+                cmd.timestamps.with(|raw, _inner| {
+                    result.ts_start = raw.start.load(Ordering::Relaxed);
+                    result.ts_end = raw.end.load(Ordering::Relaxed);
+                });
+
+                if let Some(err) = error {
+                    result.info = err.into();
+                } else {
+                    result.info.status = bindings::drm_asahi_status_DRM_ASAHI_STATUS_COMPLETE;
+                }
+
+                rw.write(result);
+            }
+
             fence.command_complete();
         })?;
 

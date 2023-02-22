@@ -12,6 +12,7 @@ use kernel::prelude::*;
 use kernel::user_ptr::UserSlicePtr;
 use kernel::{
     bindings, c_str, dma_fence,
+    drm::gem::shmem::VMap,
     drm::sched,
     macros::versions,
     prelude::*,
@@ -296,6 +297,23 @@ impl sched::JobImpl for QueueJob::ver {
     }
 }
 
+struct ResultWriter {
+    vmap: VMap<gem::DriverObject>,
+    offset: usize,
+    len: usize,
+}
+
+impl ResultWriter {
+    fn write<T>(&mut self, mut value: T) {
+        let p: *mut u8 = &mut value as *mut _ as *mut u8;
+        // SAFETY: We know `p` points to a type T of that size, and UAPI types must have
+        // no padding and all bit patterns valid.
+        let slice = unsafe { core::slice::from_raw_parts_mut(p, core::mem::size_of::<T>()) };
+        let len = slice.len().min(self.len);
+        self.vmap.as_mut_slice()[self.offset..self.offset + len].copy_from_slice(&slice[..len]);
+    }
+}
+
 static QUEUE_NAME: &CStr = c_str!("asahi_fence");
 static QUEUE_CLASS_KEY: kernel::sync::LockClassKey = kernel::sync::LockClassKey::new();
 
@@ -557,9 +575,43 @@ impl Queue for Queue::ver {
                 }
             }
 
+            let result_writer = match result_buf.as_ref() {
+                None => {
+                    if cmd.result_offset != 0 || cmd.result_size != 0 {
+                        return Err(EINVAL);
+                    }
+                    None
+                }
+                Some(buf) => {
+                    if cmd.result_size != 0 {
+                        if cmd
+                            .result_offset
+                            .checked_add(cmd.result_size)
+                            .ok_or(EINVAL)?
+                            > buf.size() as u64
+                        {
+                            return Err(EINVAL);
+                        }
+                        Some(ResultWriter {
+                            vmap: buf.gem.vmap()?,
+                            offset: cmd.result_offset.try_into()?,
+                            len: cmd.result_size.try_into()?,
+                        })
+                    } else {
+                        None
+                    }
+                }
+            };
+
             match cmd.cmd_type {
                 bindings::drm_asahi_cmd_type_DRM_ASAHI_CMD_RENDER => {
-                    self.submit_render(&mut job, &cmd, id, last_render.unwrap() == i)?;
+                    self.submit_render(
+                        &mut job,
+                        &cmd,
+                        result_writer,
+                        id,
+                        last_render.unwrap() == i,
+                    )?;
                     events[SQ_RENDER].try_push(Some(
                         job.sj_frag
                             .as_ref()
@@ -571,7 +623,13 @@ impl Queue for Queue::ver {
                     ))?;
                 }
                 bindings::drm_asahi_cmd_type_DRM_ASAHI_CMD_COMPUTE => {
-                    self.submit_compute(&mut job, &cmd, id, last_compute.unwrap() == i)?;
+                    self.submit_compute(
+                        &mut job,
+                        &cmd,
+                        result_writer,
+                        id,
+                        last_compute.unwrap() == i,
+                    )?;
                     events[SQ_COMPUTE].try_push(Some(
                         job.sj_comp
                             .as_ref()
