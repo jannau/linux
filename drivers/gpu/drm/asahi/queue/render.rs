@@ -358,7 +358,7 @@ impl super::Queue::ver {
         mod_dev_dbg!(self.dev, "[Submission {}] Add Barrier\n", id);
         frag_job.add(barrier, vm_bind.slot())?;
 
-        let timestamps = Arc::try_new(kalloc.shared.new_default::<fw::job::JobTimestamps>()?)?;
+        let timestamps = Arc::try_new(kalloc.shared.new_default::<fw::job::RenderTimestamps>()?)?;
 
         let unk1 = debug_enabled(debug::DebugFlags::Debug1);
         let unk2 = debug_enabled(debug::DebugFlags::Debug2);
@@ -457,7 +457,7 @@ impl super::Queue::ver {
 
                 /*
                 builder.add(microseq::Timestamp::ver {
-                    header: microseq::op::Timestamp::new(true),
+                    header: microseq::op::Timestamp::new(false),
                     cur_ts: inner_weak_ptr!(ptr, cur_ts),
                     start_ts: inner_weak_ptr!(ptr, start_ts),
                     update_ts: inner_weak_ptr!(ptr, end_ts),
@@ -725,8 +725,8 @@ impl super::Queue::ver {
                         unk_buf_8: U64(0),
                         unk_buf_10: U64(1),
                         cur_ts: U64(0),
-                        start_ts: Some(inner_ptr!(inner.timestamps.gpu_pointer(), start)),
-                        end_ts: Some(inner_ptr!(inner.timestamps.gpu_pointer(), end)),
+                        start_ts: Some(inner_ptr!(inner.timestamps.gpu_pointer(), frag.start)),
+                        end_ts: Some(inner_ptr!(inner.timestamps.gpu_pointer(), frag.end)),
                         unk_914: 0,
                         unk_918: U64(0),
                         unk_920: 0,
@@ -849,7 +849,7 @@ impl super::Queue::ver {
 
                 /*
                 builder.add(microseq::Timestamp::ver {
-                    header: microseq::op::Timestamp::new(true),
+                    header: microseq::op::Timestamp::new(false),
                     cur_ts: inner_weak_ptr!(ptr, cur_ts),
                     start_ts: inner_weak_ptr!(ptr, start_ts),
                     update_ts: inner_weak_ptr!(ptr, end_ts),
@@ -1042,8 +1042,8 @@ impl super::Queue::ver {
                         unk_buf_8: U64(0),
                         unk_buf_10: U64(0),
                         cur_ts: U64(0),
-                        start_ts: Some(inner_ptr!(inner.timestamps.gpu_pointer(), start)),
-                        end_ts: None,
+                        start_ts: Some(inner_ptr!(inner.timestamps.gpu_pointer(), vtx.start)),
+                        end_ts: Some(inner_ptr!(inner.timestamps.gpu_pointer(), vtx.end)),
                         unk_5c4: 0,
                         unk_5c8: 0,
                         unk_5cc: 0,

@@ -270,7 +270,7 @@ pub(crate) struct RunFragment {
     pub(crate) micro_seq: microseq::MicroSequence,
     pub(crate) vm_bind: mmu::VmBind,
     pub(crate) aux_fb: GpuArray<u8>,
-    pub(crate) timestamps: Arc<GpuObject<job::JobTimestamps>>,
+    pub(crate) timestamps: Arc<GpuObject<job::RenderTimestamps>>,
 }
 
 #[versions(AGX)]

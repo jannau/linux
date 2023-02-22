@@ -42,6 +42,15 @@ pub(crate) mod raw {
         pub(crate) end: AtomicU64,
     }
     default_zeroed!(JobTimestamps);
+
+    #[derive(Debug)]
+    #[repr(C)]
+    pub(crate) struct RenderTimestamps {
+        pub(crate) vtx: JobTimestamps,
+        pub(crate) frag: JobTimestamps,
+    }
+    default_zeroed!(RenderTimestamps);
 }
 
 trivial_gpustruct!(JobTimestamps);
+trivial_gpustruct!(RenderTimestamps);

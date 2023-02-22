@@ -174,7 +174,7 @@ pub(crate) struct RunVertex {
     pub(crate) scene: Arc<buffer::Scene::ver>,
     pub(crate) micro_seq: microseq::MicroSequence,
     pub(crate) vm_bind: mmu::VmBind,
-    pub(crate) timestamps: Arc<GpuObject<job::JobTimestamps>>,
+    pub(crate) timestamps: Arc<GpuObject<job::RenderTimestamps>>,
 }
 
 #[versions(AGX)]
