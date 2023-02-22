@@ -1,3 +1,7 @@
+* Wed Feb 22 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc0.89f5349e0673.2]
+- Trim Changelog for 6.3 series (Justin M. Forbes)
+Resolves: 
+
 * Tue Feb 21 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc0.89f5349e0673.1]
 - Reset RHEL_RELEASE to 0 for the 6.3 cycle (Justin M. Forbes)
 - redhat/configs: Enable CONFIG_V4L_TEST_DRIVERS related drivers (Enric Balletbo i Serra)
