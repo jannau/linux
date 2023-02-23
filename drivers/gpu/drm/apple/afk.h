@@ -64,6 +64,7 @@ struct apple_epic_service_ops {
 		    size_t reply_size);
     int (*report)(struct apple_epic_service *service, u32 idx,
             const void *data, size_t data_size);
+    void (*teardown)(struct apple_epic_service *service);
 };
 
 struct afk_ringbuffer_header {
@@ -139,6 +140,7 @@ enum epic_category {
 
 enum epic_subtype {
 	EPIC_SUBTYPE_ANNOUNCE = 0x30,
+	EPIC_SUBTYPE_TEARDOWN = 0x32,
 	EPIC_SUBTYPE_STD_SERVICE = 0xc0,
 };
 

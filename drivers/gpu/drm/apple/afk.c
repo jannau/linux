@@ -239,6 +239,24 @@ static void afk_recv_handle_init(struct apple_dcp_afkep *ep, u32 channel,
 	afk_populate_service_debugfs(&ep->services[channel]);
 }
 
+static void afk_recv_handle_teardown(struct apple_dcp_afkep *ep, u32 channel)
+{
+	struct apple_epic_service *service = &ep->services[channel];
+	const struct apple_epic_service_ops *ops;
+	unsigned long flags;
+
+	WARN_ON(!service->enabled);
+
+	// TODO: think through what locking is necessary
+	spin_lock_irqsave(&service->lock, flags);
+	service->enabled = false;
+	ops = service->ops;
+	spin_unlock_irqrestore(&service->lock, flags);
+
+	if (ops->teardown)
+		ops->teardown(service);
+}
+
 static void afk_recv_handle_reply(struct apple_dcp_afkep *ep, u32 channel,
 				  u16 tag, void *payload, size_t payload_size)
 {
@@ -436,6 +454,10 @@ static void afk_recv_handle(struct apple_dcp_afkep *ep, u32 channel, u32 type,
 			channel);
 		return;
 	}
+
+	if (type == EPIC_TYPE_NOTIFY && eshdr->category == EPIC_CAT_REPORT &&
+	    subtype == EPIC_SUBTYPE_TEARDOWN)
+		return afk_recv_handle_teardown(ep, channel);
 
 	if (type == EPIC_TYPE_REPLY && eshdr->category == EPIC_CAT_REPLY)
 		return afk_recv_handle_reply(ep, channel,
