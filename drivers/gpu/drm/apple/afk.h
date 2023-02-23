@@ -131,7 +131,7 @@ enum epic_category {
 };
 
 enum epic_subtype {
-	EPIC_SUBYPE_ANNOUNCE = 0x30,
+	EPIC_SUBTYPE_ANNOUNCE = 0x30,
 	EPIC_SUBTYPE_STD_SERVICE = 0xc0,
 };
 
