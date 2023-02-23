@@ -399,6 +399,8 @@ static void afk_recv_handle_std_service(struct apple_dcp_afkep *ep, u32 channel,
 	dev_err(ep->dcp->dev,
 		"AFK: channel %d received unhandled standard service message: %x / %x\n",
 		channel, type, eshdr->category);
+	print_hex_dump(KERN_INFO, "AFK: ", DUMP_PREFIX_NONE, 16, 1, payload,
+				   payload_size, true);
 }
 
 static void afk_recv_handle(struct apple_dcp_afkep *ep, u32 channel, u32 type,
@@ -468,8 +470,10 @@ static void afk_recv_handle(struct apple_dcp_afkep *ep, u32 channel, u32 type,
 		return afk_recv_handle_std_service(
 			ep, channel, type, ehdr, eshdr, payload, payload_size);
 
-	dev_err(ep->dcp->dev, "AFK: channel %d received unhandled message\n",
-		channel);
+	dev_err(ep->dcp->dev, "AFK: channel %d received unhandled message (type %x subtype %x)\n",
+		channel, type, subtype);
+	print_hex_dump(KERN_INFO, "AFK: ", DUMP_PREFIX_NONE, 16, 1, payload,
+				   payload_size, true);
 }
 
 static bool afk_recv(struct apple_dcp_afkep *ep)
