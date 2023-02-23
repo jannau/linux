@@ -1,3 +1,10 @@
+* Thu Feb 23 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc0.a5c95ca18a98.4]
+- kernel.spec: move modules.builtin to kernel-core (Jan Stancek)
+- Turn on IDLE_INJECT for x86 (Justin M. Forbes)
+- Flip CONFIG_IDLE_INJECT in pending (Justin M. Forbes)
+- Linux v6.3.0-0.rc0.a5c95ca18a98
+Resolves: 
+
 * Wed Feb 22 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc0.5b7c4cabbb65.3]
 - Linux v6.3.0-0.rc0.5b7c4cabbb65
 Resolves: 
