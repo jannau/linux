@@ -34,7 +34,7 @@ static void av_audiosrv_init(struct apple_epic_service *service, u8 *props,
 
 	/* TODO: this must be done elsewhere */
 	err = afk_service_call(asrv->srv, 0, 6, NULL, 0, 32, NULL, 0, 32);
-	if (err)
+	if (err && err != -ETIMEDOUT)
 		dev_err(dcp->dev, "error opening audio service: %d\n", err);
 
 	asrv->plugged = true;
