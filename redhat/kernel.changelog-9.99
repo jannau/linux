@@ -1,3 +1,7 @@
+* Sat Feb 25 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc0.489fa31ea873.6]
+- Linux v6.3.0-0.rc0.489fa31ea873
+Resolves: 
+
 * Fri Feb 24 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc0.a5c95ca18a98.5]
 - Flip I2C_ALGOBIT to m to avoid mismatch (Justin M. Forbes)
 Resolves: 
