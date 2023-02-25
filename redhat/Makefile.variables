@@ -44,7 +44,7 @@ DIST ?=
 
 # This is the source branch that you are building out of typically this is
 # the current branch.
-DIST_BRANCH ?= "fedora-6.5"
+DIST_BRANCH ?= "fedora-asahi-6.5"
 
 # This is a human readable distribution variable that is used to determine the
 # OS version (fedora, centos, or rhel).
@@ -86,7 +86,7 @@ NO_CONFIGCHECKS ?=
 # the kernel src.rpm, which will contain shas and commits not upstream. The
 # value of PATCHLIST_URL in this case should point to the git repository where
 # the commits are located, and will be added as a prefix to the shas listed.
-PATCHLIST_URL ?= "https://gitlab.com/cki-project/kernel-ark/-/commit"
+PATCHLIST_URL ?= "https://gitlab.com/fedora-asahi/kernel-asahi/-/commit"
 
 # RELEASED_KERNEL swaps between the pre-release secureboot keys and
 # the release one, for vmlinux signing. It also controls whether Fedora
@@ -145,7 +145,7 @@ SPECPACKAGE_NAME ?= kernel
 # should be tracked in a local branch. This would be "master" for the
 # Linus master branch or linux-5.x.y for a stable branch. It can also be
 # any other upstream you have added as a branch locally.
-UPSTREAM_BRANCH ?= linux-6.5.y
+UPSTREAM_BRANCH ?= fedora-6.5
 
 # If VERSION_ON_UPSTREAM is set, the versioning of the rpm package is based
 # on a branch tracking upstream. This allows for generating rpms

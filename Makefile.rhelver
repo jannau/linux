@@ -78,3 +78,6 @@ ifneq ("$(ZSTREAM)", "yes")
     RHEL_RELEASE:=$(RHEL_RELEASE).$(EARLY_YRELEASE)
   endif
 endif
+
+# kernel variant extra version suffix
+VARIANTSTREAM = .asahi
