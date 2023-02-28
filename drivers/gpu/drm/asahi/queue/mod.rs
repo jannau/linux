@@ -492,6 +492,11 @@ impl Queue for Queue::ver {
             return Err(ENODEV);
         }
 
+        // Empty submissions are not legal
+        if commands.is_empty() {
+            return Err(EINVAL);
+        }
+
         let op_guard = if !in_syncs.is_empty() {
             Some(gpu.start_op()?)
         } else {
