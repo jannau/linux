@@ -143,6 +143,32 @@ struct DCP_FW_NAME(dc_swap_complete_resp) {
 	u8 swap_info_null;
 } __packed;
 
+struct DCP_FW_NAME(dcp_map_reg_req) {
+	char obj[4];
+	u32 index;
+	u32 flags;
+#if DCP_FW_VER >= DCP_FW_VERSION(13, 2, 0)
+	u8 unk_u64_null;
+#endif
+	u8 addr_null;
+	u8 length_null;
+#if DCP_FW_VER >= DCP_FW_VERSION(13, 2, 0)
+	u8 padding[1];
+#else
+	u8 padding[2];
+#endif
+} __packed;
+
+struct DCP_FW_NAME(dcp_map_reg_resp) {
+#if DCP_FW_VER >= DCP_FW_VERSION(13, 2, 0)
+	u64 unk_u64;
+#endif
+	u64 addr;
+	u64 length;
+	u32 ret;
+} __packed;
+
+
 struct apple_dcp;
 
 void DCP_FW_NAME(iomfb_flush)(struct apple_dcp *dcp, struct drm_crtc *crtc, struct drm_atomic_state *state);
