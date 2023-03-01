@@ -1109,7 +1109,7 @@ impl super::Queue::ver {
                             stamp_value: ev_vtx.value.next(),
                             stamp_slot: ev_vtx.slot,
                             evctl_index: 0, // fixed
-                            flush_stamps: 0,
+                            flush_stamps: flush_stamps as u32,
                             uuid: uuid_ta,
                             cmd_seq: ev_vtx.cmd_seq as u32,
                         },
