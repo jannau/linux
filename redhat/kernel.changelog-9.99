@@ -1,3 +1,9 @@
+* Wed Mar 01 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc0.c0927a7a5391.10]
+- redhat:  modify efiuki specfile changes to use variants convention (Clark Williams)
+- Turn off DEBUG_INFO_COMPRESSED_ZLIB for Fedora (Justin M. Forbes)
+- Linux v6.3.0-0.rc0.c0927a7a5391
+Resolves: 
+
 * Tue Feb 28 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc0.ae3419fbac84.9]
 - redhat/kernel.spec.template: Fix RHEL systemd-boot-unsigned dependency (Prarit Bhargava)
 - Add hashtable_test to mod-internal.list (Justin M. Forbes)
