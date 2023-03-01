@@ -164,6 +164,8 @@ pub(crate) struct QueueJob {
     sj_frag: Option<SubQueueJob::ver>,
     sj_comp: Option<SubQueueJob::ver>,
     fence: UserFence<JobFence::ver>,
+    did_run: bool,
+    id: u64,
 }
 
 #[versions(AGX)]
@@ -193,23 +195,35 @@ impl QueueJob::ver {
 #[versions(AGX)]
 impl sched::JobImpl for QueueJob::ver {
     fn can_run(job: &mut sched::Job<Self>) -> bool {
-        mod_dev_dbg!(job.dev, "QueueJob: Checking runnability\n");
+        mod_dev_dbg!(job.dev, "QueueJob {}: Checking runnability\n", job.id);
 
         if let Some(sj) = job.sj_vtx.as_ref() {
             if !sj.can_submit() {
-                mod_dev_dbg!(job.dev, "QueueJob: Blocking due to vertex queue full\n");
+                mod_dev_dbg!(
+                    job.dev,
+                    "QueueJob {}: Blocking due to vertex queue full\n",
+                    job.id
+                );
                 return false;
             }
         }
         if let Some(sj) = job.sj_frag.as_ref() {
             if !sj.can_submit() {
-                mod_dev_dbg!(job.dev, "QueueJob: Blocking due to fragment queue full\n");
+                mod_dev_dbg!(
+                    job.dev,
+                    "QueueJob {}: Blocking due to fragment queue full\n",
+                    job.id
+                );
                 return false;
             }
         }
         if let Some(sj) = job.sj_comp.as_ref() {
             if !sj.can_submit() {
-                mod_dev_dbg!(job.dev, "QueueJob: Blocking due to compute queue full\n");
+                mod_dev_dbg!(
+                    job.dev,
+                    "QueueJob {}: Blocking due to compute queue full\n",
+                    job.id
+                );
                 return false;
             }
         }
@@ -218,7 +232,7 @@ impl sched::JobImpl for QueueJob::ver {
 
     #[allow(unused_assignments)]
     fn run(job: &mut sched::Job<Self>) -> Result<Option<dma_fence::Fence>> {
-        mod_dev_dbg!(job.dev, "QueueJob: Running Job\n");
+        mod_dev_dbg!(job.dev, "QueueJob {}: Running Job\n", job.id);
 
         let dev = job.dev.data();
         let gpu = match dev
@@ -242,7 +256,7 @@ impl sched::JobImpl for QueueJob::ver {
         if let Some(sj) = job.sj_frag.as_mut() {
             frag_job = sj.job.take();
             if let Some(wqjob) = frag_job.as_mut() {
-                mod_dev_dbg!(job.dev, "QueueJob: Submit fragment\n");
+                mod_dev_dbg!(job.dev, "QueueJob {}: Submit fragment\n", job.id);
                 frag_sub = Some(wqjob.submit()?);
             }
         }
@@ -252,7 +266,7 @@ impl sched::JobImpl for QueueJob::ver {
         if let Some(sj) = job.sj_vtx.as_mut() {
             vtx_job = sj.job.take();
             if let Some(wqjob) = vtx_job.as_mut() {
-                mod_dev_dbg!(job.dev, "QueueJob: Submit vertex\n");
+                mod_dev_dbg!(job.dev, "QueueJob {}: Submit vertex\n", job.id);
                 vtx_sub = Some(wqjob.submit()?);
             }
         }
@@ -262,27 +276,29 @@ impl sched::JobImpl for QueueJob::ver {
         if let Some(sj) = job.sj_comp.as_mut() {
             comp_job = sj.job.take();
             if let Some(wqjob) = comp_job.as_mut() {
-                mod_dev_dbg!(job.dev, "QueueJob: Submit compute\n");
+                mod_dev_dbg!(job.dev, "QueueJob {}: Submit compute\n", job.id);
                 comp_sub = Some(wqjob.submit()?);
             }
         }
 
         // Now we fully commit to running the job
-        mod_dev_dbg!(job.dev, "QueueJob: Run fragment\n");
+        mod_dev_dbg!(job.dev, "QueueJob {}: Run fragment\n", job.id);
         frag_sub.map(|a| gpu.run_job(a)).transpose()?;
 
-        mod_dev_dbg!(job.dev, "QueueJob: Run vertex\n");
+        mod_dev_dbg!(job.dev, "QueueJob {}: Run vertex\n", job.id);
         vtx_sub.map(|a| gpu.run_job(a)).transpose()?;
 
-        mod_dev_dbg!(job.dev, "QueueJob: Run compute\n");
+        mod_dev_dbg!(job.dev, "QueueJob {}: Run compute\n", job.id);
         comp_sub.map(|a| gpu.run_job(a)).transpose()?;
 
-        mod_dev_dbg!(job.dev, "QueueJob: Drop compute job\n");
+        mod_dev_dbg!(job.dev, "QueueJob {}: Drop compute job\n", job.id);
         core::mem::drop(comp_job);
-        mod_dev_dbg!(job.dev, "QueueJob: Drop vertex job\n");
+        mod_dev_dbg!(job.dev, "QueueJob {}: Drop vertex job\n", job.id);
         core::mem::drop(vtx_job);
-        mod_dev_dbg!(job.dev, "QueueJob: Drop fragment job\n");
+        mod_dev_dbg!(job.dev, "QueueJob {}: Drop fragment job\n", job.id);
         core::mem::drop(frag_job);
+
+        job.did_run = true;
 
         Ok(Some(Fence::from_fence(&job.fence)))
     }
@@ -291,7 +307,8 @@ impl sched::JobImpl for QueueJob::ver {
         // FIXME: Handle timeouts properly
         dev_err!(
             job.dev,
-            "Job timed out on the DRM scheduler, things will probably break\n"
+            "QueueJob {}: Job timed out on the DRM scheduler, things will probably break (ran: {})\n",
+            job.id, job.did_run
         );
         sched::Status::NoDevice
     }
@@ -524,6 +541,8 @@ impl Queue for Queue::ver {
                 .fence_ctx
                 .new_fence::<JobFence::ver>(0, Default::default())?
                 .into(),
+            did_run: false,
+            id,
         })?;
 
         mod_dev_dbg!(self.dev, "Queue: Adding {} in_syncs\n", in_syncs.len());
