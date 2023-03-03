@@ -1,3 +1,7 @@
+* Fri Mar 03 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc0.2eb29d59ddf0.12]
+- Linux v6.3.0-0.rc0.2eb29d59ddf0
+Resolves: 
+
 * Thu Mar 02 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc0.ee3f96b16468.11]
 - redhat:  adapt to upstream Makefile change (Clark Williams)
 - Linux v6.3.0-0.rc0.ee3f96b16468
