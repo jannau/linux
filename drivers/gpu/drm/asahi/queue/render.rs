@@ -615,7 +615,7 @@ impl super::Queue::ver {
                             unk_4: 0,
                             clear_pipeline: fw::fragment::raw::ClearPipelineBinding {
                                 pipeline_bind: U64(cmdbuf.load_pipeline_bind as u64),
-                                address: U64(cmdbuf.load_pipeline as u64 | 4),
+                                address: U64(cmdbuf.load_pipeline as u64),
                             },
                             ppp_multisamplectl: U64(cmdbuf.ppp_multisamplectl),
                             scissor_array: U64(cmdbuf.scissor_array),
@@ -662,7 +662,7 @@ impl super::Queue::ver {
                         },
                         job_params2: fw::fragment::raw::JobParameters2 {
                             store_pipeline_bind: cmdbuf.store_pipeline_bind,
-                            store_pipeline_addr: cmdbuf.store_pipeline | 4,
+                            store_pipeline_addr: cmdbuf.store_pipeline,
                             unk_8: 0x0,
                             unk_c: 0x0,
                             merge_upper_x: F32::from_bits(cmdbuf.merge_upper_x),
@@ -695,7 +695,7 @@ impl super::Queue::ver {
                             unk_120: Default::default(),
                             unk_reload_pipeline: fw::fragment::raw::ClearPipelineBinding {
                                 pipeline_bind: U64(cmdbuf.partial_reload_pipeline_bind as u64),
-                                address: U64(cmdbuf.partial_reload_pipeline as u64 | 4),
+                                address: U64(cmdbuf.partial_reload_pipeline as u64),
                             },
                             unk_258: U64(0),
                             unk_260: U64(0),
@@ -703,7 +703,7 @@ impl super::Queue::ver {
                             unk_270: U64(0),
                             reload_pipeline: fw::fragment::raw::ClearPipelineBinding {
                                 pipeline_bind: U64(cmdbuf.partial_reload_pipeline_bind as u64),
-                                address: U64(cmdbuf.partial_reload_pipeline as u64 | 4),
+                                address: U64(cmdbuf.partial_reload_pipeline as u64),
                             },
                             zls_ctrl: U64(cmdbuf.zls_ctrl),
                             unk_290: U64(0x0),
@@ -727,11 +727,11 @@ impl super::Queue::ver {
                             unk_partial_store_pipeline:
                                 fw::fragment::raw::StorePipelineBinding::new(
                                     cmdbuf.partial_store_pipeline_bind,
-                                    cmdbuf.partial_store_pipeline | 4
+                                    cmdbuf.partial_store_pipeline
                                 ),
                             partial_store_pipeline: fw::fragment::raw::StorePipelineBinding::new(
                                 cmdbuf.partial_store_pipeline_bind,
-                                cmdbuf.partial_store_pipeline | 4
+                                cmdbuf.partial_store_pipeline
                             ),
                             isp_bgobjdepth: cmdbuf.isp_bgobjdepth,
                             isp_bgobjvals: cmdbuf.isp_bgobjvals,
