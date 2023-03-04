@@ -1,3 +1,11 @@
+* Sat Mar 04 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc0.0988a0ea7919.13]
+- redhat: Fix build for kselftests mm (Nico Pache)
+- fix tools build after vm to mm rename (Justin M. Forbes)
+- redhat/spec: Update bpftool versioning scheme (Viktor Malik)
+- redhat/configs: CONFIG_CRYPTO_SM4_AESNI_AVX*_X86_64 is x86 only (Prarit Bhargava)
+- Linux v6.3.0-0.rc0.0988a0ea7919
+Resolves: 
+
 * Fri Mar 03 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc0.2eb29d59ddf0.12]
 - Linux v6.3.0-0.rc0.2eb29d59ddf0
 Resolves: 
