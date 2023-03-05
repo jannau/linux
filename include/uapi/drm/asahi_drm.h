@@ -319,7 +319,7 @@ struct drm_asahi_submit {
 #define ASAHI_ATTACHMENT_Z    1
 #define ASAHI_ATTACHMENT_S    2
 
-// FIXME: Type doesn't make sense here
+/* FIXME: Type doesn't make sense here */
 struct drm_asahi_attachment {
 	__u32 type;
 	__u32 size;
