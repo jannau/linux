@@ -29,6 +29,7 @@
 #include <linux/dma-mapping.h>
 #include <linux/err.h>
 #include <linux/errname.h>
+#include <linux/mutex.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
 #include <linux/platform_device.h>
@@ -523,6 +524,22 @@ int rust_helper_drm_gem_shmem_object_mmap(struct drm_gem_object *obj, struct vm_
 EXPORT_SYMBOL_GPL(rust_helper_drm_gem_shmem_object_mmap);
 
 #endif
+#endif
+
+#ifdef mutex_lock
+void rust_helper_mutex_lock(struct mutex *lock)
+{
+	return mutex_lock(lock);
+}
+EXPORT_SYMBOL_GPL(rust_helper_mutex_lock);
+#endif
+
+#ifdef mutex_unlock
+void rust_helper_mutex_unlock(struct mutex *lock)
+{
+	return mutex_unlock(lock);
+}
+EXPORT_SYMBOL_GPL(rust_helper_mutex_unlock);
 #endif
 
 /*
