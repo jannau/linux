@@ -97,6 +97,82 @@ impl ForeignOwnable for () {
     unsafe fn from_foreign(_: *const core::ffi::c_void) -> Self {}
 }
 
+/// Used to transfer ownership to and from foreign (non-Rust) languages.
+///
+/// Ownership is transferred from Rust to a foreign language by calling [`Self::into_foreign`] and
+/// later may be transferred back to Rust by calling [`Self::from_foreign`].
+///
+/// This trait is meant to be used in cases when Rust objects are stored in C objects and
+/// eventually "freed" back to Rust.
+pub trait ForeignOwnable: Sized {
+    /// Type of values borrowed between calls to [`ForeignOwnable::into_foreign`] and
+    /// [`ForeignOwnable::from_foreign`].
+    type Borrowed<'a>;
+
+    /// Converts a Rust-owned object to a foreign-owned one.
+    ///
+    /// The foreign representation is a pointer to void.
+    fn into_foreign(self) -> *const core::ffi::c_void;
+
+    /// Borrows a foreign-owned object.
+    ///
+    /// # Safety
+    ///
+    /// `ptr` must have been returned by a previous call to [`ForeignOwnable::into_foreign`] for
+    /// which a previous matching [`ForeignOwnable::from_foreign`] hasn't been called yet.
+    /// Additionally, all instances (if any) of values returned by [`ForeignOwnable::borrow_mut`]
+    /// for this object must have been dropped.
+    unsafe fn borrow<'a>(ptr: *const core::ffi::c_void) -> Self::Borrowed<'a>;
+
+    /// Mutably borrows a foreign-owned object.
+    ///
+    /// # Safety
+    ///
+    /// `ptr` must have been returned by a previous call to [`ForeignOwnable::into_foreign`] for
+    /// which a previous matching [`ForeignOwnable::from_foreign`] hasn't been called yet.
+    /// Additionally, all instances (if any) of values returned by [`ForeignOwnable::borrow`] and
+    /// [`ForeignOwnable::borrow_mut`] for this object must have been dropped.
+    unsafe fn borrow_mut(ptr: *const core::ffi::c_void) -> ScopeGuard<Self, fn(Self)> {
+        // SAFETY: The safety requirements ensure that `ptr` came from a previous call to
+        // `into_foreign`.
+        ScopeGuard::new_with_data(unsafe { Self::from_foreign(ptr) }, |d| {
+            d.into_foreign();
+        })
+    }
+
+    /// Converts a foreign-owned object back to a Rust-owned one.
+    ///
+    /// # Safety
+    ///
+    /// `ptr` must have been returned by a previous call to [`ForeignOwnable::into_foreign`] for
+    /// which a previous matching [`ForeignOwnable::from_foreign`] hasn't been called yet.
+    /// Additionally, all instances (if any) of values returned by [`ForeignOwnable::borrow`] and
+    /// [`ForeignOwnable::borrow_mut`] for this object must have been dropped.
+    unsafe fn from_foreign(ptr: *const core::ffi::c_void) -> Self;
+}
+
+impl<T: 'static> ForeignOwnable for Box<T> {
+    type Borrowed<'a> = &'a T;
+
+    fn into_foreign(self) -> *const core::ffi::c_void {
+        Box::into_raw(self) as _
+    }
+
+    unsafe fn borrow<'a>(ptr: *const core::ffi::c_void) -> &'a T {
+        // SAFETY: The safety requirements for this function ensure that the object is still alive,
+        // so it is safe to dereference the raw pointer.
+        // The safety requirements of `from_foreign` also ensure that the object remains alive for
+        // the lifetime of the returned value.
+        unsafe { &*ptr.cast() }
+    }
+
+    unsafe fn from_foreign(ptr: *const core::ffi::c_void) -> Self {
+        // SAFETY: The safety requirements of this function ensure that `ptr` comes from a previous
+        // call to `Self::into_foreign`.
+        unsafe { Box::from_raw(ptr as _) }
+    }
+}
+
 /// Runs a cleanup function/closure when dropped.
 ///
 /// The [`ScopeGuard::dismiss`] function prevents the cleanup function from running.
@@ -248,3 +324,84 @@ pub enum Either<L, R> {
     /// Constructs an instance of [`Either`] containing a value of type `R`.
     Right(R),
 }
+
+/// A trait for boolean types.
+///
+/// This is meant to be used in type states to allow boolean constraints in implementation blocks.
+/// In the example below, the implementation containing `MyType::set_value` could _not_ be
+/// constrained to type states containing `Writable = true` if `Writable` were a constant instead
+/// of a type.
+///
+/// # Safety
+///
+/// No additional implementations of [`Bool`] should be provided, as [`True`] and [`False`] are
+/// already provided.
+///
+/// # Examples
+///
+/// ```
+/// # use kernel::{Bool, False, True};
+/// use core::marker::PhantomData;
+///
+/// // Type state specifies whether the type is writable.
+/// trait MyTypeState {
+///     type Writable: Bool;
+/// }
+///
+/// // In state S1, the type is writable.
+/// struct S1;
+/// impl MyTypeState for S1 {
+///     type Writable = True;
+/// }
+///
+/// // In state S2, the type is not writable.
+/// struct S2;
+/// impl MyTypeState for S2 {
+///     type Writable = False;
+/// }
+///
+/// struct MyType<T: MyTypeState> {
+///     value: u32,
+///     _p: PhantomData<T>,
+/// }
+///
+/// impl<T: MyTypeState> MyType<T> {
+///     fn new(value: u32) -> Self {
+///         Self {
+///             value,
+///             _p: PhantomData,
+///         }
+///     }
+/// }
+///
+/// // This implementation block only applies if the type state is writable.
+/// impl<T> MyType<T>
+/// where
+///     T: MyTypeState<Writable = True>,
+/// {
+///     fn set_value(&mut self, v: u32) {
+///         self.value = v;
+///     }
+/// }
+///
+/// let mut x = MyType::<S1>::new(10);
+/// let mut y = MyType::<S2>::new(20);
+///
+/// x.set_value(30);
+///
+/// // The code below fails to compile because `S2` is not writable.
+/// // y.set_value(40);
+/// ```
+pub unsafe trait Bool {}
+
+/// Represents the `true` value for types with [`Bool`] bound.
+pub struct True;
+
+// SAFETY: This is one of the only two implementations of `Bool`.
+unsafe impl Bool for True {}
+
+/// Represents the `false` value for types wth [`Bool`] bound.
+pub struct False;
+
+// SAFETY: This is one of the only two implementations of `Bool`.
+unsafe impl Bool for False {}
