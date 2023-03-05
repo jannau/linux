@@ -32,6 +32,7 @@
 #include <linux/of.h>
 #include <linux/of_device.h>
 #include <linux/platform_device.h>
+#include <linux/spinlock.h>
 #include <linux/rcupdate.h>
 #include <linux/refcount.h>
 #include <linux/xarray.h>
@@ -378,7 +379,12 @@ void rust_helper___spin_lock_init(spinlock_t *lock, const char *name,
 				  struct lock_class_key *key)
 {
 #ifdef CONFIG_DEBUG_SPINLOCK
-	__spin_lock_init(lock, name, key);
+# ifndef CONFIG_PREEMPT_RT
+	__raw_spin_lock_init(spinlock_check(lock), name, key, LD_WAIT_CONFIG);
+# else
+	rt_mutex_base_init(&lock->lock);
+	__rt_spin_lock_init(lock, name, key, false);
+# endif
 #else
 	spin_lock_init(lock);
 #endif
