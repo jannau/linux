@@ -159,12 +159,12 @@ impl<T, U: RawAllocation> Drop for GenericAlloc<T, U> {
                         .unwrap_or(0);
                     dev_warn!(
                         self.device(),
-                        "Allocator: Corruption after object of type {} at {:#x}:{:#x} + {:#x}..{:#x}\n",
+                        "Allocator: Corruption after object of type {} at {:#x}:{:#x} + {:#x}..={:#x}\n",
                         core::any::type_name::<T>(),
                         self.gpu_ptr(),
                         self.size(),
                         first_err,
-                        self.padding - last_err
+                        self.padding - last_err - 1
                     );
                 }
             }
