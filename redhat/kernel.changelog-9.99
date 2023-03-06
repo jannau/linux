@@ -1,3 +1,8 @@
+* Mon Mar 06 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc1.15]
+- redhat/configs: CONFIG_HP_ILO location fix (Vladis Dronov)
+- Linux v6.3.0-0.rc1
+Resolves: 
+
 * Sun Mar 05 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc0.b01fe98d34f3.14]
 - Linux v6.3.0-0.rc0.b01fe98d34f3
 Resolves: 
