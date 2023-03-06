@@ -60,6 +60,7 @@ pub(crate) mod raw {
     }
 
     #[derive(Debug)]
+    #[repr(transparent)]
     pub(crate) struct Threshold(AtomicU64);
     default_zeroed!(Threshold);
 

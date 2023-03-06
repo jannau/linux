@@ -165,7 +165,7 @@ impl drm::file::DriverFile for File {
         let gpu = &device.data().gpu;
         let id = gpu.ids().file.next();
 
-        mod_dev_dbg!(device, "[File {}]: DRM device opened", id);
+        mod_dev_dbg!(device, "[File {}]: DRM device opened\n", id);
         Ok(Box::try_new(Self {
             id,
             vms: xarray::XArray::new(xarray::flags::ALLOC1)?,
@@ -181,7 +181,7 @@ impl File {
         data: &mut bindings::drm_asahi_get_params,
         file: &DrmFile,
     ) -> Result<u32> {
-        mod_dev_dbg!(device, "[File {}]: IOCTL: get_params", file.id);
+        mod_dev_dbg!(device, "[File {}]: IOCTL: get_params\n", file.id);
 
         let gpu = &device.data().gpu;
 
@@ -264,8 +264,13 @@ impl File {
         let resv = file.vms.reserve()?;
         let id: u32 = resv.index().try_into()?;
 
-        mod_dev_dbg!(device, "[File {} VM {}]: VM Create", file_id, id);
-        mod_dev_dbg!(device, "[File {} VM {}]: Creating allocators", file_id, id);
+        mod_dev_dbg!(device, "[File {} VM {}]: VM Create\n", file_id, id);
+        mod_dev_dbg!(
+            device,
+            "[File {} VM {}]: Creating allocators\n",
+            file_id,
+            id
+        );
         let ualloc = Arc::try_new(Mutex::new(alloc::DefaultAllocator::new(
             device,
             &vm,
@@ -293,7 +298,7 @@ impl File {
 
         mod_dev_dbg!(
             device,
-            "[File {} VM {}]: Creating dummy object",
+            "[File {} VM {}]: Creating dummy object\n",
             file_id,
             id
         );
@@ -301,7 +306,7 @@ impl File {
         dummy_obj.vmap()?.as_mut_slice().fill(0);
         dummy_obj.map_at(&vm, VM_UNK_PAGE, mmu::PROT_GPU_SHARED_RW, true)?;
 
-        mod_dev_dbg!(device, "[File {} VM {}]: VM created", file_id, id);
+        mod_dev_dbg!(device, "[File {} VM {}]: VM created\n", file_id, id);
         resv.store(Box::try_new(Vm {
             ualloc,
             ualloc_priv,
@@ -339,7 +344,7 @@ impl File {
     ) -> Result<u32> {
         mod_dev_dbg!(
             device,
-            "[File {}]: IOCTL: gem_create size={:#x?}",
+            "[File {}]: IOCTL: gem_create size={:#x?}\n",
             file.id,
             data.size
         );
@@ -364,7 +369,7 @@ impl File {
 
         mod_dev_dbg!(
             device,
-            "[File {}]: IOCTL: gem_create size={:#x} handle={:#x?}",
+            "[File {}]: IOCTL: gem_create size={:#x} handle={:#x?}\n",
             file.id,
             data.size,
             data.handle
@@ -381,7 +386,7 @@ impl File {
     ) -> Result<u32> {
         mod_dev_dbg!(
             device,
-            "[File {}]: IOCTL: gem_mmap_offset handle={:#x?}",
+            "[File {}]: IOCTL: gem_mmap_offset handle={:#x?}\n",
             file.id,
             data.handle
         );
@@ -403,7 +408,7 @@ impl File {
     ) -> Result<u32> {
         mod_dev_dbg!(
             device,
-            "[File {} VM {}]: IOCTL: gem_bind op={:?} handle={:#x?} flags={:#x?} {:#x?}:{:#x?} -> {:#x?}",
+            "[File {} VM {}]: IOCTL: gem_bind op={:?} handle={:#x?} flags={:#x?} {:#x?}:{:#x?} -> {:#x?}\n",
             file.id,
             data.op,
             data.vm_id,
@@ -527,7 +532,7 @@ impl File {
 
         mod_dev_dbg!(
             device,
-            "[File {} VM {}]: Creating queue caps={:?} prio={:?} flags={:#x?}",
+            "[File {} VM {}]: Creating queue caps={:?} prio={:?} flags={:#x?}\n",
             file_id,
             data.vm_id,
             data.queue_caps,
@@ -616,7 +621,7 @@ impl File {
         let id = gpu.ids().submission.next();
         mod_dev_dbg!(
             device,
-            "[File {} Queue {}]: IOCTL: submit (submission ID: {})",
+            "[File {} Queue {}]: IOCTL: submit (submission ID: {})\n",
             file.id,
             data.queue_id,
             id
@@ -683,18 +688,20 @@ impl File {
             .lock()
             .submit(id, in_syncs, out_syncs, result_buf, commands);
 
-        if let Err(e) = ret {
-            dev_info!(
-                device,
-                "[File {} Queue {}]: IOCTL: submit failed! (submission ID: {} err: {:?})",
-                file.id,
-                data.queue_id,
-                id,
-                e
-            );
-            Err(e)
-        } else {
-            Ok(0)
+        match ret {
+            Err(ERESTARTSYS) => Err(ERESTARTSYS),
+            Err(e) => {
+                dev_info!(
+                    device,
+                    "[File {} Queue {}]: IOCTL: submit failed! (submission ID: {} err: {:?})\n",
+                    file.id,
+                    data.queue_id,
+                    id,
+                    e
+                );
+                Err(e)
+            }
+            Ok(_) => Ok(0),
         }
     }
 
@@ -706,6 +713,6 @@ impl File {
 
 impl Drop for File {
     fn drop(&mut self) {
-        mod_pr_debug!("[File {}]: Closing...", self.id);
+        mod_pr_debug!("[File {}]: Closing...\n", self.id);
     }
 }

@@ -204,12 +204,13 @@ pub(crate) enum DeviceControlMsg {
 default_zeroed!(DeviceControlMsg::ver);
 
 #[derive(Copy, Clone, Default, Debug)]
+#[repr(C)]
 #[allow(dead_code)]
 pub(crate) struct FwCtlMsg {
     pub(crate) addr: U64,
     pub(crate) unk_8: u32,
     pub(crate) slot: u32,
-    pub(crate) unk_10: u16,
+    pub(crate) page_count: u16,
     pub(crate) unk_12: u16,
 }
 
@@ -236,6 +237,7 @@ pub(crate) enum EventMsg {
 pub(crate) const EVENT_MAX: u32 = 0x4;
 
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub(crate) union RawEventMsg {
     pub(crate) raw: (u32, Array<EVENT_SZ, u8>),
     pub(crate) msg: EventMsg,
@@ -373,6 +375,7 @@ pub(crate) const STATS_MAX: u32 = 0xe;
 
 #[versions(AGX)]
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub(crate) union RawStatsMsg {
     pub(crate) raw: (u32, Array<{ STATS_SZ::ver }, u8>),
     pub(crate) msg: StatsMsg::ver,

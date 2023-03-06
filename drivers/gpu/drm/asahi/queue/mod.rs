@@ -121,6 +121,7 @@ pub(crate) struct Queue {
 #[versions(AGX)]
 #[derive(Default)]
 pub(crate) struct JobFence {
+    id: u64,
     pending: AtomicU64,
 }
 
@@ -132,11 +133,15 @@ impl JobFence::ver {
 
     fn command_complete(self: &FenceObject<Self>) {
         let remain = self.pending.fetch_sub(1, Ordering::Relaxed) - 1;
-        mod_pr_debug!("JobFence: Command complete (remain: {})\n", remain);
+        mod_pr_debug!(
+            "JobFence[{}]: Command complete (remain: {})\n",
+            self.id,
+            remain
+        );
         if remain == 0 {
-            mod_pr_debug!("JobFence: Signaling\n");
+            mod_pr_debug!("JobFence[{}]: Signaling\n", self.id);
             if self.signal().is_err() {
-                pr_err!("Fence signal failed\n");
+                pr_err!("JobFence[{}]: Fence signal failed\n", self.id);
             }
         }
     }
@@ -242,7 +247,10 @@ impl sched::JobImpl for QueueJob::ver {
             .downcast::<gpu::GpuManager::ver>()
         {
             Ok(gpu) => gpu,
-            Err(_) => panic!("GpuManager mismatched with JobImpl!"),
+            Err(_) => {
+                dev_crit!(job.dev, "GpuManager mismatched with QueueJob!\n");
+                return Err(EIO);
+            }
         };
 
         if job.op_guard.is_none() {
@@ -314,6 +322,13 @@ impl sched::JobImpl for QueueJob::ver {
     }
 }
 
+#[versions(AGX)]
+impl Drop for QueueJob::ver {
+    fn drop(&mut self) {
+        mod_dev_dbg!(self.dev, "QueueJob {}: Dropping\n", self.id);
+    }
+}
+
 struct ResultWriter {
     vmap: VMap<gem::DriverObject>,
     offset: usize,
@@ -350,7 +365,7 @@ impl Queue::ver {
         priority: u32,
         caps: u32,
     ) -> Result<Queue::ver> {
-        mod_dev_dbg!(dev, "[Queue {}] Creating renderer\n", id);
+        mod_dev_dbg!(dev, "[Queue {}] Creating queue\n", id);
 
         let data = dev.data();
 
@@ -499,13 +514,20 @@ impl Queue for Queue::ver {
             .downcast::<gpu::GpuManager::ver>()
         {
             Ok(gpu) => gpu,
-            Err(_) => panic!("GpuManager mismatched with JobImpl!"),
+            Err(_) => {
+                dev_crit!(self.dev, "GpuManager mismatched with JobImpl!\n");
+                return Err(EIO);
+            }
         };
 
-        mod_dev_dbg!(self.dev, "Queue: Submit job\n");
+        mod_dev_dbg!(self.dev, "[Submission {}] Submit job\n", id);
 
         if gpu.is_crashed() {
-            dev_err!(self.dev, "GPU is crashed, cannot submit\n");
+            dev_err!(
+                self.dev,
+                "[Submission {}] GPU is crashed, cannot submit\n",
+                id
+            );
             return Err(ENODEV);
         }
 
@@ -529,7 +551,7 @@ impl Queue for Queue::ver {
         let vm_bind = gpu.bind_vm(&self.vm)?;
         let vm_slot = vm_bind.slot();
 
-        mod_dev_dbg!(self.dev, "Queue: Creating job\n");
+        mod_dev_dbg!(self.dev, "[Submission {}] Creating job\n", id);
         let mut job = self.entity.new_job(QueueJob::ver {
             dev: self.dev.clone(),
             vm_bind,
@@ -539,13 +561,24 @@ impl Queue for Queue::ver {
             sj_comp: self.q_comp.as_mut().map(|a| a.new_job()),
             fence: self
                 .fence_ctx
-                .new_fence::<JobFence::ver>(0, Default::default())?
+                .new_fence::<JobFence::ver>(
+                    0,
+                    JobFence::ver {
+                        id,
+                        pending: Default::default(),
+                    },
+                )?
                 .into(),
             did_run: false,
             id,
         })?;
 
-        mod_dev_dbg!(self.dev, "Queue: Adding {} in_syncs\n", in_syncs.len());
+        mod_dev_dbg!(
+            self.dev,
+            "[Submission {}] Adding {} in_syncs\n",
+            id,
+            in_syncs.len()
+        );
         for sync in in_syncs {
             job.add_dependency(sync.fence.expect("in_sync missing fence"))?;
         }
@@ -561,7 +594,12 @@ impl Queue for Queue::ver {
             }
         }
 
-        mod_dev_dbg!(self.dev, "Queue: Submitting {} commands\n", commands.len());
+        mod_dev_dbg!(
+            self.dev,
+            "[Submission {}] Submitting {} commands\n",
+            id,
+            commands.len()
+        );
         for (i, cmd) in commands.into_iter().enumerate() {
             for (queue_idx, index) in cmd.barriers.iter().enumerate() {
                 if *index == bindings::DRM_ASAHI_BARRIER_NONE as u32 {
@@ -689,6 +727,7 @@ impl Queue for Queue::ver {
 #[versions(AGX)]
 impl Drop for Queue::ver {
     fn drop(&mut self) {
+        mod_dev_dbg!(self.dev, "[Queue {}] Dropping queue\n", self.id);
         let dev = self.dev.data();
         if dev.gpu.invalidate_context(&self.gpu_context).is_err() {
             dev_err!(self.dev, "Queue::drop: Failed to invalidate GPU context!\n");

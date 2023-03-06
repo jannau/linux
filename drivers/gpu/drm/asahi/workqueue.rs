@@ -641,6 +641,7 @@ impl WorkQueue::ver {
 
         let ev = &inner.event.as_ref().unwrap();
 
+        mod_pr_debug!("WorkQueue({:?}): New job\n", inner.pipe_type);
         Ok(Job::ver {
             wq: self.clone(),
             wq_size: inner.size,
@@ -693,7 +694,7 @@ impl WorkQueue for WorkQueue::ver {
         let event = inner.event.as_ref();
         let value = match event {
             None => {
-                pr_err!("WorkQueue: signal() called but no event?");
+                pr_err!("WorkQueue: signal() called but no event?\n");
                 return true;
             }
             Some(event) => event.0.current(),
@@ -702,7 +703,7 @@ impl WorkQueue for WorkQueue::ver {
         inner.last_completed = Some(value);
 
         mod_pr_debug!(
-            "WorkQueue({:?}): Signaling event {:?} value {:#x?}",
+            "WorkQueue({:?}): Signaling event {:?} value {:#x?}\n",
             inner.pipe_type,
             inner.last_token,
             value
@@ -713,7 +714,7 @@ impl WorkQueue for WorkQueue::ver {
         for cmd in inner.pending.iter() {
             if cmd.value() <= value {
                 mod_pr_debug!(
-                    "WorkQueue({:?}): Command at value {:#x?} complete",
+                    "WorkQueue({:?}): Command at value {:#x?} complete\n",
                     inner.pipe_type,
                     cmd.value()
                 );
@@ -731,7 +732,7 @@ impl WorkQueue for WorkQueue::ver {
 
         if completed.try_reserve(completed_commands).is_err() {
             pr_crit!(
-                "WorkQueue({:?}): Failed to allocated space for {} completed commands",
+                "WorkQueue({:?}): Failed to allocated space for {} completed commands\n",
                 inner.pipe_type,
                 completed_commands
             );
@@ -744,14 +745,14 @@ impl WorkQueue for WorkQueue::ver {
         for cmd in inner.pending.drain(..completed_commands) {
             if completed.try_push(cmd).is_err() {
                 pr_crit!(
-                    "WorkQueue({:?}): Failed to signal a completed command",
+                    "WorkQueue({:?}): Failed to signal a completed command\n",
                     pipe_type,
                 );
             }
         }
 
         mod_pr_debug!(
-            "WorkQueue({:?}): Completed {} commands",
+            "WorkQueue({:?}): Completed {} commands\n",
             inner.pipe_type,
             completed_commands
         );
@@ -788,12 +789,12 @@ impl WorkQueue for WorkQueue::ver {
         let mut inner = self.inner.lock();
 
         if inner.event.is_none() {
-            pr_err!("WorkQueue: signal_fault() called but no event?");
+            pr_err!("WorkQueue: signal_fault() called but no event?\n");
             return;
         }
 
         mod_pr_debug!(
-            "WorkQueue({:?}): Signaling fault for event {:?} at value {:#x?}",
+            "WorkQueue({:?}): Signaling fault for event {:?} at value {:#x?}\n",
             inner.pipe_type,
             inner.last_token,
             value
@@ -817,12 +818,12 @@ impl WorkQueue for WorkQueue::ver {
         let mut inner = self.inner.lock();
 
         if inner.event.is_none() {
-            pr_err!("WorkQueue: fail_all() called but no event?");
+            pr_err!("WorkQueue: fail_all() called but no event?\n");
             return;
         }
 
         mod_pr_debug!(
-            "WorkQueue({:?}): Failing all jobs {:?}",
+            "WorkQueue({:?}): Failing all jobs {:?}\n",
             inner.pipe_type,
             error
         );
@@ -841,5 +842,12 @@ impl WorkQueue for WorkQueue::ver {
             cmd.mark_error(error);
             cmd.complete();
         }
+    }
+}
+
+#[versions(AGX)]
+impl Drop for WorkQueue::ver {
+    fn drop(&mut self) {
+        mod_pr_debug!("WorkQueue({:?}): Dropping\n", self.inner.lock().pipe_type);
     }
 }

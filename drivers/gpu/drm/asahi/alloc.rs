@@ -159,7 +159,7 @@ impl<T, U: RawAllocation> Drop for GenericAlloc<T, U> {
                         .unwrap_or(0);
                     dev_warn!(
                         self.device(),
-                        "Allocator: Corruption after object of type {} at {:#x}:{:#x} + {:#x}..{:#x}",
+                        "Allocator: Corruption after object of type {} at {:#x}:{:#x} + {:#x}..{:#x}\n",
                         core::any::type_name::<T>(),
                         self.gpu_ptr(),
                         self.size(),
@@ -406,7 +406,7 @@ impl Drop for SimpleAllocation {
     fn drop(&mut self) {
         mod_dev_dbg!(
             self.device(),
-            "SimpleAllocator: drop object @ {:#x}",
+            "SimpleAllocator: drop object @ {:#x}\n",
             self.gpu_ptr()
         );
         if debug_enabled(DebugFlags::FillAllocations) {
@@ -504,7 +504,7 @@ impl Allocator for SimpleAllocator {
 
         mod_dev_dbg!(
             &self.dev,
-            "SimpleAllocator::new: size={:#x} size_al={:#x} al={:#x} off={:#x}",
+            "SimpleAllocator::new: size={:#x} size_al={:#x} al={:#x} off={:#x}\n",
             size,
             size_aligned,
             align,
@@ -530,7 +530,7 @@ impl Allocator for SimpleAllocator {
 
         mod_dev_dbg!(
             &self.dev,
-            "SimpleAllocator::new -> {:#?} / {:#?} | {:#x} / {:#x}",
+            "SimpleAllocator::new -> {:#?} / {:#?} | {:#x} / {:#x}\n",
             p,
             ptr,
             iova,
@@ -581,7 +581,7 @@ impl Drop for HeapAllocation {
                 if garbage.try_push(node).is_err() {
                     dev_err!(
                         &a.dev,
-                        "HeapAllocation[{}]::drop: Failed to keep garbage",
+                        "HeapAllocation[{}]::drop: Failed to keep garbage\n",
                         &*a.name,
                     );
                 }
@@ -608,7 +608,7 @@ impl mm::AllocInner<HeapAllocationInner> for HeapAllocatorInner {
         if obj.real_size > 0 {
             mod_dev_dbg!(
                 obj.dev,
-                "HeapAllocator[{}]: drop object @ {:#x} ({} bytes)",
+                "HeapAllocator[{}]: drop object @ {:#x} ({} bytes)\n",
                 &*self.name,
                 start,
                 obj.real_size,
@@ -745,7 +745,7 @@ impl HeapAllocator {
 
         mod_dev_dbg!(
             &self.dev,
-            "HeapAllocator[{}]::add_block: size={:#x} size_al={:#x}",
+            "HeapAllocator[{}]::add_block: size={:#x} size_al={:#x}\n",
             &*self.name,
             size,
             size_aligned,
@@ -754,7 +754,7 @@ impl HeapAllocator {
         if self.top.saturating_add(size_aligned as u64) >= self.end {
             dev_err!(
                 &self.dev,
-                "HeapAllocator[{}]::add_block: Exhausted VA space",
+                "HeapAllocator[{}]::add_block: Exhausted VA space\n",
                 &*self.name,
             );
         }
@@ -768,7 +768,7 @@ impl HeapAllocator {
         if let Err(e) = obj.map_at(&self.vm, gpu_ptr, self.prot, self.cpu_maps) {
             dev_err!(
                 &self.dev,
-                "HeapAllocator[{}]::add_block: Failed to map at {:#x} ({:?})",
+                "HeapAllocator[{}]::add_block: Failed to map at {:#x} ({:?})\n",
                 &*self.name,
                 gpu_ptr,
                 e
@@ -784,7 +784,7 @@ impl HeapAllocator {
             let guard = self.min_align.max(mmu::UAT_PGSZ);
             mod_dev_dbg!(
                 &self.dev,
-                "HeapAllocator[{}]::add_block: Adding guard node {:#x}:{:#x}",
+                "HeapAllocator[{}]::add_block: Adding guard node {:#x}:{:#x}\n",
                 &*self.name,
                 new_top,
                 guard
@@ -801,7 +801,7 @@ impl HeapAllocator {
                 Err(a) => {
                     dev_err!(
                         &self.dev,
-                        "HeapAllocator[{}]::add_block: Failed to reserve guard node {:#x}:{:#x}: {:?}",
+                        "HeapAllocator[{}]::add_block: Failed to reserve guard node {:#x}:{:#x}: {:?}\n",
                         &*self.name,
                         guard,
                         new_top,
@@ -817,7 +817,7 @@ impl HeapAllocator {
         }
         mod_dev_dbg!(
             &self.dev,
-            "HeapAllocator[{}]::add_block: top={:#x}",
+            "HeapAllocator[{}]::add_block: top={:#x}\n",
             &*self.name,
             new_top
         );
@@ -830,7 +830,7 @@ impl HeapAllocator {
         cls_dev_dbg!(
             MemStats,
             &self.dev,
-            "{} Heap: grow to {} bytes",
+            "{} Heap: grow to {} bytes\n",
             &*self.name,
             self.top - self.start
         );
@@ -883,7 +883,7 @@ impl Allocator for HeapAllocator {
 
         mod_dev_dbg!(
             &self.dev,
-            "HeapAllocator[{}]::new: size={:#x} size_al={:#x}",
+            "HeapAllocator[{}]::new: size={:#x} size_al={:#x}\n",
             &*self.name,
             size,
             size_aligned,
@@ -906,7 +906,7 @@ impl Allocator for HeapAllocator {
             Err(a) => {
                 dev_err!(
                     &self.dev,
-                    "HeapAllocator[{}]::new: Failed to insert node of size {:#x} / align {:#x}: {:?}",
+                    "HeapAllocator[{}]::new: Failed to insert node of size {:#x} / align {:#x}: {:?}\n",
                     &*self.name, size_aligned, align, a
                 );
                 return Err(a);
@@ -922,7 +922,7 @@ impl Allocator for HeapAllocator {
             if start > self.top {
                 dev_warn!(
                     self.dev,
-                    "HeapAllocator[{}]::alloc: top={:#x}, start={:#x}",
+                    "HeapAllocator[{}]::alloc: top={:#x}, start={:#x}\n",
                     &*self.name,
                     self.top,
                     start
@@ -937,7 +937,7 @@ impl Allocator for HeapAllocator {
         if self.cpu_maps {
             mod_dev_dbg!(
                 self.dev,
-                "HeapAllocator[{}]::alloc: mapping to CPU",
+                "HeapAllocator[{}]::alloc: mapping to CPU\n",
                 &*self.name
             );
 
@@ -949,7 +949,7 @@ impl Allocator for HeapAllocator {
                     Err(_) => {
                         dev_warn!(
                             self.dev,
-                            "HeapAllocator[{}]::alloc: Failed to find object at {:#x}",
+                            "HeapAllocator[{}]::alloc: Failed to find object at {:#x}\n",
                             &*self.name,
                             start
                         );
@@ -969,7 +969,7 @@ impl Allocator for HeapAllocator {
                 NonNull::new(unsafe { p.add((start - obj_start) as usize) });
             mod_dev_dbg!(
                 self.dev,
-                "HeapAllocator[{}]::alloc: CPU pointer = {:?}",
+                "HeapAllocator[{}]::alloc: CPU pointer = {:?}\n",
                 &*self.name,
                 node.ptr
             );
@@ -977,7 +977,7 @@ impl Allocator for HeapAllocator {
 
         mod_dev_dbg!(
             self.dev,
-            "HeapAllocator[{}]::alloc: Allocated {:#x} bytes @ {:#x}",
+            "HeapAllocator[{}]::alloc: Allocated {:#x} bytes @ {:#x}\n",
             &*self.name,
             end - start,
             start
@@ -1003,7 +1003,7 @@ impl Allocator for HeapAllocator {
         if garbage.try_reserve(count).is_err() {
             dev_crit!(
                 self.dev,
-                "HeapAllocator[{}]:collect_garbage: failed to reserve space",
+                "HeapAllocator[{}]:collect_garbage: failed to reserve space\n",
                 &*self.name,
             );
             return;
@@ -1026,14 +1026,14 @@ impl Drop for HeapAllocatorInner {
     fn drop(&mut self) {
         mod_dev_dbg!(
             self.dev,
-            "HeapAllocator[{}]: dropping allocator",
+            "HeapAllocator[{}]: dropping allocator\n",
             &*self.name
         );
         if self.allocated > 0 {
             // This should never happen
             dev_crit!(
                 self.dev,
-                "HeapAllocator[{}]: dropping with {} bytes allocated",
+                "HeapAllocator[{}]: dropping with {} bytes allocated\n",
                 &*self.name,
                 self.allocated
             );

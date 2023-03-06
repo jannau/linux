@@ -231,7 +231,7 @@ impl<T: GpuStruct, U: Allocation<T>> GpuObject<T, U> {
         if size > 0x1000 {
             dev_crit!(
                 alloc.device(),
-                "Allocating {} of size {:#x}, with new, please use new_boxed!",
+                "Allocating {} of size {:#x}, with new, please use new_boxed!\n",
                 core::any::type_name::<T>(),
                 size
             );
@@ -243,7 +243,7 @@ impl<T: GpuStruct, U: Allocation<T>> GpuObject<T, U> {
             GpuWeakPointer::<T>(NonZeroU64::new(alloc.gpu_ptr()).ok_or(EINVAL)?, PhantomData);
         mod_dev_dbg!(
             alloc.device(),
-            "Allocating {} @ {:#x}",
+            "Allocating {} @ {:#x}\n",
             core::any::type_name::<T>(),
             alloc.gpu_ptr()
         );
@@ -282,7 +282,7 @@ impl<T: GpuStruct, U: Allocation<T>> GpuObject<T, U> {
             GpuWeakPointer::<T>(NonZeroU64::new(alloc.gpu_ptr()).ok_or(EINVAL)?, PhantomData);
         mod_dev_dbg!(
             alloc.device(),
-            "Allocating {} @ {:#x}",
+            "Allocating {} @ {:#x}\n",
             core::any::type_name::<T>(),
             alloc.gpu_ptr()
         );
@@ -292,7 +292,7 @@ impl<T: GpuStruct, U: Allocation<T>> GpuObject<T, U> {
         if p as *mut T::Raw<'_> != raw as *mut _ {
             dev_err!(
                 alloc.device(),
-                "Allocation callback returned a mismatched reference ({})",
+                "Allocation callback returned a mismatched reference ({})\n",
                 core::any::type_name::<T>(),
             );
             return Err(EINVAL);
@@ -343,7 +343,7 @@ impl<T: GpuStruct, U: Allocation<T>> GpuObject<T, U> {
             GpuWeakPointer::<T>(NonZeroU64::new(alloc.gpu_ptr()).ok_or(EINVAL)?, PhantomData);
         mod_dev_dbg!(
             alloc.device(),
-            "Allocating {} @ {:#x}",
+            "Allocating {} @ {:#x}\n",
             core::any::type_name::<T>(),
             alloc.gpu_ptr()
         );
@@ -354,7 +354,7 @@ impl<T: GpuStruct, U: Allocation<T>> GpuObject<T, U> {
         if p as *mut T::Raw<'_> != raw as *mut _ {
             dev_err!(
                 alloc.device(),
-                "Allocation callback returned a mismatched reference ({})",
+                "Allocation callback returned a mismatched reference ({})\n",
                 core::any::type_name::<T>(),
             );
             return Err(EINVAL);
@@ -456,7 +456,7 @@ impl<T: GpuStruct, U: Allocation<T>> Drop for GpuObject<T, U> {
     fn drop(&mut self) {
         mod_dev_dbg!(
             self.alloc.device(),
-            "Dropping {} @ {:?}",
+            "Dropping {} @ {:?}\n",
             core::any::type_name::<T>(),
             self.gpu_pointer()
         );
@@ -591,7 +591,7 @@ impl<T, U: Allocation<T>> Drop for GpuOnlyArray<T, U> {
     fn drop(&mut self) {
         mod_dev_dbg!(
             self.alloc.device(),
-            "Dropping {} @ {:?}",
+            "Dropping {} @ {:?}\n",
             core::any::type_name::<T>(),
             self.gpu_pointer()
         );
