@@ -253,8 +253,6 @@ pub(crate) mod raw {
 
         #[ver(V >= V13_0B4)]
         pub(crate) unk_92d_8: Array<0x1b, u8>,
-        // Alignment - handled by allocator
-        //pad_928: [u8; 0x18],
     }
 }
 

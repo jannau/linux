@@ -154,12 +154,7 @@ pub(crate) mod raw {
         pub(crate) unk_ts: U64,
 
         #[ver(V >= V13_0B4)]
-        pub(crate) unk_5dd_8: Array<0x13, u8>,
-
-        pub(crate) pad_5dd: Pad<0x8>,
-        // Alignment - handled by allocator
-        //#[ver(V >= V13_0B4)]
-        //pad_5e0: Pad<0x18>,
+        pub(crate) unk_5dd_8: Array<0x1b, u8>,
     }
 }
 

@@ -1130,7 +1130,6 @@ impl super::Queue::ver {
                         unk_ts: U64(0),
                         #[ver(V >= V13_0B4)]
                         unk_5dd_8: Default::default(),
-                        pad_5dd: Default::default(),
                     }
                 ))
             },
