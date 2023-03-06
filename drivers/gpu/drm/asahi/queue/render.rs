@@ -795,14 +795,12 @@ impl super::Queue::ver {
                         unk_920: 0,
                         client_sequence: slot_client_seq,
                         pad_925: Default::default(),
-                        #[ver(V >= V13_0B4)]
-                        unk_928_0: 0,
-                        #[ver(V >= V13_0B4)]
-                        unk_928_4: 0,
+                        unk_928: 0,
+                        unk_92c: 0,
                         #[ver(V >= V13_0B4)]
                         unk_ts: U64(0),
                         #[ver(V >= V13_0B4)]
-                        unk_928_d: Default::default(),
+                        unk_92d_8: Default::default(),
                     }
                 ))
             },
@@ -1126,15 +1124,13 @@ impl super::Queue::ver {
                         unk_5d0: 0,
                         client_sequence: slot_client_seq,
                         pad_5d5: Default::default(),
-                        #[ver(V >= V13_0B4)]
-                        unk_5d8_0: 0,
-                        #[ver(V >= V13_0B4)]
-                        unk_5d8_4: 0,
+                        unk_5d8: 0,
+                        unk_5dc: 0,
                         #[ver(V >= V13_0B4)]
                         unk_ts: U64(0),
                         #[ver(V >= V13_0B4)]
-                        unk_5d8_d: Default::default(),
-                        pad_5d8: Default::default(),
+                        unk_5dd_8: Default::default(),
+                        pad_5dd: Default::default(),
                     }
                 ))
             },
