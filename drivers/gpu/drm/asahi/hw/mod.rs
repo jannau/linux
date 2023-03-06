@@ -389,14 +389,14 @@ impl PwrConfig {
             ($prop:expr, $default:expr) => {{
                 node.get_opt_property(c_str!($prop))
                     .map_err(|e| {
-                        dev_err!(dev, "Error reading property {}: {:?}", $prop, e);
+                        dev_err!(dev, "Error reading property {}: {:?}\n", $prop, e);
                         e
                     })?
                     .unwrap_or($default)
             }};
             ($prop:expr) => {{
                 node.get_property(c_str!($prop)).map_err(|e| {
-                    dev_err!(dev, "Error reading property {}: {:?}", $prop, e);
+                    dev_err!(dev, "Error reading property {}: {:?}\n", $prop, e);
                     e
                 })?
             }};
@@ -410,7 +410,7 @@ impl PwrConfig {
             if volt_uv.len() != cfg.max_num_clusters as usize {
                 dev_err!(
                     dev,
-                    "Invalid opp-microvolt length (expected {}, got {})",
+                    "Invalid opp-microvolt length (expected {}, got {})\n",
                     cfg.max_num_clusters,
                     volt_uv.len()
                 );
@@ -436,7 +436,7 @@ impl PwrConfig {
         let pz_data = prop!("apple,power-zones", Vec::new());
 
         if pz_data.len() > 3 * MAX_POWERZONES || pz_data.len() % 3 != 0 {
-            dev_err!(dev, "Invalid apple,power-zones value");
+            dev_err!(dev, "Invalid apple,power-zones value\n");
             return Err(EINVAL);
         }
 
@@ -454,11 +454,11 @@ impl PwrConfig {
         let sram_leak_coef: Vec<F32> = prop!("apple,sram-leak-coef");
 
         if core_leak_coef.len() != cfg.max_num_clusters as usize {
-            dev_err!(dev, "Invalid apple,core-leak-coef");
+            dev_err!(dev, "Invalid apple,core-leak-coef\n");
             return Err(EINVAL);
         }
         if sram_leak_coef.len() != cfg.max_num_clusters as usize {
-            dev_err!(dev, "Invalid apple,sram_leak_coef");
+            dev_err!(dev, "Invalid apple,sram_leak_coef\n");
             return Err(EINVAL);
         }
 

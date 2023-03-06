@@ -841,12 +841,12 @@ impl GpuManager for GpuManager::ver {
         if garbage_bytes > 1024 * 1024 {
             mod_dev_dbg!(
                 self.dev,
-                "Collecting kalloc garbage ({} objects, {} bytes)",
+                "Collecting kalloc garbage ({} objects, {} bytes)\n",
                 garbage_count,
                 garbage_bytes
             );
             if self.flush_fw_cache().is_err() {
-                dev_err!(self.dev, "Failed to flush FW cache");
+                dev_err!(self.dev, "Failed to flush FW cache\n");
             } else {
                 guard.private.collect_garbage(garbage_count);
             }

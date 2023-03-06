@@ -226,7 +226,10 @@ impl<T: SlotItem> SlotAllocator<T> {
 
             if oldest_time == u64::MAX {
                 if first {
-                    pr_warn!("{}: out of slots, blocking", core::any::type_name::<Self>());
+                    pr_warn!(
+                        "{}: out of slots, blocking\n",
+                        core::any::type_name::<Self>()
+                    );
                 }
                 first = false;
                 if self.0.cond.wait(&mut inner) {
@@ -270,7 +273,7 @@ impl<T: SlotItem> Drop for Guard<T> {
         let mut inner = self.alloc.inner.lock();
         if inner.slots[self.token.slot as usize].is_some() {
             pr_crit!(
-                "{}: tried to return an item into a full slot ({})",
+                "{}: tried to return an item into a full slot ({})\n",
                 core::any::type_name::<Self>(),
                 self.token.slot
             );

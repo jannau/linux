@@ -272,7 +272,7 @@ impl VmInner {
             if (addr | len | iova) & UAT_PGMSK != 0 {
                 dev_err!(
                     self.dev,
-                    "MMU: Mapping {:#x}:{:#x} -> {:#x} is not page-aligned",
+                    "MMU: Mapping {:#x}:{:#x} -> {:#x} is not page-aligned\n",
                     addr,
                     len,
                     iova
@@ -280,7 +280,13 @@ impl VmInner {
                 return Err(EINVAL);
             }
 
-            mod_dev_dbg!(self.dev, "MMU: map: {:#x}:{:#x} -> {:#x}", addr, len, iova);
+            mod_dev_dbg!(
+                self.dev,
+                "MMU: map: {:#x}:{:#x} -> {:#x}\n",
+                addr,
+                len,
+                iova
+            );
 
             self.map_pages(iova, addr, UAT_PGSZ, len >> UAT_PGBIT, prot)?;
 
@@ -325,6 +331,7 @@ impl Drop for VmBind {
 
         assert_ne!(inner.active_users, 0);
         inner.active_users -= 1;
+        mod_pr_debug!("MMU: slot {} active users {}\n", self.1, inner.active_users);
         if inner.active_users == 0 {
             inner.binding = None;
         }
@@ -336,6 +343,7 @@ impl Clone for VmBind {
         let mut inner = self.0.inner.lock();
 
         inner.active_users += 1;
+        mod_pr_debug!("MMU: slot {} active users {}\n", self.1, inner.active_users);
         VmBind(self.0.clone(), self.1)
     }
 }
@@ -369,7 +377,7 @@ impl Mapping {
         let mut owner = self.0.owner.lock();
         mod_dev_dbg!(
             owner.dev,
-            "MMU: remap as uncached {:#x}:{:#x}",
+            "MMU: remap as uncached {:#x}:{:#x}\n",
             self.iova(),
             self.size()
         );
@@ -383,7 +391,7 @@ impl Mapping {
         {
             dev_err!(
                 owner.dev,
-                "MMU: unmap for remap {:#x}:{:#x} failed",
+                "MMU: unmap for remap {:#x}:{:#x} failed\n",
                 self.iova(),
                 self.size()
             );
@@ -393,7 +401,7 @@ impl Mapping {
         if owner.map_node(&self.0, prot).is_err() {
             dev_err!(
                 owner.dev,
-                "MMU: remap {:#x}:{:#x} failed",
+                "MMU: remap {:#x}:{:#x} failed\n",
                 self.iova(),
                 self.size()
             );
@@ -459,23 +467,28 @@ impl Mapping {
 
         // Lock this flush slot, and write the range to it
         let flush = self.0.uat_inner.lock_flush(flush_slot);
+        let pages = self.size() >> UAT_PGBIT;
         flush.begin_flush(self.iova() as u64, self.size() as u64);
+        if pages >= 0x10000 {
+            dev_err!(owner.dev, "MMU: Flush too big ({:#x} pages))\n", pages);
+        }
 
         let cmd = fw::channels::FwCtlMsg {
             addr: fw::types::U64(self.iova() as u64),
             unk_8: 0,
             slot: flush_slot,
-            unk_10: 1,
-            unk_12: 2,
+            page_count: pages as u16,
+            unk_12: 2, // ?
         };
 
         // Tell the firmware to do a cache flush
-        if owner.dev.data().gpu.fwctl(cmd).is_err() {
+        if let Err(e) = owner.dev.data().gpu.fwctl(cmd) {
             dev_err!(
                 owner.dev,
-                "MMU: ASC cache flush {:#x}:{:#x} timed out",
+                "MMU: ASC cache flush {:#x}:{:#x} failed (err: {:?})\n",
                 self.iova(),
-                self.size()
+                self.size(),
+                e
             );
         }
 
@@ -516,7 +529,7 @@ impl Drop for Mapping {
         let mut owner = self.0.owner.lock();
         mod_dev_dbg!(
             owner.dev,
-            "MMU: unmap {:#x}:{:#x}",
+            "MMU: unmap {:#x}:{:#x}\n",
             self.iova(),
             self.size()
         );
@@ -527,7 +540,7 @@ impl Drop for Mapping {
         {
             dev_err!(
                 owner.dev,
-                "MMU: unmap {:#x}:{:#x} failed",
+                "MMU: unmap {:#x}:{:#x} failed\n",
                 self.iova(),
                 self.size()
             );
@@ -537,7 +550,7 @@ impl Drop for Mapping {
             mem::tlbi_range(asid as u8, self.iova(), self.size());
             mod_dev_dbg!(
                 owner.dev,
-                "MMU: flush range: asid={:#x} start={:#x} len={:#x}",
+                "MMU: flush range: asid={:#x} start={:#x} len={:#x}\n",
                 asid,
                 self.iova(),
                 self.size()
@@ -695,7 +708,7 @@ impl HandoffFlush {
 
         let state = flush.state.load(Ordering::Relaxed);
         if state != 0 {
-            pr_err!("Handoff: expected flush state 0, got {}", state);
+            pr_err!("Handoff: expected flush state 0, got {}\n", state);
         }
         flush.addr.store(start, Ordering::Relaxed);
         flush.size.store(size, Ordering::Relaxed);
@@ -707,7 +720,7 @@ impl HandoffFlush {
         let flush = unsafe { self.0.as_ref().unwrap() };
         let state = flush.state.load(Ordering::Relaxed);
         if state != 2 {
-            pr_err!("Handoff: expected flush state 2, got {}", state);
+            pr_err!("Handoff: expected flush state 2, got {}\n", state);
         }
         flush.state.store(0, Ordering::Relaxed);
     }
@@ -907,7 +920,7 @@ impl Vm {
         if (phys | size | iova) & UAT_PGMSK != 0 {
             dev_err!(
                 inner.dev,
-                "MMU: Mapping {:#x}:{:#x} -> {:#x} is not page-aligned",
+                "MMU: Mapping {:#x}:{:#x} -> {:#x} is not page-aligned\n",
                 phys,
                 size,
                 iova
@@ -917,7 +930,7 @@ impl Vm {
 
         dev_info!(
             inner.dev,
-            "MMU: IO map: {:#x}:{:#x} -> {:#x}",
+            "MMU: IO map: {:#x}:{:#x} -> {:#x}\n",
             phys,
             size,
             iova
@@ -962,7 +975,7 @@ impl Drop for VmInner {
             if inval {
                 if handoff_cur == Some(idx as u32) {
                     pr_err!(
-                        "VmInner::drop owning slot {}, but it is currently in use by the ASC?",
+                        "VmInner::drop owning slot {}, but it is currently in use by the ASC?\n",
                         idx
                     );
                 }
@@ -1095,7 +1108,7 @@ impl Uat {
                 uat_inner.handoff().lock();
                 if uat_inner.handoff().current_slot() == Some(idx as u32) {
                     pr_err!(
-                        "Vm::bind to slot {}, but it is currently in use by the ASC?",
+                        "Vm::bind to slot {}, but it is currently in use by the ASC?\n",
                         idx
                     );
                 }
@@ -1115,10 +1128,9 @@ impl Uat {
 
         inner.active_users += 1;
 
-        Ok(VmBind(
-            vm.clone(),
-            inner.binding.as_ref().unwrap().slot() + UAT_USER_CTX_START as u32,
-        ))
+        let slot = inner.binding.as_ref().unwrap().slot() + UAT_USER_CTX_START as u32;
+        mod_pr_debug!("MMU: slot {} active users {}\n", slot, inner.active_users);
+        Ok(VmBind(vm.clone(), slot))
     }
 
     /// Creates a new `Vm` linked to this UAT.

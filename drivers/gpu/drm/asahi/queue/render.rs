@@ -257,7 +257,10 @@ impl super::Queue::ver {
         let dev = self.dev.data();
         let gpu = match dev.gpu.as_any().downcast_ref::<gpu::GpuManager::ver>() {
             Some(gpu) => gpu,
-            None => panic!("GpuManager mismatched with Queue!"),
+            None => {
+                dev_crit!(self.dev, "GpuManager mismatched with Queue!\n");
+                return Err(EIO);
+            }
         };
 
         let nclusters = gpu.get_dyncfg().id.num_clusters;

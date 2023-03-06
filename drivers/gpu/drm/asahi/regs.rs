@@ -218,7 +218,7 @@ impl Resources {
         if num_cores * num_clusters > 64 {
             dev_err!(
                 self.dev,
-                "Too many total cores ({} x {} > 64)",
+                "Too many total cores ({} x {} > 64)\n",
                 num_clusters,
                 num_cores
             );
@@ -254,7 +254,7 @@ impl Resources {
             0x20 => (hw::GpuRevision::C0, hw::GpuRevisionID::C0),
             0x21 => (hw::GpuRevision::C1, hw::GpuRevisionID::C1),
             a => {
-                dev_err!(self.dev, "Unknown GPU revision {}", a);
+                dev_err!(self.dev, "Unknown GPU revision {}\n", a);
                 return Err(ENODEV);
             }
         };
@@ -264,7 +264,7 @@ impl Resources {
                 4 => hw::GpuGen::G13,
                 5 => hw::GpuGen::G14,
                 a => {
-                    dev_err!(self.dev, "Unknown GPU generation {}", a);
+                    dev_err!(self.dev, "Unknown GPU generation {}\n", a);
                     return Err(ENODEV);
                 }
             },
@@ -280,7 +280,7 @@ impl Resources {
                     }
                 }
                 a => {
-                    dev_err!(self.dev, "Unknown GPU variant {}", a);
+                    dev_err!(self.dev, "Unknown GPU variant {}\n", a);
                     return Err(ENODEV);
                 }
             },

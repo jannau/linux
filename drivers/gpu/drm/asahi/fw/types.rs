@@ -35,12 +35,14 @@ pub(crate) type GpuOnlyArray<T> =
 
 /// A stamp slot that is shared between firmware and the driver.
 #[derive(Debug, Default)]
+#[repr(transparent)]
 pub(crate) struct Stamp(pub(crate) AtomicU32);
 
 /// A stamp slot that is for private firmware use.
 ///
 /// This is a separate type to guard against pointer type confusion.
 #[derive(Debug, Default)]
+#[repr(transparent)]
 pub(crate) struct FwStamp(pub(crate) AtomicU32);
 
 /// An unaligned u64 type.

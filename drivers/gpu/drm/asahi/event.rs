@@ -120,7 +120,7 @@ impl slotalloc::SlotItem for EventInner {
     type Data = EventManagerInner;
 
     fn release(&mut self, data: &mut Self::Data, slot: u32) {
-        mod_pr_debug!("EventManager: Released slot {}", slot);
+        mod_pr_debug!("EventManager: Released slot {}\n", slot);
         data.owners[slot as usize] = None;
     }
 }
@@ -173,7 +173,7 @@ impl EventManager {
     ) -> Result<Event> {
         let ev = self.alloc.get_inner(token, |inner, ev| {
             mod_pr_debug!(
-                "EventManager: Registered owner {:p} on slot {}",
+                "EventManager: Registered owner {:p} on slot {}\n",
                 &*owner,
                 ev.slot()
             );
@@ -193,7 +193,7 @@ impl EventManager {
                 owner.signal();
             }
             None => {
-                mod_pr_debug!("EventManager: Received event for empty slot {}", slot);
+                mod_pr_debug!("EventManager: Received event for empty slot {}\n", slot);
             }
         }
     }
@@ -208,7 +208,7 @@ impl EventManager {
                 owner.mark_error(EventValue(wait_value), error);
             }
             None => {
-                pr_err!("Received error for empty slot {}", slot);
+                pr_err!("Received error for empty slot {}\n", slot);
             }
         }
     }

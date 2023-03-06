@@ -134,7 +134,7 @@ where
             let mut rptr = T::rptr(raw);
             if next_wptr == rptr {
                 pr_err!(
-                    "TX ring buffer is full! Waiting... ({}, {})",
+                    "TX ring buffer is full! Waiting... ({}, {})\n",
                     next_wptr,
                     rptr
                 );
@@ -199,7 +199,7 @@ impl DeviceControlChannel::ver {
 
     /// Submits a Device Control command.
     pub(crate) fn send(&mut self, msg: &DeviceControlMsg::ver) -> u32 {
-        cls_dev_dbg!(DeviceControlCh, self.dev, "DeviceControl: {:?}", msg);
+        cls_dev_dbg!(DeviceControlCh, self.dev, "DeviceControl: {:?}\n", msg);
         self.ch.put(msg)
     }
 
@@ -236,7 +236,7 @@ impl PipeChannel::ver {
 
     /// Submits a Pipe kick command to the firmware.
     pub(crate) fn send(&mut self, msg: &PipeMsg::ver) {
-        cls_dev_dbg!(PipeCh, self.dev, "Pipe: {:?}", msg);
+        cls_dev_dbg!(PipeCh, self.dev, "Pipe: {:?}\n", msg);
         self.ch.put(msg);
     }
 }
@@ -268,7 +268,7 @@ impl FwCtlChannel {
 
     /// Submits a Firmware Control command to the firmware.
     pub(crate) fn send(&mut self, msg: &FwCtlMsg) -> u32 {
-        cls_dev_dbg!(FwCtlCh, self.dev, "FwCtl: {:?}", msg);
+        cls_dev_dbg!(FwCtlCh, self.dev, "FwCtl: {:?}\n", msg);
         self.ch.put(msg)
     }
 
@@ -320,11 +320,13 @@ impl EventChannel {
                 0..=EVENT_MAX => {
                     let msg = unsafe { msg.msg };
 
-                    cls_dev_dbg!(EventCh, self.dev, "Event: {:?}", msg);
+                    cls_dev_dbg!(EventCh, self.dev, "Event: {:?}\n", msg);
                     match msg {
                         EventMsg::Fault => match self.gpu.as_ref() {
                             Some(gpu) => gpu.handle_fault(),
-                            None => dev_crit!(self.dev, "EventChannel: No GPU manager available!"),
+                            None => {
+                                dev_crit!(self.dev, "EventChannel: No GPU manager available!\n")
+                            }
                         },
                         EventMsg::Timeout {
                             counter,
@@ -332,7 +334,9 @@ impl EventChannel {
                             ..
                         } => match self.gpu.as_ref() {
                             Some(gpu) => gpu.handle_timeout(counter, event_slot),
-                            None => dev_crit!(self.dev, "EventChannel: No GPU manager available!"),
+                            None => {
+                                dev_crit!(self.dev, "EventChannel: No GPU manager available!\n")
+                            }
                         },
                         EventMsg::Flag { firing, .. } => {
                             for (i, flags) in firing.iter().enumerate() {
@@ -344,12 +348,14 @@ impl EventChannel {
                             }
                         }
                         msg => {
-                            dev_crit!(self.dev, "Unknown event message: {:?}", msg);
+                            dev_crit!(self.dev, "Unknown event message: {:?}\n", msg);
                         }
                     }
                 }
                 _ => {
-                    dev_warn!(self.dev, "Unknown event message: {:?}", unsafe { msg.raw });
+                    dev_warn!(self.dev, "Unknown event message: {:?}\n", unsafe {
+                        msg.raw
+                    });
                 }
             }
         }
@@ -397,16 +403,16 @@ impl FwLogChannel {
     pub(crate) fn poll(&mut self) {
         for i in 0..=FwLogChannelState::SUB_CHANNELS - 1 {
             while let Some(msg) = self.ch.peek(i) {
-                cls_dev_dbg!(FwLogCh, self.dev, "FwLog{}: {:?}", i, msg);
+                cls_dev_dbg!(FwLogCh, self.dev, "FwLog{}: {:?}\n", i, msg);
                 if msg.msg_type != 2 {
-                    dev_warn!(self.dev, "Unknown FWLog{} message: {:?}", i, msg);
+                    dev_warn!(self.dev, "Unknown FWLog{} message: {:?}\n", i, msg);
                     self.ch.get(i);
                     continue;
                 }
                 if msg.msg_index.0 as usize >= Self::BUF_SIZE {
                     dev_warn!(
                         self.dev,
-                        "FWLog{} message index out of bounds: {:?}",
+                        "FWLog{} message index out of bounds: {:?}\n",
                         i,
                         msg
                     );
@@ -416,7 +422,7 @@ impl FwLogChannel {
                 let index = Self::BUF_SIZE * i + msg.msg_index.0 as usize;
                 let payload = &self.payload_buf.as_slice()[index];
                 if payload.msg_type != 3 {
-                    dev_warn!(self.dev, "Unknown FWLog{} payload: {:?}", i, payload);
+                    dev_warn!(self.dev, "Unknown FWLog{} payload: {:?}\n", i, payload);
                     self.ch.get(i);
                     continue;
                 }
@@ -426,7 +432,7 @@ impl FwLogChannel {
                 } else {
                     dev_warn!(
                         self.dev,
-                        "FWLog{} payload not NUL-terminated: {:?}",
+                        "FWLog{} payload not NUL-terminated: {:?}\n",
                         i,
                         payload
                     );
@@ -434,12 +440,12 @@ impl FwLogChannel {
                     continue;
                 };
                 match i {
-                    0 => dev_dbg!(self.dev, "FWLog: {}", msg),
-                    1 => dev_info!(self.dev, "FWLog: {}", msg),
-                    2 => dev_notice!(self.dev, "FWLog: {}", msg),
-                    3 => dev_warn!(self.dev, "FWLog: {}", msg),
-                    4 => dev_err!(self.dev, "FWLog: {}", msg),
-                    5 => dev_crit!(self.dev, "FWLog: {}", msg),
+                    0 => dev_dbg!(self.dev, "FWLog: {}\n", msg),
+                    1 => dev_info!(self.dev, "FWLog: {}\n", msg),
+                    2 => dev_notice!(self.dev, "FWLog: {}\n", msg),
+                    3 => dev_warn!(self.dev, "FWLog: {}\n", msg),
+                    4 => dev_err!(self.dev, "FWLog: {}\n", msg),
+                    5 => dev_crit!(self.dev, "FWLog: {}\n", msg),
                     _ => (),
                 };
                 self.ch.get(i);
@@ -475,7 +481,7 @@ impl KTraceChannel {
     /// Polls for new KTrace messages on this ring.
     pub(crate) fn poll(&mut self) {
         while let Some(msg) = self.ch.get(0) {
-            cls_dev_dbg!(KTraceCh, self.dev, "KTrace: {:?}", msg);
+            cls_dev_dbg!(KTraceCh, self.dev, "KTrace: {:?}\n", msg);
         }
     }
 }
@@ -513,10 +519,10 @@ impl StatsChannel::ver {
             match tag {
                 0..=STATS_MAX::ver => {
                     let msg = unsafe { msg.msg };
-                    cls_dev_dbg!(StatsCh, self.dev, "Stats: {:?}", msg);
+                    cls_dev_dbg!(StatsCh, self.dev, "Stats: {:?}\n", msg);
                 }
                 _ => {
-                    pr_warn!("Unknown stats message: {:?}", unsafe { msg.raw });
+                    pr_warn!("Unknown stats message: {:?}\n", unsafe { msg.raw });
                 }
             }
         }

@@ -51,6 +51,7 @@ pub(crate) struct Attachments {
 }
 
 #[derive(Debug, Copy, Clone)]
+#[repr(transparent)]
 pub(crate) struct OpHeader(u32);
 
 impl OpHeader {
