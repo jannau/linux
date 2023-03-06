@@ -159,7 +159,7 @@ pub(crate) struct QueueInfo {
     pub(crate) ring: GpuArray<u64>,
     pub(crate) gpu_buf: GpuArray<u8>,
     pub(crate) notifier_list: Arc<GpuObject<event::NotifierList>>,
-    pub(crate) gpu_context: Arc<GpuObject<GpuContextData>>,
+    pub(crate) gpu_context: Arc<crate::workqueue::GpuContext>,
 }
 
 #[versions(AGX)]

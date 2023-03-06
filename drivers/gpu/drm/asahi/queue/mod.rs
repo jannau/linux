@@ -109,7 +109,7 @@ pub(crate) struct Queue {
     q_frag: Option<SubQueue::ver>,
     q_comp: Option<SubQueue::ver>,
     buffer: Option<Mutex<buffer::Buffer::ver>>,
-    gpu_context: Arc<GpuObject<fw::workqueue::GpuContextData>>,
+    gpu_context: Arc<workqueue::GpuContext>,
     notifier_list: Arc<GpuObject<fw::event::NotifierList>>,
     notifier: Arc<GpuObject<fw::event::Notifier::ver>>,
     id: u64,
@@ -369,12 +369,6 @@ impl Queue::ver {
 
         let data = dev.data();
 
-        let gpu_context: Arc<GpuObject<fw::workqueue::GpuContextData>> = Arc::try_new(
-            alloc
-                .shared
-                .new_object(Default::default(), |_inner| Default::default())?,
-        )?;
-
         let mut notifier_list = alloc.private.new_default::<fw::event::NotifierList>()?;
 
         let self_ptr = notifier_list.weak_pointer();
@@ -416,7 +410,7 @@ impl Queue::ver {
             q_frag: None,
             q_comp: None,
             buffer: None,
-            gpu_context,
+            gpu_context: Arc::try_new(workqueue::GpuContext::new(dev, alloc)?)?,
             notifier_list: Arc::try_new(notifier_list)?,
             notifier,
             id,
@@ -728,9 +722,5 @@ impl Queue for Queue::ver {
 impl Drop for Queue::ver {
     fn drop(&mut self) {
         mod_dev_dbg!(self.dev, "[Queue {}] Dropping queue\n", self.id);
-        let dev = self.dev.data();
-        if dev.gpu.invalidate_context(&self.gpu_context).is_err() {
-            dev_err!(self.dev, "Queue::drop: Failed to invalidate GPU context!\n");
-        }
     }
 }

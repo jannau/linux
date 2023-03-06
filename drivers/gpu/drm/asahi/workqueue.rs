@@ -19,8 +19,8 @@ use crate::fw::types::*;
 use crate::fw::workqueue::*;
 use crate::object::OpaqueGpuObject;
 use crate::regs::FaultReason;
-use crate::{box_in_place, place};
-use crate::{channel, event, fw, gpu, object, regs};
+use crate::{box_in_place, no_debug, place};
+use crate::{channel, driver, event, fw, gpu, object, regs};
 use core::num::NonZeroU64;
 use core::sync::atomic::Ordering;
 use kernel::{
@@ -93,6 +93,43 @@ impl From<WorkError> for kernel::error::Error {
             WorkError::Unknown => ENODATA,
             WorkError::Killed => ECANCELED,
             WorkError::NoDevice => ENODEV,
+        }
+    }
+}
+
+/// A GPU context tracking structure, which must be explicitly invalidated when dropped.
+pub(crate) struct GpuContext {
+    dev: driver::AsahiDevice,
+    data: GpuObject<fw::workqueue::GpuContextData>,
+}
+no_debug!(GpuContext);
+
+impl GpuContext {
+    /// Allocate a new GPU context.
+    pub(crate) fn new(
+        dev: &driver::AsahiDevice,
+        alloc: &mut gpu::KernelAllocators,
+    ) -> Result<GpuContext> {
+        Ok(GpuContext {
+            dev: dev.clone(),
+            data: alloc
+                .shared
+                .new_object(Default::default(), |_inner| Default::default())?,
+        })
+    }
+
+    /// Returns the GPU pointer to the inner GPU context data structure.
+    pub(crate) fn gpu_pointer(&self) -> GpuPointer<'_, fw::workqueue::GpuContextData> {
+        self.data.gpu_pointer()
+    }
+}
+
+impl Drop for GpuContext {
+    fn drop(&mut self) {
+        mod_dev_dbg!(self.dev, "GpuContext: Invalidating GPU context\n");
+        let dev = self.dev.data();
+        if dev.gpu.invalidate_context(&self.data).is_err() {
+            dev_err!(self.dev, "GpuContext: Failed to invalidate GPU context!\n");
         }
     }
 }
@@ -512,7 +549,7 @@ impl WorkQueue::ver {
     pub(crate) fn new(
         alloc: &mut gpu::KernelAllocators,
         event_manager: Arc<event::EventManager>,
-        gpu_context: Arc<GpuObject<fw::workqueue::GpuContextData>>,
+        gpu_context: Arc<GpuContext>,
         notifier_list: Arc<GpuObject<fw::event::NotifierList>>,
         pipe_type: PipeType,
         id: u64,
