@@ -254,7 +254,7 @@ impl<T: JobImpl> Entity<T> {
 
         let mut sched_ptr = &sched.0.sched as *const _ as *mut _;
 
-        // SAFETY: The Box is allocated above and valid
+        // SAFETY: The Box is allocated above and valid.
         unsafe {
             bindings::drm_sched_entity_init(
                 addr_of_mut!((*entity.as_mut_ptr()).entity),
@@ -265,7 +265,7 @@ impl<T: JobImpl> Entity<T> {
             )
         };
 
-        // SAFETY:
+        // SAFETY: The Box is allocated above and valid.
         unsafe { addr_of_mut!((*entity.as_mut_ptr()).sched).write(sched.0.clone()) };
 
         // SAFETY: entity is now initialized.
@@ -292,7 +292,7 @@ impl<T: JobImpl> Entity<T> {
         // SAFETY: The Box pointer is valid, and this initializes the inner member.
         unsafe { addr_of_mut!((*job.as_mut_ptr()).inner).write(inner) };
 
-        // SAFETY: Both fields of the Job<T> are now initialized.
+        // SAFETY: All fields of the Job<T> are now initialized.
         Ok(PendingJob(unsafe { job.assume_init() }, PhantomData))
     }
 }
@@ -305,6 +305,8 @@ pub struct SchedulerInner<T: JobImpl> {
 
 impl<T: JobImpl> Drop for SchedulerInner<T> {
     fn drop(&mut self) {
+        // SAFETY: The scheduler is valid. This assumes drm_sched_fini() will take care of
+        // freeing all in-progress jobs.
         unsafe { bindings::drm_sched_fini(&mut self.sched) };
     }
 }
