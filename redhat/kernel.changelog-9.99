@@ -1,3 +1,12 @@
+* Tue Mar 07 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc1.8ca09d5fa354.16]
+- redhat/Makefile: fix default values for dist-brew's DISTRO and DIST (Íñigo Huguet)
+- Remove cc lines from automatic configs (Don Zickus)
+- Add rtla-hwnoise files (Justin M. Forbes)
+- redhat/kernel.spec.template: Mark it as a non-executable file (Neal Gompa)
+- fedora: arm: Enable DRM_PANEL_HIMAX_HX8394 (Javier Martinez Canillas)
+- Linux v6.3.0-0.rc1.8ca09d5fa354
+Resolves: rhbz#2115876
+
 * Mon Mar 06 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc1.15]
 - redhat/configs: CONFIG_HP_ILO location fix (Vladis Dronov)
 - Linux v6.3.0-0.rc1
