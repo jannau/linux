@@ -847,7 +847,7 @@ static int apple_pcie_probe(struct platform_device *pdev)
 	int ret;
 
 	/* Check for probe dependencies for all ports first */
-	for_each_child_of_node(dev->of_node, of_port) {
+	for_each_available_child_of_node(dev->of_node, of_port) {
 		ret = apple_pcie_probe_port(of_port);
 		if (ret) {
 			of_node_put(of_port);
