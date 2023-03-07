@@ -155,14 +155,26 @@ where
     /// Wait for a previously submitted message to be popped off of the ring by the GPU firmware.
     ///
     /// This busy-loops, and is intended to be used for rare cases when we need to block for
-    /// completion of a cache management or invalidation operation synchronously.
+    /// completion of a cache management or invalidation operation synchronously (which
+    /// the firmware normally completes fast enough not to be worth sleeping for).
+    /// If the poll takes longer than 10ms, this switches to sleeping between polls.
     pub(crate) fn wait_for(&mut self, wptr: u32, timeout_ms: u64) -> Result {
-        let timeout = time::ktime_get() + Duration::from_millis(timeout_ms);
+        const MAX_FAST_POLL: u64 = 10;
+        let start = time::ktime_get();
+        let timeout_fast = start + Duration::from_millis(timeout_ms.min(MAX_FAST_POLL));
+        let timeout_slow = start + Duration::from_millis(timeout_ms);
         self.ring.state.with(|raw, _inner| {
-            while time::ktime_get() < timeout {
+            while time::ktime_get() < timeout_fast {
                 if T::rptr(raw) == wptr {
                     return Ok(());
                 }
+                mem::sync();
+            }
+            while time::ktime_get() < timeout_slow {
+                if T::rptr(raw) == wptr {
+                    return Ok(());
+                }
+                coarse_sleep(Duration::from_millis(5));
                 mem::sync();
             }
             Err(ETIMEDOUT)
@@ -179,7 +191,7 @@ pub(crate) struct DeviceControlChannel {
 
 #[versions(AGX)]
 impl DeviceControlChannel::ver {
-    const COMMAND_TIMEOUT_MS: u64 = 100;
+    const COMMAND_TIMEOUT_MS: u64 = 1000;
 
     /// Allocate a new Device Control channel.
     pub(crate) fn new(
@@ -248,7 +260,7 @@ pub(crate) struct FwCtlChannel {
 }
 
 impl FwCtlChannel {
-    const COMMAND_TIMEOUT_MS: u64 = 100;
+    const COMMAND_TIMEOUT_MS: u64 = 1000;
 
     /// Allocate a new Firmware Control channel.
     pub(crate) fn new(
