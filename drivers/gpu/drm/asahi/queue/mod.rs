@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-only OR MIT
-#![allow(unused_imports)]
 
 //! Submission queue management
 //!
@@ -7,16 +6,13 @@
 //! submissions to firmware queues.
 
 use kernel::dma_fence::*;
-use kernel::io_buffer::IoBufferReader;
 use kernel::prelude::*;
-use kernel::user_ptr::UserSlicePtr;
 use kernel::{
     bindings, c_str, dma_fence,
     drm::gem::shmem::VMap,
     drm::sched,
     macros::versions,
-    prelude::*,
-    sync::{smutex::Mutex, Arc, Guard, UniqueArc},
+    sync::{smutex::Mutex, Arc},
 };
 
 use crate::alloc::Allocator;
@@ -24,11 +20,9 @@ use crate::debug::*;
 use crate::driver::AsahiDevice;
 use crate::fw::types::*;
 use crate::gpu::GpuManager;
-use crate::util::*;
-use crate::{alloc, buffer, channel, event, file, fw, gem, gpu, microseq, mmu, object, workqueue};
-use crate::{box_in_place, inner_ptr, inner_weak_ptr, place};
+use crate::{alloc, buffer, channel, event, file, fw, gem, gpu, mmu, workqueue};
+use crate::{inner_weak_ptr, place};
 
-use core::any::Any;
 use core::mem::MaybeUninit;
 use core::sync::atomic::{AtomicU64, Ordering};
 
@@ -101,7 +95,7 @@ impl SubQueueJob::ver {
 #[versions(AGX)]
 pub(crate) struct Queue {
     dev: AsahiDevice,
-    sched: sched::Scheduler<QueueJob::ver>,
+    _sched: sched::Scheduler<QueueJob::ver>,
     entity: sched::Entity<QueueJob::ver>,
     vm: mmu::Vm,
     ualloc: Arc<Mutex<alloc::DefaultAllocator>>,
@@ -402,7 +396,7 @@ impl Queue::ver {
 
         let mut ret = Queue::ver {
             dev: dev.clone(),
-            sched,
+            _sched: sched,
             entity,
             vm,
             ualloc,

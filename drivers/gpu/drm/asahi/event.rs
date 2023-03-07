@@ -46,11 +46,6 @@ pub(crate) type Event = slotalloc::Guard<EventInner>;
 pub(crate) struct EventValue(u32);
 
 impl EventValue {
-    /// Returns the counter portion of the value.
-    pub(crate) fn counter(&self) -> u32 {
-        self.0 >> 8
-    }
-
     /// Returns the `EventValue` that succeeds this one.
     pub(crate) fn next(&self) -> EventValue {
         EventValue(self.0.wrapping_add(0x100))
@@ -61,12 +56,14 @@ impl EventValue {
         self.0 = self.0.wrapping_add(0x100);
     }
 
+    /* Not used
     /// Increments this `EventValue` in place by a certain count.
     pub(crate) fn add(&mut self, val: u32) {
         self.0 = self
             .0
             .wrapping_add(val.checked_mul(0x100).expect("Adding too many events"));
     }
+    */
 
     /// Increments this `EventValue` in place by a certain count.
     pub(crate) fn sub(&mut self, val: u32) {

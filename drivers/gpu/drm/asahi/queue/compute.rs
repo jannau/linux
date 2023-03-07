@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only OR MIT
 #![allow(clippy::unusual_byte_groupings)]
-#![allow(unused_imports)]
 
 //! Compute work queue.
 //!
@@ -11,11 +10,10 @@
 use super::common;
 use crate::alloc::Allocator;
 use crate::debug::*;
-use crate::driver::AsahiDevice;
 use crate::fw::types::*;
 use crate::gpu::GpuManager;
-use crate::{alloc, channel, event, file, fw, gpu, microseq, mmu, workqueue};
 use crate::{box_in_place, inner_ptr, inner_weak_ptr, place};
+use crate::{fw, gpu, microseq};
 use core::mem::MaybeUninit;
 use core::sync::atomic::Ordering;
 use kernel::bindings;
@@ -23,7 +21,7 @@ use kernel::dma_fence::RawDmaFence;
 use kernel::drm::sched::Job;
 use kernel::io_buffer::IoBufferReader;
 use kernel::prelude::*;
-use kernel::sync::{smutex::Mutex, Arc};
+use kernel::sync::Arc;
 use kernel::user_ptr::UserSlicePtr;
 
 const DEBUG_CLASS: DebugFlags = DebugFlags::Compute;

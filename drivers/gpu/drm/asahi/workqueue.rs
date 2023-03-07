@@ -28,7 +28,6 @@ use kernel::{
     error::code::*,
     prelude::*,
     sync::{Arc, Guard, Mutex, UniqueArc},
-    types::Opaque,
 };
 
 const DEBUG_CLASS: DebugFlags = DebugFlags::WorkQueue;
@@ -178,10 +177,10 @@ impl<O: OpaqueGpuObject, C: FnOnce(O, Option<WorkError>) + Send + Sync> GenSubmi
     fn complete(self: Box<Self>) {
         let SubmittedWork {
             object,
-            value,
+            value: _,
             error,
-            wptr,
-            vm_slot,
+            wptr: _,
+            vm_slot: _,
             callback,
         } = *self;
 
@@ -249,7 +248,6 @@ pub(crate) struct QueueEventInfo {
 #[versions(AGX)]
 pub(crate) struct Job {
     wq: Arc<WorkQueue::ver>,
-    wq_size: u32,
     event_info: QueueEventInfo::ver,
     start_value: EventValue,
     pending: Vec<Box<dyn GenSubmittedWork>>,
@@ -637,11 +635,6 @@ impl WorkQueue::ver {
         Ok(queue.into())
     }
 
-    /// Returns the QueueInfo pointer for this workqueue, as a weak pointer.
-    pub(crate) fn info_pointer(&self) -> GpuWeakPointer<QueueInfo::ver> {
-        self.info_pointer
-    }
-
     pub(crate) fn event_info(&self) -> Option<QueueEventInfo::ver> {
         let inner = self.inner.lock();
 
@@ -681,7 +674,6 @@ impl WorkQueue::ver {
         mod_pr_debug!("WorkQueue({:?}): New job\n", inner.pipe_type);
         Ok(Job::ver {
             wq: self.clone(),
-            wq_size: inner.size,
             event_info: QueueEventInfo::ver {
                 stamp_pointer: ev.0.stamp_pointer(),
                 fw_stamp_pointer: ev.0.fw_stamp_pointer(),
@@ -774,8 +766,6 @@ impl WorkQueue for WorkQueue::ver {
                 completed_commands
             );
         }
-
-        let last_wptr = 0;
 
         let pipe_type = inner.pipe_type;
 

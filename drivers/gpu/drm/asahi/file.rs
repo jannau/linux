@@ -109,7 +109,7 @@ impl SyncItem {
         // SAFETY: We only read this once, so there are no TOCTOU issues.
         let mut reader = unsafe { UserSlicePtr::new(ptr as usize as *mut _, size).reader() };
 
-        for i in 0..count {
+        for _i in 0..count {
             let mut sync: MaybeUninit<bindings::drm_asahi_sync> = MaybeUninit::uninit();
 
             // SAFETY: The size of `sync` is STRIDE
@@ -455,7 +455,7 @@ impl File {
     }
 
     pub(crate) fn do_gem_bind(
-        device: &AsahiDevice,
+        _device: &AsahiDevice,
         data: &mut bindings::drm_asahi_gem_bind,
         file: &DrmFile,
     ) -> Result<u32> {
@@ -525,7 +525,7 @@ impl File {
     }
 
     pub(crate) fn do_gem_unbind_all(
-        device: &AsahiDevice,
+        _device: &AsahiDevice,
         data: &mut bindings::drm_asahi_gem_bind,
         file: &DrmFile,
     ) -> Result<u32> {
@@ -714,7 +714,7 @@ impl File {
         let mut reader =
             unsafe { UserSlicePtr::new(data.commands as usize as *mut _, size).reader() };
 
-        for i in 0..data.command_count {
+        for _i in 0..data.command_count {
             let mut cmd: MaybeUninit<bindings::drm_asahi_command> = MaybeUninit::uninit();
 
             // SAFETY: The size of `sync` is STRIDE
