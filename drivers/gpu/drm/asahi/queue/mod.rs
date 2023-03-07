@@ -704,8 +704,13 @@ impl Queue for Queue::ver {
         job.push();
 
         mod_dev_dbg!(self.dev, "Queue: Adding {} out_syncs\n", out_syncs.len());
-        for sync in out_syncs {
-            sync.syncobj.replace_fence(Some(&out_fence));
+        for mut sync in out_syncs {
+            if let Some(chain) = sync.chain_fence.take() {
+                sync.syncobj
+                    .add_point(chain, &out_fence, sync.timeline_value);
+            } else {
+                sync.syncobj.replace_fence(Some(&out_fence));
+            }
         }
 
         Ok(())
