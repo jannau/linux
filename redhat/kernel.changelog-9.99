@@ -1,3 +1,8 @@
+* Wed Mar 08 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc1.63355b9884b3.17]
+- Revert "Merge branch 'systemd-boot-unsigned' into 'os-build'" (Patrick Talbert)
+- Linux v6.3.0-0.rc1.63355b9884b3
+Resolves: 
+
 * Tue Mar 07 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc1.8ca09d5fa354.16]
 - redhat/Makefile: fix default values for dist-brew's DISTRO and DIST (Íñigo Huguet)
 - Remove cc lines from automatic configs (Don Zickus)
