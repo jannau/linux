@@ -159,6 +159,7 @@ enum dcpep_method {
 	iomfbep_a132_backlight_service_matched,
 	iomfbep_a358_vi_set_temperature_hint,
 	iomfbep_get_color_remap_mode,
+	iomfbep_last_client_close,
 	dcpep_num_methods
 };
 
@@ -338,6 +339,15 @@ struct iomfb_get_color_remap_mode_req {
 struct iomfb_get_color_remap_mode_resp {
 	u32 mode;
 	u32 ret;
+} __packed;
+
+struct iomfb_last_client_close_req {
+	u8 unkint_null;
+	u8 padding[3];
+} __packed;
+
+struct iomfb_last_client_close_resp {
+	u32 unkint;
 } __packed;
 
 #endif

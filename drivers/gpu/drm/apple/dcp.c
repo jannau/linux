@@ -528,9 +528,10 @@ static int dcp_comp_bind(struct device *dev, struct device *main, void *data)
 static void dcp_comp_unbind(struct device *dev, struct device *main, void *data)
 {
 	struct apple_dcp *dcp = dev_get_drvdata(dev);
+	struct platform_device *pdev = to_platform_device(dev);
 
 	if (dcp && dcp->shmem)
-		iomfb_shutdown(dcp);
+		dcp_poweroff(pdev);
 
 	platform_device_put(dcp->piodma);
 	dcp->piodma = NULL;
