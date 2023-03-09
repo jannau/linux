@@ -1,3 +1,15 @@
+* Thu Mar 09 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc1.6a98c9cae232.18]
+- redhat/self-test: Update self-test data (Prarit Bhargava)
+- redhat/kernel.spec.template: Fix hardcoded "kernel" (Prarit Bhargava)
+- redhat/configs/generate_all_configs.sh: Fix config naming (Prarit Bhargava)
+- redhat/kernel.spec.template: Pass SPECPACKAGE_NAME to generate_all_configs.sh (Prarit Bhargava)
+- kernel.spec.template: Use SPECPACKAGE_NAME (Prarit Bhargava)
+- redhat/Makefile: Copy spec file (Prarit Bhargava)
+- redhat: Change PACKAGE_NAME to SPECPACKAGE_NAME (Prarit Bhargava)
+- redhat/configs: Support the virtio_mmio.device parameter in Fedora (David Michael)
+- Linux v6.3.0-0.rc1.6a98c9cae232
+Resolves: 
+
 * Wed Mar 08 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc1.63355b9884b3.17]
 - Revert "Merge branch 'systemd-boot-unsigned' into 'os-build'" (Patrick Talbert)
 - Linux v6.3.0-0.rc1.63355b9884b3
