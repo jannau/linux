@@ -834,7 +834,7 @@ void DCP_FW_NAME(iomfb_poweroff)(struct apple_dcp *dcp)
 	memset(swap, 0, sizeof(*swap));
 
 	swap->swap.swap_enabled =
-		swap->swap.swap_completed = IOMFB_SET_BACKGROUND | 0xF;
+		swap->swap.swap_completed = IOMFB_SET_BACKGROUND | 0x7;
 	swap->swap.bg_color = 0xFF000000;
 
 	/*
@@ -1106,7 +1106,7 @@ void DCP_FW_NAME(iomfb_flush)(struct apple_dcp *dcp, struct drm_crtc *crtc, stru
 	 * sticks around.
 	 */
 	if (!dcp->surfaces_cleared) {
-		req->swap.swap_enabled = IOMFB_SET_BACKGROUND | 0xF;
+		req->swap.swap_enabled = IOMFB_SET_BACKGROUND | 0x7;
 		req->swap.bg_color = 0xFF000000;
 		dcp->surfaces_cleared = true;
 	}
