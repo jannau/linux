@@ -563,16 +563,3 @@ int iomfb_start_rtkit(struct apple_dcp *dcp)
 
 	return 0;
 }
-
-void iomfb_shutdown(struct apple_dcp *dcp)
-{
-	struct dcp_set_power_state_req req = {
-		/* defaults are ok */
-	};
-
-	/* We're going down */
-	dcp->active = false;
-	dcp->valid_mode = false;
-
-	dcp_set_power_state(dcp, false, &req, NULL, NULL);
-}

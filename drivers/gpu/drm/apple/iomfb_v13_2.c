@@ -26,8 +26,7 @@ static const struct dcp_method_entry dcp_methods[dcpep_num_methods] = {
 	IOMFB_METHOD("A457", iomfbep_last_client_close),
 	IOMFB_METHOD("A462", dcpep_set_display_refresh_properties),
 	IOMFB_METHOD("A465", dcpep_flush_supports_power),
-	IOMFB_METHOD("A471", dcpep_set_power_state),
-	IOMFB_METHOD("A500", dcpep_set_dcp_power),
+	IOMFB_METHOD("A470", dcpep_set_power_state),
 };
 
 #define DCP_FW v13_2
