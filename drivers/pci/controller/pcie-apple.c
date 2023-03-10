@@ -511,7 +511,7 @@ static int apple_pcie_probe_port(struct device_node *np)
 {
 	struct gpio_desc *gd;
 
-	gd = gpiod_get_from_of_node(np, "reset-gpios", 0,
+	gd = fwnode_gpiod_get_index(of_fwnode_handle(np), "reset", 0,
 				    GPIOD_OUT_LOW, "PERST#");
 	if (IS_ERR(gd)) {
 		return PTR_ERR(gd);
