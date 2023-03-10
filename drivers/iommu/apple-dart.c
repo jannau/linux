@@ -653,8 +653,8 @@ static int apple_dart_finalize_domain(struct iommu_domain *domain,
 
 		WARN_ON(!(ttbr & dart->hw->ttbr_valid));
 		ttbr &= ~dart->hw->ttbr_valid;
-		if (dart->hw->ttbr_addr_off)
-			ttbr >>= dart->hw->ttbr_addr_off;
+		if (dart->hw->ttbr_addr_field_shift)
+			ttbr >>= dart->hw->ttbr_addr_field_shift;
 
 		phys = ((phys_addr_t) ttbr) << dart->hw->ttbr_shift;
 		pgtbl_cfg.apple_dart_cfg.ttbr[0] = phys;
