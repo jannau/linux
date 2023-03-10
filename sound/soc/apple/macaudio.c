@@ -663,12 +663,12 @@ static int macaudio_add_backend_dai_route(struct snd_soc_card *card, struct snd_
 		r->source = "Speaker Playback";
 	else
 		r->source = "Headphone Playback";
-	r->sink = dai->playback_widget->name;
+	r->sink = dai->stream[SNDRV_PCM_STREAM_PLAYBACK].widget->name;
 
 	/* If headphone jack, add capture path */
 	if (!is_speakers) {
 		r = &routes[nroutes++];
-		r->source = dai->capture_widget->name;
+		r->source = dai->stream[SNDRV_PCM_STREAM_CAPTURE].widget->name;
 		r->sink = "Headset Capture";
 	}
 
