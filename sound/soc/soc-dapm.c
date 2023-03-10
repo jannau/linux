@@ -2242,8 +2242,8 @@ static ssize_t dapm_graph_read_file(struct file *file, char __user *user_buf,
 	 */
 	for_each_card_rtds(card, rtd) {
 		for_each_rtd_cpu_dais(rtd, i, dai) {
-			if (dai->playback_widget) {
-				w = dai->playback_widget;
+			if (dai->stream[SNDRV_PCM_STREAM_PLAYBACK].widget) {
+				w = dai->stream[SNDRV_PCM_STREAM_PLAYBACK].widget;
 				bufprintf("w%pK [label=\"%s\"];\n", w, w->name);
 				if (!rtd->dai_link->no_pcm)
 					bufprintf("w%pK -> w%pK;\n", rtd, w);
@@ -2252,8 +2252,8 @@ static ssize_t dapm_graph_read_file(struct file *file, char __user *user_buf,
 					num_wdone++;
 			}
 
-			if (dai->capture_widget) {
-				w = dai->capture_widget;
+			if (dai->stream[SNDRV_PCM_STREAM_CAPTURE].widget) {
+				w = dai->stream[SNDRV_PCM_STREAM_CAPTURE].widget;
 				bufprintf("w%pK [label=\"%s\"];\n", w, w->name);
 				if (!rtd->dai_link->no_pcm)
 					bufprintf("w%pK -> w%pK;\n", w, rtd);
