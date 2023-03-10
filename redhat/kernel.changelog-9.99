@@ -1,3 +1,7 @@
+* Fri Mar 10 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc1.44889ba56cbb.19]
+- Linux v6.3.0-0.rc1.44889ba56cbb
+Resolves: 
+
 * Thu Mar 09 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc1.6a98c9cae232.18]
 - redhat/self-test: Update self-test data (Prarit Bhargava)
 - redhat/kernel.spec.template: Fix hardcoded "kernel" (Prarit Bhargava)
