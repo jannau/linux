@@ -1,3 +1,7 @@
+* Mon Mar 13 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc2.22]
+- Linux v6.3.0-0.rc2
+Resolves: 
+
 * Sun Mar 12 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc1.81ff855485a3.21]
 - Linux v6.3.0-0.rc1.81ff855485a3
 Resolves: 
