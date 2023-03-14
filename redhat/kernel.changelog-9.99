@@ -1,3 +1,11 @@
+* Tue Mar 14 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc2.fc89d7fb499b.23]
+- redhat/kernel.spec.template: Fix typo for process_configs.sh call (Neal Gompa)
+- redhat/configs: CONFIG_CRYPTO_SM3_AVX_X86_64 is x86 only (Vladis Dronov)
+- redhat/configs: Enable CONFIG_PINCTRL_METEORLAKE in RHEL (Prarit Bhargava)
+- fedora: enable new image sensors (Peter Robinson)
+- Linux v6.3.0-0.rc2.fc89d7fb499b
+Resolves: 
+
 * Mon Mar 13 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc2.22]
 - Linux v6.3.0-0.rc2
 Resolves: 
