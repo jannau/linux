@@ -144,7 +144,7 @@ impl super::Queue::ver {
                     vm_slot: vm_bind.slot(),
                     unk_28: 0x1,
                     event_generation: self.id as u32,
-                    cmd_seq: U64(ev_comp.cmd_seq),
+                    event_seq: U64(ev_comp.event_seq),
                     unk_38: 0x0,
                     job_params2: inner_weak_ptr!(ptr, job_params2),
                     unk_44: 0x0,
@@ -305,7 +305,7 @@ impl super::Queue::ver {
                             evctl_index: 0, // fixed
                             flush_stamps: flush_stamps as u32,
                             uuid: uuid,
-                            cmd_seq: ev_comp.cmd_seq as u32,
+                            event_seq: ev_comp.event_seq as u32,
                         },
                         cur_ts: U64(0),
                         start_ts: Some(inner_ptr!(inner.timestamps.gpu_pointer(), start)),

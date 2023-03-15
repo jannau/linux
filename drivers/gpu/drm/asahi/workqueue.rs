@@ -214,6 +214,7 @@ struct WorkQueueInner {
     priority: u32,
     commit_seq: u64,
     submit_seq: u64,
+    event_seq: u64,
 }
 
 /// An instance of a work queue.
@@ -242,6 +243,7 @@ pub(crate) struct QueueEventInfo {
     pub(crate) slot: u32,
     pub(crate) value: event::EventValue,
     pub(crate) cmd_seq: u64,
+    pub(crate) event_seq: u64,
     pub(crate) info_ptr: GpuWeakPointer<QueueInfo::ver>,
 }
 
@@ -268,7 +270,8 @@ pub(crate) struct JobSubmission<'a> {
 impl Job::ver {
     pub(crate) fn event_info(&self) -> QueueEventInfo::ver {
         let mut info = self.event_info;
-        info.cmd_seq += self.event_count as u64;
+        info.cmd_seq += self.pending.len() as u64;
+        info.event_seq += self.event_count as u64;
 
         info
     }
@@ -336,6 +339,7 @@ impl Job::ver {
 
         ev.1 = self.event_info.value;
         inner.commit_seq += self.pending.len() as u64;
+        inner.event_seq += self.event_count as u64;
         self.committed = true;
 
         Ok(())
@@ -480,6 +484,7 @@ impl Drop for Job::ver {
             );
             event.1.sub(self.event_count as u32);
             inner.commit_seq -= self.pending.len() as u64;
+            inner.event_seq -= self.event_count as u64;
         }
 
         inner.pending_jobs -= 1;
@@ -515,6 +520,7 @@ impl<'a> Drop for JobSubmission::ver<'a> {
         );
         event.1.sub(self.event_count as u32);
         inner.commit_seq -= self.command_count as u64;
+        inner.event_seq -= self.event_count as u64;
         mod_pr_debug!("WorkQueue({:?}): Dropped JobSubmission\n", inner.pipe_type);
     }
 }
@@ -614,6 +620,7 @@ impl WorkQueue::ver {
             pending_jobs: 0,
             commit_seq: 0,
             submit_seq: 0,
+            event_seq: 0,
             last_completed: None,
             last_submitted: None,
         };
@@ -644,6 +651,7 @@ impl WorkQueue::ver {
             slot: ev.0.slot(),
             value: ev.1,
             cmd_seq: inner.commit_seq,
+            event_seq: inner.event_seq,
             info_ptr: self.info_pointer,
         })
     }
@@ -680,6 +688,7 @@ impl WorkQueue::ver {
                 slot: ev.0.slot(),
                 value: ev.1,
                 cmd_seq: inner.commit_seq,
+                event_seq: inner.event_seq,
                 info_ptr: self.info_pointer,
             },
             start_value: ev.1,

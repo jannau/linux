@@ -19,7 +19,7 @@ pub(crate) mod raw {
         pub(crate) evctl_index: u32,
         pub(crate) flush_stamps: u32,
         pub(crate) uuid: u32,
-        pub(crate) cmd_seq: u32,
+        pub(crate) event_seq: u32,
     }
 
     #[derive(Debug)]
