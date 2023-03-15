@@ -11,7 +11,9 @@ pub(crate) mod raw {
     #[derive(Debug, Clone, Copy)]
     #[repr(C)]
     pub(crate) struct JobMeta {
-        pub(crate) unk_4: u32,
+        pub(crate) unk_0: u16,
+        pub(crate) unk_2: u8,
+        pub(crate) no_preemption: u8,
         pub(crate) stamp: GpuWeakPointer<Stamp>,
         pub(crate) fw_stamp: GpuWeakPointer<FwStamp>,
         pub(crate) stamp_value: EventValue,

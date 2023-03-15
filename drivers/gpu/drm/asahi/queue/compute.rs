@@ -297,7 +297,10 @@ impl super::Queue::ver {
                             unk_28: U64(0x0), // fixed
                         },
                         meta: fw::job::raw::JobMeta {
-                            unk_4: 0,
+                            unk_0: 0,
+                            unk_2: 0,
+                            // TODO: make separate flag
+                            no_preemption: ((cmdbuf.ctx_switch_prog & 1) == 0) as u8,
                             stamp: ev_comp.stamp_pointer,
                             fw_stamp: ev_comp.fw_stamp_pointer,
                             stamp_value: ev_comp.value.next(),

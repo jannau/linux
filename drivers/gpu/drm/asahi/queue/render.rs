@@ -769,7 +769,9 @@ impl super::Queue::ver {
                         unk_param: unk2.into(), // 1 for boot stuff?
                         unk_pointee: 0,
                         meta: fw::job::raw::JobMeta {
-                            unk_4: 0,
+                            unk_0: 0,
+                            unk_2: 0,
+                            no_preemption: 0,
                             stamp: ev_frag.stamp_pointer,
                             fw_stamp: ev_frag.fw_stamp_pointer,
                             stamp_value: ev_frag.value.next(),
@@ -1092,7 +1094,9 @@ impl super::Queue::ver {
                         unk_568: 0,
                         unk_56c: 0,
                         meta: fw::job::raw::JobMeta {
-                            unk_4: 0,
+                            unk_0: 0,
+                            unk_2: 0,
+                            no_preemption: 0,
                             stamp: ev_vtx.stamp_pointer,
                             fw_stamp: ev_vtx.fw_stamp_pointer,
                             stamp_value: ev_vtx.value.next(),
