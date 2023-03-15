@@ -397,7 +397,6 @@ impl super::Queue::ver {
 
         let unk1 = debug_enabled(debug::DebugFlags::Debug1);
         let unk2 = debug_enabled(debug::DebugFlags::Debug2);
-        let unk3 = debug_enabled(debug::DebugFlags::Debug3);
 
         let mut tile_config: u64 = 0;
         if !unk1 {
@@ -489,7 +488,7 @@ impl super::Queue::ver {
                         cmdbuf.attachments,
                         cmdbuf.attachment_count,
                     )?,
-                    unk_190: 0,
+                    padding: 0,
                     #[ver(V >= V13_0B4)]
                     counter: U64(count_frag),
                     #[ver(V >= V13_0B4)]
@@ -557,7 +556,7 @@ impl super::Queue::ver {
                     #[ver(G == G14 && V < V13_0B4)]
                     unk_8c_g14: U64(0),
                     restart_branch_offset: off,
-                    unk_98: unk3.into(),
+                    has_attachments: (cmdbuf.attachment_count > 0) as u32,
                     #[ver(V >= V13_0B4)]
                     unk_9c: Default::default(),
                 })?;
@@ -885,13 +884,8 @@ impl super::Queue::ver {
                     unk_64: 0x0, // fixed
                     unk_68: unk1.into(),
                     uuid: uuid_ta,
-                    unk_70: 0x0,                // fixed
-                    unk_74: Default::default(), // fixed
-                    unk_15c: 0x0,               // fixed
-                    unk_160: U64(0x0),          // fixed
-                    unk_168: 0x0,               // fixed
-                    unk_16c: 0x0,               // fixed
-                    unk_170: U64(0x0),          // fixed
+                    attachments: Default::default(), // TODO: Vertex attachments
+                    padding: 0,
                     #[ver(V >= V13_0B4)]
                     counter: U64(count_vtx),
                     #[ver(V >= V13_0B4)]
@@ -957,7 +951,7 @@ impl super::Queue::ver {
                     #[ver(G >= G14 && V < V13_0B4)]
                     unk_68_g14: U64(0),
                     restart_branch_offset: off,
-                    unk_70: 0x0, // fixed
+                    has_attachments: 0, // TODO: Vertex attachments
                     #[ver(V >= V13_0B4)]
                     unk_74: Default::default(), // Ventura
                 })?;

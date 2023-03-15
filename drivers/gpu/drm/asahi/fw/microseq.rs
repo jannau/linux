@@ -169,13 +169,8 @@ pub(crate) struct StartVertex<'a> {
     pub(crate) unk_64: u32,
     pub(crate) unk_68: u32,
     pub(crate) uuid: u32,
-    pub(crate) unk_70: u32,
-    pub(crate) unk_74: Array<0x1d, U64>,
-    pub(crate) unk_15c: u32,
-    pub(crate) unk_160: U64,
-    pub(crate) unk_168: u32,
-    pub(crate) unk_16c: u32,
-    pub(crate) unk_170: U64,
+    pub(crate) attachments: Attachments,
+    pub(crate) padding: u32,
 
     #[ver(V >= V13_0B4)]
     pub(crate) counter: U64,
@@ -217,7 +212,7 @@ pub(crate) struct FinalizeVertex {
     pub(crate) unk_68_g14: U64,
 
     pub(crate) restart_branch_offset: i32,
-    pub(crate) unk_70: u32,
+    pub(crate) has_attachments: u32,
 
     #[ver(V >= V13_0B4)]
     pub(crate) unk_74: Array<0x10, u8>,
@@ -254,7 +249,7 @@ pub(crate) struct StartFragment<'a> {
     pub(crate) unk_84: u32,
     pub(crate) uuid: u32,
     pub(crate) attachments: Attachments,
-    pub(crate) unk_190: u32,
+    pub(crate) padding: u32,
 
     #[ver(V >= V13_0B4)]
     pub(crate) counter: U64,
@@ -297,7 +292,7 @@ pub(crate) struct FinalizeFragment {
     pub(crate) unk_8c_g14: U64,
 
     pub(crate) restart_branch_offset: i32,
-    pub(crate) unk_98: u32,
+    pub(crate) has_attachments: u32,
 
     #[ver(V >= V13_0B4)]
     pub(crate) unk_9c: Array<0x10, u8>,
@@ -368,7 +363,7 @@ pub(crate) struct FinalizeCompute<'a> {
     pub(crate) unk_5c_g14: U64,
 
     pub(crate) restart_branch_offset: i32,
-    pub(crate) unk_60: u32,
+    pub(crate) has_attachments: u32,
 
     #[ver(V >= V13_0B4)]
     pub(crate) unk_64: Array<0xd, u8>,

@@ -122,8 +122,6 @@ impl super::Queue::ver {
 
         let uuid = cmdbuf.cmd_id;
 
-        let unk3 = debug_enabled(debug::DebugFlags::Debug3);
-
         mod_dev_dbg!(self.dev, "[Submission {}] UUID = {:#x?}\n", id, uuid);
 
         // TODO: check
@@ -223,7 +221,7 @@ impl super::Queue::ver {
                     #[ver(G == G14 && V < V13_0B4)]
                     unk_5c_g14: U64(0),
                     restart_branch_offset: off,
-                    unk_60: unk3.into(),
+                    has_attachments: (cmdbuf.attachment_count > 0) as u32,
                     #[ver(V >= V13_0B4)]
                     unk_64: Default::default(),
                     #[ver(V >= V13_0B4)]
