@@ -384,7 +384,7 @@ impl super::Queue::ver {
                         wait_slot: ev_vtx.slot,
                         stamp_self: ev_frag.value.next(),
                         uuid: uuid_3d,
-                        unk: 0,
+                        barrier_type: 0,
                     }
                 ))
             },

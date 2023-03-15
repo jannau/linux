@@ -34,7 +34,7 @@ pub(crate) mod raw {
         pub(crate) wait_slot: u32,
         pub(crate) stamp_self: EventValue,
         pub(crate) uuid: u32,
-        pub(crate) unk: u32,
+        pub(crate) barrier_type: u32,
     }
 
     #[derive(Debug, Clone, Copy)]
