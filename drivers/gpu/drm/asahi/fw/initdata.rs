@@ -807,12 +807,16 @@ pub(crate) mod raw {
     #[versions(AGX)]
     default_zeroed!(GpuGlobalStatsFrag::ver);
 
+    #[versions(AGX)]
     #[derive(Debug)]
     #[repr(C)]
     pub(crate) struct GpuStatsComp {
-        pub(crate) unk: Array<0x140, u8>,
+        pub(crate) unk: Array<0x180, u8>,
+        #[ver(V >= V13_0B4)]
+        pub(crate) unk_pad: Array<0x580, u8>,
     }
-    default_zeroed!(GpuStatsComp);
+    #[versions(AGX)]
+    default_zeroed!(GpuStatsComp::ver);
 
     #[derive(Debug)]
     #[repr(C)]
@@ -871,7 +875,7 @@ pub(crate) mod raw {
         pub(crate) unk_168: U64,
         pub(crate) stats_vtx: GpuPointer<'a, super::GpuGlobalStatsVtx::ver>,
         pub(crate) stats_frag: GpuPointer<'a, super::GpuGlobalStatsFrag::ver>,
-        pub(crate) stats_comp: GpuPointer<'a, super::GpuStatsComp>,
+        pub(crate) stats_comp: GpuPointer<'a, super::GpuStatsComp::ver>,
         pub(crate) hwdata_a: GpuPointer<'a, super::HwDataA::ver>,
         pub(crate) unkptr_190: GpuPointer<'a, &'a [u8]>,
         pub(crate) unkptr_198: GpuPointer<'a, &'a [u8]>,
@@ -1185,11 +1189,13 @@ impl GpuStruct for GpuGlobalStatsFrag::ver {
     type Raw<'a> = raw::GpuGlobalStatsFrag::ver;
 }
 
+#[versions(AGX)]
 #[derive(Debug, Default)]
 pub(crate) struct GpuStatsComp {}
 
-impl GpuStruct for GpuStatsComp {
-    type Raw<'a> = raw::GpuStatsComp;
+#[versions(AGX)]
+impl GpuStruct for GpuStatsComp::ver {
+    type Raw<'a> = raw::GpuStatsComp::ver;
 }
 
 #[versions(AGX)]
@@ -1215,7 +1221,7 @@ impl GpuStruct for HwDataB::ver {
 pub(crate) struct Stats {
     pub(crate) vtx: GpuObject<GpuGlobalStatsVtx::ver>,
     pub(crate) frag: GpuObject<GpuGlobalStatsFrag::ver>,
-    pub(crate) comp: GpuObject<GpuStatsComp>,
+    pub(crate) comp: GpuObject<GpuStatsComp::ver>,
 }
 
 #[versions(AGX)]

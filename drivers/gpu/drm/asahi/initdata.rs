@@ -640,7 +640,7 @@ impl<'a> InitDataBuilder::ver<'a> {
                         ))
                     },
                 )?,
-                comp: self.alloc.private.new_default::<GpuStatsComp>()?,
+                comp: self.alloc.private.new_default::<GpuStatsComp::ver>()?,
             },
 
             hwdata_a: hwa,

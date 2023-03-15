@@ -308,7 +308,7 @@ pub(crate) struct StartCompute<'a> {
     pub(crate) header: op::StartCompute,
     pub(crate) unk_pointer: GpuWeakPointer<Array<0x54, u8>>,
     pub(crate) job_params1: GpuWeakPointer<compute::raw::JobParameters1<'a>>,
-    pub(crate) stats: GpuWeakPointer<initdata::GpuStatsComp>,
+    pub(crate) stats: GpuWeakPointer<initdata::GpuStatsComp::ver>,
     pub(crate) work_queue: GpuWeakPointer<workqueue::QueueInfo::ver>,
     pub(crate) vm_slot: u32,
     pub(crate) unk_28: u32,
@@ -339,7 +339,7 @@ impl<'a> Operation for StartCompute::ver<'a> {}
 #[repr(C)]
 pub(crate) struct FinalizeCompute<'a> {
     pub(crate) header: op::FinalizeCompute,
-    pub(crate) stats: GpuWeakPointer<initdata::GpuStatsComp>,
+    pub(crate) stats: GpuWeakPointer<initdata::GpuStatsComp::ver>,
     pub(crate) work_queue: GpuWeakPointer<workqueue::QueueInfo::ver>,
     pub(crate) vm_slot: u32,
     #[ver(V < V13_0B4)]
