@@ -1,3 +1,10 @@
+* Fri Mar 17 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc2.38e04b3e4240.26]
+- Make Fedora debug configs more useful for debug (Justin M. Forbes)
+- redhat/configs: enable Octeon TX2 network drivers for RHEL (Michal Schmidt) [2040643]
+- redhat/kernel.spec.template: fix installonlypkg for meta package (Jan Stancek)
+- Linux v6.3.0-0.rc2.38e04b3e4240
+Resolves: rhbz#2040643
+
 * Thu Mar 16 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc2.9c1bec9c0b08.25]
 - redhat: version two of Makefile.rhelver tweaks (Clark Williams)
 - Linux v6.3.0-0.rc2.9c1bec9c0b08
