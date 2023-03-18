@@ -1,3 +1,9 @@
+* Sat Mar 18 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc2.478a351ce0d6.27]
+- Use RHJOBS for create-tarball (Don Zickus)
+- Enable CONFIG_NET_SCH_FQ_PIE for Fedora (Justin M. Forbes)
+- Linux v6.3.0-0.rc2.478a351ce0d6
+Resolves: 
+
 * Fri Mar 17 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc2.38e04b3e4240.26]
 - Make Fedora debug configs more useful for debug (Justin M. Forbes)
 - redhat/configs: enable Octeon TX2 network drivers for RHEL (Michal Schmidt) [2040643]
