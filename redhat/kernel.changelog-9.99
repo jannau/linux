@@ -1,3 +1,7 @@
+* Sun Mar 19 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc2.a3671bd86a97.28]
+- Linux v6.3.0-0.rc2.a3671bd86a97
+Resolves: 
+
 * Sat Mar 18 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc2.478a351ce0d6.27]
 - Use RHJOBS for create-tarball (Don Zickus)
 - Enable CONFIG_NET_SCH_FQ_PIE for Fedora (Justin M. Forbes)
