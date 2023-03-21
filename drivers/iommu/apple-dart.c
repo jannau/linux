@@ -199,7 +199,6 @@ struct apple_dart_hw {
  * @lock: lock for hardware operations involving this dart
  * @pgsize: pagesize supported by this DART
  * @supports_bypass: indicates if this DART supports bypass mode
- * @force_bypass: force bypass mode due to pagesize mismatch?
  * @locked: indicates if this DART is locked
  * @sid2group: maps stream ids to iommu_groups
  * @iommu: iommu core device
@@ -221,7 +220,6 @@ struct apple_dart {
 	u32 pgsize;
 	u32 num_streams;
 	u32 supports_bypass : 1;
-	u32 force_bypass : 1;
 	u32 locked : 1;
 
 	struct iommu_group *sid2group[DART_MAX_STREAMS];
@@ -737,8 +735,6 @@ static int apple_dart_attach_dev(struct iommu_domain *domain,
 	struct apple_dart_domain *dart_domain = to_dart_domain(domain);
 	struct apple_dart *dart0 = cfg->stream_maps[0].dart;
 
-	if (dart0->force_bypass && domain->type != IOMMU_DOMAIN_IDENTITY)
-		return -EINVAL;
 	if (!dart0->supports_bypass && domain->type == IOMMU_DOMAIN_IDENTITY)
 		return -EINVAL;
 	if (dart0->locked && domain->type != IOMMU_DOMAIN_DMA)
@@ -886,8 +882,6 @@ static int apple_dart_of_xlate(struct device *dev, struct of_phandle_args *args)
 	if (cfg_dart) {
 		if (cfg_dart->supports_bypass != dart->supports_bypass)
 			return -EINVAL;
-		if (cfg_dart->force_bypass != dart->force_bypass)
-			return -EINVAL;
 		if (cfg_dart->pgsize != dart->pgsize)
 			return -EINVAL;
 	}
@@ -993,10 +987,6 @@ static int apple_dart_def_domain_type(struct device *dev)
 	struct apple_dart_master_cfg *cfg = dev_iommu_priv_get(dev);
 	struct apple_dart *dart = cfg->stream_maps[0].dart;
 
-	WARN_ON(dart->force_bypass && dart->locked);
-
-	if (dart->force_bypass)
-		return IOMMU_DOMAIN_IDENTITY;
 	if (dart->locked)
 		return IOMMU_DOMAIN_DMA;
 	if (dart->supports_bypass)
@@ -1209,8 +1199,6 @@ static int apple_dart_probe(struct platform_device *pdev)
 		goto err_clk_disable;
 	}
 
-	dart->force_bypass = dart->pgsize > PAGE_SIZE;
-
 	dart->locked = apple_dart_is_locked(dart);
 	if (!dart->locked) {
 		ret = apple_dart_hw_reset(dart);
@@ -1238,8 +1226,8 @@ static int apple_dart_probe(struct platform_device *pdev)
 
 	dev_info(
 		&pdev->dev,
-		"DART [pagesize %x, %d streams, bypass support: %d, bypass forced: %d, locked: %d] initialized\n",
-		dart->pgsize, dart->num_streams, dart->supports_bypass, dart->force_bypass, dart->locked);
+		"DART [pagesize %x, %d streams, bypass support: %d, bypass locked: %d] initialized\n",
+		dart->pgsize, dart->num_streams, dart->supports_bypass, dart->locked);
 	return 0;
 
 err_sysfs_remove:
