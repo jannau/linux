@@ -135,6 +135,9 @@ int drm_gem_object_init(struct drm_device *dev,
 
 	obj->filp = filp;
 
+#ifdef CONFIG_ARM64_4K_PAGES
+	filp->f_mapping->order = 2;
+#endif
 	return 0;
 }
 EXPORT_SYMBOL(drm_gem_object_init);
