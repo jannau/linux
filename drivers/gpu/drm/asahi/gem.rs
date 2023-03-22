@@ -20,9 +20,7 @@ use kernel::drm::gem::BaseObject;
 
 use core::sync::atomic::{AtomicU64, Ordering};
 
-use crate::debug::*;
-use crate::driver::AsahiDevice;
-use crate::file::DrmFile;
+use crate::{debug::*, driver::AsahiDevice, file::DrmFile, mmu, util::*};
 
 const DEBUG_CLASS: DebugFlags = DebugFlags::Gem;
 
@@ -221,7 +219,7 @@ impl ObjectRef {
 
 /// Create a new kernel-owned GEM object.
 pub(crate) fn new_kernel_object(dev: &AsahiDevice, size: usize) -> Result<ObjectRef> {
-    let mut gem = shmem::Object::<DriverObject>::new(dev, size)?;
+    let mut gem = shmem::Object::<DriverObject>::new(dev, align(size, mmu::UAT_PGSZ))?;
     gem.kernel = true;
     gem.flags = 0;
 
@@ -238,7 +236,7 @@ pub(crate) fn new_object(
     flags: u32,
     vm_id: Option<u64>,
 ) -> Result<ObjectRef> {
-    let mut gem = shmem::Object::<DriverObject>::new(dev, size)?;
+    let mut gem = shmem::Object::<DriverObject>::new(dev, align(size, mmu::UAT_PGSZ))?;
     gem.kernel = false;
     gem.flags = flags;
     gem.vm_id = vm_id;
