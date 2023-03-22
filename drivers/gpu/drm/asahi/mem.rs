@@ -80,6 +80,11 @@ pub(crate) fn tlbi_range(asid: Asid, va: usize, len: usize) {
     let mut val: u64 = ((asid as u64) << 48) | (2 << 46) | (start_pg as u64 & 0x1fffffffff);
     let pages = end_pg - start_pg;
 
+    // Guess? It's possible that the page count is in terms of 4K pages
+    // when the CPU is in 4K mode...
+    #[cfg(CONFIG_ARM64_4K_PAGES)]
+    let pages = 4 * pages;
+
     if pages == 1 {
         tlbi_page(asid, va);
         return;
