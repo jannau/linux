@@ -278,10 +278,15 @@ impl rtkit::Operations for GpuManager::ver {
 
     fn crashed(data: <Self::Data as ForeignOwnable>::Borrowed<'_>) {
         let dev = &data.dev;
-        dev_err!(dev, "GPU firmware crashed, failing all jobs\n");
 
         data.crashed.store(true, Ordering::Relaxed);
-        data.event_manager.fail_all(workqueue::WorkError::NoDevice);
+
+        if debug_enabled(DebugFlags::OopsOnGpuCrash) {
+            panic!("GPU firmware crashed");
+        } else {
+            dev_err!(dev, "GPU firmware crashed, failing all jobs\n");
+            data.event_manager.fail_all(workqueue::WorkError::NoDevice);
+        }
     }
 
     fn shmem_alloc(
