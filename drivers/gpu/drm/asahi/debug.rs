@@ -64,6 +64,8 @@ pub(crate) enum DebugFlags {
     Debug5 = 53,
     Debug6 = 54,
     Debug7 = 55,
+
+    OopsOnGpuCrash = 63,
 }
 
 /// Update the cached global debug flags from the module parameter
