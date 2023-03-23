@@ -7,7 +7,7 @@
 use crate::{bindings, drm, error::Result};
 use alloc::boxed::Box;
 use core::marker::PhantomData;
-use core::ops::Deref;
+use core::pin::Pin;
 
 /// Trait that must be implemented by DRM drivers to represent a DRM File (a client instance).
 pub trait DriverFile {
@@ -15,7 +15,7 @@ pub trait DriverFile {
     type Driver: drm::drv::Driver;
 
     /// Open a new file (called when a client opens the DRM device).
-    fn open(device: &drm::device::Device<Self::Driver>) -> Result<Box<Self>>;
+    fn open(device: &drm::device::Device<Self::Driver>) -> Result<Pin<Box<Self>>>;
 }
 
 /// An open DRM File.
@@ -43,7 +43,8 @@ pub(super) unsafe extern "C" fn open_callback<T: DriverFile>(
         Ok(i) => i,
     };
 
-    file.driver_priv = Box::into_raw(inner) as *mut _;
+    // SAFETY: This pointer is treated as pinned, and the Drop guarantee is upheld below.
+    file.driver_priv = Box::into_raw(unsafe { Pin::into_inner_unchecked(inner) }) as *mut _;
 
     0
 }
@@ -79,13 +80,10 @@ impl<T: DriverFile> File<T> {
     pub(super) fn file(&self) -> &bindings::drm_file {
         unsafe { &*self.raw }
     }
-}
 
-impl<T: DriverFile> Deref for File<T> {
-    type Target = T;
-
-    fn deref(&self) -> &T {
-        unsafe { &*(self.file().driver_priv as *const T) }
+    /// Return a pinned reference to the driver file structure.
+    pub fn inner(&self) -> Pin<&T> {
+        unsafe { Pin::new_unchecked(&*(self.file().driver_priv as *const T)) }
     }
 }
 
