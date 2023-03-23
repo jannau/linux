@@ -274,7 +274,7 @@ impl gem::BaseDriverObject<Object> for DriverObject {
     /// Callback to drop all mappings for a GEM object owned by a given `File`
     fn close(obj: &Object, file: &DrmFile) {
         mod_pr_debug!("DriverObject::close vm_id={:?} id={}\n", obj.vm_id, obj.id);
-        obj.drop_file_mappings(file.file_id());
+        obj.drop_file_mappings(file.inner().file_id());
     }
 }
 

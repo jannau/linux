@@ -159,29 +159,42 @@ impl drm::file::DriverFile for File {
     type Driver = driver::AsahiDriver;
 
     /// Create a new `File` instance for a fresh client.
-    fn open(device: &AsahiDevice) -> Result<Box<Self>> {
+    fn open(device: &AsahiDevice) -> Result<Pin<Box<Self>>> {
         debug::update_debug_flags();
 
         let gpu = &device.data().gpu;
         let id = gpu.ids().file.next();
 
         mod_dev_dbg!(device, "[File {}]: DRM device opened\n", id);
-        Ok(Box::try_new(Self {
+        Ok(Box::into_pin(Box::try_new(Self {
             id,
-            vms: xarray::XArray::new(xarray::flags::ALLOC1)?,
-            queues: xarray::XArray::new(xarray::flags::ALLOC1)?,
-        })?)
+            vms: xarray::XArray::new(xarray::flags::ALLOC1),
+            queues: xarray::XArray::new(xarray::flags::ALLOC1),
+        })?))
     }
 }
 
 impl File {
+    fn vms(self: Pin<&Self>) -> Pin<&xarray::XArray<Box<Vm>>> {
+        // SAFETY: Structural pinned projection for vms.
+        // We never move out of this field.
+        unsafe { self.map_unchecked(|s| &s.vms) }
+    }
+
+    #[allow(clippy::type_complexity)]
+    fn queues(self: Pin<&Self>) -> Pin<&xarray::XArray<Arc<Mutex<Box<dyn queue::Queue>>>>> {
+        // SAFETY: Structural pinned projection for queues.
+        // We never move out of this field.
+        unsafe { self.map_unchecked(|s| &s.queues) }
+    }
+
     /// IOCTL: get_param: Get a driver parameter value.
     pub(crate) fn get_params(
         device: &AsahiDevice,
         data: &mut bindings::drm_asahi_get_params,
         file: &DrmFile,
     ) -> Result<u32> {
-        mod_dev_dbg!(device, "[File {}]: IOCTL: get_params\n", file.id);
+        mod_dev_dbg!(device, "[File {}]: IOCTL: get_params\n", file.inner().id);
 
         let gpu = &device.data().gpu;
 
@@ -258,10 +271,10 @@ impl File {
         }
 
         let gpu = &device.data().gpu;
-        let file_id = file.id;
+        let file_id = file.inner().id;
         let vm = gpu.new_vm(file_id)?;
 
-        let resv = file.vms.reserve()?;
+        let resv = file.inner().vms().reserve()?;
         let id: u32 = resv.index().try_into()?;
 
         mod_dev_dbg!(device, "[File {} VM {}]: VM Create\n", file_id, id);
@@ -329,7 +342,7 @@ impl File {
             return Err(EINVAL);
         }
 
-        if file.vms.remove(data.vm_id as usize).is_none() {
+        if file.inner().vms().remove(data.vm_id as usize).is_none() {
             Err(ENOENT)
         } else {
             Ok(0)
@@ -345,7 +358,7 @@ impl File {
         mod_dev_dbg!(
             device,
             "[File {}]: IOCTL: gem_create size={:#x?}\n",
-            file.id,
+            file.inner().id,
             data.size
         );
 
@@ -357,7 +370,15 @@ impl File {
         }
 
         let vm_id = if data.flags & bindings::ASAHI_GEM_VM_PRIVATE != 0 {
-            Some(file.vms.get(data.vm_id.try_into()?).ok_or(ENOENT)?.vm.id())
+            Some(
+                file.inner()
+                    .vms()
+                    .get(data.vm_id.try_into()?)
+                    .ok_or(ENOENT)?
+                    .borrow()
+                    .vm
+                    .id(),
+            )
         } else {
             None
         };
@@ -370,7 +391,7 @@ impl File {
         mod_dev_dbg!(
             device,
             "[File {}]: IOCTL: gem_create size={:#x} handle={:#x?}\n",
-            file.id,
+            file.inner().id,
             data.size,
             data.handle
         );
@@ -387,7 +408,7 @@ impl File {
         mod_dev_dbg!(
             device,
             "[File {}]: IOCTL: gem_mmap_offset handle={:#x?}\n",
-            file.id,
+            file.inner().id,
             data.handle
         );
 
@@ -409,7 +430,7 @@ impl File {
         mod_dev_dbg!(
             device,
             "[File {} VM {}]: IOCTL: gem_bind op={:?} handle={:#x?} flags={:#x?} {:#x?}:{:#x?} -> {:#x?}\n",
-            file.id,
+            file.inner().id,
             data.op,
             data.vm_id,
             data.handle,
@@ -490,9 +511,11 @@ impl File {
 
         // Clone it immediately so we aren't holding the XArray lock
         let vm = file
-            .vms
+            .inner()
+            .vms()
             .get(data.vm_id.try_into()?)
             .ok_or(ENOENT)?
+            .borrow()
             .vm
             .clone();
 
@@ -513,9 +536,16 @@ impl File {
         let mut bo = gem::lookup_handle(file, data.handle)?;
 
         if data.vm_id == 0 {
-            bo.drop_file_mappings(file.id);
+            bo.drop_file_mappings(file.inner().id);
         } else {
-            let vm_id = file.vms.get(data.vm_id.try_into()?).ok_or(ENOENT)?.vm.id();
+            let vm_id = file
+                .inner()
+                .vms()
+                .get(data.vm_id.try_into()?)
+                .ok_or(ENOENT)?
+                .borrow()
+                .vm
+                .id();
             bo.drop_vm_mappings(vm_id);
         }
 
@@ -528,7 +558,7 @@ impl File {
         data: &mut bindings::drm_asahi_queue_create,
         file: &DrmFile,
     ) -> Result<u32> {
-        let file_id = file.id;
+        let file_id = file.inner().id;
 
         mod_dev_dbg!(
             device,
@@ -553,11 +583,15 @@ impl File {
             return Err(EINVAL);
         }
 
-        let resv = file.queues.reserve()?;
-        let file_vm = file.vms.get(data.vm_id.try_into()?).ok_or(ENOENT)?;
-        let vm = file_vm.vm.clone();
-        let ualloc = file_vm.ualloc.clone();
-        let ualloc_priv = file_vm.ualloc_priv.clone();
+        let resv = file.inner().queues().reserve()?;
+        let file_vm = file
+            .inner()
+            .vms()
+            .get(data.vm_id.try_into()?)
+            .ok_or(ENOENT)?;
+        let vm = file_vm.borrow().vm.clone();
+        let ualloc = file_vm.borrow().ualloc.clone();
+        let ualloc_priv = file_vm.borrow().ualloc_priv.clone();
         // Drop the vms lock eagerly
         core::mem::drop(file_vm);
 
@@ -583,7 +617,12 @@ impl File {
             return Err(EINVAL);
         }
 
-        if file.queues.remove(data.queue_id as usize).is_none() {
+        if file
+            .inner()
+            .queues()
+            .remove(data.queue_id as usize)
+            .is_none()
+        {
             Err(ENOENT)
         } else {
             Ok(0)
@@ -612,7 +651,8 @@ impl File {
 
         // Upgrade to Arc<T> to drop the XArray lock early
         let queue: Arc<Mutex<Box<dyn queue::Queue>>> = file
-            .queues
+            .inner()
+            .queues()
             .get(data.queue_id.try_into()?)
             .ok_or(ENOENT)?
             .borrow()
@@ -622,7 +662,7 @@ impl File {
         mod_dev_dbg!(
             device,
             "[File {} Queue {}]: IOCTL: submit (submission ID: {})\n",
-            file.id,
+            file.inner().id,
             data.queue_id,
             id
         );
@@ -630,7 +670,7 @@ impl File {
         mod_dev_dbg!(
             device,
             "[File {} Queue {}]: IOCTL: submit({}): Parsing in_syncs\n",
-            file.id,
+            file.inner().id,
             data.queue_id,
             id
         );
@@ -638,7 +678,7 @@ impl File {
         mod_dev_dbg!(
             device,
             "[File {} Queue {}]: IOCTL: submit({}): Parsing out_syncs\n",
-            file.id,
+            file.inner().id,
             data.queue_id,
             id
         );
@@ -648,7 +688,7 @@ impl File {
             mod_dev_dbg!(
                 device,
                 "[File {} Queue {}]: IOCTL: submit({}): Looking up result_handle {}\n",
-                file.id,
+                file.inner().id,
                 data.queue_id,
                 id,
                 data.result_handle
@@ -661,7 +701,7 @@ impl File {
         mod_dev_dbg!(
             device,
             "[File {} Queue {}]: IOCTL: submit({}): Parsing commands\n",
-            file.id,
+            file.inner().id,
             data.queue_id,
             id
         );
@@ -694,7 +734,7 @@ impl File {
                 dev_info!(
                     device,
                     "[File {} Queue {}]: IOCTL: submit failed! (submission ID: {} err: {:?})\n",
-                    file.id,
+                    file.inner().id,
                     data.queue_id,
                     id,
                     e
