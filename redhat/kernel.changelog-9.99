@@ -1,3 +1,7 @@
+* Thu Mar 23 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc3.fff5a5e7f528.31]
+- Linux v6.3.0-0.rc3.fff5a5e7f528
+Resolves: 
+
 * Wed Mar 22 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc3.a1effab7a3a3.30]
 - arm64/configs: Put some arm64 configs in the right place (Mark Salter)
 - cleanup removed R8188EU config (Peter Robinson)
