@@ -1,3 +1,10 @@
+* Fri Mar 24 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc3.1e760fa3596e.32]
+- Revert "acpi: prefer booting with ACPI over DTS" (Mark Salter)
+- Revert "Fixes "acpi: prefer booting with ACPI over DTS" to be RHEL only" (Mark Salter)
+- configs: arm: bring some configs in line with rhel configs in c9s (Mark Salter)
+- Linux v6.3.0-0.rc3.1e760fa3596e
+Resolves: 
+
 * Thu Mar 23 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc3.fff5a5e7f528.31]
 - Linux v6.3.0-0.rc3.fff5a5e7f528
 Resolves: 
