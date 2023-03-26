@@ -1,3 +1,7 @@
+* Sun Mar 26 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc3.da8e7da11e4b.34]
+- Linux v6.3.0-0.rc3.da8e7da11e4b
+Resolves: 
+
 * Sat Mar 25 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc3.65aca32efdcb.33]
 - CONFIG_SND_SOC_CS42L83 is no longer common (Justin M. Forbes)
 - Linux v6.3.0-0.rc3.65aca32efdcb
