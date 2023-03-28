@@ -1,3 +1,7 @@
+* Tue Mar 28 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc4.3a93e40326c8.36]
+- Linux v6.3.0-0.rc4.3a93e40326c8
+Resolves: 
+
 * Mon Mar 27 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc4.35]
 - generic: common: Parport and paride/ata cleanups (Peter Robinson)
 - Linux v6.3.0-0.rc4
