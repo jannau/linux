@@ -24,10 +24,10 @@ use crate::{channel, driver, event, fw, gpu, object, regs};
 use core::num::NonZeroU64;
 use core::sync::atomic::Ordering;
 use kernel::{
-    bindings,
     error::code::*,
     prelude::*,
     sync::{Arc, Guard, Mutex, UniqueArc},
+    uapi,
 };
 
 const DEBUG_CLASS: DebugFlags = DebugFlags::WorkQueue;
@@ -49,18 +49,18 @@ pub(crate) enum WorkError {
     Unknown,
 }
 
-impl From<WorkError> for bindings::drm_asahi_result_info {
+impl From<WorkError> for uapi::drm_asahi_result_info {
     fn from(err: WorkError) -> Self {
         match err {
             WorkError::Fault(info) => Self {
-                status: bindings::drm_asahi_status_DRM_ASAHI_STATUS_FAULT,
+                status: uapi::drm_asahi_status_DRM_ASAHI_STATUS_FAULT,
                 fault_type: match info.reason {
-                    FaultReason::Unmapped => bindings::drm_asahi_fault_DRM_ASAHI_FAULT_UNMAPPED,
-                    FaultReason::AfFault => bindings::drm_asahi_fault_DRM_ASAHI_FAULT_AF_FAULT,
-                    FaultReason::WriteOnly => bindings::drm_asahi_fault_DRM_ASAHI_FAULT_WRITE_ONLY,
-                    FaultReason::ReadOnly => bindings::drm_asahi_fault_DRM_ASAHI_FAULT_READ_ONLY,
-                    FaultReason::NoAccess => bindings::drm_asahi_fault_DRM_ASAHI_FAULT_NO_ACCESS,
-                    FaultReason::Unknown(_) => bindings::drm_asahi_fault_DRM_ASAHI_FAULT_UNKNOWN,
+                    FaultReason::Unmapped => uapi::drm_asahi_fault_DRM_ASAHI_FAULT_UNMAPPED,
+                    FaultReason::AfFault => uapi::drm_asahi_fault_DRM_ASAHI_FAULT_AF_FAULT,
+                    FaultReason::WriteOnly => uapi::drm_asahi_fault_DRM_ASAHI_FAULT_WRITE_ONLY,
+                    FaultReason::ReadOnly => uapi::drm_asahi_fault_DRM_ASAHI_FAULT_READ_ONLY,
+                    FaultReason::NoAccess => uapi::drm_asahi_fault_DRM_ASAHI_FAULT_NO_ACCESS,
+                    FaultReason::Unknown(_) => uapi::drm_asahi_fault_DRM_ASAHI_FAULT_UNKNOWN,
                 },
                 unit: info.unit_code.into(),
                 sideband: info.sideband.into(),
@@ -72,10 +72,10 @@ impl From<WorkError> for bindings::drm_asahi_result_info {
             },
             a => Self {
                 status: match a {
-                    WorkError::Timeout => bindings::drm_asahi_status_DRM_ASAHI_STATUS_TIMEOUT,
-                    WorkError::Killed => bindings::drm_asahi_status_DRM_ASAHI_STATUS_KILLED,
-                    WorkError::NoDevice => bindings::drm_asahi_status_DRM_ASAHI_STATUS_NO_DEVICE,
-                    _ => bindings::drm_asahi_status_DRM_ASAHI_STATUS_UNKNOWN_ERROR,
+                    WorkError::Timeout => uapi::drm_asahi_status_DRM_ASAHI_STATUS_TIMEOUT,
+                    WorkError::Killed => uapi::drm_asahi_status_DRM_ASAHI_STATUS_KILLED,
+                    WorkError::NoDevice => uapi::drm_asahi_status_DRM_ASAHI_STATUS_NO_DEVICE,
+                    _ => uapi::drm_asahi_status_DRM_ASAHI_STATUS_UNKNOWN_ERROR,
                 },
                 ..Default::default()
             },

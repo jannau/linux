@@ -90,11 +90,11 @@ pub(crate) mod feat {
 
     /// Backwards-incompatible features.
     pub(crate) mod incompat {
-        use kernel::bindings;
+        use kernel::uapi;
 
         /// Hardware requires Z/S compression to be mandatorily enabled.
         pub(crate) const MANDATORY_ZS_COMPRESSION: u64 =
-            bindings::drm_asahi_feat_incompat_DRM_ASAHI_FEAT_MANDATORY_ZS_COMPRESSION as u64;
+            uapi::drm_asahi_feat_incompat_DRM_ASAHI_FEAT_MANDATORY_ZS_COMPRESSION as u64;
     }
 }
 

@@ -8,11 +8,12 @@
 use kernel::dma_fence::*;
 use kernel::prelude::*;
 use kernel::{
-    bindings, c_str, dma_fence,
+    c_str, dma_fence,
     drm::gem::shmem::VMap,
     drm::sched,
     macros::versions,
     sync::{smutex::Mutex, Arc},
+    uapi,
 };
 
 use crate::alloc::Allocator;
@@ -42,7 +43,7 @@ pub(crate) trait Queue: Send + Sync {
         in_syncs: Vec<file::SyncItem>,
         out_syncs: Vec<file::SyncItem>,
         result_buf: Option<gem::ObjectRef>,
-        commands: Vec<bindings::drm_asahi_command>,
+        commands: Vec<uapi::drm_asahi_command>,
     ) -> Result;
 }
 
@@ -414,7 +415,7 @@ impl Queue::ver {
         };
 
         // Rendering structures
-        if caps & bindings::drm_asahi_queue_cap_DRM_ASAHI_QUEUE_CAP_RENDER != 0 {
+        if caps & uapi::drm_asahi_queue_cap_DRM_ASAHI_QUEUE_CAP_RENDER != 0 {
             let buffer =
                 buffer::Buffer::ver::new(&*data.gpu, alloc, ret.ualloc.clone(), ualloc_priv, mgr)?;
             let tvb_blocks = {
@@ -441,8 +442,8 @@ impl Queue::ver {
 
         // Rendering & blit structures
         if caps
-            & (bindings::drm_asahi_queue_cap_DRM_ASAHI_QUEUE_CAP_RENDER
-                | bindings::drm_asahi_queue_cap_DRM_ASAHI_QUEUE_CAP_BLIT)
+            & (uapi::drm_asahi_queue_cap_DRM_ASAHI_QUEUE_CAP_RENDER
+                | uapi::drm_asahi_queue_cap_DRM_ASAHI_QUEUE_CAP_BLIT)
             != 0
         {
             ret.q_frag = Some(SubQueue::ver {
@@ -460,7 +461,7 @@ impl Queue::ver {
         }
 
         // Compute structures
-        if caps & bindings::drm_asahi_queue_cap_DRM_ASAHI_QUEUE_CAP_COMPUTE != 0 {
+        if caps & uapi::drm_asahi_queue_cap_DRM_ASAHI_QUEUE_CAP_COMPUTE != 0 {
             ret.q_comp = Some(SubQueue::ver {
                 wq: workqueue::WorkQueue::ver::new(
                     alloc,
@@ -480,9 +481,9 @@ impl Queue::ver {
     }
 }
 
-const SQ_RENDER: usize = bindings::drm_asahi_subqueue_DRM_ASAHI_SUBQUEUE_RENDER as usize;
-const SQ_COMPUTE: usize = bindings::drm_asahi_subqueue_DRM_ASAHI_SUBQUEUE_COMPUTE as usize;
-const SQ_COUNT: usize = bindings::drm_asahi_subqueue_DRM_ASAHI_SUBQUEUE_COUNT as usize;
+const SQ_RENDER: usize = uapi::drm_asahi_subqueue_DRM_ASAHI_SUBQUEUE_RENDER as usize;
+const SQ_COMPUTE: usize = uapi::drm_asahi_subqueue_DRM_ASAHI_SUBQUEUE_COMPUTE as usize;
+const SQ_COUNT: usize = uapi::drm_asahi_subqueue_DRM_ASAHI_SUBQUEUE_COUNT as usize;
 
 #[versions(AGX)]
 impl Queue for Queue::ver {
@@ -492,7 +493,7 @@ impl Queue for Queue::ver {
         in_syncs: Vec<file::SyncItem>,
         out_syncs: Vec<file::SyncItem>,
         result_buf: Option<gem::ObjectRef>,
-        commands: Vec<bindings::drm_asahi_command>,
+        commands: Vec<uapi::drm_asahi_command>,
     ) -> Result {
         let dev = self.dev.data();
         let gpu = match dev
@@ -576,8 +577,8 @@ impl Queue for Queue::ver {
 
         for (i, cmd) in commands.iter().enumerate() {
             match cmd.cmd_type {
-                bindings::drm_asahi_cmd_type_DRM_ASAHI_CMD_RENDER => last_render = Some(i),
-                bindings::drm_asahi_cmd_type_DRM_ASAHI_CMD_COMPUTE => last_compute = Some(i),
+                uapi::drm_asahi_cmd_type_DRM_ASAHI_CMD_RENDER => last_render = Some(i),
+                uapi::drm_asahi_cmd_type_DRM_ASAHI_CMD_COMPUTE => last_compute = Some(i),
                 _ => return Err(EINVAL),
             }
         }
@@ -590,14 +591,14 @@ impl Queue for Queue::ver {
         );
         for (i, cmd) in commands.into_iter().enumerate() {
             for (queue_idx, index) in cmd.barriers.iter().enumerate() {
-                if *index == bindings::DRM_ASAHI_BARRIER_NONE as u32 {
+                if *index == uapi::DRM_ASAHI_BARRIER_NONE as u32 {
                     continue;
                 }
                 if let Some(event) = events[queue_idx].get(*index as usize).ok_or(EINVAL)? {
                     let mut alloc = gpu.alloc();
                     let queue_job = match cmd.cmd_type {
-                        bindings::drm_asahi_cmd_type_DRM_ASAHI_CMD_RENDER => job.get_vtx()?,
-                        bindings::drm_asahi_cmd_type_DRM_ASAHI_CMD_COMPUTE => job.get_comp()?,
+                        uapi::drm_asahi_cmd_type_DRM_ASAHI_CMD_RENDER => job.get_vtx()?,
+                        uapi::drm_asahi_cmd_type_DRM_ASAHI_CMD_COMPUTE => job.get_comp()?,
                         _ => return Err(EINVAL),
                     };
                     mod_dev_dbg!(self.dev, "[Submission {}] Create Explicit Barrier\n", id);
@@ -654,7 +655,7 @@ impl Queue for Queue::ver {
             };
 
             match cmd.cmd_type {
-                bindings::drm_asahi_cmd_type_DRM_ASAHI_CMD_RENDER => {
+                uapi::drm_asahi_cmd_type_DRM_ASAHI_CMD_RENDER => {
                     self.submit_render(
                         &mut job,
                         &cmd,
@@ -672,7 +673,7 @@ impl Queue for Queue::ver {
                             .event_info(),
                     ))?;
                 }
-                bindings::drm_asahi_cmd_type_DRM_ASAHI_CMD_COMPUTE => {
+                uapi::drm_asahi_cmd_type_DRM_ASAHI_CMD_COMPUTE => {
                     self.submit_compute(
                         &mut job,
                         &cmd,
