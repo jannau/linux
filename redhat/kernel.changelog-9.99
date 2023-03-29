@@ -1,3 +1,11 @@
+* Wed Mar 29 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc4.fcd476ea6a88.37]
+- redhat: kunit: cleanup NITRO config and enable rescale test (Nico Pache)
+- kernel.spec: use %%{package_name} to fix kernel-devel-matched Requires (Jan Stancek)
+- kernel.spec: use %%{package_name} also for abi-stablelist subpackages (Jan Stancek)
+- kernel.spec: use %%{package_name} also for tools subpackages (Jan Stancek)
+- Linux v6.3.0-0.rc4.fcd476ea6a88
+Resolves: 
+
 * Tue Mar 28 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc4.3a93e40326c8.36]
 - Linux v6.3.0-0.rc4.3a93e40326c8
 Resolves: 
