@@ -17,7 +17,7 @@ use kernel::io_buffer::{IoBufferReader, IoBufferWriter};
 use kernel::prelude::*;
 use kernel::sync::{smutex::Mutex, Arc};
 use kernel::user_ptr::UserSlicePtr;
-use kernel::{bindings, dma_fence, drm, xarray};
+use kernel::{dma_fence, drm, uapi, xarray};
 
 const DEBUG_CLASS: DebugFlags = DebugFlags::File;
 
@@ -49,13 +49,13 @@ pub(crate) struct SyncItem {
 }
 
 impl SyncItem {
-    fn parse_one(file: &DrmFile, data: bindings::drm_asahi_sync, out: bool) -> Result<SyncItem> {
+    fn parse_one(file: &DrmFile, data: uapi::drm_asahi_sync, out: bool) -> Result<SyncItem> {
         if data.extensions != 0 {
             return Err(EINVAL);
         }
 
         match data.sync_type {
-            bindings::drm_asahi_sync_type_DRM_ASAHI_SYNC_SYNCOBJ => {
+            uapi::drm_asahi_sync_type_DRM_ASAHI_SYNC_SYNCOBJ => {
                 if data.timeline_value != 0 {
                     return Err(EINVAL);
                 }
@@ -72,7 +72,7 @@ impl SyncItem {
                     timeline_value: data.timeline_value,
                 })
             }
-            bindings::drm_asahi_sync_type_DRM_ASAHI_SYNC_TIMELINE_SYNCOBJ => {
+            uapi::drm_asahi_sync_type_DRM_ASAHI_SYNC_TIMELINE_SYNCOBJ => {
                 let syncobj = drm::syncobj::SyncObj::lookup_handle(file, data.handle)?;
                 let fence = if out {
                     None
@@ -103,14 +103,14 @@ impl SyncItem {
     fn parse_array(file: &DrmFile, ptr: u64, count: u32, out: bool) -> Result<Vec<SyncItem>> {
         let mut vec = Vec::try_with_capacity(count as usize)?;
 
-        const STRIDE: usize = core::mem::size_of::<bindings::drm_asahi_sync>();
+        const STRIDE: usize = core::mem::size_of::<uapi::drm_asahi_sync>();
         let size = STRIDE * count as usize;
 
         // SAFETY: We only read this once, so there are no TOCTOU issues.
         let mut reader = unsafe { UserSlicePtr::new(ptr as usize as *mut _, size).reader() };
 
         for _i in 0..count {
-            let mut sync: MaybeUninit<bindings::drm_asahi_sync> = MaybeUninit::uninit();
+            let mut sync: MaybeUninit<uapi::drm_asahi_sync> = MaybeUninit::uninit();
 
             // SAFETY: The size of `sync` is STRIDE
             unsafe { reader.read_raw(sync.as_mut_ptr() as *mut u8, STRIDE)? };
@@ -191,7 +191,7 @@ impl File {
     /// IOCTL: get_param: Get a driver parameter value.
     pub(crate) fn get_params(
         device: &AsahiDevice,
-        data: &mut bindings::drm_asahi_get_params,
+        data: &mut uapi::drm_asahi_get_params,
         file: &DrmFile,
     ) -> Result<u32> {
         mod_dev_dbg!(device, "[File {}]: IOCTL: get_params\n", file.inner().id);
@@ -202,8 +202,8 @@ impl File {
             return Err(EINVAL);
         }
 
-        let mut params = bindings::drm_asahi_params_global {
-            unstable_uabi_version: bindings::DRM_ASAHI_UNSTABLE_UABI_VERSION,
+        let mut params = uapi::drm_asahi_params_global {
+            unstable_uabi_version: uapi::DRM_ASAHI_UNSTABLE_UABI_VERSION,
             pad0: 0,
 
             feat_compat: gpu.get_cfg().gpu_feat_compat,
@@ -220,7 +220,7 @@ impl File {
             num_frags_per_cluster: gpu.get_dyncfg().id.num_frags,
             num_gps_per_cluster: gpu.get_dyncfg().id.num_gps,
             num_cores_total_active: gpu.get_dyncfg().id.total_active_cores,
-            core_masks: [0; bindings::DRM_ASAHI_MAX_CLUSTERS as usize],
+            core_masks: [0; uapi::DRM_ASAHI_MAX_CLUSTERS as usize],
 
             vm_page_size: mmu::UAT_PGSZ as u32,
             pad1: 0,
@@ -239,16 +239,15 @@ impl File {
             max_frequency_khz: gpu.get_dyncfg().pwr.max_frequency_khz(),
             max_power_mw: gpu.get_dyncfg().pwr.max_power_mw,
 
-            result_render_size: core::mem::size_of::<bindings::drm_asahi_result_render>() as u32,
-            result_compute_size: core::mem::size_of::<bindings::drm_asahi_result_compute>() as u32,
+            result_render_size: core::mem::size_of::<uapi::drm_asahi_result_render>() as u32,
+            result_compute_size: core::mem::size_of::<uapi::drm_asahi_result_compute>() as u32,
         };
 
         for (i, mask) in gpu.get_dyncfg().id.core_masks.iter().enumerate() {
             *(params.core_masks.get_mut(i).ok_or(EIO)?) = (*mask).try_into()?;
         }
 
-        let size =
-            core::mem::size_of::<bindings::drm_asahi_params_global>().min(data.size.try_into()?);
+        let size = core::mem::size_of::<uapi::drm_asahi_params_global>().min(data.size.try_into()?);
 
         // SAFETY: We only write to this userptr once, so there are no TOCTOU issues.
         let mut params_writer =
@@ -263,7 +262,7 @@ impl File {
     /// IOCTL: vm_create: Create a new `Vm`.
     pub(crate) fn vm_create(
         device: &AsahiDevice,
-        data: &mut bindings::drm_asahi_vm_create,
+        data: &mut uapi::drm_asahi_vm_create,
         file: &DrmFile,
     ) -> Result<u32> {
         if data.extensions != 0 {
@@ -335,7 +334,7 @@ impl File {
     /// IOCTL: vm_destroy: Destroy a `Vm`.
     pub(crate) fn vm_destroy(
         _device: &AsahiDevice,
-        data: &mut bindings::drm_asahi_vm_destroy,
+        data: &mut uapi::drm_asahi_vm_destroy,
         file: &DrmFile,
     ) -> Result<u32> {
         if data.extensions != 0 {
@@ -352,7 +351,7 @@ impl File {
     /// IOCTL: gem_create: Create a new GEM object.
     pub(crate) fn gem_create(
         device: &AsahiDevice,
-        data: &mut bindings::drm_asahi_gem_create,
+        data: &mut uapi::drm_asahi_gem_create,
         file: &DrmFile,
     ) -> Result<u32> {
         mod_dev_dbg!(
@@ -363,13 +362,13 @@ impl File {
         );
 
         if data.extensions != 0
-            || (data.flags & !(bindings::ASAHI_GEM_WRITEBACK | bindings::ASAHI_GEM_VM_PRIVATE)) != 0
-            || (data.flags & bindings::ASAHI_GEM_VM_PRIVATE == 0 && data.vm_id != 0)
+            || (data.flags & !(uapi::ASAHI_GEM_WRITEBACK | uapi::ASAHI_GEM_VM_PRIVATE)) != 0
+            || (data.flags & uapi::ASAHI_GEM_VM_PRIVATE == 0 && data.vm_id != 0)
         {
             return Err(EINVAL);
         }
 
-        let vm_id = if data.flags & bindings::ASAHI_GEM_VM_PRIVATE != 0 {
+        let vm_id = if data.flags & uapi::ASAHI_GEM_VM_PRIVATE != 0 {
             Some(
                 file.inner()
                     .vms()
@@ -402,7 +401,7 @@ impl File {
     /// IOCTL: gem_mmap_offset: Assign an mmap offset to a GEM object.
     pub(crate) fn gem_mmap_offset(
         device: &AsahiDevice,
-        data: &mut bindings::drm_asahi_gem_mmap_offset,
+        data: &mut uapi::drm_asahi_gem_mmap_offset,
         file: &DrmFile,
     ) -> Result<u32> {
         mod_dev_dbg!(
@@ -424,7 +423,7 @@ impl File {
     /// IOCTL: gem_bind: Map or unmap a GEM object into a Vm.
     pub(crate) fn gem_bind(
         device: &AsahiDevice,
-        data: &mut bindings::drm_asahi_gem_bind,
+        data: &mut uapi::drm_asahi_gem_bind,
         file: &DrmFile,
     ) -> Result<u32> {
         mod_dev_dbg!(
@@ -445,9 +444,9 @@ impl File {
         }
 
         match data.op {
-            bindings::drm_asahi_bind_op_ASAHI_BIND_OP_BIND => Self::do_gem_bind(device, data, file),
-            bindings::drm_asahi_bind_op_ASAHI_BIND_OP_UNBIND => Err(ENOTSUPP),
-            bindings::drm_asahi_bind_op_ASAHI_BIND_OP_UNBIND_ALL => {
+            uapi::drm_asahi_bind_op_ASAHI_BIND_OP_BIND => Self::do_gem_bind(device, data, file),
+            uapi::drm_asahi_bind_op_ASAHI_BIND_OP_UNBIND => Err(ENOTSUPP),
+            uapi::drm_asahi_bind_op_ASAHI_BIND_OP_UNBIND_ALL => {
                 Self::do_gem_unbind_all(device, data, file)
             }
             _ => Err(EINVAL),
@@ -456,7 +455,7 @@ impl File {
 
     pub(crate) fn do_gem_bind(
         _device: &AsahiDevice,
-        data: &mut bindings::drm_asahi_gem_bind,
+        data: &mut uapi::drm_asahi_gem_bind,
         file: &DrmFile,
     ) -> Result<u32> {
         if data.offset != 0 {
@@ -467,7 +466,7 @@ impl File {
             return Err(EINVAL); // Must be page aligned
         }
 
-        if (data.flags & !(bindings::ASAHI_BIND_READ | bindings::ASAHI_BIND_WRITE)) != 0 {
+        if (data.flags & !(uapi::ASAHI_BIND_READ | uapi::ASAHI_BIND_WRITE)) != 0 {
             return Err(EINVAL);
         }
 
@@ -497,13 +496,13 @@ impl File {
             return Err(EINVAL);
         }
 
-        let prot = if data.flags & bindings::ASAHI_BIND_READ != 0 {
-            if data.flags & bindings::ASAHI_BIND_WRITE != 0 {
+        let prot = if data.flags & uapi::ASAHI_BIND_READ != 0 {
+            if data.flags & uapi::ASAHI_BIND_WRITE != 0 {
                 mmu::PROT_GPU_SHARED_RW
             } else {
                 mmu::PROT_GPU_SHARED_RO
             }
-        } else if data.flags & bindings::ASAHI_BIND_WRITE != 0 {
+        } else if data.flags & uapi::ASAHI_BIND_WRITE != 0 {
             mmu::PROT_GPU_SHARED_WO
         } else {
             return Err(EINVAL); // Must specify one of ASAHI_BIND_{READ,WRITE}
@@ -526,7 +525,7 @@ impl File {
 
     pub(crate) fn do_gem_unbind_all(
         _device: &AsahiDevice,
-        data: &mut bindings::drm_asahi_gem_bind,
+        data: &mut uapi::drm_asahi_gem_bind,
         file: &DrmFile,
     ) -> Result<u32> {
         if data.flags != 0 || data.offset != 0 || data.range != 0 || data.addr != 0 {
@@ -555,7 +554,7 @@ impl File {
     /// IOCTL: queue_create: Create a new command submission queue of a given type.
     pub(crate) fn queue_create(
         device: &AsahiDevice,
-        data: &mut bindings::drm_asahi_queue_create,
+        data: &mut uapi::drm_asahi_queue_create,
         file: &DrmFile,
     ) -> Result<u32> {
         let file_id = file.inner().id;
@@ -575,9 +574,9 @@ impl File {
             || data.priority > 3
             || data.queue_caps == 0
             || (data.queue_caps
-                & !(bindings::drm_asahi_queue_cap_DRM_ASAHI_QUEUE_CAP_RENDER
-                    | bindings::drm_asahi_queue_cap_DRM_ASAHI_QUEUE_CAP_BLIT
-                    | bindings::drm_asahi_queue_cap_DRM_ASAHI_QUEUE_CAP_COMPUTE))
+                & !(uapi::drm_asahi_queue_cap_DRM_ASAHI_QUEUE_CAP_RENDER
+                    | uapi::drm_asahi_queue_cap_DRM_ASAHI_QUEUE_CAP_BLIT
+                    | uapi::drm_asahi_queue_cap_DRM_ASAHI_QUEUE_CAP_COMPUTE))
                 != 0
         {
             return Err(EINVAL);
@@ -610,7 +609,7 @@ impl File {
     /// IOCTL: queue_destroy: Destroy a command submission queue.
     pub(crate) fn queue_destroy(
         _device: &AsahiDevice,
-        data: &mut bindings::drm_asahi_queue_destroy,
+        data: &mut uapi::drm_asahi_queue_destroy,
         file: &DrmFile,
     ) -> Result<u32> {
         if data.extensions != 0 {
@@ -632,7 +631,7 @@ impl File {
     /// IOCTL: submit: Submit GPU work to a command submission queue.
     pub(crate) fn submit(
         device: &AsahiDevice,
-        data: &mut bindings::drm_asahi_submit,
+        data: &mut uapi::drm_asahi_submit,
         file: &DrmFile,
     ) -> Result<u32> {
         if data.extensions != 0
@@ -707,7 +706,7 @@ impl File {
         );
         let mut commands = Vec::try_with_capacity(data.command_count as usize)?;
 
-        const STRIDE: usize = core::mem::size_of::<bindings::drm_asahi_command>();
+        const STRIDE: usize = core::mem::size_of::<uapi::drm_asahi_command>();
         let size = STRIDE * data.command_count as usize;
 
         // SAFETY: We only read this once, so there are no TOCTOU issues.
@@ -715,7 +714,7 @@ impl File {
             unsafe { UserSlicePtr::new(data.commands as usize as *mut _, size).reader() };
 
         for _i in 0..data.command_count {
-            let mut cmd: MaybeUninit<bindings::drm_asahi_command> = MaybeUninit::uninit();
+            let mut cmd: MaybeUninit<uapi::drm_asahi_command> = MaybeUninit::uninit();
 
             // SAFETY: The size of `sync` is STRIDE
             unsafe { reader.read_raw(cmd.as_mut_ptr() as *mut u8, STRIDE)? };

@@ -16,12 +16,12 @@ use crate::{box_in_place, inner_ptr, inner_weak_ptr, place};
 use crate::{fw, gpu, microseq};
 use core::mem::MaybeUninit;
 use core::sync::atomic::Ordering;
-use kernel::bindings;
 use kernel::dma_fence::RawDmaFence;
 use kernel::drm::sched::Job;
 use kernel::io_buffer::IoBufferReader;
 use kernel::prelude::*;
 use kernel::sync::Arc;
+use kernel::uapi;
 use kernel::user_ptr::UserSlicePtr;
 
 const DEBUG_CLASS: DebugFlags = DebugFlags::Compute;
@@ -32,12 +32,12 @@ impl super::Queue::ver {
     pub(super) fn submit_compute(
         &self,
         job: &mut Job<super::QueueJob::ver>,
-        cmd: &bindings::drm_asahi_command,
+        cmd: &uapi::drm_asahi_command,
         result_writer: Option<super::ResultWriter>,
         id: u64,
         flush_stamps: bool,
     ) -> Result {
-        if cmd.cmd_type != bindings::drm_asahi_cmd_type_DRM_ASAHI_CMD_COMPUTE {
+        if cmd.cmd_type != uapi::drm_asahi_cmd_type_DRM_ASAHI_CMD_COMPUTE {
             return Err(EINVAL);
         }
 
@@ -58,16 +58,16 @@ impl super::Queue::ver {
         let mut cmdbuf_reader = unsafe {
             UserSlicePtr::new(
                 cmd.cmd_buffer as usize as *mut _,
-                core::mem::size_of::<bindings::drm_asahi_cmd_compute>(),
+                core::mem::size_of::<uapi::drm_asahi_cmd_compute>(),
             )
             .reader()
         };
 
-        let mut cmdbuf: MaybeUninit<bindings::drm_asahi_cmd_compute> = MaybeUninit::uninit();
+        let mut cmdbuf: MaybeUninit<uapi::drm_asahi_cmd_compute> = MaybeUninit::uninit();
         unsafe {
             cmdbuf_reader.read_raw(
                 cmdbuf.as_mut_ptr() as *mut u8,
-                core::mem::size_of::<bindings::drm_asahi_cmd_compute>(),
+                core::mem::size_of::<uapi::drm_asahi_cmd_compute>(),
             )?;
         }
         let cmdbuf = unsafe { cmdbuf.assume_init() };
@@ -342,7 +342,7 @@ impl super::Queue::ver {
                 fence.set_error(err.into())
             }
             if let Some(mut rw) = result_writer {
-                let mut result: bindings::drm_asahi_result_compute = Default::default();
+                let mut result: uapi::drm_asahi_result_compute = Default::default();
 
                 cmd.timestamps.with(|raw, _inner| {
                     result.ts_start = raw.start.load(Ordering::Relaxed);
@@ -352,7 +352,7 @@ impl super::Queue::ver {
                 if let Some(err) = error {
                     result.info = err.into();
                 } else {
-                    result.info.status = bindings::drm_asahi_status_DRM_ASAHI_STATUS_COMPLETE;
+                    result.info.status = uapi::drm_asahi_status_DRM_ASAHI_STATUS_COMPLETE;
                 }
 
                 rw.write(result);

@@ -8,12 +8,12 @@
 //! implementing RTKit buffers on top of GEM objects for firmware use.
 
 use kernel::{
-    bindings,
     drm::{gem, gem::shmem},
     error::Result,
     prelude::*,
     soc::apple::rtkit,
     sync::smutex::Mutex,
+    uapi,
 };
 
 use kernel::drm::gem::BaseObject;
@@ -242,7 +242,7 @@ pub(crate) fn new_object(
     gem.vm_id = vm_id;
 
     gem.set_exportable(vm_id.is_none());
-    gem.set_wc(flags & bindings::ASAHI_GEM_WRITEBACK == 0);
+    gem.set_wc(flags & uapi::ASAHI_GEM_WRITEBACK == 0);
 
     mod_pr_debug!(
         "DriverObject new user object: vm_id={:?} id={}\n",

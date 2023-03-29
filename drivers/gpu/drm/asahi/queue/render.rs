@@ -18,12 +18,12 @@ use crate::{box_in_place, inner_ptr, inner_weak_ptr, place};
 use crate::{buffer, fw, gpu, microseq, workqueue};
 use core::mem::MaybeUninit;
 use core::sync::atomic::Ordering;
-use kernel::bindings;
 use kernel::dma_fence::RawDmaFence;
 use kernel::drm::sched::Job;
 use kernel::io_buffer::IoBufferReader;
 use kernel::prelude::*;
 use kernel::sync::{smutex::Mutex, Arc};
+use kernel::uapi;
 use kernel::user_ptr::UserSlicePtr;
 
 const DEBUG_CLASS: DebugFlags = DebugFlags::Render;
@@ -35,7 +35,7 @@ const DEBUG_CLASS: DebugFlags = DebugFlags::Render;
 const TILECTL_DISABLE_CLUSTERING: u32 = 1u32 << 0;
 
 struct RenderResult {
-    result: bindings::drm_asahi_result_render,
+    result: uapi::drm_asahi_result_render,
     vtx_complete: bool,
     frag_complete: bool,
     vtx_error: Option<workqueue::WorkError>,
@@ -59,7 +59,7 @@ impl RenderResult {
         if let Some(err) = error {
             self.result.info = err.into();
         } else {
-            self.result.info.status = bindings::drm_asahi_status_DRM_ASAHI_STATUS_COMPLETE;
+            self.result.info.status = uapi::drm_asahi_status_DRM_ASAHI_STATUS_COMPLETE;
         }
 
         self.writer.write(self.result);
@@ -70,7 +70,7 @@ impl RenderResult {
 impl super::Queue::ver {
     /// Get the appropriate tiling parameters for a given userspace command buffer.
     fn get_tiling_params(
-        cmdbuf: &bindings::drm_asahi_cmd_render,
+        cmdbuf: &uapi::drm_asahi_cmd_render,
         num_clusters: u32,
     ) -> Result<buffer::TileInfo> {
         let width: u32 = cmdbuf.fb_width;
@@ -192,12 +192,12 @@ impl super::Queue::ver {
     pub(super) fn submit_render(
         &self,
         job: &mut Job<super::QueueJob::ver>,
-        cmd: &bindings::drm_asahi_command,
+        cmd: &uapi::drm_asahi_command,
         result_writer: Option<super::ResultWriter>,
         id: u64,
         flush_stamps: bool,
     ) -> Result {
-        if cmd.cmd_type != bindings::drm_asahi_cmd_type_DRM_ASAHI_CMD_RENDER {
+        if cmd.cmd_type != uapi::drm_asahi_cmd_type_DRM_ASAHI_CMD_RENDER {
             return Err(EINVAL);
         }
 
@@ -206,32 +206,32 @@ impl super::Queue::ver {
         let mut cmdbuf_reader = unsafe {
             UserSlicePtr::new(
                 cmd.cmd_buffer as usize as *mut _,
-                core::mem::size_of::<bindings::drm_asahi_cmd_render>(),
+                core::mem::size_of::<uapi::drm_asahi_cmd_render>(),
             )
             .reader()
         };
 
-        let mut cmdbuf: MaybeUninit<bindings::drm_asahi_cmd_render> = MaybeUninit::uninit();
+        let mut cmdbuf: MaybeUninit<uapi::drm_asahi_cmd_render> = MaybeUninit::uninit();
         unsafe {
             cmdbuf_reader.read_raw(
                 cmdbuf.as_mut_ptr() as *mut u8,
-                core::mem::size_of::<bindings::drm_asahi_cmd_render>(),
+                core::mem::size_of::<uapi::drm_asahi_cmd_render>(),
             )?;
         }
         let cmdbuf = unsafe { cmdbuf.assume_init() };
 
         if cmdbuf.flags
-            & !(bindings::ASAHI_RENDER_NO_CLEAR_PIPELINE_TEXTURES
-                | bindings::ASAHI_RENDER_SET_WHEN_RELOADING_Z_OR_S
-                | bindings::ASAHI_RENDER_MEMORYLESS_RTS_USED
-                | bindings::ASAHI_RENDER_PROCESS_EMPTY_TILES
-                | bindings::ASAHI_RENDER_NO_VERTEX_CLUSTERING) as u64
+            & !(uapi::ASAHI_RENDER_NO_CLEAR_PIPELINE_TEXTURES
+                | uapi::ASAHI_RENDER_SET_WHEN_RELOADING_Z_OR_S
+                | uapi::ASAHI_RENDER_MEMORYLESS_RTS_USED
+                | uapi::ASAHI_RENDER_PROCESS_EMPTY_TILES
+                | uapi::ASAHI_RENDER_NO_VERTEX_CLUSTERING) as u64
             != 0
         {
             return Err(EINVAL);
         }
 
-        if cmdbuf.flags & bindings::ASAHI_RENDER_MEMORYLESS_RTS_USED as u64 != 0 {
+        if cmdbuf.flags & uapi::ASAHI_RENDER_MEMORYLESS_RTS_USED as u64 != 0 {
             // Not supported yet
             return Err(EINVAL);
         }
@@ -267,7 +267,7 @@ impl super::Queue::ver {
         let mut clustering = nclusters > 1;
 
         if debug_enabled(debug::DebugFlags::DisableClustering)
-            || cmdbuf.flags & bindings::ASAHI_RENDER_NO_VERTEX_CLUSTERING as u64 != 0
+            || cmdbuf.flags & uapi::ASAHI_RENDER_NO_VERTEX_CLUSTERING as u64 != 0
         {
             clustering = false;
         }
@@ -405,7 +405,7 @@ impl super::Queue::ver {
         if cmdbuf.layers > 1 {
             tile_config |= 1;
         }
-        if cmdbuf.flags & bindings::ASAHI_RENDER_PROCESS_EMPTY_TILES as u64 != 0 {
+        if cmdbuf.flags & uapi::ASAHI_RENDER_PROCESS_EMPTY_TILES as u64 != 0 {
             tile_config |= 0x10000;
         }
 
@@ -430,10 +430,10 @@ impl super::Queue::ver {
                 };
 
                 if tvb_autogrown {
-                    result.result.flags |= bindings::DRM_ASAHI_RESULT_RENDER_TVB_GROW_OVF as u64;
+                    result.result.flags |= uapi::DRM_ASAHI_RESULT_RENDER_TVB_GROW_OVF as u64;
                 }
                 if tvb_grown {
-                    result.result.flags |= bindings::DRM_ASAHI_RESULT_RENDER_TVB_GROW_MIN as u64;
+                    result.result.flags |= uapi::DRM_ASAHI_RESULT_RENDER_TVB_GROW_MIN as u64;
                 }
                 result.result.tvb_size_bytes = buffer.size() as u64;
 
@@ -750,7 +750,7 @@ impl super::Queue::ver {
                         unk_878: 0,
                         encoder_params: fw::job::raw::EncoderParams {
                             unk_8: (cmdbuf.flags
-                                & bindings::ASAHI_RENDER_SET_WHEN_RELOADING_Z_OR_S as u64
+                                & uapi::ASAHI_RENDER_SET_WHEN_RELOADING_Z_OR_S as u64
                                 != 0) as u32,
                             unk_c: 0x0,  // fixed
                             unk_10: 0x0, // fixed
@@ -761,10 +761,10 @@ impl super::Queue::ver {
                             unk_28: U64(0x0), // fixed
                         },
                         process_empty_tiles: (cmdbuf.flags
-                            & bindings::ASAHI_RENDER_PROCESS_EMPTY_TILES as u64
+                            & uapi::ASAHI_RENDER_PROCESS_EMPTY_TILES as u64
                             != 0) as u32,
                         no_clear_pipeline_textures: (cmdbuf.flags
-                            & bindings::ASAHI_RENDER_NO_CLEAR_PIPELINE_TEXTURES as u64
+                            & uapi::ASAHI_RENDER_NO_CLEAR_PIPELINE_TEXTURES as u64
                             != 0) as u32,
                         unk_param: unk2.into(), // 1 for boot stuff?
                         unk_pointee: 0,
@@ -1089,7 +1089,7 @@ impl super::Queue::ver {
                         unk_55c: 0,
                         unk_560: 0,
                         memoryless_rts_used: (cmdbuf.flags
-                            & bindings::ASAHI_RENDER_MEMORYLESS_RTS_USED as u64
+                            & uapi::ASAHI_RENDER_MEMORYLESS_RTS_USED as u64
                             != 0) as u32,
                         unk_568: 0,
                         unk_56c: 0,
@@ -1145,7 +1145,7 @@ impl super::Queue::ver {
                 });
                 res.result.tvb_usage_bytes = cmd.scene.used_bytes() as u64;
                 if cmd.scene.overflowed() {
-                    res.result.flags |= bindings::DRM_ASAHI_RESULT_RENDER_TVB_OVERFLOWED as u64;
+                    res.result.flags |= uapi::DRM_ASAHI_RESULT_RENDER_TVB_OVERFLOWED as u64;
                 }
                 res.vtx_error = error;
                 res.vtx_complete = true;

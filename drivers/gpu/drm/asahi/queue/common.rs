@@ -7,9 +7,9 @@
 use crate::fw::microseq;
 use crate::fw::types::*;
 
-use kernel::bindings;
 use kernel::io_buffer::IoBufferReader;
 use kernel::prelude::*;
+use kernel::uapi;
 use kernel::user_ptr::UserSlicePtr;
 
 use core::mem::MaybeUninit;
@@ -19,7 +19,7 @@ pub(super) fn build_attachments(pointer: u64, count: u32) -> Result<microseq::At
         return Err(EINVAL);
     }
 
-    const STRIDE: usize = core::mem::size_of::<bindings::drm_asahi_attachment>();
+    const STRIDE: usize = core::mem::size_of::<uapi::drm_asahi_attachment>();
     let size = STRIDE * count as usize;
 
     // SAFETY: We only read this once, so there are no TOCTOU issues.
@@ -28,7 +28,7 @@ pub(super) fn build_attachments(pointer: u64, count: u32) -> Result<microseq::At
     let mut attachments: microseq::Attachments = Default::default();
 
     for i in 0..count {
-        let mut att: MaybeUninit<bindings::drm_asahi_attachment> = MaybeUninit::uninit();
+        let mut att: MaybeUninit<uapi::drm_asahi_attachment> = MaybeUninit::uninit();
 
         // SAFETY: The size of `att` is STRIDE
         unsafe { reader.read_raw(att.as_mut_ptr() as *mut u8, STRIDE)? };
