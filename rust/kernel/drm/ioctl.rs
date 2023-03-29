@@ -7,7 +7,7 @@
 
 use crate::ioctl;
 
-const BASE: u32 = bindings::DRM_IOCTL_BASE as u32;
+const BASE: u32 = uapi::DRM_IOCTL_BASE as u32;
 
 /// Construct a DRM ioctl number with no argument.
 pub const fn IO(nr: u32) -> u32 {
@@ -94,20 +94,20 @@ macro_rules! declare_drm_ioctls {
     ( $(($cmd:ident, $struct:ident, $flags:expr, $func:expr)),* $(,)? ) => {
         const IOCTLS: &'static [$crate::drm::ioctl::DrmIoctlDescriptor] = {
             const _:() = {
-                let i: u32 = $crate::bindings::DRM_COMMAND_BASE;
+                let i: u32 = $crate::uapi::DRM_COMMAND_BASE;
                 // Assert that all the IOCTLs are in the right order and there are no gaps,
                 // and that the sizeof of the specified type is correct.
                 $(
-                    let cmd: u32 = $crate::macros::concat_idents!($crate::bindings::DRM_IOCTL_, $cmd);
+                    let cmd: u32 = $crate::macros::concat_idents!($crate::uapi::DRM_IOCTL_, $cmd);
                     ::core::assert!(i == $crate::ioctl::_IOC_NR(cmd));
-                    ::core::assert!(core::mem::size_of::<$crate::bindings::$struct>() == $crate::ioctl::_IOC_SIZE(cmd));
+                    ::core::assert!(core::mem::size_of::<$crate::uapi::$struct>() == $crate::ioctl::_IOC_SIZE(cmd));
                     let i: u32 = i + 1;
                 )*
             };
 
             let ioctls = &[$(
                 $crate::bindings::drm_ioctl_desc {
-                    cmd: $crate::macros::concat_idents!($crate::bindings::DRM_IOCTL_, $cmd) as u32,
+                    cmd: $crate::macros::concat_idents!($crate::uapi::DRM_IOCTL_, $cmd) as u32,
                     func: {
                         #[allow(non_snake_case)]
                         unsafe extern "C" fn $cmd(
@@ -126,7 +126,7 @@ macro_rules! declare_drm_ioctls {
                             });
                             // SAFETY: This is just the ioctl argument, which hopefully has the right type
                             // (we've done our best checking the size).
-                            let data = unsafe { &mut *(raw_data as *mut $crate::bindings::$struct) };
+                            let data = unsafe { &mut *(raw_data as *mut $crate::uapi::$struct) };
                             // SAFETY: This is just the DRM file structure
                             let file = unsafe { $crate::drm::file::File::from_raw(raw_file_priv) };
 
