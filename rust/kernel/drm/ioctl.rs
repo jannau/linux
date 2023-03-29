@@ -64,6 +64,14 @@ pub const UNLOCKED: u32 = bindings::drm_ioctl_flags_DRM_UNLOCKED;
 /// DRM_AUTH because they do not require authentication.
 pub const RENDER_ALLOW: u32 = bindings::drm_ioctl_flags_DRM_RENDER_ALLOW;
 
+/// Internal structures used by the [`declare_drm_ioctls!{}`] macro. Do not use directly.
+#[doc(hidden)]
+pub mod internal {
+    pub use bindings::drm_device;
+    pub use bindings::drm_file;
+    pub use bindings::drm_ioctl_desc;
+}
+
 /// Declare the DRM ioctls for a driver.
 ///
 /// Each entry in the list should have the form:
@@ -106,14 +114,14 @@ macro_rules! declare_drm_ioctls {
             };
 
             let ioctls = &[$(
-                $crate::bindings::drm_ioctl_desc {
+                $crate::drm::ioctl::internal::drm_ioctl_desc {
                     cmd: $crate::macros::concat_idents!($crate::uapi::DRM_IOCTL_, $cmd) as u32,
                     func: {
                         #[allow(non_snake_case)]
                         unsafe extern "C" fn $cmd(
-                                raw_dev: *mut $crate::bindings::drm_device,
+                                raw_dev: *mut $crate::drm::ioctl::internal::drm_device,
                                 raw_data: *mut ::core::ffi::c_void,
-                                raw_file_priv: *mut $crate::bindings::drm_file,
+                                raw_file_priv: *mut $crate::drm::ioctl::internal::drm_file,
                         ) -> core::ffi::c_int {
                             // SAFETY: We never drop this, and the DRM core ensures the device lives
                             // while callbacks are being called.
