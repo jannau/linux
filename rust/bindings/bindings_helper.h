@@ -34,7 +34,6 @@
 #include <linux/sysctl.h>
 #include <linux/timekeeping.h>
 #include <linux/xarray.h>
-#include <uapi/drm/asahi_drm.h>
 
 /* `bindgen` gets confused at certain things. */
 const gfp_t BINDINGS_GFP_KERNEL = GFP_KERNEL;
