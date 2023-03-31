@@ -673,7 +673,7 @@ static struct platform_driver apple_platform_driver = {
 	},
 };
 
-drm_module_platform_driver(apple_platform_driver);
+static int __init dcp_init(void)
 {
 	int ret;
 
