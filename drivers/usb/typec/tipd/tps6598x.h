@@ -284,6 +284,7 @@ struct tps6598x {
 	struct power_supply_desc psy_desc;
 	enum power_supply_usb_type usb_type;
 
+	int wakeup;
 	u16 pwr_status;
 
 	/* DisplayPort alternate mode */
