@@ -682,7 +682,7 @@ static int __init dcp_init(void)
 
 	dcp_debugfs_root = debugfs_create_dir("apple_dcp", NULL);
 
-	ret = platform_driver_register(&dcp_driver);
+	ret = platform_driver_register(&apple_platform_driver);
 	if (ret)
 		return ret;
 
@@ -692,7 +692,7 @@ module_init(dcp_init);
 
 static void __exit dcp_exit(void)
 {
-	platform_driver_unregister(&dcp_driver);
+	platform_driver_unregister(&apple_platform_driver);
 	debugfs_remove_recursive(dcp_debugfs_root);
 }
 module_exit(dcp_exit);
