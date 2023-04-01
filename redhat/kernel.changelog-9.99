@@ -1,3 +1,8 @@
+* Sat Apr 01 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc4.7b50567bdcad.40]
+- redhat/configs: enable CONFIG_INTEL_TCC_COOLING for RHEL (David Arcari)
+- Linux v6.3.0-0.rc4.7b50567bdcad
+Resolves: 
+
 * Fri Mar 31 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc4.62bad54b26db.39]
 - Update Fedora ppc filters after config updates (Justin M. Forbes)
 - Update Fedora aarch64 filters after config updates (Justin M. Forbes)
