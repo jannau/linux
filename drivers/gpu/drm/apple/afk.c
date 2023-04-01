@@ -1028,10 +1028,13 @@ static const struct file_operations service_raw_call_fops = {
 
 static void afk_populate_service_debugfs(struct apple_epic_service *srv)
 {
-	srv->debugfs.root = debugfs_create_dir(srv->ops->name,
-					       srv->ep->debugfs_root);
-	debugfs_create_file("call", 0600, srv->debugfs.root, srv,
-			    &service_call_fops);
-	debugfs_create_file("raw_call", 0600, srv->debugfs.root, srv,
-			    &service_raw_call_fops);
+	if (srv->ep->debugfs_root && srv->ops &&
+	    strcmp(srv->ops->name, "DCPAVAudioInterface") == 0) {
+		srv->debugfs.root = debugfs_create_dir(srv->ops->name,
+						srv->ep->debugfs_root);
+		debugfs_create_file("call", 0600, srv->debugfs.root, srv,
+				&service_call_fops);
+		debugfs_create_file("raw_call", 0600, srv->debugfs.root, srv,
+				&service_raw_call_fops);
+	}
 }
