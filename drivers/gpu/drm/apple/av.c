@@ -19,6 +19,11 @@ struct audiosrv_data {
 	struct rw_semaphore srv_rwsem;
 };
 
+static void av_interface_init(struct apple_epic_service *service, u8 *props,
+				 size_t props_size)
+{
+}
+
 static void av_audiosrv_init(struct apple_epic_service *service, u8 *props,
 				 size_t props_size)
 {
@@ -220,6 +225,10 @@ static int av_audiosrv_report(struct apple_epic_service *service, u32 idx,
 }
 
 static const struct apple_epic_service_ops avep_ops[] = {
+	{
+		.name = "dcpav-interface",
+		.init = av_interface_init,
+	},
 	{
 		.name = "DCPAVAudioInterface",
 		.init = av_audiosrv_init,
