@@ -1203,6 +1203,7 @@
 			clocks = <&clk_dispext0>;
 			apple,asc-dram-mask = <0xf 0x00000000>;
 			apple,piodma-mapper = <&dispext0_piodma>;
+			apple,audio-xmitter = <&dpaudio1>;
 		};
 
 		ans_mbox: mbox@277408000 {
