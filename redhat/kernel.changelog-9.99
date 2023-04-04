@@ -1,3 +1,12 @@
+* Tue Apr 04 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc5.148341f0a2f5.43]
+- Update Fedora arm filters after config updates (Nicolas Chauvet)
+- redhat/kernel.spec.template: Fix kernel-tools-libs-devel dependency (Prarit Bhargava)
+- redhat: fix the check for the n option (Patrick Talbert)
+- common: de-dupe some options that are the same (Peter Robinson)
+- generic: remove deleted options (Peter Robinson)
+- Linux v6.3.0-0.rc5.148341f0a2f5
+Resolves: 
+
 * Mon Apr 03 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc5.42]
 - Linux v6.3.0-0.rc5
 Resolves: 
