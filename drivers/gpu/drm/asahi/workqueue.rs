@@ -129,6 +129,9 @@ impl Drop for GpuContext {
         let dev = self.dev.data();
         if dev.gpu.invalidate_context(&self.data).is_err() {
             dev_err!(self.dev, "GpuContext: Failed to invalidate GPU context!\n");
+            if debug_enabled(DebugFlags::OopsOnGpuCrash) {
+                panic!("GPU firmware timed out");
+            }
         }
     }
 }
