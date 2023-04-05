@@ -221,8 +221,15 @@ macro_rules! offset_of {
 #[macro_export]
 macro_rules! container_of {
     ($ptr:expr, $type:ty, $($f:tt)*) => {{
-        let ptr = $ptr as *const _ as *const u8;
+        let ptr = $ptr as *const u8;
         let offset = $crate::offset_of!($type, $($f)*);
-        ptr.wrapping_offset(-offset) as *const $type
+        let outer = ptr.wrapping_offset(-offset) as *const $type;
+        // SAFETY: The pointer is valid and aligned, just not initialised; `addr_of` ensures that
+        // we don't actually read from `outer` (which would be UB) nor create an intermediate
+        // reference.
+        // SAFETY: The two pointers are within the same allocation block.
+        let inner = unsafe { core::ptr::addr_of!((*outer).$($f)*) };
+        build_assert!(inner == $ptr);
+        outer
     }}
 }
