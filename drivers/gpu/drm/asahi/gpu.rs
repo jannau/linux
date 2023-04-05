@@ -189,6 +189,8 @@ pub(crate) struct GpuManager {
     buffer_mgr: buffer::BufferManager,
     ids: SequenceIDs,
     garbage_work: Mutex<Vec<Box<dyn workqueue::GenSubmittedWork>>>,
+    #[allow(clippy::vec_box)]
+    garbage_contexts: Mutex<Vec<Box<fw::types::GpuObject<fw::workqueue::GpuContextData>>>>,
 }
 
 /// Trait used to abstract the firmware/GPU-dependent variants of the GpuManager.
@@ -225,11 +227,6 @@ pub(crate) trait GpuManager: Send + Sync {
     /// This should be useful to reduce latency on work submission, so we can ask the firmware to
     /// wake up while we do some preparatory work for the work submission.
     fn kick_firmware(&self) -> Result;
-    /// Invalidate a GPU scheduler context. Must be called before the relevant structures are freed.
-    fn invalidate_context(
-        &self,
-        context: &fw::types::GpuObject<fw::workqueue::GpuContextData>,
-    ) -> Result;
     /// Flush the entire firmware cache.
     ///
     /// TODO: Does this actually work?
@@ -248,6 +245,8 @@ pub(crate) trait GpuManager: Send + Sync {
     fn get_dyncfg(&self) -> &hw::DynConfig;
     /// Register completed work as garbage
     fn add_completed_work(&self, work: Vec<Box<dyn workqueue::GenSubmittedWork>>);
+    /// Register an unused context as garbage
+    fn free_context(&self, data: Box<fw::types::GpuObject<fw::workqueue::GpuContextData>>);
 }
 
 /// Private generic trait for functions that don't need to escape this module.
@@ -530,6 +529,7 @@ impl GpuManager::ver {
             alloc: Mutex::new(alloc),
             ids: Default::default(),
             garbage_work: Mutex::new(Vec::new()),
+            garbage_contexts: Mutex::new(Vec::new()),
         })
     }
 
@@ -804,6 +804,66 @@ impl GpuManager::ver {
         self.kick_firmware()?;
         Ok(OpGuard(self.clone()))
     }
+
+    fn invalidate_context(
+        &self,
+        context: &fw::types::GpuObject<fw::workqueue::GpuContextData>,
+    ) -> Result {
+        mod_dev_dbg!(
+            self.dev,
+            "Invalidating GPU context @ {:?}\n",
+            context.weak_pointer()
+        );
+
+        if self.is_crashed() {
+            return Err(ENODEV);
+        }
+
+        let mut guard = self.alloc.lock();
+        let (garbage_count, _) = guard.private.garbage();
+
+        let dc = context.with(
+            |raw, _inner| fw::channels::DeviceControlMsg::ver::DestroyContext {
+                unk_4: 0,
+                ctx_23: raw.unk_23,
+                __pad0: Default::default(),
+                unk_c: 0,
+                unk_10: 0,
+                ctx_0: raw.unk_0,
+                ctx_1: raw.unk_1,
+                ctx_4: raw.unk_4,
+                __pad1: Default::default(),
+                unk_18: 0,
+                gpu_context: Some(context.weak_pointer()),
+                __pad2: Default::default(),
+            },
+        );
+
+        mod_dev_dbg!(self.dev, "Context invalidation command: {:?}\n", &dc);
+
+        let mut txch = self.tx_channels.lock();
+
+        let token = txch.device_control.send(&dc);
+
+        {
+            let mut guard = self.rtkit.lock();
+            let rtk = guard.as_mut().unwrap();
+            rtk.send_message(EP_DOORBELL, MSG_TX_DOORBELL | DOORBELL_DEVCTRL)?;
+        }
+
+        txch.device_control.wait_for(token)?;
+
+        mod_dev_dbg!(
+            self.dev,
+            "GPU context invalidated: {:?}\n",
+            context.weak_pointer()
+        );
+
+        // The invalidation does a cache flush, so it is okay to collect garbage
+        guard.private.collect_garbage(garbage_count);
+
+        Ok(())
+    }
 }
 
 #[versions(AGX)]
@@ -855,6 +915,19 @@ impl GpuManager for GpuManager::ver {
          * Clean up completed jobs
          */
         self.garbage_work.lock().clear();
+
+        /* Clean up idle contexts */
+        let mut garbage_ctx = Vec::new();
+        core::mem::swap(&mut *self.garbage_contexts.lock(), &mut garbage_ctx);
+
+        for ctx in garbage_ctx {
+            if self.invalidate_context(&ctx).is_err() {
+                dev_err!(self.dev, "GpuContext: Failed to invalidate GPU context!\n");
+                if debug_enabled(DebugFlags::OopsOnGpuCrash) {
+                    panic!("GPU firmware timed out");
+                }
+            }
+        }
 
         let mut guard = self.alloc.lock();
         let (garbage_count, garbage_bytes) = guard.private.garbage();
@@ -915,66 +988,6 @@ impl GpuManager for GpuManager::ver {
         let mut guard = self.rtkit.lock();
         let rtk = guard.as_mut().unwrap();
         rtk.send_message(EP_DOORBELL, MSG_TX_DOORBELL | DOORBELL_KICKFW)?;
-
-        Ok(())
-    }
-
-    fn invalidate_context(
-        &self,
-        context: &fw::types::GpuObject<fw::workqueue::GpuContextData>,
-    ) -> Result {
-        mod_dev_dbg!(
-            self.dev,
-            "Invalidating GPU context @ {:?}\n",
-            context.weak_pointer()
-        );
-
-        if self.is_crashed() {
-            return Err(ENODEV);
-        }
-
-        let mut guard = self.alloc.lock();
-        let (garbage_count, _) = guard.private.garbage();
-
-        let dc = context.with(
-            |raw, _inner| fw::channels::DeviceControlMsg::ver::DestroyContext {
-                unk_4: 0,
-                ctx_23: raw.unk_23,
-                __pad0: Default::default(),
-                unk_c: 0,
-                unk_10: 0,
-                ctx_0: raw.unk_0,
-                ctx_1: raw.unk_1,
-                ctx_4: raw.unk_4,
-                __pad1: Default::default(),
-                unk_18: 0,
-                gpu_context: Some(context.weak_pointer()),
-                __pad2: Default::default(),
-            },
-        );
-
-        mod_dev_dbg!(self.dev, "Context invalidation command: {:?}\n", &dc);
-
-        let mut txch = self.tx_channels.lock();
-
-        let token = txch.device_control.send(&dc);
-
-        {
-            let mut guard = self.rtkit.lock();
-            let rtk = guard.as_mut().unwrap();
-            rtk.send_message(EP_DOORBELL, MSG_TX_DOORBELL | DOORBELL_DEVCTRL)?;
-        }
-
-        txch.device_control.wait_for(token)?;
-
-        mod_dev_dbg!(
-            self.dev,
-            "GPU context invalidated: {:?}\n",
-            context.weak_pointer()
-        );
-
-        // The invalidation does a cache flush, so it is okay to collect garbage
-        guard.private.collect_garbage(garbage_count);
 
         Ok(())
     }
@@ -1109,6 +1122,17 @@ impl GpuManager for GpuManager::ver {
             garbage
                 .try_push(i)
                 .expect("try_push() failed after try_reserve()");
+        }
+    }
+
+    fn free_context(&self, ctx: Box<fw::types::GpuObject<fw::workqueue::GpuContextData>>) {
+        let mut garbage = self.garbage_contexts.lock();
+
+        if garbage.try_push(ctx).is_err() {
+            dev_err!(
+                self.dev,
+                "Failed to reserve space for freed context, deadlock possible.\n"
+            );
         }
     }
 }
