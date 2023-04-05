@@ -188,6 +188,7 @@ pub(crate) struct GpuManager {
     event_manager: Arc<event::EventManager>,
     buffer_mgr: buffer::BufferManager,
     ids: SequenceIDs,
+    garbage_work: Mutex<Vec<Box<dyn workqueue::GenSubmittedWork>>>,
 }
 
 /// Trait used to abstract the firmware/GPU-dependent variants of the GpuManager.
@@ -245,6 +246,8 @@ pub(crate) trait GpuManager: Send + Sync {
     fn get_cfg(&self) -> &'static hw::HwConfig;
     /// Get the dynamic GPU configuration for this SoC.
     fn get_dyncfg(&self) -> &hw::DynConfig;
+    /// Register completed work as garbage
+    fn add_completed_work(&self, work: Vec<Box<dyn workqueue::GenSubmittedWork>>);
 }
 
 /// Private generic trait for functions that don't need to escape this module.
@@ -526,6 +529,7 @@ impl GpuManager::ver {
             buffer_mgr: buffer::BufferManager::new()?,
             alloc: Mutex::new(alloc),
             ids: Default::default(),
+            garbage_work: Mutex::new(Vec::new()),
         })
     }
 
@@ -846,6 +850,12 @@ impl GpuManager for GpuManager::ver {
     }
 
     fn alloc(&self) -> Guard<'_, Mutex<KernelAllocators>> {
+        /*
+         * TODO: This should be done in a workqueue or something.
+         * Clean up completed jobs
+         */
+        self.garbage_work.lock().clear();
+
         let mut guard = self.alloc.lock();
         let (garbage_count, garbage_bytes) = guard.private.garbage();
         if garbage_bytes > MAX_FW_ALLOC_GARBAGE {
@@ -1082,6 +1092,24 @@ impl GpuManager for GpuManager::ver {
 
     fn get_dyncfg(&self) -> &hw::DynConfig {
         &self.dyncfg
+    }
+
+    fn add_completed_work(&self, work: Vec<Box<dyn workqueue::GenSubmittedWork>>) {
+        let mut garbage = self.garbage_work.lock();
+
+        if garbage.try_reserve(work.len()).is_err() {
+            dev_err!(
+                self.dev,
+                "Failed to reserve space for completed work, deadlock possible.\n"
+            );
+            return;
+        }
+
+        for i in work {
+            garbage
+                .try_push(i)
+                .expect("try_push() failed after try_reserve()");
+        }
     }
 }
 

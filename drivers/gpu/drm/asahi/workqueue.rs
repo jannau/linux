@@ -139,26 +139,26 @@ impl Drop for GpuContext {
 struct SubmittedWork<O, C>
 where
     O: OpaqueGpuObject,
-    C: FnOnce(O, Option<WorkError>) + Send + Sync + 'static,
+    C: FnOnce(&mut O, Option<WorkError>) + Send + Sync + 'static,
 {
     object: O,
     value: EventValue,
     error: Option<WorkError>,
     wptr: u32,
     vm_slot: u32,
-    callback: C,
+    callback: Option<C>,
 }
 
-trait GenSubmittedWork: Send + Sync {
+pub(crate) trait GenSubmittedWork: Send + Sync {
     fn gpu_va(&self) -> NonZeroU64;
     fn value(&self) -> event::EventValue;
     fn wptr(&self) -> u32;
     fn set_wptr(&mut self, wptr: u32);
     fn mark_error(&mut self, error: WorkError);
-    fn complete(self: Box<Self>);
+    fn complete(&mut self);
 }
 
-impl<O: OpaqueGpuObject, C: FnOnce(O, Option<WorkError>) + Send + Sync> GenSubmittedWork
+impl<O: OpaqueGpuObject, C: FnOnce(&mut O, Option<WorkError>) + Send + Sync> GenSubmittedWork
     for SubmittedWork<O, C>
 {
     fn gpu_va(&self) -> NonZeroU64 {
@@ -177,17 +177,10 @@ impl<O: OpaqueGpuObject, C: FnOnce(O, Option<WorkError>) + Send + Sync> GenSubmi
         self.wptr = wptr;
     }
 
-    fn complete(self: Box<Self>) {
-        let SubmittedWork {
-            object,
-            value: _,
-            error,
-            wptr: _,
-            vm_slot: _,
-            callback,
-        } = *self;
-
-        callback(object, error);
+    fn complete(&mut self) {
+        if let Some(cb) = self.callback.take() {
+            cb(&mut self.object, self.error);
+        }
     }
 
     fn mark_error(&mut self, error: WorkError) {
@@ -297,7 +290,7 @@ impl Job::ver {
         &mut self,
         command: O,
         vm_slot: u32,
-        callback: impl FnOnce(O, Option<WorkError>) + Sync + Send + 'static,
+        callback: impl FnOnce(&mut O, Option<WorkError>) + Sync + Send + 'static,
     ) -> Result {
         if self.committed {
             pr_err!("WorkQueue: Tried to mutate committed Job\n");
@@ -308,7 +301,7 @@ impl Job::ver {
             object: command,
             value: self.event_info.value.next(),
             error: None,
-            callback,
+            callback: Some(callback),
             wptr: 0,
             vm_slot,
         })?)?;
@@ -776,7 +769,7 @@ impl WorkQueue for WorkQueue::ver {
 
         if completed.try_reserve(completed_commands).is_err() {
             pr_crit!(
-                "WorkQueue({:?}): Failed to allocated space for {} completed commands\n",
+                "WorkQueue({:?}): Failed to allocate space for {} completed commands\n",
                 inner.pipe_type,
                 completed_commands
             );
@@ -813,11 +806,15 @@ impl WorkQueue for WorkQueue::ver {
             inner.last_completed = None;
         }
 
+        let dev = inner.dev.clone();
         core::mem::drop(inner);
 
-        for cmd in completed {
+        for cmd in completed.iter_mut() {
             cmd.complete();
         }
+
+        let gpu = &dev.data().gpu;
+        gpu.add_completed_work(completed);
 
         empty
     }
