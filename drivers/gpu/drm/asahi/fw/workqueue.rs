@@ -147,10 +147,16 @@ pub(crate) mod raw {
 }
 
 trivial_gpustruct!(Barrier);
-trivial_gpustruct!(GpuContextData);
 trivial_gpustruct!(RingState);
 
 impl Command for Barrier {}
+
+pub(crate) struct GpuContextData {
+    pub(crate) _buffer: Option<Arc<dyn core::any::Any + Send + Sync>>,
+}
+impl GpuStruct for GpuContextData {
+    type Raw<'a> = raw::GpuContextData;
+}
 
 #[versions(AGX)]
 #[derive(Debug)]

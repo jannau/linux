@@ -395,6 +395,18 @@ impl Queue::ver {
         // per-queue scheduler.
         let entity = sched::Entity::new(&sched, sched::Priority::Normal)?;
 
+        let buffer = if caps & uapi::drm_asahi_queue_cap_DRM_ASAHI_QUEUE_CAP_RENDER != 0 {
+            Some(buffer::Buffer::ver::new(
+                &*data.gpu,
+                alloc,
+                ualloc.clone(),
+                ualloc_priv,
+                mgr,
+            )?)
+        } else {
+            None
+        };
+
         let mut ret = Queue::ver {
             dev: dev.clone(),
             _sched: sched,
@@ -404,8 +416,12 @@ impl Queue::ver {
             q_vtx: None,
             q_frag: None,
             q_comp: None,
-            buffer: None,
-            gpu_context: Arc::try_new(workqueue::GpuContext::new(dev, alloc)?)?,
+            gpu_context: Arc::try_new(workqueue::GpuContext::new(
+                dev,
+                alloc,
+                buffer.as_ref().map(|b| b.any_ref()),
+            )?)?,
+            buffer,
             notifier_list: Arc::try_new(notifier_list)?,
             notifier,
             id,
@@ -416,16 +432,13 @@ impl Queue::ver {
 
         // Rendering structures
         if caps & uapi::drm_asahi_queue_cap_DRM_ASAHI_QUEUE_CAP_RENDER != 0 {
-            let buffer =
-                buffer::Buffer::ver::new(&*data.gpu, alloc, ret.ualloc.clone(), ualloc_priv, mgr)?;
             let tvb_blocks = {
                 let lock = crate::THIS_MODULE.kernel_param_lock();
                 *crate::initial_tvb_size.read(&lock)
             };
 
-            buffer.ensure_blocks(tvb_blocks)?;
+            ret.buffer.as_ref().unwrap().ensure_blocks(tvb_blocks)?;
 
-            ret.buffer = Some(buffer);
             ret.q_vtx = Some(SubQueue::ver {
                 wq: workqueue::WorkQueue::ver::new(
                     dev,

@@ -663,6 +663,10 @@ impl Buffer::ver {
             raw.count.store(v + 1, Ordering::Relaxed);
         });
     }
+
+    pub(crate) fn any_ref(&self) -> Arc<dyn core::any::Any + Send + Sync> {
+        self.inner.clone()
+    }
 }
 
 #[versions(AGX)]

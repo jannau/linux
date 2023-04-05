@@ -108,14 +108,14 @@ impl GpuContext {
     pub(crate) fn new(
         dev: &driver::AsahiDevice,
         alloc: &mut gpu::KernelAllocators,
+        buffer: Option<Arc<dyn core::any::Any + Send + Sync>>,
     ) -> Result<GpuContext> {
         Ok(GpuContext {
             dev: dev.clone(),
-            data: Some(Box::try_new(
-                alloc
-                    .shared
-                    .new_object(Default::default(), |_inner| Default::default())?,
-            )?),
+            data: Some(Box::try_new(alloc.shared.new_object(
+                fw::workqueue::GpuContextData { _buffer: buffer },
+                |_inner| Default::default(),
+            )?)?),
         })
     }
 
