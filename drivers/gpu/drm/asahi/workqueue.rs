@@ -99,7 +99,7 @@ impl From<WorkError> for kernel::error::Error {
 /// A GPU context tracking structure, which must be explicitly invalidated when dropped.
 pub(crate) struct GpuContext {
     dev: driver::AsahiDevice,
-    data: GpuObject<fw::workqueue::GpuContextData>,
+    data: Option<Box<GpuObject<fw::workqueue::GpuContextData>>>,
 }
 no_debug!(GpuContext);
 
@@ -111,28 +111,26 @@ impl GpuContext {
     ) -> Result<GpuContext> {
         Ok(GpuContext {
             dev: dev.clone(),
-            data: alloc
-                .shared
-                .new_object(Default::default(), |_inner| Default::default())?,
+            data: Some(Box::try_new(
+                alloc
+                    .shared
+                    .new_object(Default::default(), |_inner| Default::default())?,
+            )?),
         })
     }
 
     /// Returns the GPU pointer to the inner GPU context data structure.
     pub(crate) fn gpu_pointer(&self) -> GpuPointer<'_, fw::workqueue::GpuContextData> {
-        self.data.gpu_pointer()
+        self.data.as_ref().unwrap().gpu_pointer()
     }
 }
 
 impl Drop for GpuContext {
     fn drop(&mut self) {
-        mod_dev_dbg!(self.dev, "GpuContext: Invalidating GPU context\n");
+        mod_dev_dbg!(self.dev, "GpuContext: Freeing GPU context\n");
         let dev = self.dev.data();
-        if dev.gpu.invalidate_context(&self.data).is_err() {
-            dev_err!(self.dev, "GpuContext: Failed to invalidate GPU context!\n");
-            if debug_enabled(DebugFlags::OopsOnGpuCrash) {
-                panic!("GPU firmware timed out");
-            }
-        }
+        let data = self.data.take().unwrap();
+        dev.gpu.free_context(data);
     }
 }
 
