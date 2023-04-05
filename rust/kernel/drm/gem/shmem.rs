@@ -115,7 +115,9 @@ unsafe extern "C" fn gem_create_object<T: DriverObject>(
 
 unsafe extern "C" fn free_callback<T: DriverObject>(obj: *mut bindings::drm_gem_object) {
     // SAFETY: All of our objects are Object<T>.
-    let p = crate::container_of!(obj, Object<T>, obj) as *mut Object<T>;
+    let shmem = crate::container_of!(obj, bindings::drm_gem_shmem_object, base)
+        as *mut bindings::drm_gem_shmem_object;
+    let p = crate::container_of!(shmem, Object<T>, obj) as *mut Object<T>;
 
     // SAFETY: p is never used after this
     unsafe {
@@ -239,7 +241,9 @@ impl<T: DriverObject> gem::IntoGEMObject for Object<T> {
     }
 
     fn from_gem_obj(obj: *mut bindings::drm_gem_object) -> *mut Object<T> {
-        crate::container_of!(obj, Object<T>, obj) as *mut Object<T>
+        let shmem = crate::container_of!(obj, bindings::drm_gem_shmem_object, base)
+            as *mut bindings::drm_gem_shmem_object;
+        crate::container_of!(shmem, Object<T>, obj) as *mut Object<T>
     }
 }
 
