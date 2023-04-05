@@ -428,6 +428,7 @@ impl Queue::ver {
             ret.buffer = Some(Mutex::new(buffer));
             ret.q_vtx = Some(SubQueue::ver {
                 wq: workqueue::WorkQueue::ver::new(
+                    dev,
                     alloc,
                     event_manager.clone(),
                     ret.gpu_context.clone(),
@@ -448,6 +449,7 @@ impl Queue::ver {
         {
             ret.q_frag = Some(SubQueue::ver {
                 wq: workqueue::WorkQueue::ver::new(
+                    dev,
                     alloc,
                     event_manager.clone(),
                     ret.gpu_context.clone(),
@@ -464,6 +466,7 @@ impl Queue::ver {
         if caps & uapi::drm_asahi_queue_cap_DRM_ASAHI_QUEUE_CAP_COMPUTE != 0 {
             ret.q_comp = Some(SubQueue::ver {
                 wq: workqueue::WorkQueue::ver::new(
+                    dev,
                     alloc,
                     event_manager,
                     ret.gpu_context.clone(),

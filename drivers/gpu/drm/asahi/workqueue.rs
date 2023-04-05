@@ -202,6 +202,7 @@ impl<O: OpaqueGpuObject, C: FnOnce(O, Option<WorkError>) + Send + Sync> GenSubmi
 /// Inner data for managing a single work queue.
 #[versions(AGX)]
 struct WorkQueueInner {
+    dev: driver::AsahiDevice,
     event_manager: Arc<event::EventManager>,
     info: GpuObject<QueueInfo::ver>,
     new: bool,
@@ -554,6 +555,7 @@ impl WorkQueue::ver {
     /// Create a new WorkQueue of a given type and priority.
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
+        dev: &driver::AsahiDevice,
         alloc: &mut gpu::KernelAllocators,
         event_manager: Arc<event::EventManager>,
         gpu_context: Arc<GpuContext>,
@@ -576,6 +578,7 @@ impl WorkQueue::ver {
         });
 
         let inner = WorkQueueInner::ver {
+            dev: dev.clone(),
             event_manager,
             info: alloc.private.new_boxed(info, |inner, ptr| {
                 Ok(place!(
