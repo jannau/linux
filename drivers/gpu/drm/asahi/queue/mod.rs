@@ -103,7 +103,7 @@ pub(crate) struct Queue {
     q_vtx: Option<SubQueue::ver>,
     q_frag: Option<SubQueue::ver>,
     q_comp: Option<SubQueue::ver>,
-    buffer: Option<Mutex<buffer::Buffer::ver>>,
+    buffer: Option<buffer::Buffer::ver>,
     gpu_context: Arc<workqueue::GpuContext>,
     notifier_list: Arc<GpuObject<fw::event::NotifierList>>,
     notifier: Arc<GpuObject<fw::event::Notifier::ver>>,
@@ -425,7 +425,7 @@ impl Queue::ver {
 
             buffer.ensure_blocks(tvb_blocks)?;
 
-            ret.buffer = Some(Mutex::new(buffer));
+            ret.buffer = Some(buffer);
             ret.q_vtx = Some(SubQueue::ver {
                 wq: workqueue::WorkQueue::ver::new(
                     dev,

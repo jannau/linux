@@ -292,7 +292,7 @@ impl super::Queue::ver {
 
         let tile_info = Self::get_tiling_params(&cmdbuf, if clustering { nclusters } else { 1 })?;
 
-        let buffer = self.buffer.as_ref().ok_or(EINVAL)?.lock();
+        let buffer = self.buffer.as_ref().ok_or(EINVAL)?;
 
         let scene = Arc::try_new(buffer.new_scene(kalloc, &tile_info)?)?;
 
