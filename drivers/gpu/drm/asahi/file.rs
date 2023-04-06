@@ -202,6 +202,10 @@ impl File {
             return Err(EINVAL);
         }
 
+        if gpu.is_crashed() {
+            return Err(ENODEV);
+        }
+
         let mut params = uapi::drm_asahi_params_global {
             unstable_uabi_version: uapi::DRM_ASAHI_UNSTABLE_UABI_VERSION,
             pad0: 0,
