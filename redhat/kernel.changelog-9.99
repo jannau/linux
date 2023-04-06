@@ -1,3 +1,7 @@
+* Thu Apr 06 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc5.99ddf2254feb.45]
+- Linux v6.3.0-0.rc5.99ddf2254feb
+Resolves: 
+
 * Wed Apr 05 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc5.76f598ba7d8e.44]
 - redhat: configs: Enable CONFIG_MEMTEST to enable memory test (Kate Hsuan)
 - Linux v6.3.0-0.rc5.76f598ba7d8e
