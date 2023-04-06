@@ -404,6 +404,7 @@ static const struct apple_epic_service_ops dptxep_ops[] = {
 int dptxep_init(struct apple_dcp *dcp)
 {
 	int ret;
+	unsigned long timeout = msecs_to_jiffies(1000);
 
 	init_completion(&dcp->dptxport[0].enable_completion);
 	init_completion(&dcp->dptxport[1].enable_completion);
@@ -416,9 +417,19 @@ int dptxep_init(struct apple_dcp *dcp)
 	if (ret)
 		return ret;
 
-	// TOOD: timeout
-	wait_for_completion(&dcp->dptxport[0].enable_completion);
-	wait_for_completion(&dcp->dptxport[1].enable_completion);
+	ret = wait_for_completion_timeout(&dcp->dptxport[0].enable_completion,
+					      timeout);
+	if (!ret)
+		return -ETIMEDOUT;
+	else if (ret < 0)
+		return ret;
+	timeout = ret;
+	ret = wait_for_completion_timeout(&dcp->dptxport[1].enable_completion,
+					      timeout);
+	if (!ret)
+		return -ETIMEDOUT;
+	else if (ret < 0)
+		return ret;
 
 	return 0;
 }
