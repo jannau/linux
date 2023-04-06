@@ -40,8 +40,8 @@ static void system_log_work(struct work_struct *work_)
 	kfree(work);
 }
 
-static void system_init(struct apple_epic_service *service, u8 *props,
-			size_t props_size)
+static void system_init(struct apple_epic_service *service, const char *name,
+			const char *class, s64 unit)
 {
 	struct systemep_work *work;
 
@@ -61,8 +61,8 @@ static void system_init(struct apple_epic_service *service, u8 *props,
 	schedule_work(&work->work);
 }
 
-static void powerlog_init(struct apple_epic_service *service, u8 *props,
-			  size_t props_size)
+static void powerlog_init(struct apple_epic_service *service, const char *name,
+			  const char *class, s64 unit)
 {
 }
 
