@@ -247,6 +247,8 @@ pub(crate) trait GpuManager: Send + Sync {
     fn add_completed_work(&self, work: Vec<Box<dyn workqueue::GenSubmittedWork>>);
     /// Register an unused context as garbage
     fn free_context(&self, data: Box<fw::types::GpuObject<fw::workqueue::GpuContextData>>);
+    /// Check whether the GPU is crashed
+    fn is_crashed(&self) -> bool;
 }
 
 /// Private generic trait for functions that don't need to escape this module.
@@ -786,10 +788,6 @@ impl GpuManager::ver {
         Ok(())
     }
 
-    pub(crate) fn is_crashed(&self) -> bool {
-        self.crashed.load(Ordering::Relaxed)
-    }
-
     pub(crate) fn start_op(self: &Arc<GpuManager::ver>) -> Result<OpGuard> {
         if self.is_crashed() {
             return Err(ENODEV);
@@ -1134,6 +1132,10 @@ impl GpuManager for GpuManager::ver {
                 "Failed to reserve space for freed context, deadlock possible.\n"
             );
         }
+    }
+
+    fn is_crashed(&self) -> bool {
+        self.crashed.load(Ordering::Relaxed)
     }
 }
 
