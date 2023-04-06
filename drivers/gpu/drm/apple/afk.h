@@ -57,8 +57,8 @@ struct apple_epic_service {
 struct apple_epic_service_ops {
 	const char name[32];
 
-	void (*init)(struct apple_epic_service *service, u8 *props,
-		     size_t props_size);
+	void (*init)(struct apple_epic_service *service, const char *name,
+			      const char *class, s64 unit);
 	int (*call)(struct apple_epic_service *service, u32 idx,
 		    const void *data, size_t data_size, void *reply,
 		    size_t reply_size);

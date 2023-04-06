@@ -21,13 +21,13 @@ struct audiosrv_data {
 	struct rw_semaphore srv_rwsem;
 };
 
-static void av_interface_init(struct apple_epic_service *service, u8 *props,
-				 size_t props_size)
+static void av_interface_init(struct apple_epic_service *service, const char *name,
+			      const char *class, s64 unit)
 {
 }
 
-static void av_audiosrv_init(struct apple_epic_service *service, u8 *props,
-				 size_t props_size)
+static void av_audiosrv_init(struct apple_epic_service *service, const char *name,
+			     const char *class, s64 unit)
 {
 	struct apple_dcp *dcp = service->ep->dcp;
 	struct audiosrv_data *asrv = dcp->audiosrv;

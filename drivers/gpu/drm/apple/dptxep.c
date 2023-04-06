@@ -342,33 +342,14 @@ static int dptxport_call(struct apple_epic_service *service, u32 idx,
 	}
 }
 
-static void dptxport_init(struct apple_epic_service *service, u8 *props,
-			  size_t props_size)
+static void dptxport_init(struct apple_epic_service *service, const char *name,
+			  const char *class, s64 unit)
 {
-	s64 unit;
-	const char *name, *class;
-	struct dcp_parse_ctx ctx;
-	int ret;
-
-	ret = parse(props, props_size, &ctx);
-	if (ret) {
-		dev_err(service->ep->dcp->dev,
-			"DPTXPort: failed to parse init props: %d\n", ret);
-		return;
-	}
-	ret = parse_epic_service_init(&ctx, &name, &class, &unit);
-	if (ret) {
-		dev_err(service->ep->dcp->dev,
-			"DPTXPort: failed to extract init props: %d\n", ret);
-		return;
-	}
 
 	if (strcmp(name, "dcpdptx-port-epic"))
 		return;
 	if (strcmp(class, "AppleDCPDPTXRemotePort"))
 		return;
-	kfree(name);
-	kfree(class);
 
 	trace_dptxport_init(service->ep->dcp, unit);
 
