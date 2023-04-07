@@ -16,7 +16,7 @@
 extern "C" {
 #endif
 
-#define DRM_ASAHI_UNSTABLE_UABI_VERSION		10006
+#define DRM_ASAHI_UNSTABLE_UABI_VERSION		10007
 
 #define DRM_ASAHI_GET_PARAMS			0x00
 #define DRM_ASAHI_VM_CREATE			0x01
@@ -331,6 +331,8 @@ struct drm_asahi_attachment {
 #define ASAHI_RENDER_MEMORYLESS_RTS_USED (1UL << 2)
 #define ASAHI_RENDER_PROCESS_EMPTY_TILES (1UL << 3)
 #define ASAHI_RENDER_NO_VERTEX_CLUSTERING (1UL << 4)
+#define ASAHI_RENDER_MSAA_ZS (1UL << 5)
+#define ASAHI_RENDER_UNK_FLAG1 (1UL << 6)
 
 struct drm_asahi_cmd_render {
 	/** @extensions: Pointer to the first extension struct, if any */
@@ -379,8 +381,8 @@ struct drm_asahi_cmd_render {
 	__u32 cmd_ta_id;
 	__u32 cmd_3d_id;
 
-	__u32 iogpu_unk_49;
-	__u32 iogpu_unk_212;
+	__u32 sample_size;
+	__u32 tib_blocks;
 	__u32 iogpu_unk_214;
 
 	__u32 merge_upper_x;
