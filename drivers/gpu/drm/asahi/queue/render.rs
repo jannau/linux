@@ -225,7 +225,9 @@ impl super::Queue::ver {
                 | uapi::ASAHI_RENDER_SET_WHEN_RELOADING_Z_OR_S
                 | uapi::ASAHI_RENDER_MEMORYLESS_RTS_USED
                 | uapi::ASAHI_RENDER_PROCESS_EMPTY_TILES
-                | uapi::ASAHI_RENDER_NO_VERTEX_CLUSTERING) as u64
+                | uapi::ASAHI_RENDER_NO_VERTEX_CLUSTERING
+                | uapi::ASAHI_RENDER_MSAA_ZS
+                | uapi::ASAHI_RENDER_UNK_FLAG1) as u64
             != 0
         {
             return Err(EINVAL);
@@ -395,8 +397,7 @@ impl super::Queue::ver {
 
         let timestamps = Arc::try_new(kalloc.shared.new_default::<fw::job::RenderTimestamps>()?)?;
 
-        let unk1 = debug_enabled(debug::DebugFlags::Debug1);
-        let unk2 = debug_enabled(debug::DebugFlags::Debug2);
+        let unk1 = cmdbuf.flags & uapi::ASAHI_RENDER_UNK_FLAG1 as u64 != 0;
 
         let mut tile_config: u64 = 0;
         if !unk1 {
@@ -449,6 +450,8 @@ impl super::Queue::ver {
         #[ver(V >= V13_0B4)]
         let count_vtx = count_frag + 1;
 
+        let large_tib = cmdbuf.tib_blocks > 8;
+
         mod_dev_dbg!(self.dev, "[Submission {}] Create Frag\n", id);
         let frag = GpuObject::new_prealloc(
             kalloc.private.alloc_object()?,
@@ -475,7 +478,7 @@ impl super::Queue::ver {
                     unk_50: 0x1, // fixed
                     event_generation: self.id as u32,
                     buffer_slot: scene.slot(),
-                    unk_5c: 0,
+                    large_tib: large_tib as u32,
                     event_seq: U64(ev_frag.event_seq),
                     unk_68: 0,
                     unk_758_flag: inner_weak_ptr!(ptr, unk_758_flag),
@@ -671,7 +674,7 @@ impl super::Queue::ver {
                             utiles_per_mtile_x: tile_info.utiles_per_mtile_x as u16,
                             unk_24: 0x0,
                             tile_counts: ((tile_info.tiles_y - 1) << 12) | (tile_info.tiles_x - 1),
-                            iogpu_unk_212: cmdbuf.iogpu_unk_212,
+                            tib_blocks: cmdbuf.tib_blocks,
                             isp_bgobjdepth: cmdbuf.isp_bgobjdepth,
                             // TODO: does this flag need to be exposed to userspace?
                             isp_bgobjvals: cmdbuf.isp_bgobjvals | 0x400,
@@ -719,7 +722,7 @@ impl super::Queue::ver {
                             stencil_buffer_ptr3: U64(cmdbuf.stencil_buffer_3),
                             stencil_meta_buffer_ptr3: U64(cmdbuf.stencil_meta_buffer_3),
                             unk_2f8: Default::default(),
-                            iogpu_unk_212: cmdbuf.iogpu_unk_212,
+                            tib_blocks: cmdbuf.tib_blocks,
                             unk_30c: 0x0,
                             aux_fb_info: aux_fb_info,
                             unk_320_padding: Default::default(),
@@ -734,7 +737,7 @@ impl super::Queue::ver {
                             ),
                             isp_bgobjdepth: cmdbuf.isp_bgobjdepth,
                             isp_bgobjvals: cmdbuf.isp_bgobjvals,
-                            iogpu_unk_49: cmdbuf.iogpu_unk_49,
+                            sample_size: cmdbuf.sample_size,
                             unk_37c: 0x0,
                             unk_380: U64(0x0),
                             unk_388: U64(0x0),
@@ -752,8 +755,8 @@ impl super::Queue::ver {
                             unk_8: (cmdbuf.flags
                                 & uapi::ASAHI_RENDER_SET_WHEN_RELOADING_Z_OR_S as u64
                                 != 0) as u32,
-                            unk_c: 0x0,  // fixed
-                            unk_10: 0x0, // fixed
+                            large_tib: large_tib as u32, // fixed
+                            unk_10: 0x0,                 // fixed
                             encoder_id: cmdbuf.encoder_id,
                             unk_18: 0x0, // fixed
                             iogpu_compute_unk44: 0xffffffff,
@@ -766,7 +769,7 @@ impl super::Queue::ver {
                         no_clear_pipeline_textures: (cmdbuf.flags
                             & uapi::ASAHI_RENDER_NO_CLEAR_PIPELINE_TEXTURES as u64
                             != 0) as u32,
-                        unk_param: unk2.into(), // 1 for boot stuff?
+                        msaa_zs: (cmdbuf.flags & uapi::ASAHI_RENDER_MSAA_ZS as u64 != 0) as u32,
                         unk_pointee: 0,
                         meta: fw::job::raw::JobMeta {
                             unk_0: 0,
@@ -1077,9 +1080,9 @@ impl super::Queue::ver {
                             unk_520: U64(0x0), // fixed
                         },
                         encoder_params: fw::job::raw::EncoderParams {
-                            unk_8: 0x0,  // fixed
-                            unk_c: 0x0,  // fixed
-                            unk_10: 0x0, // fixed
+                            unk_8: 0x0,     // fixed
+                            large_tib: 0x0, // fixed
+                            unk_10: 0x0,    // fixed
                             encoder_id: cmdbuf.encoder_id,
                             unk_18: 0x0, // fixed
                             iogpu_compute_unk44: 0xffffffff,

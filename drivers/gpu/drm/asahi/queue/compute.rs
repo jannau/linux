@@ -287,9 +287,9 @@ impl super::Queue::ver {
                             unk_5c: 0,
                         },
                         encoder_params: fw::job::raw::EncoderParams {
-                            unk_8: 0x0,  // fixed
-                            unk_c: 0x0,  // fixed
-                            unk_10: 0x0, // fixed
+                            unk_8: 0x0,     // fixed
+                            large_tib: 0x0, // check!
+                            unk_10: 0x0,    // fixed
                             encoder_id: cmdbuf.encoder_id,
                             unk_18: 0x0, // fixed
                             iogpu_compute_unk44: cmdbuf.iogpu_unk_44,
