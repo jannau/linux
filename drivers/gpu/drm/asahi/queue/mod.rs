@@ -390,7 +390,10 @@ impl Queue::ver {
                 },
             )?)?;
 
-        let sched = sched::Scheduler::new(dev, WQ_SIZE, 0, 100000, c_str!("asahi_sched"))?;
+        // SAFETY: I give up. This is unsafe and there is no reasonable way to make it safe.
+        // Known broken. Will crash and burn and oops under corner cases like apps getting kill -9'd.
+        let sched =
+            unsafe { sched::Scheduler::new(dev, WQ_SIZE, 0, 100000, c_str!("asahi_sched"))? };
         // Priorities are handled by the AGX scheduler, there is no meaning within a
         // per-queue scheduler.
         let entity = sched::Entity::new(&sched, sched::Priority::Normal)?;

@@ -327,8 +327,16 @@ impl<T: JobImpl> Scheduler<T> {
         free_job: Some(free_job_cb::<T>),
     };
     /// Creates a new DRM Scheduler object
+    ///
+    /// # Safety
+    /// The user must magically ensure all of its Job objects outlive this scheduler,
+    /// but isn't allowed to hold a direct reference to the scheduler because dropping
+    /// the scheduler from the drop impl of a Job is not allowed, as it will deadlock.
+    ///
+    /// Yes, this is horribly broken, but it's how drm_sched is designed.
+    /// Please send help.
     // TODO: Shared timeout workqueues & scores
-    pub fn new(
+    pub unsafe fn new(
         device: &impl device::RawDevice,
         hw_submission: u32,
         hang_limit: u32,
