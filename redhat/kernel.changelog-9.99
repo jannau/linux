@@ -1,3 +1,8 @@
+* Sat Apr 08 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc5.aa318c48808c.47]
+- Fedora 6.3 configs part 1 (Justin M. Forbes)
+- Linux v6.3.0-0.rc5.aa318c48808c
+Resolves: 
+
 * Fri Apr 07 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc5.f2afccfefe7b.46]
 - Linux v6.3.0-0.rc5.f2afccfefe7b
 Resolves: 
