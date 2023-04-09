@@ -287,7 +287,7 @@
 };
 
 / {
-	sound {
+	sound: sound {
 		compatible = "apple,j375-macaudio", "apple,macaudio";
 		model = "Mac Studio J375";
 
@@ -345,6 +345,7 @@
 	};
 };
 
+#ifndef NO_PCIE_SDHC
 &port01 {
 	/* SD card reader */
 	bus-range = <2 2>;
@@ -356,6 +357,7 @@
 		wp-inverted;
 	};
 };
+#endif
 
 &port02 {
 	/* 10 Gbit Ethernet */
@@ -384,6 +386,7 @@
 	status = "okay";
 };
 
+#ifndef NO_GPU
 &gpu {
 	apple,avg-power-ki-only = <0.6375>;
 	apple,avg-power-kp = <0.58>;
@@ -392,3 +395,4 @@
 	apple,ppm-ki = <5.8>;
 	apple,ppm-kp = <0.355>;
 };
+#endif
