@@ -111,6 +111,7 @@ struct epic_cmd {
 	__le64 txbuf;
 	__le32 rxlen;
 	__le32 txlen;
+	u16 pad;
 } __attribute__((packed));
 
 struct epic_service_call {
@@ -128,6 +129,7 @@ enum epic_type {
 	EPIC_TYPE_NOTIFY = 0,
 	EPIC_TYPE_COMMAND = 3,
 	EPIC_TYPE_REPLY = 4,
+	EPIC_TYPE_7 = 7,
 	EPIC_TYPE_NOTIFY_ACK = 8,
 };
 
