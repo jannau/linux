@@ -797,7 +797,7 @@ out:
 	return ret;
 }
 
-int afk_send_command(struct apple_epic_service *service, u8 type,
+int afk_send_command2(struct apple_epic_service *service, enum epic_type etype, u8 type,
 		     const void *payload, size_t payload_len, void *output,
 		     size_t output_len, u32 *retcode)
 {
@@ -855,7 +855,7 @@ int afk_send_command(struct apple_epic_service *service, u8 type,
 	spin_unlock_irqrestore(&service->lock, flags);
 
 	ret = afk_send_epic(service->ep, service->channel, tag,
-			    EPIC_TYPE_COMMAND, EPIC_CAT_COMMAND, type, &cmd,
+			    etype, EPIC_CAT_COMMAND, type, &cmd,
 			    sizeof(cmd));
 	if (ret)
 		goto err_free_cmd;
@@ -896,6 +896,14 @@ err_free_rxbuf:
 	return ret;
 }
 
+int afk_send_command(struct apple_epic_service *service, u8 type,
+		     const void *payload, size_t payload_len, void *output,
+		     size_t output_len, u32 *retcode)
+{
+	return afk_send_command2(service, EPIC_TYPE_COMMAND, type,
+				 payload, payload_len, output, output_len, retcode);
+}
+
 int afk_service_call(struct apple_epic_service *service, u16 group, u32 command,
 		     const void *data, size_t data_len, size_t data_pad,
 		     void *output, size_t output_len, size_t output_pad)
@@ -920,6 +928,11 @@ int afk_service_call(struct apple_epic_service *service, u16 group, u32 command,
 
 	memcpy(bfr + sizeof(*call), data, data_len);
 
+	if (group == 8)
+		ret = afk_send_command2(service, EPIC_TYPE_7,
+					EPIC_SUBTYPE_STD_SERVICE, bfr, bfr_len,
+					bfr, bfr_len, &retcode);
+	else
 	ret = afk_send_command(service, EPIC_SUBTYPE_STD_SERVICE, bfr, bfr_len,
 			       bfr, bfr_len, &retcode);
 	if (ret)
