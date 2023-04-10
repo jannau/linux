@@ -35,3 +35,7 @@
 &sound {
 	model = "MacBook Pro J414";
 };
+
+&mtp_mt {
+	firmware-name = "apple/tpmtfw-j414s.bin";
+};
