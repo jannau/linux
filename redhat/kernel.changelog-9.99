@@ -1,3 +1,9 @@
+* Tue Apr 11 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc6.0d3eb744aed4.50]
+- ipmi: ssif_bmc: Add SSIF BMC driver (Tony Camuso)
+- common: minor de-dupe of parallel port configs (Peter Robinson)
+- Linux v6.3.0-0.rc6.0d3eb744aed4
+Resolves: 
+
 * Mon Apr 10 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc6.49]
 - Linux v6.3.0-0.rc6
 Resolves: 
