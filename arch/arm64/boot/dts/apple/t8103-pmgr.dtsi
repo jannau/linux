@@ -799,6 +799,7 @@
 		#reset-cells = <0>;
 		label = "mipi_dsi";
 		power-domains = <&ps_dispdfr_be>;
+		apple,always-on;
 	};
 
 	ps_isp_sys: power-controller@400 {

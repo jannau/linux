@@ -178,6 +178,7 @@
 			default-state = "keep";
 		};
 	};
+
 };
 
 &framebuffer0 {
@@ -185,5 +186,9 @@
 };
 
 &fpwm1 {
+	status = "okay";
+};
+
+&display_dfr {
 	status = "okay";
 };
