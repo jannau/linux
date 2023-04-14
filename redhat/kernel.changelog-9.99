@@ -1,3 +1,9 @@
+* Fri Apr 14 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc6.44149752e998.53]
+- redhat/configs: Enable CONFIG_X86_KERNEL_IBT for Fedora and ARK (Josh Poimboeuf)
+- kernel.spec: gcov: make gcov subpackages per variant (Jan Stancek)
+- Linux v6.3.0-0.rc6.44149752e998
+Resolves: 
+
 * Thu Apr 13 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc6.de4664485abb.52]
 - Linux v6.3.0-0.rc6.de4664485abb
 Resolves: 
