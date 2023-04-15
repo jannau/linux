@@ -45,6 +45,14 @@
 	};
 };
 
+&display_dfr {
+	status = "okay";
+};
+
+&displaydfr_dart {
+	status = "okay";
+};
+
 /*
  * Force the bus number assignments so that we can declare some of the
  * on-board devices and properties that are populated by the bootloader
