@@ -25,6 +25,15 @@
 		power-domains = <&ps_aic>;
 	};
 
+	pmgr_misc: power-management@28e20c000 {
+		compatible = "apple,t6020-pmgr-misc", "apple,t6000-pmgr-misc";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		reg = <0x2 0x8e20c000 0 0x400>,
+			<0x2 0x8e20c400 0 0x400>;
+		reg-names = "fabric-ps", "dcs-ps";
+	};
+
 	wdt: watchdog@29e2c4000 {
 		compatible = "apple,t6020-wdt", "apple,wdt";
 		reg = <0x2 0x9e2c4000 0x0 0x4000>;
