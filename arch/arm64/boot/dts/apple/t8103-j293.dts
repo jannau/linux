@@ -138,6 +138,15 @@
 &fpwm1 {
 	status = "okay";
 };
+
+&display_dfr {
+	status = "okay";
+	dfr_panel: panel@0 {
+		compatible = "apple,summit";
+		reg = <0>;
+	};
+};
+
 / {
 	sound {
 		compatible = "apple,j293-macaudio", "apple,macaudio";
