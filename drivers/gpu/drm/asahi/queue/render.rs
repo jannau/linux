@@ -140,6 +140,7 @@ impl super::Queue::ver {
             0
         };
 
+        // TODO: large_tib needs larger min_tvb_blocks apparently
         let min_tvb_blocks =
             div_ceil(tiles_x * tiles_y, 128).max(if num_clusters > 1 { 9 } else { 8 }) as usize;
 
@@ -707,7 +708,93 @@ impl super::Queue::ver {
                         #[ver(G >= G14X)]
                         registers: fw::job::raw::RegisterArray::new(
                             inner_weak_ptr!(_gpu_ptr, registers.registers),
-                            |r| {}
+                            |r| {
+                                r.add(0x1739, 1);
+                                r.add(0x10009, utile_config.into());
+                                r.add(0x15379, cmdbuf.store_pipeline_bind.into());
+                                r.add(0x15381, cmdbuf.store_pipeline.into());
+                                r.add(0x15369, cmdbuf.load_pipeline_bind.into());
+                                r.add(0x15371, cmdbuf.load_pipeline.into());
+                                r.add(0x15131, cmdbuf.merge_upper_x.into());
+                                r.add(0x15139, cmdbuf.merge_upper_y.into());
+                                r.add(0x100a1, 0);
+                                r.add(0x15069, 0);
+                                r.add(0x15071, 0); // pointer
+                                r.add(0x16058, 0);
+                                r.add(0x10019, cmdbuf.ppp_multisamplectl);
+
+                                let isp_mtile_size = (tile_info.utiles_per_mtile_y
+                                    | (tile_info.utiles_per_mtile_x << 16))
+                                    .into();
+                                r.add(0x100b1, isp_mtile_size); // ISP_MTILE_SIZE
+                                r.add(0x16030, isp_mtile_size); // ISP_MTILE_SIZE
+                                r.add(
+                                    0x100d9,
+                                    (((tile_info.tiles_y - 1) << 12) | (tile_info.tiles_x - 1))
+                                        .into(),
+                                ); // TE_SCREEN
+                                r.add(0x16098, inner.scene.tvb_heapmeta_pointer().into());
+                                r.add(0x15109, cmdbuf.scissor_array); // ISP_SCISSOR_BASE
+                                r.add(0x15101, cmdbuf.depth_bias_array); // ISP_DBIAS_BASE
+                                r.add(0x15021, cmdbuf.iogpu_unk_214.into()); // aux_fb_info.unk_1
+                                r.add(
+                                    0x15211,
+                                    ((cmdbuf.fb_height as u64) << 32) | cmdbuf.fb_width as u64,
+                                ); // aux_fb_info.{width, heigh
+                                r.add(0x15049, 0x100000); // s2.aux_fb_info.unk3
+                                r.add(0x10051, cmdbuf.tib_blocks.into()); // s1.unk_2c
+                                r.add(0x15321, cmdbuf.depth_dimensions.into()); // ISP_ZLS_PIXELS
+                                r.add(0x15301, cmdbuf.isp_bgobjdepth.into()); // ISP_BGOBJDEPTH
+                                r.add(0x15309, cmdbuf.isp_bgobjvals.into()); // ISP_BGOBJVALS
+                                r.add(0x15311, cmdbuf.visibility_result_buffer); // ISP_OCLQRY_BASE
+                                r.add(0x15319, cmdbuf.zls_ctrl); // ISP_ZLSCTL
+                                r.add(0x15349, 0x4040404); // s2.unk_58_g14_0
+                                r.add(0x15351, 0); // s2.unk_58_g14_8
+                                r.add(0x15329, cmdbuf.depth_buffer_1); // ISP_ZLOAD_BASE
+                                r.add(0x15331, cmdbuf.depth_buffer_2); // ISP_ZSTORE_BASE
+                                r.add(0x15339, cmdbuf.stencil_buffer_1); // ISP_STENCIL_LOAD_BASE
+                                r.add(0x15341, cmdbuf.stencil_buffer_2); // ISP_STENCIL_STORE_BASE
+                                r.add(0x15231, 0);
+                                r.add(0x15221, 0);
+                                r.add(0x15239, 0);
+                                r.add(0x15229, 0);
+                                r.add(0x15401, 0);
+                                r.add(0x15421, 0);
+                                r.add(0x15409, 0);
+                                r.add(0x15429, 0);
+                                r.add(0x153c1, cmdbuf.depth_meta_buffer_1);
+                                r.add(0x15411, 0);
+                                r.add(0x153c9, cmdbuf.depth_meta_buffer_2);
+                                r.add(0x15431, 0);
+                                r.add(0x153d1, cmdbuf.stencil_meta_buffer_1);
+                                r.add(0x15419, 0);
+                                r.add(0x153d9, cmdbuf.stencil_meta_buffer_2);
+                                r.add(0x15439, 0);
+                                r.add(0x16429, inner.scene.tvb_tilemap_pointer().into());
+                                r.add(0x16060, inner.scene.tvb_heapmeta_pointer().into());
+                                r.add(0x16431, (4 * tile_info.params.rgn_size as u64) << 24); // ISP_RGN?
+                                r.add(0x10039, tile_config); // tile_config ISP_CTL?
+                                r.add(0x16451, 0x0); // ISP_RENDER_ORIGIN
+                                r.add(0x11821, 0x0); // some shader?
+                                r.add(0x11829, 0);
+                                r.add(0x11f79, 0);
+                                r.add(0x15359, 0);
+                                r.add(0x10069, 0x11_00000000); // USC_EXEC_BASE_ISP
+                                r.add(0x16020, 0);
+                                r.add(0x16461, inner.aux_fb.gpu_pointer().into());
+                                r.add(0x16090, inner.aux_fb.gpu_pointer().into());
+                                r.add(0x120a1, 0x1c); // s2.unk_158
+                                r.add(0x160a8, 0);
+                                r.add(
+                                    0x16068,
+                                    0x0000000_00036011
+                                        | (((tile_info.tiles_x - 1) as u64) << 44)
+                                        | (((tile_info.tiles_y - 1) as u64) << 53)
+                                        | (if unk1 { 0 } else { 0x20_00000000 })
+                                        | ((utile_config as u64 & 0xf000) << 28),
+                                );
+                                r.add(0x160b8, 0x0);
+                            }
                         ),
                         job_params3: fw::fragment::raw::JobParameters3::ver {
                             depth_bias_array: fw::fragment::raw::ArrayAddr {
