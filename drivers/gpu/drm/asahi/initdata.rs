@@ -559,6 +559,10 @@ impl<'a> InitDataBuilder::ver<'a> {
                         raw.voltages[i][j] = *mv;
                         raw.voltages_sram[i][j] = sram_mv;
                     }
+                    for j in ps.volt_mv.len()..raw.voltages[i].len() {
+                        raw.voltages[i][j] = raw.voltages[i][0];
+                        raw.voltages_sram[i][j] = raw.voltages_sram[i][0];
+                    }
                     raw.sram_k[i] = self.cfg.sram_k;
                     raw.rel_max_powers[i] = ps.pwr_mw * 100 / self.dyncfg.pwr.max_power_mw;
                     raw.rel_boost_freqs[i] = if i > base_ps {
