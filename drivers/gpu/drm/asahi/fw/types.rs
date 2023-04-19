@@ -87,6 +87,7 @@ unsafe impl Zeroed for i8 {}
 unsafe impl Zeroed for i16 {}
 unsafe impl Zeroed for i32 {}
 unsafe impl Zeroed for i64 {}
+unsafe impl Zeroed for F32 {}
 
 /// Create a dummy `Debug` implementation, for when we need it but it's too painful to write by
 /// hand or not very useful.
