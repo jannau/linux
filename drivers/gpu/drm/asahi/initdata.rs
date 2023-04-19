@@ -15,6 +15,7 @@ use crate::fw::initdata::*;
 use crate::fw::types::*;
 use crate::{box_in_place, f32, place};
 use crate::{gpu, hw, mmu};
+use alloc::vec::Vec;
 use kernel::error::Result;
 use kernel::macros::versions;
 
@@ -56,7 +57,7 @@ impl<'a> InitDataBuilder::ver<'a> {
         unk_4: u32,
         t1: &[u16],
         t2: &[i16],
-        t3: &[&[i32]],
+        t3: &[Vec<i32>],
     ) {
         curve.unk_0 = unk_0;
         curve.unk_4 = unk_4;
@@ -67,7 +68,7 @@ impl<'a> InitDataBuilder::ver<'a> {
         for (i, a) in curve.t3.iter_mut().enumerate() {
             a.fill(0x3ffffff);
             if i < t3.len() {
-                let b = t3[i];
+                let b = &t3[i];
                 (**a)[..b.len()].copy_from_slice(b);
             }
         }
@@ -75,7 +76,10 @@ impl<'a> InitDataBuilder::ver<'a> {
 
     /// Create the HwDataShared2 structure, which is used in two places in InitData.
     #[inline(never)]
-    fn hw_shared2(cfg: &hw::HwConfig) -> Result<Box<raw::HwDataShared2>> {
+    fn hw_shared2(
+        cfg: &hw::HwConfig,
+        dyncfg: &'a hw::DynConfig,
+    ) -> Result<Box<raw::HwDataShared2>> {
         let mut ret = box_in_place!(raw::HwDataShared2 {
             unk_28: Array::new([0xff; 16]),
             g14: Default::default(),
@@ -87,35 +91,56 @@ impl<'a> InitDataBuilder::ver<'a> {
             ret.table[i] = *val;
         }
 
-        if cfg.chip_id == 0x8112 {
-            ret.g14.unk_14 = 0x6000000;
-            Self::init_curve(
-                &mut ret.g14.curve1,
-                0,
-                0x20000000,
-                &[0xffff],
-                &[0x0f07],
-                &[],
-            );
-            Self::init_curve(
-                &mut ret.g14.curve2,
-                7,
-                0x80000000,
-                &[0xffff, 25740, 17429, 12550, 9597, 7910, 6657, 5881, 5421],
-                &[
-                    0x0f07, 0x04c0, 0x06c0, 0x08c0, 0x0ac0, 0x0c40, 0x0dc0, 0x0ec0, 0x0f80,
-                ],
-                &[
-                    &[0x3ffffff, 107, 101, 94, 87, 82, 77, 73, 71],
-                    &[
-                        0x3ffffff, 38240, 36251, 33562, 31368, 29379, 27693, 26211, 25370,
-                    ],
-                    &[
-                        0x3ffffff, 123933, 117485, 108771, 101661, 95217, 89751, 84948, 82222,
-                    ],
-                ],
-            );
+        let curve_cfg = match cfg.shared2_curves.as_ref() {
+            None => return Ok(ret),
+            Some(a) => a,
+        };
+
+        let mut t1 = Vec::new();
+        let mut t3 = Vec::new();
+
+        for _ in 0..curve_cfg.t3_scales.len() {
+            t3.try_push(Vec::new())?;
         }
+
+        for (i, ps) in dyncfg.pwr.perf_states.iter().enumerate() {
+            let t3_coef = curve_cfg.t3_coefs[i];
+            if t3_coef == 0 {
+                t1.try_push(0xffff)?;
+                for j in t3.iter_mut() {
+                    j.try_push(0x3ffffff)?;
+                }
+                continue;
+            }
+
+            let f_mhz = (ps.freq_hz / 1000) as u64;
+            let v_max = ps.max_volt_mv() as u64;
+
+            t1.try_push(
+                (1000000000 * (curve_cfg.t1_coef as u64) / (f_mhz * v_max))
+                    .try_into()
+                    .unwrap(),
+            )?;
+
+            for (j, scale) in curve_cfg.t3_scales.iter().enumerate() {
+                t3[j].try_push(
+                    (t3_coef as u64 * 1000000000 * *scale as u64 / (f_mhz * v_max * 6))
+                        .try_into()
+                        .unwrap(),
+                )?;
+            }
+        }
+
+        ret.g14.unk_14 = 0x6000000;
+        Self::init_curve(
+            &mut ret.g14.curve1,
+            0,
+            0x20000000,
+            &[0xffff],
+            &[0x0f07],
+            &[],
+        );
+        Self::init_curve(&mut ret.g14.curve2, 7, 0x80000000, &t1, curve_cfg.t2, &t3);
 
         Ok(ret)
     }
@@ -350,7 +375,7 @@ impl<'a> InitDataBuilder::ver<'a> {
                         unk_163c: 1,
                         unk_3644: 0,
                         hws1: Self::hw_shared1(self.cfg),
-                        hws2: *Self::hw_shared2(self.cfg)?,
+                        hws2: *Self::hw_shared2(self.cfg, self.dyncfg)?,
                         hws3: *Self::hw_shared3(self.cfg)?,
                         unk_3ce8: 1,
                         ..Default::default()
@@ -390,6 +415,11 @@ impl<'a> InitDataBuilder::ver<'a> {
                     raw.power_zones[i].filter_a_neg = f32!(1.0) - filter_a;
                     #[ver(V >= V13_0B4)]
                     raw.power_zones[i].unk_10 = 1320000000;
+                }
+
+                #[ver(V >= V13_0B4)]
+                for (i, j) in raw.hws2.g14.curve2.t1.iter().enumerate() {
+                    raw.unk_hws2[i] = if *j == 0xffff { 0 } else { j / 2 };
                 }
 
                 Ok(raw)
@@ -568,7 +598,7 @@ impl<'a> InitDataBuilder::ver<'a> {
                         unk_89f4_8: 1,
                         unk_89f4: 0,
                         hws1: Self::hw_shared1(self.cfg),
-                        hws2: *Self::hw_shared2(self.cfg)?,
+                        hws2: *Self::hw_shared2(self.cfg, self.dyncfg)?,
                         hws3: *Self::hw_shared3(self.cfg)?,
                         unk_900c: 1,
                         #[ver(V >= V13_0B4)]
