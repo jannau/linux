@@ -152,14 +152,11 @@ impl<'a> InitDataBuilder::ver<'a> {
             ..Default::default()
         })?;
 
-        if cfg.chip_id == 0x8112 {
+        if !cfg.shared3_tab.is_empty() {
             ret.unk_0 = 1;
             ret.unk_4 = 500;
-            ret.unk_8 = 5;
-            ret.table.copy_from_slice(&[
-                10700, 10700, 10700, 10700, 10700, 6000, 1000, 1000, 1000, 10700, 10700, 10700,
-                10700, 10700, 10700, 10700,
-            ]);
+            ret.unk_8 = cfg.shared3_unk;
+            ret.table.copy_from_slice(cfg.shared3_tab);
             ret.unk_4c = 1;
         }
 
