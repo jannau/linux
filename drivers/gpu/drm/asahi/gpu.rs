@@ -438,6 +438,22 @@ impl GpuManager::ver {
             }
         }
 
+        #[ver(V >= V13_0B4)]
+        if let Some(base) = cfg.sram_base {
+            let size = cfg.sram_size.unwrap() as usize;
+
+            let mapping =
+                mgr.uat
+                    .kernel_vm()
+                    .map_io(base as usize, size, mmu::PROT_FW_SHARED_RW)?;
+
+            mgr.initdata.runtime_pointers.hwdata_b.with_mut(|raw, _| {
+                raw.sgx_sram_ptr = U64(mapping.iova() as u64);
+            });
+
+            mgr.io_mappings.try_push(mapping)?;
+        }
+
         let mgr = Arc::from(mgr);
 
         let rtkit = Box::try_new(rtkit::RtKit::<GpuManager::ver>::new(
@@ -647,10 +663,15 @@ impl GpuManager::ver {
         let off = map.base & mmu::UAT_PGMSK;
         let base = map.base - off;
         let end = (map.base + map.size + mmu::UAT_PGMSK) & !mmu::UAT_PGMSK;
-        let mapping = self
-            .uat
-            .kernel_vm()
-            .map_io(base, end - base, map.writable)?;
+        let mapping = self.uat.kernel_vm().map_io(
+            base,
+            end - base,
+            if map.writable {
+                mmu::PROT_FW_MMIO_RW
+            } else {
+                mmu::PROT_FW_MMIO_RO
+            },
+        )?;
 
         self.initdata.runtime_pointers.hwdata_b.with_mut(|raw, _| {
             raw.io_mappings[index] = fw::initdata::raw::IOMapping {

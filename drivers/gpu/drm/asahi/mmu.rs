@@ -899,8 +899,7 @@ impl Vm {
     }
 
     /// Add a direct MMIO mapping to this Vm at a free address.
-    pub(crate) fn map_io(&self, phys: usize, size: usize, rw: bool) -> Result<Mapping> {
-        let prot = if rw { PROT_FW_MMIO_RW } else { PROT_FW_MMIO_RO };
+    pub(crate) fn map_io(&self, phys: usize, size: usize, prot: u32) -> Result<Mapping> {
         let mut inner = self.inner.lock();
 
         let uat_inner = inner.uat_inner.clone();
