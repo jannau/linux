@@ -623,24 +623,9 @@ impl<'a> InitDataBuilder::ver<'a> {
 
         let pointers: Box<RuntimePointers::ver> = box_in_place!(RuntimePointers::ver {
             stats: Stats::ver {
-                vtx: self.alloc.private.new_default::<GpuGlobalStatsVtx::ver>()?,
-                frag: self.alloc.private.new_inplace(
-                    Default::default(),
-                    |_inner, ptr: &mut MaybeUninit<raw::GpuGlobalStatsFrag::ver>| {
-                        Ok(place!(
-                            ptr,
-                            raw::GpuGlobalStatsFrag::ver {
-                                stats: raw::GpuStatsFrag::ver {
-                                    cur_stamp_id: -1,
-                                    unk_118: -1,
-                                    ..Default::default()
-                                },
-                                ..Default::default()
-                            }
-                        ))
-                    },
-                )?,
-                comp: self.alloc.private.new_default::<GpuStatsComp::ver>()?,
+                vtx: self.alloc.private.new_default::<GpuGlobalStatsVtx>()?,
+                frag: self.alloc.private.new_default::<GpuGlobalStatsFrag>()?,
+                comp: self.alloc.private.new_default::<GpuStatsComp>()?,
             },
 
             hwdata_a: hwa,

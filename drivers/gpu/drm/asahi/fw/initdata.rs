@@ -723,100 +723,46 @@ pub(crate) mod raw {
     #[versions(AGX)]
     default_zeroed!(HwDataB::ver);
 
-    #[derive(Debug, Clone, Copy)]
-    #[repr(C, packed)]
-    pub(crate) struct GpuQueueStatsVtx {
-        pub(crate) busy: u32,
-        pub(crate) unk_4: u32,
-        pub(crate) cur_cmdqueue: U64,
-        pub(crate) cur_count: u32,
-        pub(crate) unk_14: u32,
-    }
-    default_zeroed!(GpuQueueStatsVtx);
-
-    #[versions(AGX)]
-    #[derive(Debug, Default, Clone, Copy)]
+    #[derive(Debug)]
     #[repr(C, packed)]
     pub(crate) struct GpuStatsVtx {
-        pub(crate) unk_4: u32,
-        pub(crate) queues: Array<0x4, GpuQueueStatsVtx>,
-        pub(crate) unk_68: Array<0x8, u8>,
-        pub(crate) unk_70: u32,
-        pub(crate) unk_74: u32,
-        pub(crate) unk_timestamp: U64,
-        pub(crate) unk_80: Array<0x40, u8>,
+        // This changes all the time and we don't use it, let's just make it a big buffer
+        pub(crate) opaque: Array<0x3000, u8>,
     }
+    default_zeroed!(GpuStatsVtx);
 
-    #[derive(Debug, Default, Clone, Copy)]
-    #[repr(C, packed)]
-    pub(crate) struct GpuQueueStatsFrag {
-        pub(crate) busy: u32,
-        pub(crate) cur_cmdqueue: U64,
-        pub(crate) unk_c: u32,
-        pub(crate) unk_10: u32,
-        pub(crate) unk_14: Array<0x14, u8>,
-    }
-
-    #[versions(AGX)]
     #[derive(Debug)]
     #[repr(C)]
     pub(crate) struct GpuStatsFrag {
-        pub(crate) unk_0: Array<0x18, u8>,
-        pub(crate) queues: Array<0x4, GpuQueueStatsFrag>,
-        pub(crate) unk_d0: Array<0x38, u8>,
-        pub(crate) tvb_overflows_1: u32,
-        pub(crate) tvb_overflows_2: u32,
-        pub(crate) unk_f8: u32,
-        pub(crate) unk_fc: u32,
-        pub(crate) cur_stamp_id: i32,
-        pub(crate) unk_104: Array<0x14, u8>,
-        pub(crate) unk_118: i32,
-        pub(crate) unk_11c: u32,
-        pub(crate) unk_120: u32,
-        pub(crate) unk_124: u32,
-        pub(crate) unk_128: u32,
-        pub(crate) unk_12c: u32,
-        pub(crate) unk_timestamp: U64,
-        pub(crate) unk_134: Array<0x8c, u8>,
+        // This changes all the time and we don't use it, let's just make it a big buffer
+        pub(crate) opaque: Array<0x3000, u8>,
     }
-    #[versions(AGX)]
-    default_zeroed!(GpuStatsFrag::ver);
+    default_zeroed!(GpuStatsFrag);
 
-    #[versions(AGX)]
     #[derive(Debug)]
     #[repr(C)]
     pub(crate) struct GpuGlobalStatsVtx {
         pub(crate) total_cmds: u32,
-        pub(crate) stats: GpuStatsVtx::ver,
-        #[ver(V >= V13_0B4)]
-        pub(crate) unk_pad: Array<0x5c4, u8>,
+        pub(crate) stats: GpuStatsVtx,
     }
-    #[versions(AGX)]
-    default_zeroed!(GpuGlobalStatsVtx::ver);
+    default_zeroed!(GpuGlobalStatsVtx);
 
-    #[versions(AGX)]
     #[derive(Debug)]
     #[repr(C)]
     pub(crate) struct GpuGlobalStatsFrag {
         pub(crate) total_cmds: u32,
         pub(crate) unk_4: u32,
-        pub(crate) stats: GpuStatsFrag::ver,
-        #[ver(V >= V13_0B4)]
-        pub(crate) unk_pad: Array<0x580, u8>,
+        pub(crate) stats: GpuStatsFrag,
     }
-    #[versions(AGX)]
-    default_zeroed!(GpuGlobalStatsFrag::ver);
+    default_zeroed!(GpuGlobalStatsFrag);
 
-    #[versions(AGX)]
     #[derive(Debug)]
     #[repr(C)]
     pub(crate) struct GpuStatsComp {
-        pub(crate) unk: Array<0x180, u8>,
-        #[ver(V >= V13_0B4)]
-        pub(crate) unk_pad: Array<0x580, u8>,
+        // This changes all the time and we don't use it, let's just make it a big buffer
+        pub(crate) opaque: Array<0x3000, u8>,
     }
-    #[versions(AGX)]
-    default_zeroed!(GpuStatsComp::ver);
+    default_zeroed!(GpuStatsComp);
 
     #[derive(Debug)]
     #[repr(C)]
@@ -873,9 +819,9 @@ pub(crate) mod raw {
         pub(crate) __pad0: Pad<0x50>,
         pub(crate) unk_160: U64,
         pub(crate) unk_168: U64,
-        pub(crate) stats_vtx: GpuPointer<'a, super::GpuGlobalStatsVtx::ver>,
-        pub(crate) stats_frag: GpuPointer<'a, super::GpuGlobalStatsFrag::ver>,
-        pub(crate) stats_comp: GpuPointer<'a, super::GpuStatsComp::ver>,
+        pub(crate) stats_vtx: GpuPointer<'a, super::GpuGlobalStatsVtx>,
+        pub(crate) stats_frag: GpuPointer<'a, super::GpuGlobalStatsFrag>,
+        pub(crate) stats_comp: GpuPointer<'a, super::GpuStatsComp>,
         pub(crate) hwdata_a: GpuPointer<'a, super::HwDataA::ver>,
         pub(crate) unkptr_190: GpuPointer<'a, &'a [u8]>,
         pub(crate) unkptr_198: GpuPointer<'a, &'a [u8]>,
@@ -1170,33 +1116,9 @@ where
 }
 
 trivial_gpustruct!(FwStatus);
-
-#[versions(AGX)]
-#[derive(Debug, Default)]
-pub(crate) struct GpuGlobalStatsVtx {}
-
-#[versions(AGX)]
-impl GpuStruct for GpuGlobalStatsVtx::ver {
-    type Raw<'a> = raw::GpuGlobalStatsVtx::ver;
-}
-
-#[versions(AGX)]
-#[derive(Debug, Default)]
-pub(crate) struct GpuGlobalStatsFrag {}
-
-#[versions(AGX)]
-impl GpuStruct for GpuGlobalStatsFrag::ver {
-    type Raw<'a> = raw::GpuGlobalStatsFrag::ver;
-}
-
-#[versions(AGX)]
-#[derive(Debug, Default)]
-pub(crate) struct GpuStatsComp {}
-
-#[versions(AGX)]
-impl GpuStruct for GpuStatsComp::ver {
-    type Raw<'a> = raw::GpuStatsComp::ver;
-}
+trivial_gpustruct!(GpuGlobalStatsVtx);
+trivial_gpustruct!(GpuGlobalStatsFrag);
+trivial_gpustruct!(GpuStatsComp);
 
 #[versions(AGX)]
 #[derive(Debug, Default)]
@@ -1219,9 +1141,9 @@ impl GpuStruct for HwDataB::ver {
 #[versions(AGX)]
 #[derive(Debug)]
 pub(crate) struct Stats {
-    pub(crate) vtx: GpuObject<GpuGlobalStatsVtx::ver>,
-    pub(crate) frag: GpuObject<GpuGlobalStatsFrag::ver>,
-    pub(crate) comp: GpuObject<GpuStatsComp::ver>,
+    pub(crate) vtx: GpuObject<GpuGlobalStatsVtx>,
+    pub(crate) frag: GpuObject<GpuGlobalStatsFrag>,
+    pub(crate) comp: GpuObject<GpuStatsComp>,
 }
 
 #[versions(AGX)]
