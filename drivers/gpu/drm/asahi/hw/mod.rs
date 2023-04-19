@@ -68,6 +68,11 @@ pub(crate) enum GpuCore {
     G13C = 13,
     // G14P = 14,
     G14G = 15,
+    G14S = 16,
+    G14C = 17,
+    // G15M = 18,
+    // G15P_AGX2 = 19,
+    // G15P = 20,
 }
 
 /// GPU revision ID. Note: Part of the firmware ABI.

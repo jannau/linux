@@ -711,7 +711,7 @@ impl GpuManager::ver {
             }
         };
 
-        let info = res.get_fault_info();
+        let info = res.get_fault_info(self.cfg);
         if info.is_some() {
             dev_err!(self.dev, "  Fault info: {:#x?}\n", info.as_ref().unwrap());
         }

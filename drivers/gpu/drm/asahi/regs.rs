@@ -31,6 +31,10 @@ const ID_CLUSTERS: usize = 0xd0401c;
 const CORE_MASK_0: usize = 0xd01500;
 const CORE_MASK_1: usize = 0xd01514;
 
+const CORE_MASKS_G14X: usize = 0xe01500;
+const FAULT_INFO_G14X: usize = 0xd8c0;
+const FAULT_ADDR_G14X: usize = 0xd8c8;
+
 /// Enum representing the unit that caused an MMU fault.
 #[allow(non_camel_case_types)]
 #[allow(clippy::upper_case_acronyms)]
@@ -97,6 +101,16 @@ pub(crate) enum FaultUnit {
     gIPP_CS_SP(u8),
     gRDE0_SP(u8),
     gRDE1_SP(u8),
+
+    gCDM_CS,
+    gCDM_ID,
+    gCDM_CSR,
+    gCDM_CSW,
+    gCDM_CTXR,
+    gCDM_CTXW,
+    gIPP,
+    gIPP_CS,
+    gKSM_RCE,
 
     Unknown(u8),
 }
@@ -206,21 +220,53 @@ impl Resources {
             id_clusters
         );
 
-        let core_mask_0 = self.sgx_read32(CORE_MASK_0);
-        let core_mask_1 = self.sgx_read32(CORE_MASK_1);
-        let mut core_mask = (core_mask_0 as u64) | ((core_mask_1 as u64) << 32);
+        let gpu_gen = (id_version >> 24) & 0xff;
 
-        dev_info!(self.dev, "Core mask: {:#x}\n", core_mask);
+        let mut core_mask_regs = Vec::new();
 
-        let num_clusters = (id_clusters >> 12) & 0xff;
+        let num_clusters = match gpu_gen {
+            4 | 5 => {
+                // G13 | G14G
+                core_mask_regs.try_push(self.sgx_read32(CORE_MASK_0))?;
+                core_mask_regs.try_push(self.sgx_read32(CORE_MASK_1))?;
+                (id_clusters >> 12) & 0xff
+            }
+            6 => {
+                // G14X
+                core_mask_regs.try_push(self.sgx_read32(CORE_MASKS_G14X))?;
+                core_mask_regs.try_push(self.sgx_read32(CORE_MASKS_G14X + 4))?;
+                core_mask_regs.try_push(self.sgx_read32(CORE_MASKS_G14X + 8))?;
+                (id_clusters >> 28) & 0xf // TODO: guess
+            }
+            a => {
+                dev_err!(self.dev, "Unknown GPU generation {}\n", a);
+                return Err(ENODEV);
+            }
+        };
+
+        let mut core_masks_packed = Vec::new();
+        core_masks_packed.try_extend_from_slice(&core_mask_regs)?;
+
+        dev_info!(self.dev, "Core masks: {:#x?}\n", core_masks_packed);
+
         let num_cores = id_counts_1 & 0xff;
 
-        if num_cores * num_clusters > 64 {
+        if num_cores > 32 {
             dev_err!(
                 self.dev,
-                "Too many total cores ({} x {} > 64)\n",
-                num_clusters,
+                "Too many cores per cluster ({} > 32)\n",
                 num_cores
+            );
+            return Err(ENODEV);
+        }
+
+        if num_cores * num_clusters > (core_mask_regs.len() * 32) as u32 {
+            dev_err!(
+                self.dev,
+                "Too many total cores ({} x {} > {})\n",
+                num_clusters,
+                num_cores,
+                core_mask_regs.len() * 32
             );
             return Err(ENODEV);
         }
@@ -228,21 +274,21 @@ impl Resources {
         let mut core_masks = Vec::new();
         let mut total_active_cores: u32 = 0;
 
-        let max_core_mask = (1u64 << num_cores) - 1;
-        for _i in 0..num_clusters {
-            let mask = core_mask & max_core_mask;
-            core_masks.try_push(mask as u32)?;
-            core_mask >>= num_cores;
+        let max_core_mask = ((1u64 << num_cores) - 1) as u32;
+        for _ in 0..num_clusters {
+            let mask = core_mask_regs[0] & max_core_mask;
+            core_masks.try_push(mask)?;
+            for i in 0..core_mask_regs.len() {
+                core_mask_regs[i] >>= num_cores;
+                if i < (core_mask_regs.len() - 1) {
+                    core_mask_regs[i] |= core_mask_regs[i + 1] << (32 - num_cores);
+                }
+            }
             total_active_cores += mask.count_ones();
         }
-        let mut core_masks_packed = Vec::new();
-        core_masks_packed.try_push(core_mask_0)?;
-        if core_mask_1 != 0 {
-            core_masks_packed.try_push(core_mask_1)?;
-        }
 
-        if core_mask != 0 {
-            dev_err!(self.dev, "Leftover core mask: {:#x}\n", core_mask);
+        if core_mask_regs.iter().any(|a| *a != 0) {
+            dev_err!(self.dev, "Leftover core mask: {:#x?}\n", core_mask_regs);
             return Err(EIO);
         }
 
@@ -263,6 +309,7 @@ impl Resources {
             gpu_gen: match (id_version >> 24) & 0xff {
                 4 => hw::GpuGen::G13,
                 5 => hw::GpuGen::G14,
+                6 => hw::GpuGen::G14, // G14X has a separate ID
                 a => {
                     dev_err!(self.dev, "Unknown GPU generation {}\n", a);
                     return Err(ENODEV);
@@ -289,7 +336,7 @@ impl Resources {
             max_dies: (id_clusters >> 20) & 0xf,
             num_clusters,
             num_cores,
-            num_frags: (id_counts_1 >> 8) & 0xff,
+            num_frags: num_cores, // Used to be id_counts_1[15:8] but does not work for G14X
             num_gps: (id_counts_2 >> 16) & 0xff,
             total_active_cores,
             core_masks,
@@ -298,12 +345,24 @@ impl Resources {
     }
 
     /// Get the fault information from the MMU status register, if one occurred.
-    pub(crate) fn get_fault_info(&self) -> Option<FaultInfo> {
-        let fault_info = self.sgx_read64(FAULT_INFO);
+    pub(crate) fn get_fault_info(&self, cfg: &'static hw::HwConfig) -> Option<FaultInfo> {
+        let g14x = cfg.gpu_core as u32 >= hw::GpuCore::G14S as u32;
+
+        let fault_info = if g14x {
+            self.sgx_read64(FAULT_INFO_G14X)
+        } else {
+            self.sgx_read64(FAULT_INFO)
+        };
 
         if fault_info & 1 == 0 {
             return None;
         }
+
+        let fault_addr = if g14x {
+            self.sgx_read64(FAULT_ADDR_G14X)
+        } else {
+            fault_info >> 30
+        };
 
         let unit_code = ((fault_info >> 9) & 0xff) as u8;
         let unit = match unit_code {
@@ -341,7 +400,29 @@ impl Resources {
             0xae => FaultUnit::GSL2,
             0xb0..=0xb7 => FaultUnit::GL2CC_META(unit_code & 0xf),
             0xb8 => FaultUnit::GL2CC_MB,
-            0xe0..=0xff => match unit_code & 0xf {
+            0xd0..=0xdf if g14x => match unit_code & 0xf {
+                0x0 => FaultUnit::gCDM_CS,
+                0x1 => FaultUnit::gCDM_ID,
+                0x2 => FaultUnit::gCDM_CSR,
+                0x3 => FaultUnit::gCDM_CSW,
+                0x4 => FaultUnit::gCDM_CTXR,
+                0x5 => FaultUnit::gCDM_CTXW,
+                0x6 => FaultUnit::gIPP,
+                0x7 => FaultUnit::gIPP_CS,
+                0x8 => FaultUnit::gKSM_RCE,
+                _ => FaultUnit::Unknown(unit_code),
+            },
+            0xe0..=0xff if g14x => match unit_code & 0xf {
+                0x0 => FaultUnit::gPM_SP((unit_code >> 4) & 1),
+                0x1 => FaultUnit::gVDM_CSD_SP((unit_code >> 4) & 1),
+                0x2 => FaultUnit::gVDM_SSD_SP((unit_code >> 4) & 1),
+                0x3 => FaultUnit::gVDM_ILF_SP((unit_code >> 4) & 1),
+                0x4 => FaultUnit::gVDM_TFP_SP((unit_code >> 4) & 1),
+                0x5 => FaultUnit::gVDM_MMB_SP((unit_code >> 4) & 1),
+                0x6 => FaultUnit::gRDE0_SP((unit_code >> 4) & 1),
+                _ => FaultUnit::Unknown(unit_code),
+            },
+            0xe0..=0xff if !g14x => match unit_code & 0xf {
                 0x0 => FaultUnit::gPM_SP((unit_code >> 4) & 1),
                 0x1 => FaultUnit::gVDM_CSD_SP((unit_code >> 4) & 1),
                 0x2 => FaultUnit::gVDM_SSD_SP((unit_code >> 4) & 1),
@@ -373,7 +454,7 @@ impl Resources {
         };
 
         Some(FaultInfo {
-            address: (fault_info >> 30) << 6,
+            address: fault_addr << 6,
             sideband: ((fault_info >> 23) & 0x7f) as u8,
             vm_slot: ((fault_info >> 17) & 0x3f) as u32,
             unit_code,
