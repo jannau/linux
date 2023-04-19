@@ -1,3 +1,9 @@
+* Wed Apr 19 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc7.af67688dca57.57]
+- kernel.spec: Fix UKI naming to comply with BLS (Philipp Rudo)
+- redhat/kernel.spec.template: Suppress 'extracting debug info' noise in build log (Prarit Bhargava)
+- Linux v6.3.0-0.rc7.af67688dca57
+Resolves: 
+
 * Mon Apr 17 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.3.0-0.rc7.56]
 - Linux v6.3.0-0.rc7
 Resolves: 
