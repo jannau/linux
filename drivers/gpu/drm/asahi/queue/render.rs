@@ -276,7 +276,7 @@ impl super::Queue::ver {
             clustering = false;
         }
 
-        #[ver(G < G14)]
+        #[ver(G != G14)]
         let tiling_control = {
             let render_cfg = gpu.get_cfg().render;
             let mut tiling_control = render_cfg.tiling_control;
@@ -1187,7 +1187,98 @@ impl super::Queue::ver {
                         #[ver(G >= G14X)]
                         registers: fw::job::raw::RegisterArray::new(
                             inner_weak_ptr!(_gpu_ptr, registers.registers),
-                            |r| {}
+                            |r| {
+                                r.add(0x10141, if unk1 { 0 } else { 0x200 }); // s2.unk_0
+                                r.add(0x1c039, inner.scene.tvb_tilemap_pointer().into());
+                                r.add(0x1c9c8, inner.scene.tvb_tilemap_pointer().into());
+
+                                let cl_tilemaps_ptr = inner
+                                    .scene
+                                    .cluster_tilemaps_pointer()
+                                    .map_or(0, |a| a.into());
+                                r.add(0x1c041, cl_tilemaps_ptr);
+                                r.add(0x1c9d0, cl_tilemaps_ptr);
+                                r.add(0x1c0a1, inner.scene.tpc_pointer().into()); // TE_TPC_ADDR
+
+                                let tvb_heapmeta_ptr = inner
+                                    .scene
+                                    .tvb_heapmeta_pointer()
+                                    .or(0x8000_0000_0000_0000)
+                                    .into();
+                                r.add(0x1c031, tvb_heapmeta_ptr);
+                                r.add(0x1c9c0, tvb_heapmeta_ptr);
+                                r.add(0x1c051, 0x3a0012006b0003); // iogpu_unk_54/55
+                                r.add(0x1c061, 1); // iogpu_unk_56
+                                r.add(0x10149, utile_config.into()); // s2.unk_48 utile_config
+                                r.add(0x10139, cmdbuf.ppp_multisamplectl); // PPP_MULTISAMPLECTL
+                                r.add(0x10111, inner.scene.preempt_buf_1_pointer().into());
+                                r.add(0x1c9b0, inner.scene.preempt_buf_1_pointer().into());
+                                r.add(0x10119, inner.scene.preempt_buf_2_pointer().into());
+                                r.add(0x1c9b8, inner.scene.preempt_buf_2_pointer().into());
+                                r.add(0x1c958, 1); // s2.unk_80
+                                r.add(
+                                    0x1c950,
+                                    inner
+                                        .scene
+                                        .preempt_buf_3_pointer()
+                                        .or(0x4_0000_0000_0000)
+                                        .into(),
+                                );
+                                r.add(0x1c930, 0); // VCE related addr, lsb to enable
+                                r.add(0x1c880, cmdbuf.encoder_ptr); // VDM_CTRL_STREAM_BASE
+                                r.add(0x1c898, 0x0); // if lsb set, faults in UL1C0, possibly missing addr.
+                                r.add(
+                                    0x1c948,
+                                    inner.scene.meta_2_pointer().map_or(0, |a| a.into()),
+                                ); // tvb_cluster_meta2
+                                r.add(
+                                    0x1c888,
+                                    inner.scene.meta_3_pointer().map_or(0, |a| a.into()),
+                                ); // tvb_cluster_meta3
+                                r.add(0x1c890, tiling_control.into()); // tvb_tiling_control
+                                r.add(0x1c918, 0x4);
+                                r.add(0x1c079, inner.scene.tvb_heapmeta_pointer().into());
+                                r.add(0x1c9d8, inner.scene.tvb_heapmeta_pointer().into());
+                                r.add(0x1c089, 0);
+                                r.add(0x1c9e0, 0);
+                                let cl_meta_4_pointer =
+                                    inner.scene.meta_4_pointer().map_or(0, |a| a.into());
+                                r.add(0x16c41, cl_meta_4_pointer); // tvb_cluster_meta4
+                                r.add(0x1ca40, cl_meta_4_pointer); // tvb_cluster_meta4
+                                r.add(0x1c9a8, 0x1c); // + meta1_blocks? min_free_tvb_pages?
+                                r.add(
+                                    0x1c920,
+                                    inner.scene.meta_1_pointer().map_or(0, |a| a.into()),
+                                ); // ??? | meta1_blocks?
+                                r.add(0x10151, 0);
+                                r.add(0x1c199, 0);
+                                r.add(0x1c1a1, 0);
+                                r.add(0x1c1a9, 0); // 0x10151 bit 1 enables
+                                r.add(0x1c1b1, 0);
+                                r.add(0x1c1b9, 0);
+                                r.add(0x10061, 0x11_00000000); // USC_EXEC_BASE_TA
+                                r.add(0x11801, 0); // some shader?
+                                r.add(0x11809, 0); // maybe arg?
+                                r.add(0x11f71, 0);
+                                r.add(0x1c0b1, tile_info.params.rgn_size.into()); // TE_PSG
+                                r.add(0x1c850, tile_info.params.rgn_size.into());
+                                r.add(0x10131, tile_info.params.unk_4.into());
+                                r.add(0x10121, tile_info.params.ppp_ctrl.into()); // PPP_CTRL
+                                r.add(
+                                    0x10129,
+                                    tile_info.params.x_max as u64
+                                        | ((tile_info.params.y_max as u64) << 16),
+                                ); // PPP_SCREEN
+                                r.add(0x101b9, tile_info.params.te_screen.into()); // TE_SCREEN
+                                r.add(0x1c069, tile_info.params.te_mtile1.into()); // TE_MTILE1
+                                r.add(0x1c071, tile_info.params.te_mtile2.into()); // TE_MTILE2
+                                r.add(0x1c081, tile_info.params.tiles_per_mtile.into()); // TE_MTILE
+                                r.add(0x1c0a9, tile_info.params.tpc_stride.into()); // TE_TPC
+                                r.add(0x10171, tile_info.params.unk_24.into());
+                                r.add(0x10169, tile_info.params.unk_28.into()); // TA_RENDER_TARGET_MAX
+                                r.add(0x12099, 0x1c);
+                                r.add(0x1c9e8, 0);
+                            }
                         ),
                         tpc: inner.scene.tpc_pointer(),
                         tpc_size: U64(tile_info.tpc_size as u64),
