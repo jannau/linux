@@ -67,7 +67,11 @@ const DOORBELL_DEVCTRL: u64 = 0x11;
 /// Private (cached) firmware structure VA range base.
 const IOVA_KERN_PRIV_BASE: u64 = 0xffffffa000000000;
 /// Private (cached) firmware structure VA range top.
-const IOVA_KERN_PRIV_TOP: u64 = 0xffffffa7ffffffff;
+const IOVA_KERN_PRIV_TOP: u64 = 0xffffffa5ffffffff;
+/// Private (cached) GPU-RO firmware structure VA range base.
+const IOVA_KERN_GPU_RO_BASE: u64 = 0xffffffa600000000;
+/// Private (cached) GPU-RO firmware structure VA range top.
+const IOVA_KERN_GPU_RO_TOP: u64 = 0xffffffa7ffffffff;
 /// Shared (uncached) firmware structure VA range base.
 const IOVA_KERN_SHARED_BASE: u64 = 0xffffffa800000000;
 /// Shared (uncached) firmware structure VA range top.
@@ -101,6 +105,7 @@ pub(crate) struct KernelAllocators {
     pub(crate) shared_ro: alloc::DefaultAllocator,
     #[allow(dead_code)]
     pub(crate) gpu: alloc::DefaultAllocator,
+    pub(crate) gpu_ro: alloc::DefaultAllocator,
     pub(crate) gpu_low: alloc::DefaultAllocator,
 }
 
@@ -375,6 +380,18 @@ impl GpuManager::ver {
                 true,
                 fmt!("Kernel GPU Shared"),
                 false,
+            )?,
+            gpu_ro: alloc::DefaultAllocator::new(
+                dev,
+                uat.kernel_vm(),
+                IOVA_KERN_GPU_RO_BASE,
+                IOVA_KERN_GPU_RO_TOP,
+                0x80,
+                mmu::PROT_GPU_RO_FW_PRIV_RW,
+                1024 * 1024,
+                true,
+                fmt!("Kernel GPU RO Shared"),
+                true,
             )?,
             gpu_low: alloc::DefaultAllocator::new(
                 dev,
@@ -866,6 +883,7 @@ impl GpuManager::ver {
 
         let mut guard = self.alloc.lock();
         let (garbage_count, _) = guard.private.garbage();
+        let (garbage_count_gpuro, _) = guard.gpu_ro.garbage();
 
         let dc = context.with(
             |raw, _inner| fw::channels::DeviceControlMsg::ver::DestroyContext {
@@ -906,6 +924,7 @@ impl GpuManager::ver {
 
         // The invalidation does a cache flush, so it is okay to collect garbage
         guard.private.collect_garbage(garbage_count);
+        guard.gpu_ro.collect_garbage(garbage_count_gpuro);
 
         Ok(())
     }
@@ -979,7 +998,7 @@ impl GpuManager for GpuManager::ver {
         if garbage_bytes > MAX_FW_ALLOC_GARBAGE {
             mod_dev_dbg!(
                 self.dev,
-                "Collecting kalloc garbage ({} objects, {} bytes)\n",
+                "Collecting kalloc/private garbage ({} objects, {} bytes)\n",
                 garbage_count,
                 garbage_bytes
             );
@@ -987,6 +1006,21 @@ impl GpuManager for GpuManager::ver {
                 dev_err!(self.dev, "Failed to flush FW cache\n");
             } else {
                 guard.private.collect_garbage(garbage_count);
+            }
+        }
+
+        let (garbage_count, garbage_bytes) = guard.gpu_ro.garbage();
+        if garbage_bytes > MAX_FW_ALLOC_GARBAGE {
+            mod_dev_dbg!(
+                self.dev,
+                "Collecting kalloc/gpuro garbage ({} objects, {} bytes)\n",
+                garbage_count,
+                garbage_bytes
+            );
+            if self.flush_fw_cache().is_err() {
+                dev_err!(self.dev, "Failed to flush FW cache\n");
+            } else {
+                guard.gpu_ro.collect_garbage(garbage_count);
             }
         }
 

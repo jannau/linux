@@ -103,6 +103,8 @@ pub(crate) const PROT_FW_PRIV_RO: u32 = prot::PRIV | prot::READ;
 pub(crate) const PROT_GPU_FW_SHARED_RW: u32 = prot::READ | prot::WRITE | prot::CACHE;
 /// Firmware/GPU shared (private) RW
 pub(crate) const PROT_GPU_FW_PRIV_RW: u32 = prot::READ | prot::WRITE;
+/// Firmware-RW/GPU-RO shared (private) RW
+pub(crate) const PROT_GPU_RO_FW_PRIV_RW: u32 = prot::PRIV | prot::WRITE;
 /// GPU shared/coherent RW
 pub(crate) const PROT_GPU_SHARED_RW: u32 = prot::READ | prot::WRITE | prot::CACHE | prot::NOEXEC;
 /// GPU shared/coherent RO
