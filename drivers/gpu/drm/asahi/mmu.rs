@@ -562,6 +562,8 @@ impl Drop for Mapping {
 
 /// Shared UAT global data structures
 struct UatShared {
+    kernel_ttb1: u64,
+    map_kernel_to_user: bool,
     handoff_rgn: UatRegion,
     ttbs_rgn: UatRegion,
 }
@@ -979,6 +981,7 @@ impl Drop for VmInner {
                     );
                 }
                 uat_inner.ttbs()[idx].ttb0.store(0, Ordering::SeqCst);
+                uat_inner.ttbs()[idx].ttb1.store(0, Ordering::SeqCst);
             }
             uat_inner.handoff().unlock();
             core::mem::drop(uat_inner);
@@ -1108,6 +1111,13 @@ impl Uat {
                 let ttb = inner.ttb() | TTBR_VALID | (idx as u64) << TTBR_ASID_SHIFT;
 
                 let uat_inner = self.inner.lock();
+
+                let ttb1 = if uat_inner.map_kernel_to_user {
+                    uat_inner.kernel_ttb1 | TTBR_VALID | (idx as u64) << TTBR_ASID_SHIFT
+                } else {
+                    0
+                };
+
                 let ttbs = uat_inner.ttbs();
                 uat_inner.handoff().lock();
                 if uat_inner.handoff().current_slot() == Some(idx as u32) {
@@ -1117,7 +1127,7 @@ impl Uat {
                     );
                 }
                 ttbs[idx].ttb0.store(ttb, Ordering::Relaxed);
-                ttbs[idx].ttb1.store(0, Ordering::Relaxed);
+                ttbs[idx].ttb1.store(ttb1, Ordering::Relaxed);
                 uat_inner.handoff().unlock();
                 core::mem::drop(uat_inner);
 
@@ -1169,6 +1179,8 @@ impl Uat {
             }
 
             addr_of_mut!((*ptr).shared).write(Mutex::new(UatShared {
+                kernel_ttb1: 0,
+                map_kernel_to_user: false,
                 handoff_rgn,
                 ttbs_rgn,
             }));
@@ -1180,7 +1192,11 @@ impl Uat {
 
     /// Creates a new `Uat` instance given the relevant hardware config.
     #[inline(never)]
-    pub(crate) fn new(dev: &driver::AsahiDevice, cfg: &'static hw::HwConfig) -> Result<Self> {
+    pub(crate) fn new(
+        dev: &driver::AsahiDevice,
+        cfg: &'static hw::HwConfig,
+        map_kernel_to_user: bool,
+    ) -> Result<Self> {
         dev_info!(dev, "MMU: Initializing...\n");
 
         let inner = Self::make_inner(dev)?;
@@ -1208,7 +1224,10 @@ impl Uat {
             })?,
         };
 
-        let inner = uat.inner.lock();
+        let mut inner = uat.inner.lock();
+
+        inner.map_kernel_to_user = map_kernel_to_user;
+        inner.kernel_ttb1 = uat.pagetables_rgn.base;
 
         inner.handoff().init()?;
 
