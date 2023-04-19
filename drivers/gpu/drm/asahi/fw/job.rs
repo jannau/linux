@@ -59,6 +59,7 @@ pub(crate) mod raw {
         pub(crate) number: u32,
         pub(crate) value: U64,
     }
+    default_zeroed!(Register);
 
     impl Register {
         fn new(number: u32, value: u64) -> Register {
@@ -75,12 +76,37 @@ pub(crate) mod raw {
         pub(crate) registers: Array<128, Register>,
         pub(crate) pad: Array<0x100, u8>,
 
-        pub(crate) addr: GpuWeakPointer<[Register]>,
+        pub(crate) addr: GpuWeakPointer<Array<128, Register>>,
         pub(crate) count: u16,
         pub(crate) length: u16,
         pub(crate) unk_pad: u32,
     }
-    default_zeroed!(RegisterArray);
+
+    impl RegisterArray {
+        pub(crate) fn new(
+            self_ptr: GpuWeakPointer<Array<128, Register>>,
+            cb: impl FnOnce(&mut RegisterArray),
+        ) -> RegisterArray {
+            let mut array = RegisterArray {
+                registers: Default::default(),
+                pad: Default::default(),
+                addr: self_ptr,
+                count: 0,
+                length: 0,
+                unk_pad: 0,
+            };
+
+            cb(&mut array);
+
+            array
+        }
+
+        pub(crate) fn add(&mut self, number: u32, value: u64) {
+            self.registers[self.count as usize] = Register::new(number, value);
+            self.count += 1;
+            self.length += core::mem::size_of::<Register>() as u16;
+        }
+    }
 }
 
 trivial_gpustruct!(JobTimestamps);

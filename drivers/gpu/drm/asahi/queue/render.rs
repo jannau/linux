@@ -705,7 +705,10 @@ impl super::Queue::ver {
                             __pad: Default::default(),
                         },
                         #[ver(G >= G14X)]
-                        registers: Default::default(),
+                        registers: fw::job::raw::RegisterArray::new(
+                            inner_weak_ptr!(_gpu_ptr, registers.registers),
+                            |r| {}
+                        ),
                         job_params3: fw::fragment::raw::JobParameters3::ver {
                             depth_bias_array: fw::fragment::raw::ArrayAddr {
                                 ptr: U64(cmdbuf.depth_bias_array),
@@ -1095,7 +1098,10 @@ impl super::Queue::ver {
                         #[ver(G < G14X)]
                         tiling_params: tile_info.params,
                         #[ver(G >= G14X)]
-                        registers: Default::default(),
+                        registers: fw::job::raw::RegisterArray::new(
+                            inner_weak_ptr!(_gpu_ptr, registers.registers),
+                            |r| {}
+                        ),
                         tpc: inner.scene.tpc_pointer(),
                         tpc_size: U64(tile_info.tpc_size as u64),
                         microsequence: inner.micro_seq.gpu_pointer(),
