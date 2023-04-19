@@ -409,6 +409,18 @@ pub(crate) struct PwrConfig {
     pub(crate) pwr_integral_min_clamp: u32,
     pub(crate) pwr_min_duty_cycle: u32,
     pub(crate) pwr_proportional_gain: F32,
+    /// Power sample period in base clocks, used when not an integer number of ms
+    pub(crate) pwr_sample_period_aic_clks: u32,
+
+    pub(crate) se_engagement_criteria: i32,
+    pub(crate) se_filter_time_constant: u32,
+    pub(crate) se_filter_time_constant_1: u32,
+    pub(crate) se_inactive_threshold: u32,
+    pub(crate) se_ki: F32,
+    pub(crate) se_ki_1: F32,
+    pub(crate) se_kp: F32,
+    pub(crate) se_kp_1: F32,
+    pub(crate) se_reset_criteria: u32,
 }
 
 impl PwrConfig {
@@ -501,6 +513,8 @@ impl PwrConfig {
             return Err(EINVAL);
         }
 
+        let power_sample_period: u32 = prop!("apple,power-sample-period");
+
         Ok(PwrConfig {
             core_leak_coef,
             sram_leak_coef,
@@ -536,7 +550,7 @@ impl PwrConfig {
             perf_proportional_gain: prop!("apple,perf-proportional-gain", f32!(14.707963)),
             perf_reset_iters: prop!("apple,perf-reset-iters", 6),
             perf_tgt_utilization: prop!("apple,perf-tgt-utilization"),
-            power_sample_period: prop!("apple,power-sample-period"),
+            power_sample_period,
             ppm_filter_time_constant_ms: prop!("apple,ppm-filter-time-constant-ms"),
             ppm_ki: prop!("apple,ppm-ki"),
             ppm_kp: prop!("apple,ppm-kp"),
@@ -545,6 +559,19 @@ impl PwrConfig {
             pwr_integral_min_clamp: prop!("apple,pwr-integral-min-clamp", 0),
             pwr_min_duty_cycle: prop!("apple,pwr-min-duty-cycle"),
             pwr_proportional_gain: prop!("apple,pwr-proportional-gain", f32!(5.2831855)),
+            pwr_sample_period_aic_clks: prop!(
+                "apple,pwr-sample-period-aic-clks",
+                cfg.base_clock_hz / 1000 * power_sample_period
+            ),
+            se_engagement_criteria: prop!("apple,se-engagement-criteria", -1),
+            se_filter_time_constant: prop!("apple,se-filter-time-constant", 9),
+            se_filter_time_constant_1: prop!("apple,se-filter-time-constant-1", 3),
+            se_inactive_threshold: prop!("apple,se-inactive-threshold", 2500),
+            se_ki: prop!("apple,se-ki", f32!(-50.0)),
+            se_ki_1: prop!("apple,se-ki-1", f32!(-100.0)),
+            se_kp: prop!("apple,se-kp", f32!(-5.0)),
+            se_kp_1: prop!("apple,se-kp-1", f32!(-10.0)),
+            se_reset_criteria: prop!("apple,se-reset-criteria", 50),
 
             perf_states,
             power_zones,

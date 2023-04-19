@@ -206,8 +206,13 @@ impl<'a> InitDataBuilder::ver<'a> {
                 let max_ps_scaled = 100 * max_ps;
                 let boost_ps_count = max_ps - base_ps;
 
+                #[allow(unused_variables)]
                 let base_clock_khz = self.cfg.base_clock_hz / 1000;
-                let clocks_per_period = base_clock_khz * period_ms;
+                let clocks_per_period = pwr.pwr_sample_period_aic_clks;
+
+                #[allow(unused_variables)]
+                let clocks_per_period_coarse =
+                    self.cfg.base_clock_hz / 1000 * pwr.power_sample_period;
 
                 let raw = place!(
                     ptr,
@@ -332,36 +337,53 @@ impl<'a> InitDataBuilder::ver<'a> {
                             _ => Default::default(),
                         },
                         #[ver(V >= V13_0B4)]
-                        unk_e10_0: raw::HwDataA130Extra {
-                            unk_38: 4,
-                            unk_3c: 8000,
-                            gpu_se_inactive_threshold: 2500,
-                            gpu_se_engagement_criteria: -1,
-                            gpu_se_reset_criteria: 50,
-                            unk_54: 50,
-                            unk_58: 0x1,
-                            gpu_se_filter_a_neg: f32!(0.8888889),
-                            gpu_se_filter_1_a_neg: f32!(0.6666667),
-                            gpu_se_filter_a: f32!(0.11111111),
-                            gpu_se_filter_1_a: f32!(0.33333333),
-                            gpu_se_ki_dt: f32!(-0.4),
-                            gpu_se_ki_1_dt: f32!(-0.8),
-                            unk_7c: f32!(65536.0),
-                            gpu_se_kp: f32!(-5.0),
-                            gpu_se_kp_1: f32!(-10.0),
-                            unk_8c: 40,
-                            max_pstate_scaled_1: max_ps_scaled,
-                            unk_9c: f32!(8000.0),
-                            unk_a0: 1400,
-                            gpu_se_filter_time_constant_ms: 72,
-                            gpu_se_filter_time_constant_1_ms: 24,
-                            gpu_se_filter_time_constant_clks: U64(1728000),
-                            gpu_se_filter_time_constant_1_clks: U64(576000),
-                            unk_c4: f32!(65536.0),
-                            unk_114: f32!(65536.0),
-                            unk_124: 40,
-                            max_pstate_scaled_2: max_ps_scaled,
-                            ..Default::default()
+                        unk_e10_0: {
+                            let filter_a = f32!(1.0) / pwr.se_filter_time_constant.into();
+                            let filter_1_a = f32!(1.0) / pwr.se_filter_time_constant_1.into();
+                            raw::HwDataA130Extra {
+                                unk_38: 4,
+                                unk_3c: 8000,
+                                gpu_se_inactive_threshold: pwr.se_inactive_threshold,
+                                gpu_se_engagement_criteria: pwr.se_engagement_criteria,
+                                gpu_se_reset_criteria: pwr.se_reset_criteria,
+                                unk_54: 50,
+                                unk_58: 0x1,
+                                gpu_se_filter_a_neg: f32!(1.0) - filter_a,
+                                gpu_se_filter_1_a_neg: f32!(1.0) - filter_1_a,
+                                gpu_se_filter_a: filter_a,
+                                gpu_se_filter_1_a: filter_1_a,
+                                gpu_se_ki_dt: pwr.se_ki * period_s,
+                                gpu_se_ki_1_dt: pwr.se_ki_1 * period_s,
+                                unk_7c: f32!(65536.0),
+                                gpu_se_kp: pwr.se_kp,
+                                gpu_se_kp_1: pwr.se_kp_1,
+
+                                #[ver(V >= V13_3)]
+                                unk_8c: 100,
+                                #[ver(V < V13_3)]
+                                unk_8c: 40,
+
+                                max_pstate_scaled_1: max_ps_scaled,
+                                unk_9c: f32!(8000.0),
+                                unk_a0: 1400,
+                                gpu_se_filter_time_constant_ms: pwr.se_filter_time_constant
+                                    * period_ms,
+                                gpu_se_filter_time_constant_1_ms: pwr.se_filter_time_constant_1
+                                    * period_ms,
+                                gpu_se_filter_time_constant_clks: U64((pwr
+                                    .se_filter_time_constant
+                                    * clocks_per_period_coarse)
+                                    .into()),
+                                gpu_se_filter_time_constant_1_clks: U64((pwr
+                                    .se_filter_time_constant_1
+                                    * clocks_per_period_coarse)
+                                    .into()),
+                                unk_c4: f32!(65536.0),
+                                unk_114: f32!(65536.0),
+                                unk_124: 40,
+                                max_pstate_scaled_2: max_ps_scaled,
+                                ..Default::default()
+                            }
                         },
                         fast_die0_sensor_mask_2: U64(self.cfg.fast_sensor_mask[0]),
                         unk_e24: self.cfg.da.unk_e24,
@@ -562,7 +584,7 @@ impl<'a> InitDataBuilder::ver<'a> {
                         unk_30: 0,
                         unk_34: 120,
                         sub: raw::GlobalsSub::ver {
-                            unk_54: 0xffff,
+                            unk_54: self.cfg.global_unk_54,
                             unk_56: 40,
                             unk_58: 0xffff,
                             unk_5e: U32(1),
@@ -597,6 +619,12 @@ impl<'a> InitDataBuilder::ver<'a> {
                         hws1: Self::hw_shared1(self.cfg),
                         hws2: *Self::hw_shared2(self.cfg, self.dyncfg)?,
                         hws3: *Self::hw_shared3(self.cfg)?,
+                        #[ver(V >= V13_0B4)]
+                        unk_hws2_0: self.cfg.unk_hws2_0,
+                        #[ver(V >= V13_0B4)]
+                        unk_hws2_4: self.cfg.unk_hws2_4.map(Array::new).unwrap_or_default(),
+                        #[ver(V >= V13_0B4)]
+                        unk_hws2_24: self.cfg.unk_hws2_24,
                         unk_900c: 1,
                         #[ver(V >= V13_0B4)]
                         unk_9010_0: 1,
