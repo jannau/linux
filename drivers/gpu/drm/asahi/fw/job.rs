@@ -52,6 +52,35 @@ pub(crate) mod raw {
         pub(crate) frag: JobTimestamps,
     }
     default_zeroed!(RenderTimestamps);
+
+    #[derive(Debug)]
+    #[repr(C)]
+    pub(crate) struct Register {
+        pub(crate) number: u32,
+        pub(crate) value: U64,
+    }
+
+    impl Register {
+        fn new(number: u32, value: u64) -> Register {
+            Register {
+                number,
+                value: U64(value),
+            }
+        }
+    }
+
+    #[derive(Debug)]
+    #[repr(C)]
+    pub(crate) struct RegisterArray {
+        pub(crate) registers: Array<128, Register>,
+        pub(crate) pad: Array<0x100, u8>,
+
+        pub(crate) addr: GpuWeakPointer<[Register]>,
+        pub(crate) count: u16,
+        pub(crate) length: u16,
+        pub(crate) unk_pad: u32,
+    }
+    default_zeroed!(RegisterArray);
 }
 
 trivial_gpustruct!(JobTimestamps);

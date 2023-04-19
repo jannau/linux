@@ -3,7 +3,7 @@
 //! GPU firmware microsequence operations
 
 use super::types::*;
-use super::{buffer, compute, fragment, initdata, vertex, workqueue};
+use super::{buffer, compute, fragment, initdata, job, vertex, workqueue};
 use crate::default_zeroed;
 
 pub(crate) trait Operation {}
@@ -151,8 +151,10 @@ impl<'a> Operation for Timestamp::ver<'a> {}
 #[repr(C)]
 pub(crate) struct StartVertex<'a> {
     pub(crate) header: op::StartVertex,
-    pub(crate) tiling_params: GpuWeakPointer<vertex::raw::TilingParameters>,
-    pub(crate) job_params1: GpuWeakPointer<vertex::raw::JobParameters1::ver<'a>>,
+    pub(crate) tiling_params: Option<GpuWeakPointer<vertex::raw::TilingParameters>>,
+    pub(crate) job_params1: Option<GpuWeakPointer<vertex::raw::JobParameters1::ver<'a>>>,
+    #[ver(G >= G14X)]
+    pub(crate) registers: GpuWeakPointer<job::raw::RegisterArray>,
     pub(crate) buffer: GpuWeakPointer<buffer::Info::ver>,
     pub(crate) scene: GpuWeakPointer<buffer::Scene::ver>,
     pub(crate) stats: GpuWeakPointer<initdata::raw::GpuStatsVtx>,
@@ -226,8 +228,10 @@ impl Operation for FinalizeVertex::ver {}
 #[repr(C)]
 pub(crate) struct StartFragment<'a> {
     pub(crate) header: op::StartFragment,
-    pub(crate) job_params2: GpuWeakPointer<fragment::raw::JobParameters2>,
-    pub(crate) job_params1: GpuWeakPointer<fragment::raw::JobParameters1::ver<'a>>,
+    pub(crate) job_params2: Option<GpuWeakPointer<fragment::raw::JobParameters2>>,
+    pub(crate) job_params1: Option<GpuWeakPointer<fragment::raw::JobParameters1::ver<'a>>>,
+    #[ver(G >= G14X)]
+    pub(crate) registers: GpuWeakPointer<job::raw::RegisterArray>,
     pub(crate) scene: GpuPointer<'a, buffer::Scene::ver>,
     pub(crate) stats: GpuWeakPointer<initdata::raw::GpuStatsFrag>,
     pub(crate) busy_flag: GpuWeakPointer<u32>,
@@ -244,6 +248,8 @@ pub(crate) struct StartFragment<'a> {
     pub(crate) unk_68: u32,
     pub(crate) unk_758_flag: GpuWeakPointer<u32>,
     pub(crate) unk_job_buf: GpuWeakPointer<U64>,
+    #[ver(V >= V13_3)]
+    pub(crate) unk_7c_0: U64,
     pub(crate) unk_7c: u32,
     pub(crate) unk_80: u32,
     pub(crate) unk_84: u32,
@@ -282,6 +288,8 @@ pub(crate) struct FinalizeFragment {
     pub(crate) vm_slot: u32,
     pub(crate) unk_60: u32,
     pub(crate) unk_758_flag: GpuWeakPointer<u32>,
+    #[ver(V >= V13_3)]
+    pub(crate) unk_6c_0: U64,
     pub(crate) unk_6c: U64,
     pub(crate) unk_74: U64,
     pub(crate) unk_7c: U64,

@@ -25,6 +25,7 @@ pub(crate) mod raw {
         pub(crate) tpc_stride: u32,
         pub(crate) unk_24: u32,
         pub(crate) unk_28: u32,
+        pub(crate) __pad: Pad<0x74>,
     }
 
     #[versions(AGX)]
@@ -75,7 +76,9 @@ pub(crate) mod raw {
         pub(crate) unk_100: Array<3, U64>,
         pub(crate) unk_118: u32,
         #[ver(G >= G14)]
-        pub(crate) __pad: Pad<{ 8 * 9 }>,
+        pub(crate) __pad: Pad<{ 8 * 9 + 0x268 }>,
+        #[ver(G < G14)]
+        pub(crate) __pad: Pad<0x268>,
     }
 
     #[derive(Debug)]
@@ -114,10 +117,14 @@ pub(crate) mod raw {
         pub(crate) scene: GpuPointer<'a, fw::buffer::Scene::ver>,
         pub(crate) unk_buffer_buf: GpuWeakPointer<[u8]>,
         pub(crate) unk_34: u32,
+
+        #[ver(G < G14X)]
         pub(crate) job_params1: JobParameters1::ver<'a>,
-        pub(crate) unk_154: Array<0x268, u8>,
+        #[ver(G < G14X)]
         pub(crate) tiling_params: TilingParameters,
-        pub(crate) unk_3e8: Array<0x74, u8>,
+        #[ver(G >= G14X)]
+        pub(crate) registers: job::raw::RegisterArray,
+
         pub(crate) tpc: GpuPointer<'a, &'a [u8]>,
         pub(crate) tpc_size: U64,
         pub(crate) microsequence: GpuPointer<'a, &'a [u8]>,

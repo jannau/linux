@@ -111,11 +111,11 @@ pub(crate) mod raw {
         pub(crate) unk_160: U64,
 
         #[ver(G < G14)]
-        pub(crate) unk_168_padding: Array<0x1d8, u8>,
+        pub(crate) __pad: Pad<0x1d8>,
         #[ver(G >= G14)]
-        pub(crate) unk_168_padding: Array<0x1a8, u8>,
+        pub(crate) __pad: Pad<0x1a8>,
         #[ver(V < V13_0B4)]
-        pub(crate) __pad0: Pad<0x8>,
+        pub(crate) __pad1: Pad<0x8>,
     }
 
     #[derive(Debug)]
@@ -138,13 +138,13 @@ pub(crate) mod raw {
         pub(crate) unk_38: u32,
         pub(crate) unk_3c: u32,
         pub(crate) unk_40: u32,
+        pub(crate) __pad: Pad<0xac>,
     }
 
     #[versions(AGX)]
     #[derive(Debug)]
     #[repr(C)]
     pub(crate) struct JobParameters3 {
-        pub(crate) unk_44_padding: Array<0xac, u8>,
         pub(crate) depth_bias_array: ArrayAddr,
         pub(crate) scissor_array: ArrayAddr,
         pub(crate) visibility_result_buffer: U64,
@@ -174,7 +174,8 @@ pub(crate) mod raw {
         pub(crate) tib_blocks: u32,
         pub(crate) unk_30c: u32,
         pub(crate) aux_fb_info: AuxFBInfo::ver,
-        pub(crate) unk_320_padding: Array<0x10, u8>,
+        pub(crate) tile_config: U64,
+        pub(crate) unk_328_padding: Array<0x8, u8>,
         pub(crate) unk_partial_store_pipeline: StorePipelineBinding,
         pub(crate) partial_store_pipeline: StorePipelineBinding,
         pub(crate) isp_bgobjdepth: u32,
@@ -218,8 +219,14 @@ pub(crate) mod raw {
         pub(crate) merge_upper_y: F32,
         pub(crate) unk_68: U64,
         pub(crate) tile_count: U64,
+
+        #[ver(G < G14X)]
         pub(crate) job_params1: JobParameters1::ver<'a>,
+        #[ver(G < G14X)]
         pub(crate) job_params2: JobParameters2,
+        #[ver(G >= G14X)]
+        pub(crate) registers: job::raw::RegisterArray,
+
         pub(crate) job_params3: JobParameters3::ver,
         pub(crate) unk_758_flag: u32,
         pub(crate) unk_75c_flag: u32,
@@ -232,6 +239,8 @@ pub(crate) mod raw {
         pub(crate) no_clear_pipeline_textures: u32,
         pub(crate) msaa_zs: u32,
         pub(crate) unk_pointee: u32,
+        #[ver(V >= V13_3)]
+        pub(crate) unk_v13_3: u32,
         pub(crate) meta: job::raw::JobMeta,
         pub(crate) unk_after_meta: u32,
         pub(crate) unk_buf_0: U64,

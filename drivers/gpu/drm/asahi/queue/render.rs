@@ -184,6 +184,7 @@ impl super::Queue::ver {
                 } else {
                     0x8000
                 },
+                __pad: Default::default(),
             },
         })
     }
@@ -466,8 +467,16 @@ impl super::Queue::ver {
 
                 let start_frag = builder.add(microseq::StartFragment::ver {
                     header: microseq::op::StartFragment::HEADER,
-                    job_params2: inner_weak_ptr!(ptr, job_params2),
-                    job_params1: inner_weak_ptr!(ptr, job_params1),
+                    #[ver(G < G14X)]
+                    job_params2: Some(inner_weak_ptr!(ptr, job_params2)),
+                    #[ver(G < G14X)]
+                    job_params1: Some(inner_weak_ptr!(ptr, job_params1)),
+                    #[ver(G >= G14X)]
+                    job_params1: None,
+                    #[ver(G >= G14X)]
+                    job_params2: None,
+                    #[ver(G >= G14X)]
+                    registers: inner_weak_ptr!(ptr, registers),
                     scene: scene.gpu_pointer(),
                     stats,
                     busy_flag: inner_weak_ptr!(ptr, busy_flag),
@@ -484,6 +493,8 @@ impl super::Queue::ver {
                     unk_68: 0,
                     unk_758_flag: inner_weak_ptr!(ptr, unk_758_flag),
                     unk_job_buf: inner_weak_ptr!(ptr, unk_buf_0),
+                    #[ver(V >= V13_3)]
+                    unk_7c_0: U64(0),
                     unk_7c: 0,
                     unk_80: 0,
                     unk_84: unk1.into(),
@@ -552,6 +563,8 @@ impl super::Queue::ver {
                     vm_slot: vm_bind.slot(),
                     unk_60: 0,
                     unk_758_flag: inner_weak_ptr!(ptr, unk_758_flag),
+                    #[ver(V >= V13_3)]
+                    unk_6c_0: U64(0),
                     unk_6c: U64(0),
                     unk_74: U64(0),
                     unk_7c: U64(0),
@@ -613,6 +626,7 @@ impl super::Queue::ver {
                         merge_upper_y: F32::from_bits(cmdbuf.merge_upper_y),
                         unk_68: U64(0),
                         tile_count: U64(tile_info.tiles as u64),
+                        #[ver(G < G14X)]
                         job_params1: fw::fragment::raw::JobParameters1::ver {
                             utile_config: utile_config,
                             unk_4: 0,
@@ -659,10 +673,11 @@ impl super::Queue::ver {
                             unk_150: U64(0x0),
                             unk_158: U64(0x1c),
                             unk_160: U64(0),
-                            unk_168_padding: Default::default(),
+                            __pad: Default::default(),
                             #[ver(V < V13_0B4)]
-                            __pad0: Default::default(),
+                            __pad1: Default::default(),
                         },
+                        #[ver(G < G14X)]
                         job_params2: fw::fragment::raw::JobParameters2 {
                             store_pipeline_bind: cmdbuf.store_pipeline_bind,
                             store_pipeline_addr: cmdbuf.store_pipeline,
@@ -682,9 +697,11 @@ impl super::Queue::ver {
                             unk_38: 0x0,
                             unk_3c: 0x1,
                             unk_40: 0,
+                            __pad: Default::default(),
                         },
+                        #[ver(G >= G14X)]
+                        registers: Default::default(),
                         job_params3: fw::fragment::raw::JobParameters3::ver {
-                            unk_44_padding: Default::default(),
                             depth_bias_array: fw::fragment::raw::ArrayAddr {
                                 ptr: U64(cmdbuf.depth_bias_array),
                                 unk_padding: U64(0),
@@ -726,7 +743,8 @@ impl super::Queue::ver {
                             tib_blocks: cmdbuf.tib_blocks,
                             unk_30c: 0x0,
                             aux_fb_info: aux_fb_info,
-                            unk_320_padding: Default::default(),
+                            tile_config: U64(tile_config),
+                            unk_328_padding: Default::default(),
                             unk_partial_store_pipeline:
                                 fw::fragment::raw::StorePipelineBinding::new(
                                     cmdbuf.partial_store_pipeline_bind,
@@ -772,6 +790,8 @@ impl super::Queue::ver {
                             != 0) as u32,
                         msaa_zs: (cmdbuf.flags & uapi::ASAHI_RENDER_MSAA_ZS as u64 != 0) as u32,
                         unk_pointee: 0,
+                        #[ver(V >= V13_3)]
+                        unk_v13_3: 0,
                         meta: fw::job::raw::JobMeta {
                             unk_0: 0,
                             unk_2: 0,
@@ -872,8 +892,16 @@ impl super::Queue::ver {
 
                 let start_vtx = builder.add(microseq::StartVertex::ver {
                     header: microseq::op::StartVertex::HEADER,
-                    tiling_params: inner_weak_ptr!(ptr, tiling_params),
-                    job_params1: inner_weak_ptr!(ptr, job_params1),
+                    #[ver(G < G14X)]
+                    tiling_params: Some(inner_weak_ptr!(ptr, tiling_params)),
+                    #[ver(G < G14X)]
+                    job_params1: Some(inner_weak_ptr!(ptr, job_params1)),
+                    #[ver(G >= G14X)]
+                    tiling_params: None,
+                    #[ver(G >= G14X)]
+                    job_params1: None,
+                    #[ver(G >= G14X)]
+                    registers: inner_weak_ptr!(ptr, registers),
                     buffer: scene.weak_buffer_pointer(),
                     scene: scene.weak_pointer(),
                     stats,
@@ -992,6 +1020,7 @@ impl super::Queue::ver {
                         scene: inner.scene.gpu_pointer(),
                         unk_buffer_buf: inner.scene.kernel_buffer_pointer(),
                         unk_34: 0,
+                        #[ver(G < G14X)]
                         job_params1: fw::vertex::raw::JobParameters1::ver {
                             unk_0: U64(if unk1 { 0 } else { 0x200 }), // sometimes 0
                             unk_8: f32!(1e-20),                       // fixed
@@ -1051,12 +1080,12 @@ impl super::Queue::ver {
                             unk_f8: U64(0x8c60),         // fixed
                             unk_100: Default::default(), // fixed
                             unk_118: 0x1c,               // fixed
-                            #[ver(G >= G14)]
                             __pad: Default::default(),
                         },
-                        unk_154: Default::default(),
+                        #[ver(G < G14X)]
                         tiling_params: tile_info.params,
-                        unk_3e8: Default::default(),
+                        #[ver(G >= G14X)]
+                        registers: Default::default(),
                         tpc: inner.scene.tpc_pointer(),
                         tpc_size: U64(tile_info.tpc_size as u64),
                         microsequence: inner.micro_seq.gpu_pointer(),
