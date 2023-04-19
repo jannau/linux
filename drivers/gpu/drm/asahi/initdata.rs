@@ -534,11 +534,18 @@ impl<'a> InitDataBuilder::ver<'a> {
                         #[ver(V >= V13_0B4)]
                         unk_b38_4: 1,
                         unk_b38: Array::new([0xffffffff; 12]),
-                        #[ver(V >= V13_0B4)]
+                        #[ver(V >= V13_0B4 && V < V13_3)]
                         unk_c3c: 0x19,
+                        #[ver(V >= V13_3)]
+                        unk_c3c: 0x1a,
                         ..Default::default()
                     }
                 );
+
+                #[ver(V >= V13_3)]
+                for i in 0..16 {
+                    raw.unk_arr_0[i] = i as u32;
+                }
 
                 let base_ps = self.dyncfg.pwr.perf_base_pstate as usize;
                 let max_ps = self.dyncfg.pwr.perf_max_pstate as usize;
@@ -616,7 +623,9 @@ impl<'a> InitDataBuilder::ver<'a> {
                         #[ver(V >= V13_0B4)]
                         debug: 0,
                         unk_28: 1,
-                        #[ver(V >= V13_0B4)]
+                        #[ver(V >= V13_3)]
+                        unk_2c_0: 1,
+                        #[ver(V >= V13_0B4 && V < V13_3)]
                         unk_2c_0: 0,
                         unk_2c: 1,
                         unk_30: 0,
