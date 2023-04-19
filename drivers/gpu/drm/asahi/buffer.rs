@@ -353,7 +353,7 @@ impl Buffer::ver {
                     unk_10: 0x0,
                     gpu_counter2: 0x0,
                     unk_18: 0x0,
-                    #[ver(V < V13_0B4)]
+                    #[ver(V < V13_0B4 || G >= G14X)]
                     unk_1c: 0x0,
                     page_list: inner.page_list.gpu_pointer(),
                     page_list_size: (4 * max_pages).try_into()?,

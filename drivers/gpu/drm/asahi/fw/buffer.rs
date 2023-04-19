@@ -52,7 +52,7 @@ pub(crate) mod raw {
         pub(crate) gpu_counter2: u32,
         pub(crate) unk_18: u32,
 
-        #[ver(V < V13_0B4)]
+        #[ver(V < V13_0B4 || G >= G14X)]
         pub(crate) unk_1c: u32,
 
         pub(crate) page_list: GpuPointer<'a, &'a [u32]>,
