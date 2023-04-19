@@ -120,12 +120,21 @@ impl platform::Driver for AsahiDriver {
         let compat: Vec<u32> = node.get_property(c_str!("apple,firmware-compat"))?;
 
         let reg = drm::drv::Registration::<AsahiDriver>::new(&dev)?;
-        let gpu = match (cfg.gpu_gen, compat.as_slice()) {
-            (hw::GpuGen::G13, &[12, 3, 0]) => {
+        let gpu = match (cfg.gpu_gen, cfg.gpu_variant, compat.as_slice()) {
+            (hw::GpuGen::G13, _, &[12, 3, 0]) => {
                 gpu::GpuManagerG13V12_3::new(reg.device(), &res, cfg)? as Arc<dyn gpu::GpuManager>
             }
-            (hw::GpuGen::G14, &[12, 4, 0]) => {
+            (hw::GpuGen::G14, hw::GpuVariant::G, &[12, 4, 0]) => {
                 gpu::GpuManagerG14V12_4::new(reg.device(), &res, cfg)? as Arc<dyn gpu::GpuManager>
+            }
+            (hw::GpuGen::G13, _, &[13, 3, 0]) => {
+                gpu::GpuManagerG13V13_3::new(reg.device(), &res, cfg)? as Arc<dyn gpu::GpuManager>
+            }
+            (hw::GpuGen::G14, hw::GpuVariant::G, &[13, 3, 0]) => {
+                gpu::GpuManagerG14V13_3::new(reg.device(), &res, cfg)? as Arc<dyn gpu::GpuManager>
+            }
+            (hw::GpuGen::G14, _, &[13, 3, 0]) => {
+                gpu::GpuManagerG14XV13_3::new(reg.device(), &res, cfg)? as Arc<dyn gpu::GpuManager>
             }
             _ => {
                 dev_info!(
