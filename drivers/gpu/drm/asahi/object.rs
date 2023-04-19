@@ -99,6 +99,12 @@ impl<'a, T: ?Sized> Debug for GpuPointer<'a, T> {
     }
 }
 
+impl<'a, T: ?Sized> From<GpuPointer<'a, T>> for u64 {
+    fn from(value: GpuPointer<'a, T>) -> Self {
+        value.0.get()
+    }
+}
+
 /// Take a pointer to a sub-field within a structure pointed to by a GpuPointer, keeping the
 /// lifetime.
 #[macro_export]
@@ -159,6 +165,12 @@ impl<T: ?Sized> GpuWeakPointer<T> {
     /// perspective.
     pub(crate) unsafe fn upgrade<'a>(&self) -> GpuPointer<'a, T> {
         GpuPointer(self.0, PhantomData)
+    }
+}
+
+impl<T: ?Sized> From<GpuWeakPointer<T>> for u64 {
+    fn from(value: GpuWeakPointer<T>) -> Self {
+        value.0.get()
     }
 }
 
