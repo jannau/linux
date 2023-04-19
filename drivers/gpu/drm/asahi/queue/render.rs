@@ -387,6 +387,7 @@ impl super::Queue::ver {
                         stamp_self: ev_frag.value.next(),
                         uuid: uuid_3d,
                         barrier_type: 0,
+                        padding: Default::default(),
                     }
                 ))
             },

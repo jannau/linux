@@ -35,6 +35,8 @@ pub(crate) mod raw {
         pub(crate) stamp_self: EventValue,
         pub(crate) uuid: u32,
         pub(crate) barrier_type: u32,
+        // G14X addition
+        pub(crate) padding: Pad<0x20>,
     }
 
     #[derive(Debug, Clone, Copy)]
