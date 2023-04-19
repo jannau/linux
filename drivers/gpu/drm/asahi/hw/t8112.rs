@@ -16,6 +16,7 @@ pub(crate) const HWCONFIG: super::HwConfig = HwConfig {
 
     base_clock_hz: 24_000_000,
     uat_oas: 40,
+    num_dies: 1,
     max_num_clusters: 1,
     max_num_cores: 10,
     max_num_frags: 10,
@@ -49,13 +50,32 @@ pub(crate) const HWCONFIG: super::HwConfig = HwConfig {
     shared1_a4: 0,
     shared2_tab: &[-1, -1, -1, -1, -1, -1, -1, -1, 0xaa5aa, 0],
     shared2_unk_508: 0xc00000,
+    shared2_curves: Some(HwConfigShared2Curves {
+        t1_coef: 7200,
+        t2: &[
+            0xf07, 0x4c0, 0x6c0, 0x8c0, 0xac0, 0xc40, 0xdc0, 0xec0, 0xf80,
+        ],
+        t3_coefs: &[0, 20, 28, 36, 44, 50, 56, 60, 63],
+        t3_scales: &[9, 3209, 10400],
+    }),
+    shared3_unk: 5,
+    shared3_tab: &[
+        10700, 10700, 10700, 10700, 10700, 6000, 1000, 1000, 1000, 10700, 10700, 10700, 10700,
+        10700, 10700, 10700,
+    ],
+    unk_hws2_0: 0,
+    unk_hws2_4: None,
+    unk_hws2_24: 0,
+    global_unk_54: 0xffff,
+
     sram_k: f32!(1.02),
     // 13.2: last coef changed from 6.6 to 5.3, assuming that was a fix we can backport
     unk_coef_a: &[&f32!([0.0, 0.0, 0.0, 0.0, 5.3, 0.0, 5.3, /*6.6*/ 5.3])],
     unk_coef_b: &[&f32!([0.0, 0.0, 0.0, 0.0, 5.3, 0.0, 5.3, /*6.6*/ 5.3])],
     global_tab: None,
-    fast_die0_sensor_mask: 0x6800,
-    fast_die0_sensor_mask_alt: 0x6800,
+    has_csafr: false,
+    fast_sensor_mask: [0x6800, 0],
+    fast_sensor_mask_alt: [0x6800, 0],
     fast_die0_sensor_present: 0x02,
     io_mappings: &[
         Some(IOMapping::new(0x204d00000, 0x14000, 0x14000, true)), // Fender
@@ -79,4 +99,6 @@ pub(crate) const HWCONFIG: super::HwConfig = HwConfig {
         Some(IOMapping::new(0x23b3d0000, 0x1000, 0x1000, true)), //
         Some(IOMapping::new(0x23b3c0000, 0x1000, 0x1000, true)), //
     ],
+    sram_base: None,
+    sram_size: None,
 };

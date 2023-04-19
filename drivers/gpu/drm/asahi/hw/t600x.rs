@@ -51,6 +51,7 @@ pub(crate) const HWCONFIG_T6002: super::HwConfig = HwConfig {
 
     base_clock_hz: 24_000_000,
     uat_oas: 42,
+    num_dies: 2,
     max_num_clusters: 8,
     max_num_cores: 8,
     max_num_frags: 8,
@@ -83,6 +84,13 @@ pub(crate) const HWCONFIG_T6002: super::HwConfig = HwConfig {
     shared1_a4: 0xffff,
     shared2_tab: &[-1, -1, -1, -1, 0x2aa, 0xaaa, -1, -1, 0, 0],
     shared2_unk_508: 0xcc00001,
+    shared2_curves: None,
+    shared3_unk: 0,
+    shared3_tab: &[],
+    unk_hws2_0: 0,
+    unk_hws2_4: None,
+    unk_hws2_24: 0,
+    global_unk_54: 0xffff,
     sram_k: f32!(1.02),
     unk_coef_a: &[
         &f32!([9.838]),
@@ -107,10 +115,13 @@ pub(crate) const HWCONFIG_T6002: super::HwConfig = HwConfig {
     global_tab: Some(&[
         0, 1, 2, 1, 1, 90, 75, 1, 1, 1, 2, 90, 75, 1, 1, 1, 1, 90, 75, 1, 1,
     ]),
-    fast_die0_sensor_mask: 0x8080808080808080,
-    fast_die0_sensor_mask_alt: 0x9090909090909090,
+    has_csafr: false,
+    fast_sensor_mask: [0x8080808080808080, 0],
+    fast_sensor_mask_alt: [0x9090909090909090, 0],
     fast_die0_sensor_present: 0xff,
     io_mappings: &iomaps(16, true),
+    sram_base: None,
+    sram_size: None,
 };
 
 pub(crate) const HWCONFIG_T6001: super::HwConfig = HwConfig {
@@ -118,9 +129,10 @@ pub(crate) const HWCONFIG_T6001: super::HwConfig = HwConfig {
     gpu_variant: GpuVariant::C,
     gpu_core: GpuCore::G13C,
 
+    num_dies: 1,
     max_num_clusters: 4,
-    fast_die0_sensor_mask: 0x80808080,
-    fast_die0_sensor_mask_alt: 0x90909090,
+    fast_sensor_mask: [0x80808080, 0],
+    fast_sensor_mask_alt: [0x90909090, 0],
     fast_die0_sensor_present: 0x0f,
     io_mappings: &iomaps(8, false),
     ..HWCONFIG_T6002
@@ -132,8 +144,8 @@ pub(crate) const HWCONFIG_T6000: super::HwConfig = HwConfig {
     gpu_core: GpuCore::G13S,
 
     max_num_clusters: 2,
-    fast_die0_sensor_mask: 0x8080,
-    fast_die0_sensor_mask_alt: 0x9090,
+    fast_sensor_mask: [0x8080, 0],
+    fast_sensor_mask_alt: [0x9090, 0],
     fast_die0_sensor_present: 0x03,
     io_mappings: &iomaps(4, false),
     ..HWCONFIG_T6001

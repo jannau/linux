@@ -260,7 +260,7 @@ impl<'a> InitDataBuilder::ver<'a> {
                         max_pstate_scaled_7: max_ps_scaled,
                         unk_alpha_neg: f32!(0.8),
                         unk_alpha: f32!(0.2),
-                        fast_die0_sensor_mask: U64(self.cfg.fast_die0_sensor_mask),
+                        fast_die0_sensor_mask: U64(self.cfg.fast_sensor_mask[0]),
                         fast_die0_release_temp_cc: 100 * pwr.fast_die0_release_temp,
                         unk_87c: self.cfg.da.unk_87c,
                         unk_880: 0x4,
@@ -341,10 +341,10 @@ impl<'a> InitDataBuilder::ver<'a> {
                             max_pstate_scaled_2: max_ps_scaled,
                             ..Default::default()
                         },
-                        fast_die0_sensor_mask_2: U64(self.cfg.fast_die0_sensor_mask),
+                        fast_die0_sensor_mask_2: U64(self.cfg.fast_sensor_mask[0]),
                         unk_e24: self.cfg.da.unk_e24,
                         unk_e28: 1,
-                        fast_die0_sensor_mask_alt: U64(self.cfg.fast_die0_sensor_mask_alt),
+                        fast_die0_sensor_mask_alt: U64(self.cfg.fast_sensor_mask_alt[0]),
                         #[ver(V < V13_0B4)]
                         fast_die0_sensor_present: U64(self.cfg.fast_die0_sensor_present as u64),
                         unk_163c: 1,

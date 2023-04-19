@@ -109,6 +109,12 @@ pub(crate) struct PState {
     pub(crate) pwr_mw: u32,
 }
 
+impl PState {
+    pub(crate) fn max_volt_mv(&self) -> u32 {
+        *self.volt_mv.iter().max().expect("No voltages")
+    }
+}
+
 /// A power zone definition (we have no idea what this is but Apple puts them in the DT).
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone)]
@@ -175,6 +181,14 @@ pub(crate) struct HwRenderConfig {
     pub(crate) tiling_control: u32,
 }
 
+#[derive(Debug)]
+pub(crate) struct HwConfigShared2Curves {
+    pub(crate) t1_coef: u32,
+    pub(crate) t2: &'static [i16],
+    pub(crate) t3_coefs: &'static [u32],
+    pub(crate) t3_scales: &'static [u32],
+}
+
 /// Static hardware configuration for a given SoC model.
 #[derive(Debug)]
 pub(crate) struct HwConfig {
@@ -195,6 +209,8 @@ pub(crate) struct HwConfig {
     pub(crate) base_clock_hz: u32,
     /// Output address space for the UAT on this SoC.
     pub(crate) uat_oas: usize,
+    /// Number of dies on this SoC.
+    pub(crate) num_dies: u32,
     /// Maximum number of clusters on this SoC.
     pub(crate) max_num_clusters: u32,
     /// Maximum number of cores per cluster for this GPU.
@@ -226,6 +242,23 @@ pub(crate) struct HwConfig {
     pub(crate) shared2_tab: &'static [i32],
     /// HwDataShared2.unk_508.
     pub(crate) shared2_unk_508: u32,
+    /// HwDataShared2.unk_508.
+    pub(crate) shared2_curves: Option<HwConfigShared2Curves>,
+
+    /// HwDataShared3.unk_8.
+    pub(crate) shared3_unk: u32,
+    /// HwDataShared3.table.
+    pub(crate) shared3_tab: &'static [u32],
+
+    /// Globals.unk_hws2_0.
+    pub(crate) unk_hws2_0: u32,
+    /// Globals.unk_hws2_4.
+    pub(crate) unk_hws2_4: Option<[F32; 8]>,
+    /// Globals.unk_hws2_24.
+    pub(crate) unk_hws2_24: u32,
+    /// Globals.unk_54
+    pub(crate) global_unk_54: u16,
+
     /// Constant related to SRAM voltages.
     pub(crate) sram_k: F32,
     /// Unknown per-cluster coefficients 1.
@@ -234,15 +267,21 @@ pub(crate) struct HwConfig {
     pub(crate) unk_coef_b: &'static [&'static [F32]],
     /// Unknown table in Global struct.
     pub(crate) global_tab: Option<&'static [u8]>,
+    /// Whether this GPU has CS/AFR performance states
+    pub(crate) has_csafr: bool,
 
     /// Temperature sensor list (8 bits per sensor).
-    pub(crate) fast_die0_sensor_mask: u64,
+    pub(crate) fast_sensor_mask: [u64; 2],
     /// Temperature sensor list (alternate).
-    pub(crate) fast_die0_sensor_mask_alt: u64,
+    pub(crate) fast_sensor_mask_alt: [u64; 2],
     /// Temperature sensor present bitmask.
     pub(crate) fast_die0_sensor_present: u32,
     /// Required MMIO mappings for this GPU/firmware.
     pub(crate) io_mappings: &'static [Option<IOMapping>],
+    /// SRAM base
+    pub(crate) sram_base: Option<u64>,
+    /// SRAM size
+    pub(crate) sram_size: Option<u64>,
 }
 
 /// Dynamic (fetched from hardware/DT) configuration.
