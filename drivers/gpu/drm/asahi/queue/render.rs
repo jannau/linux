@@ -486,7 +486,7 @@ impl super::Queue::ver {
                     unk_job_buf: inner_weak_ptr!(ptr, unk_buf_0),
                     unk_7c: 0,
                     unk_80: 0,
-                    unk_84: 0,
+                    unk_84: unk1.into(),
                     uuid: uuid_3d,
                     attachments: common::build_attachments(
                         cmdbuf.attachments,
