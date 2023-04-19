@@ -1,4 +1,4 @@
-use proc_macro::{Group, Ident, Punct, Spacing, Span, TokenStream, TokenTree};
+use proc_macro::{Delimiter, Group, Ident, Punct, Spacing, Span, TokenStream, TokenTree};
 
 //use crate::helpers::expect_punct;
 
@@ -35,6 +35,29 @@ fn drop_until_punct(it: &mut impl Iterator<Item = TokenTree>, delimiter: &str) {
                     }
                 }
             }
+        }
+    }
+}
+
+fn drop_until_braces(it: &mut impl Iterator<Item = TokenTree>) {
+    let mut depth: isize = 0;
+    for token in it.by_ref() {
+        match token {
+            TokenTree::Punct(punct) => match punct.as_char() {
+                '<' => {
+                    depth += 1;
+                }
+                '>' => {
+                    depth -= 1;
+                }
+                _ => (),
+            },
+            TokenTree::Group(group) if group.delimiter() == Delimiter::Brace => {
+                if depth == 0 {
+                    break;
+                }
+            }
+            _ => (),
         }
     }
 }
@@ -150,6 +173,12 @@ fn filter_versions(
                         } else {
                             let first = it.next().unwrap();
                             match &first {
+                                TokenTree::Ident(ident)
+                                    if ["while", "for", "loop", "if", "match", "unsafe", "fn"]
+                                        .contains(&ident.to_string().as_str()) =>
+                                {
+                                    drop_until_braces(&mut it);
+                                }
                                 TokenTree::Group(_) => (),
                                 _ => {
                                     drop_until_punct(&mut it, ",;");
