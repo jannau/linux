@@ -68,14 +68,14 @@ pub(crate) mod raw {
     pub(crate) struct HwDataShared2Curve {
         pub(crate) unk_0: u32,
         pub(crate) unk_4: u32,
-        pub(crate) t1: Array<16, i16>,
+        pub(crate) t1: Array<16, u16>,
         pub(crate) t2: Array<16, i16>,
         pub(crate) t3: Array<8, Array<16, i32>>,
     }
 
     #[derive(Debug, Default)]
     #[repr(C)]
-    pub(crate) struct HwDataShared2T8112 {
+    pub(crate) struct HwDataShared2G14 {
         pub(crate) unk_0: Array<5, u32>,
         pub(crate) unk_14: u32,
         pub(crate) unk_18: Array<8, u32>,
@@ -88,12 +88,11 @@ pub(crate) mod raw {
     pub(crate) struct HwDataShared2 {
         pub(crate) table: Array<10, i32>,
         pub(crate) unk_28: Array<0x10, u8>,
-        pub(crate) t8112: HwDataShared2T8112,
+        pub(crate) g14: HwDataShared2G14,
         pub(crate) unk_500: u32,
         pub(crate) unk_504: u32,
         pub(crate) unk_508: u32,
         pub(crate) unk_50c: u32,
-        pub(crate) unk_510: u32,
     }
     default_zeroed!(HwDataShared2);
 
@@ -114,24 +113,24 @@ pub(crate) mod raw {
         pub(crate) unk_0: Array<0x38, u8>,
         pub(crate) unk_38: u32,
         pub(crate) unk_3c: u32,
-        pub(crate) unk_40: u32,
+        pub(crate) gpu_se_inactive_threshold: u32,
         pub(crate) unk_44: u32,
-        pub(crate) unk_48: u32,
-        pub(crate) unk_4c: u32,
+        pub(crate) gpu_se_engagement_criteria: i32,
+        pub(crate) gpu_se_reset_criteria: u32,
         pub(crate) unk_50: u32,
         pub(crate) unk_54: u32,
         pub(crate) unk_58: u32,
         pub(crate) unk_5c: u32,
-        pub(crate) unk_60: F32,
-        pub(crate) unk_64: F32,
-        pub(crate) unk_68: F32,
-        pub(crate) unk_6c: F32,
-        pub(crate) unk_70: F32,
-        pub(crate) unk_74: F32,
+        pub(crate) gpu_se_filter_a_neg: F32,
+        pub(crate) gpu_se_filter_1_a_neg: F32,
+        pub(crate) gpu_se_filter_a: F32,
+        pub(crate) gpu_se_filter_1_a: F32,
+        pub(crate) gpu_se_ki_dt: F32,
+        pub(crate) gpu_se_ki_1_dt: F32,
         pub(crate) unk_78: F32,
         pub(crate) unk_7c: F32,
-        pub(crate) unk_80: F32,
-        pub(crate) unk_84: F32,
+        pub(crate) gpu_se_kp: F32,
+        pub(crate) gpu_se_kp_1: F32,
         pub(crate) unk_88: u32,
         pub(crate) unk_8c: u32,
         pub(crate) max_pstate_scaled_1: u32,
@@ -140,12 +139,10 @@ pub(crate) mod raw {
         pub(crate) unk_9c: F32,
         pub(crate) unk_a0: u32,
         pub(crate) unk_a4: u32,
-        pub(crate) unk_a8: u32,
-        pub(crate) unk_ac: u32,
-        pub(crate) unk_b0: u32,
-        pub(crate) unk_b4: u32,
-        pub(crate) unk_b8: u32,
-        pub(crate) unk_bc: u32,
+        pub(crate) gpu_se_filter_time_constant_ms: u32,
+        pub(crate) gpu_se_filter_time_constant_1_ms: u32,
+        pub(crate) gpu_se_filter_time_constant_clks: U64,
+        pub(crate) gpu_se_filter_time_constant_1_clks: U64,
         pub(crate) unk_c0: u32,
         pub(crate) unk_c4: F32,
         pub(crate) unk_c8: Array<0x4c, u8>,
@@ -197,6 +194,27 @@ pub(crate) mod raw {
         pub(crate) filter_a_neg: F32,
         pub(crate) filter_a: F32,
         pub(crate) pad: u32,
+    }
+
+    #[versions(AGX)]
+    const MAX_CORES_PER_CLUSTER: usize = {
+        #[ver(G >= G14X)]
+        {
+            16
+        }
+        #[ver(G < G14X)]
+        {
+            8
+        }
+    };
+
+    #[derive(Debug, Default)]
+    #[repr(C)]
+    pub(crate) struct AuxLeakCoef {
+        pub(crate) afr_1: Array<2, F32>,
+        pub(crate) cs_1: Array<2, F32>,
+        pub(crate) afr_2: Array<2, F32>,
+        pub(crate) cs_2: Array<2, F32>,
     }
 
     #[versions(AGX)]
@@ -373,6 +391,8 @@ pub(crate) mod raw {
         pub(crate) pad_840: Pad<0x2c>,
         pub(crate) unk_86c: u32,
         pub(crate) fast_die0_sensor_mask: U64,
+        #[ver(G >= G14X)]
+        pub(crate) fast_die1_sensor_mask: U64,
         pub(crate) fast_die0_release_temp_cc: u32,
         pub(crate) unk_87c: i32,
         pub(crate) unk_880: u32,
@@ -408,8 +428,10 @@ pub(crate) mod raw {
         pub(crate) pad_8f8: u32,
         pub(crate) pad_8fc: u32,
         pub(crate) unk_900: Array<0x24, u8>,
-        pub(crate) unk_coef_a1: Array<8, Array<8, F32>>,
-        pub(crate) unk_coef_a2: Array<8, Array<8, F32>>,
+
+        pub(crate) unk_coef_a1: Array<8, Array<MAX_CORES_PER_CLUSTER::ver, F32>>,
+        pub(crate) unk_coef_a2: Array<8, Array<MAX_CORES_PER_CLUSTER::ver, F32>>,
+
         pub(crate) pad_b24: Pad<0x70>,
         pub(crate) max_pstate_scaled_11: u32,
         pub(crate) freq_with_off: u32,
@@ -418,6 +440,10 @@ pub(crate) mod raw {
         pub(crate) unk_ba8: U64,
         pub(crate) unk_bb0: u32,
         pub(crate) unk_bb4: u32,
+
+        #[ver(V >= V13_3)]
+        pub(crate) pad_bb8_0: Pad<0x200>,
+
         pub(crate) pad_bb8: Pad<0x74>,
         pub(crate) unk_c2c: u32,
         pub(crate) power_zone_count: u32,
@@ -483,28 +509,44 @@ pub(crate) mod raw {
         pub(crate) unk_e10_0: HwDataA130Extra,
 
         pub(crate) unk_e10: Array<0xc, u8>,
+
         pub(crate) fast_die0_sensor_mask_2: U64,
+        #[ver(G >= G14X)]
+        pub(crate) fast_die1_sensor_mask_2: U64,
+
         pub(crate) unk_e24: u32,
         pub(crate) unk_e28: u32,
         pub(crate) unk_e2c: Pad<0x1c>,
-        pub(crate) unk_coef_b1: Array<8, Array<8, F32>>,
-        pub(crate) unk_coef_b2: Array<8, Array<8, F32>>,
+        pub(crate) unk_coef_b1: Array<8, Array<MAX_CORES_PER_CLUSTER::ver, F32>>,
+        pub(crate) unk_coef_b2: Array<8, Array<MAX_CORES_PER_CLUSTER::ver, F32>>,
+
+        #[ver(G >= G14X)]
+        pub(crate) pad_1048_0: Pad<0x600>,
+
         pub(crate) pad_1048: Pad<0x5e4>,
+
         pub(crate) fast_die0_sensor_mask_alt: U64,
+        #[ver(G >= G14X)]
+        pub(crate) fast_die1_sensor_mask_alt: U64,
         #[ver(V < V13_0B4)]
         pub(crate) fast_die0_sensor_present: U64,
 
         pub(crate) unk_163c: u32,
 
         pub(crate) unk_1640: Array<0x2000, u8>,
+
+        #[ver(G >= G14X)]
+        pub(crate) unk_3640_0: Array<0x2000, u8>,
+
         pub(crate) unk_3640: u32,
         pub(crate) unk_3644: u32,
         pub(crate) hws1: HwDataShared1,
 
         #[ver(V >= V13_0B4)]
-        pub(crate) unk_pad1: Pad<0x20>,
+        pub(crate) unk_hws2: Array<16, u16>,
 
         pub(crate) hws2: HwDataShared2,
+        pub(crate) unk_3c00: u32,
         pub(crate) unk_3c04: u32,
         pub(crate) hws3: HwDataShared3,
         pub(crate) unk_3c58: Array<0x3c, u8>,
@@ -529,10 +571,13 @@ pub(crate) mod raw {
         pub(crate) unk_3cf0: u32,
         pub(crate) core_leak_coef: Array<8, F32>,
         pub(crate) sram_leak_coef: Array<8, F32>,
-        pub(crate) unk_3d34: Array<0x38, u8>,
 
         #[ver(V >= V13_0B4)]
-        pub(crate) unk_3d6c: Array<0x38, u8>,
+        pub(crate) aux_leak_coef: AuxLeakCoef,
+        #[ver(V >= V13_0B4)]
+        pub(crate) unk_3d34_0: Array<0x18, u8>,
+
+        pub(crate) unk_3d34: Array<0x38, u8>,
     }
     #[versions(AGX)]
     default_zeroed!(HwDataA::ver);
@@ -547,6 +592,37 @@ pub(crate) mod raw {
         pub(crate) size: u32,
         pub(crate) range_size: u32,
         pub(crate) readwrite: U64,
+    }
+
+    #[versions(AGX)]
+    const IO_MAPPING_COUNT: usize = {
+        #[ver(V < V13_0B4)]
+        {
+            0x14
+        }
+        #[ver(V >= V13_0B4 && V < V13_3)]
+        {
+            0x17
+        }
+        #[ver(V >= V13_3)]
+        {
+            0x18
+        }
+    };
+
+    #[derive(Debug)]
+    #[repr(C)]
+    pub(crate) struct HwDataBAuxPStates {
+        pub(crate) cs_max_pstate: u32,
+        pub(crate) cs_frequencies: Array<0x10, u32>,
+        pub(crate) cs_voltages: Array<0x10, Array<0x2, u32>>,
+        pub(crate) cs_voltages_sram: Array<0x10, Array<0x2, u32>>,
+        pub(crate) cs_unkpad: u32,
+        pub(crate) afr_max_pstate: u32,
+        pub(crate) afr_frequencies: Array<0x8, u32>,
+        pub(crate) afr_voltages: Array<0x8, Array<0x2, u32>>,
+        pub(crate) afr_voltages_sram: Array<0x8, Array<0x2, u32>>,
+        pub(crate) afr_unkpad: u32,
     }
 
     #[versions(AGX)]
@@ -575,10 +651,10 @@ pub(crate) mod raw {
         pub(crate) yuv_matrices: Array<0x3f, Array<3, Array<4, i16>>>,
 
         pub(crate) pad_1c8: Pad<0x8>,
-        pub(crate) io_mappings: Array<0x14, IOMapping>,
+        pub(crate) io_mappings: Array<IO_MAPPING_COUNT::ver, IOMapping>,
 
         #[ver(V >= V13_0B4)]
-        pub(crate) unk_450_0: Array<0x68, u8>,
+        pub(crate) sgx_sram_ptr: U64,
 
         pub(crate) chip_id: u32,
         pub(crate) unk_454: u32,
@@ -664,10 +740,17 @@ pub(crate) mod raw {
         pub(crate) frequencies: Array<0x10, u32>,
         pub(crate) voltages: Array<0x10, [u32; 0x8]>,
         pub(crate) voltages_sram: Array<0x10, [u32; 0x8]>,
+
+        #[ver(V >= V13_3)]
+        pub(crate) unk_9f4_0: Pad<64>,
+
         pub(crate) sram_k: Array<0x10, F32>,
         pub(crate) unk_9f4: Array<0x10, u32>,
         pub(crate) rel_max_powers: Array<0x10, u32>,
         pub(crate) rel_boost_freqs: Array<0x10, u32>,
+
+        #[ver(V >= V13_3)]
+        pub(crate) unk_arr_0: Array<32, u32>,
 
         #[ver(V < V13_0B4)]
         pub(crate) min_sram_volt: u32,
@@ -682,7 +765,10 @@ pub(crate) mod raw {
         pub(crate) unk_ac0: u32,
 
         #[ver(V >= V13_0B4)]
-        pub(crate) unk_ac4_0: Array<0x1f0, u8>,
+        pub(crate) aux_ps: HwDataBAuxPStates,
+
+        #[ver(V >= V13_3)]
+        pub(crate) pad_ac4_0: Array<0x44c, u8>,
 
         pub(crate) pad_ac4: Pad<0x8>,
         pub(crate) unk_acc: u32,
@@ -695,6 +781,10 @@ pub(crate) mod raw {
         pub(crate) unk_b04: u32,
         pub(crate) unk_b08: u32,
         pub(crate) unk_b0c: u32,
+
+        #[ver(G >= G14X)]
+        pub(crate) pad_b10_0: Array<0x8, u8>,
+
         pub(crate) unk_b10: u32,
         pub(crate) pad_b14: Pad<0x8>,
         pub(crate) unk_b1c: u32,
@@ -711,11 +801,17 @@ pub(crate) mod raw {
         #[ver(V >= V13_0B4)]
         pub(crate) unk_b38_4: u32,
 
+        #[ver(V >= V13_3)]
+        pub(crate) unk_b38_8: u32,
+
         pub(crate) unk_b38: Array<0xc, u32>,
         pub(crate) unk_b68: u32,
 
         #[ver(V >= V13_0B4)]
         pub(crate) unk_b6c: Array<0xd0, u8>,
+
+        #[ver(G >= G14X)]
+        pub(crate) unk_c3c_0: Array<0x8, u8>,
 
         #[ver(V >= V13_0B4)]
         pub(crate) unk_c3c: u32,
@@ -764,6 +860,7 @@ pub(crate) mod raw {
     }
     default_zeroed!(GpuStatsComp);
 
+    #[versions(AGX)]
     #[derive(Debug)]
     #[repr(C)]
     pub(crate) struct RuntimeScratch {
@@ -797,10 +894,15 @@ pub(crate) mod raw {
         pub(crate) unk_ctr5: u32,
         pub(crate) unk_6afc: u32,
         pub(crate) pad_6b00: Pad<0x38>,
+
+        #[ver(G >= G14X)]
+        pub(crate) pad_6b00_extra: Array<0x4800, u8>,
+
         pub(crate) unk_6b38: u32,
         pub(crate) pad_6b3c: Pad<0x84>,
     }
-    default_zeroed!(RuntimeScratch);
+    #[versions(AGX)]
+    default_zeroed!(RuntimeScratch::ver);
 
     pub(crate) type BufferMgrCtl = Array<4, u32>;
 
@@ -829,15 +931,19 @@ pub(crate) mod raw {
         pub(crate) hwdata_b_2: GpuPointer<'a, super::HwDataB::ver>,
         pub(crate) fwlog_buf: Option<GpuWeakPointer<[channels::RawFwLogPayloadMsg]>>,
         pub(crate) unkptr_1b8: GpuPointer<'a, &'a [u8]>,
+
+        #[ver(G < G14X)]
         pub(crate) unkptr_1c0: GpuPointer<'a, &'a [u8]>,
+        #[ver(G < G14X)]
         pub(crate) unkptr_1c8: GpuPointer<'a, &'a [u8]>,
+
         pub(crate) unk_1d0: u32,
         pub(crate) unk_1d4: u32,
         pub(crate) unk_1d8: Array<0x3c, u8>,
         pub(crate) buffer_mgr_ctl: GpuPointer<'a, &'a [BufferMgrCtl]>,
         pub(crate) buffer_mgr_ctl_2: GpuPointer<'a, &'a [BufferMgrCtl]>,
         pub(crate) __pad1: Pad<0x5c>,
-        pub(crate) gpu_scratch: RuntimeScratch,
+        pub(crate) gpu_scratch: RuntimeScratch::ver,
     }
     #[versions(AGX)]
     no_debug!(RuntimePointers::ver<'_>);
@@ -904,7 +1010,10 @@ pub(crate) mod raw {
         pub(crate) unk_24: u32,
 
         #[ver(V >= V13_0B4)]
-        pub(crate) unk_28_0: u32,
+        pub(crate) debug: u32,
+
+        #[ver(V >= V13_3)]
+        pub(crate) unk_28_4: u32,
 
         pub(crate) unk_28: u32,
 
@@ -922,8 +1031,11 @@ pub(crate) mod raw {
         pub(crate) unk_1000: Array<0x7000, u8>,
         pub(crate) unk_8000: Array<0x900, u8>,
 
-        #[ver(V >= V13_0B4 && V < V13_2)]
-        pub(crate) unk_8900_0: u32,
+        #[ver(G >= G14X)]
+        pub(crate) unk_8900_pad: Array<0x484c, u8>,
+
+        #[ver(V >= V13_3)]
+        pub(crate) unk_8900_pad2: Array<0x54, u8>,
 
         pub(crate) unk_8900: u32,
         pub(crate) pending_submissions: AtomicU32,
@@ -968,12 +1080,23 @@ pub(crate) mod raw {
         #[ver(V >= V13_0B4)]
         pub(crate) unk_89f4_c: Array<0x50, u8>,
 
+        #[ver(V >= V13_3)]
+        pub(crate) unk_89f4_5c: Array<0xc, u8>,
+
         pub(crate) unk_89f4: u32,
         pub(crate) hws1: HwDataShared1,
         pub(crate) hws2: HwDataShared2,
 
         #[ver(V >= V13_0B4)]
-        pub(crate) unk_hws2_0: Array<0x28, u8>,
+        pub(crate) unk_hws2_0: u32,
+
+        #[ver(V >= V13_0B4)]
+        pub(crate) unk_hws2_4: Array<0x8, F32>,
+
+        #[ver(V >= V13_0B4)]
+        pub(crate) unk_hws2_24: u32,
+
+        pub(crate) unk_hws2_28: u32,
 
         pub(crate) hws3: HwDataShared3,
         pub(crate) unk_9004: Array<8, u8>,
@@ -992,6 +1115,10 @@ pub(crate) mod raw {
         pub(crate) unk_10000: Array<0xe50, u8>,
         pub(crate) unk_10e50: u32,
         pub(crate) unk_10e54: Array<0x2c, u8>,
+
+        #[ver(G >= G14X && V < V13_3 || G <= G14 && V >= V13_3)]
+        pub(crate) unk_x_pad: Array<0x4, u8>,
+
         pub(crate) fault_control: u32,
         pub(crate) do_init: u32,
         pub(crate) unk_10e88: Array<0x188, u8>,
@@ -1020,7 +1147,12 @@ pub(crate) mod raw {
         pub(crate) idle_off_delay_ms: AtomicU32,
         pub(crate) fender_idle_off_delay_ms: u32,
         pub(crate) fw_early_wake_timeout_ms: u32,
-        pub(crate) pending_stamps: Array<0x110, PendingStamp>,
+        #[ver(V >= V13_3)]
+        pub(crate) ps_pad_0: Pad<0x8>,
+        pub(crate) pending_stamps: Array<0x100, PendingStamp>,
+        #[ver(V < V13_3)]
+        pub(crate) ps_pad_0: Pad<0x8>,
+        pub(crate) unkpad_ps: Pad<0x78>,
         pub(crate) unk_117bc: u32,
         pub(crate) fault_info: FaultInfo,
         pub(crate) counter: u32,
@@ -1029,6 +1161,12 @@ pub(crate) mod raw {
         #[ver(V >= V13_0B4)]
         pub(crate) unk_118e0_0: Array<0x9c, u8>,
 
+        #[ver(G >= G14X)]
+        pub(crate) unk_118e0_9c: Array<0x580, u8>,
+
+        #[ver(V >= V13_3)]
+        pub(crate) unk_118e0_9c_x: Array<0x8, u8>,
+
         pub(crate) unk_118e0: u32,
 
         #[ver(V >= V13_0B4)]
@@ -1036,8 +1174,8 @@ pub(crate) mod raw {
 
         pub(crate) unk_118e4: u32,
         pub(crate) unk_118e8: u32,
-        pub(crate) unk_118ec: Array<0x15, u8>,
-        pub(crate) unk_11901: Array<0x43f, u8>,
+        pub(crate) unk_118ec: Array<0x400, u8>,
+        pub(crate) unk_11cec: Array<0x54, u8>,
 
         #[ver(V >= V13_0B4)]
         pub(crate) unk_11d40: Array<0x19c, u8>,
@@ -1050,6 +1188,9 @@ pub(crate) mod raw {
 
         #[ver(V >= V13_0B4)]
         pub(crate) unk_11efc: u32,
+
+        #[ver(V >= V13_3)]
+        pub(crate) unk_11f00: Array<0x280, u8>,
     }
     #[versions(AGX)]
     default_zeroed!(Globals::ver);

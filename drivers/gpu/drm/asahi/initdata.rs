@@ -54,7 +54,7 @@ impl<'a> InitDataBuilder::ver<'a> {
         curve: &mut raw::HwDataShared2Curve,
         unk_0: u32,
         unk_4: u32,
-        t1: &[i16],
+        t1: &[u16],
         t2: &[i16],
         t3: &[&[i32]],
     ) {
@@ -78,7 +78,7 @@ impl<'a> InitDataBuilder::ver<'a> {
     fn hw_shared2(cfg: &hw::HwConfig) -> Result<Box<raw::HwDataShared2>> {
         let mut ret = box_in_place!(raw::HwDataShared2 {
             unk_28: Array::new([0xff; 16]),
-            t8112: Default::default(),
+            g14: Default::default(),
             unk_508: cfg.shared2_unk_508,
             ..Default::default()
         })?;
@@ -88,13 +88,20 @@ impl<'a> InitDataBuilder::ver<'a> {
         }
 
         if cfg.chip_id == 0x8112 {
-            ret.t8112.unk_14 = 0x6000000;
-            Self::init_curve(&mut ret.t8112.curve1, 0, 0x20000000, &[-1], &[0x0f07], &[]);
+            ret.g14.unk_14 = 0x6000000;
             Self::init_curve(
-                &mut ret.t8112.curve2,
+                &mut ret.g14.curve1,
+                0,
+                0x20000000,
+                &[0xffff],
+                &[0x0f07],
+                &[],
+            );
+            Self::init_curve(
+                &mut ret.g14.curve2,
                 7,
                 0x80000000,
-                &[-1, 25740, 17429, 12550, 9597, 7910, 6657, 5881, 5421],
+                &[0xffff, 25740, 17429, 12550, 9597, 7910, 6657, 5881, 5421],
                 &[
                     0x0f07, 0x04c0, 0x06c0, 0x08c0, 0x0ac0, 0x0c40, 0x0dc0, 0x0ec0, 0x0f80,
                 ],
@@ -306,28 +313,28 @@ impl<'a> InitDataBuilder::ver<'a> {
                         unk_e10_0: raw::HwDataA130Extra {
                             unk_38: 4,
                             unk_3c: 8000,
-                            unk_40: 2500,
-                            unk_48: 0xffffffff,
-                            unk_4c: 50,
+                            gpu_se_inactive_threshold: 2500,
+                            gpu_se_engagement_criteria: -1,
+                            gpu_se_reset_criteria: 50,
                             unk_54: 50,
                             unk_58: 0x1,
-                            unk_60: f32!(0.8888889),
-                            unk_64: f32!(0.6666667),
-                            unk_68: f32!(0.11111111),
-                            unk_6c: f32!(0.33333333),
-                            unk_70: f32!(-0.4),
-                            unk_74: f32!(-0.8),
+                            gpu_se_filter_a_neg: f32!(0.8888889),
+                            gpu_se_filter_1_a_neg: f32!(0.6666667),
+                            gpu_se_filter_a: f32!(0.11111111),
+                            gpu_se_filter_1_a: f32!(0.33333333),
+                            gpu_se_ki_dt: f32!(-0.4),
+                            gpu_se_ki_1_dt: f32!(-0.8),
                             unk_7c: f32!(65536.0),
-                            unk_80: f32!(-5.0),
-                            unk_84: f32!(-10.0),
+                            gpu_se_kp: f32!(-5.0),
+                            gpu_se_kp_1: f32!(-10.0),
                             unk_8c: 40,
                             max_pstate_scaled_1: max_ps_scaled,
                             unk_9c: f32!(8000.0),
                             unk_a0: 1400,
-                            unk_a8: 72,
-                            unk_ac: 24,
-                            unk_b0: 1728000,
-                            unk_b8: 576000,
+                            gpu_se_filter_time_constant_ms: 72,
+                            gpu_se_filter_time_constant_1_ms: 24,
+                            gpu_se_filter_time_constant_clks: U64(1728000),
+                            gpu_se_filter_time_constant_1_clks: U64(576000),
                             unk_c4: f32!(65536.0),
                             unk_114: f32!(65536.0),
                             unk_124: 40,
@@ -520,7 +527,7 @@ impl<'a> InitDataBuilder::ver<'a> {
                         unk_24_0: 3000,
                         unk_24: 0,
                         #[ver(V >= V13_0B4)]
-                        unk_28_0: 0, // debug
+                        debug: 0,
                         unk_28: 1,
                         #[ver(V >= V13_0B4)]
                         unk_2c_0: 0,
@@ -664,7 +671,10 @@ impl<'a> InitDataBuilder::ver<'a> {
                     fwlog_buf: None,
 
                     unkptr_1b8: inner.unkptr_1b8.gpu_pointer(),
+
+                    #[ver(G < G14X)]
                     unkptr_1c0: inner.unkptr_1c0.gpu_pointer(),
+                    #[ver(G < G14X)]
                     unkptr_1c8: inner.unkptr_1c8.gpu_pointer(),
 
                     buffer_mgr_ctl: inner.buffer_mgr_ctl.gpu_pointer(),
@@ -678,7 +688,7 @@ impl<'a> InitDataBuilder::ver<'a> {
                     unk_1d8: Default::default(),
 
                     __pad1: Default::default(),
-                    gpu_scratch: raw::RuntimeScratch {
+                    gpu_scratch: raw::RuntimeScratch::ver {
                         unk_6b38: 0xff,
                         ..Default::default()
                     },
