@@ -124,14 +124,8 @@ impl platform::Driver for AsahiDriver {
             (hw::GpuGen::G13, &[12, 3, 0]) => {
                 gpu::GpuManagerG13V12_3::new(reg.device(), &res, cfg)? as Arc<dyn gpu::GpuManager>
             }
-            (hw::GpuGen::G13, &[13, 2, 0]) => {
-                gpu::GpuManagerG13V13_2::new(reg.device(), &res, cfg)? as Arc<dyn gpu::GpuManager>
-            }
             (hw::GpuGen::G14, &[12, 4, 0]) => {
                 gpu::GpuManagerG14V12_4::new(reg.device(), &res, cfg)? as Arc<dyn gpu::GpuManager>
-            }
-            (hw::GpuGen::G14, &[13, 2, 0]) => {
-                gpu::GpuManagerG14V13_2::new(reg.device(), &res, cfg)? as Arc<dyn gpu::GpuManager>
             }
             _ => {
                 dev_info!(
