@@ -525,8 +525,13 @@ impl super::Queue::ver {
                     })?;
                 }
 
+                #[ver(G < G14X)]
                 builder.add(microseq::WaitForIdle {
                     header: microseq::op::WaitForIdle::new(microseq::Pipe::Fragment),
+                })?;
+                #[ver(G >= G14X)]
+                builder.add(microseq::WaitForIdle2 {
+                    header: microseq::op::WaitForIdle2::HEADER,
                 })?;
 
                 if frag_result.is_some() {
@@ -942,8 +947,13 @@ impl super::Queue::ver {
                     })?;
                 }
 
+                #[ver(G < G14X)]
                 builder.add(microseq::WaitForIdle {
                     header: microseq::op::WaitForIdle::new(microseq::Pipe::Vertex),
+                })?;
+                #[ver(G >= G14X)]
+                builder.add(microseq::WaitForIdle2 {
+                    header: microseq::op::WaitForIdle2::HEADER,
                 })?;
 
                 if vtx_result.is_some() {

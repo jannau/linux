@@ -12,6 +12,7 @@ pub(crate) trait Operation {}
 #[repr(u32)]
 enum OpCode {
     WaitForIdle = 0x01,
+    WaitForIdle2 = 0x02,
     RetireStamp = 0x18,
     #[allow(dead_code)]
     Timestamp = 0x19,
@@ -83,6 +84,7 @@ pub(crate) mod op {
     simple_op!(FinalizeFragment);
     simple_op!(StartCompute);
     simple_op!(FinalizeCompute);
+    simple_op!(WaitForIdle2);
 
     #[derive(Debug, Copy, Clone)]
     pub(crate) struct RetireStamp(OpHeader);
@@ -116,6 +118,14 @@ pub(crate) struct WaitForIdle {
 }
 
 impl Operation for WaitForIdle {}
+
+#[derive(Debug)]
+#[repr(C)]
+pub(crate) struct WaitForIdle2 {
+    pub(crate) header: op::WaitForIdle2,
+}
+
+impl Operation for WaitForIdle2 {}
 
 #[derive(Debug)]
 #[repr(C)]

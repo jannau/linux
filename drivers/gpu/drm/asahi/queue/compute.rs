@@ -177,8 +177,13 @@ impl super::Queue::ver {
                     })?;
                 }
 
+                #[ver(G < G14X)]
                 builder.add(microseq::WaitForIdle {
                     header: microseq::op::WaitForIdle::new(microseq::Pipe::Compute),
+                })?;
+                #[ver(G >= G14X)]
+                builder.add(microseq::WaitForIdle2 {
+                    header: microseq::op::WaitForIdle2::HEADER,
                 })?;
 
                 if result_writer.is_some() {
