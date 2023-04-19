@@ -455,7 +455,7 @@ impl super::Queue::ver {
 
         mod_dev_dbg!(self.dev, "[Submission {}] Create Frag\n", id);
         let frag = GpuObject::new_prealloc(
-            kalloc.private.alloc_object()?,
+            kalloc.gpu_ro.alloc_object()?,
             |ptr: GpuWeakPointer<fw::fragment::RunFragment::ver>| {
                 let mut builder = microseq::Builder::new();
 
@@ -861,7 +861,7 @@ impl super::Queue::ver {
 
         mod_dev_dbg!(self.dev, "[Submission {}] Create Vertex\n", id);
         let vtx = GpuObject::new_prealloc(
-            kalloc.private.alloc_object()?,
+            kalloc.gpu_ro.alloc_object()?,
             |ptr: GpuWeakPointer<fw::vertex::RunVertex::ver>| {
                 let mut builder = microseq::Builder::new();
 
