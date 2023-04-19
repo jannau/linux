@@ -611,7 +611,7 @@ pub(crate) struct Uat {
     slots: slotalloc::SlotAllocator<SlotInner>,
 
     kernel_vm: Vm,
-    _kernel_lower_vm: Vm,
+    kernel_lower_vm: Vm,
 }
 
 impl Drop for UatRegion {
@@ -1082,6 +1082,11 @@ impl Uat {
         &self.kernel_vm
     }
 
+    /// Returns a reference to the local kernel (lower half) `Vm`
+    pub(crate) fn kernel_lower_vm(&self) -> &Vm {
+        &self.kernel_lower_vm
+    }
+
     /// Returns the base physical address of the TTBAT region.
     pub(crate) fn ttb_base(&self) -> u64 {
         let inner = self.inner.lock();
@@ -1196,7 +1201,7 @@ impl Uat {
             cfg,
             pagetables_rgn,
             kernel_vm,
-            _kernel_lower_vm: kernel_lower_vm,
+            kernel_lower_vm,
             inner,
             slots: slotalloc::SlotAllocator::new(UAT_USER_CTX as u32, (), |_inner, _slot| {
                 SlotInner()

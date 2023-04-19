@@ -81,6 +81,11 @@ const IOVA_KERN_GPU_BASE: u64 = 0xffffffaf00000000;
 /// GPU/FW shared structure VA range top.
 const IOVA_KERN_GPU_TOP: u64 = 0xffffffafffffffff;
 
+/// GPU/FW low shared structure VA range base.
+const IOVA_KERN_GPU_LOW_BASE: u64 = 0x20_0000_0000;
+/// GPU/FW low shared structure VA range top.
+const IOVA_KERN_GPU_LOW_TOP: u64 = 0x20_ffff_ffff;
+
 /// Timeout for entering the halt state after a fault or request.
 const HALT_ENTER_TIMEOUT_MS: u64 = 100;
 
@@ -94,7 +99,9 @@ pub(crate) struct KernelAllocators {
     pub(crate) private: alloc::DefaultAllocator,
     pub(crate) shared: alloc::DefaultAllocator,
     pub(crate) shared_ro: alloc::DefaultAllocator,
+    #[allow(dead_code)]
     pub(crate) gpu: alloc::DefaultAllocator,
+    pub(crate) gpu_low: alloc::DefaultAllocator,
 }
 
 /// Receive (GPU->driver) ring buffer channels.
@@ -367,6 +374,18 @@ impl GpuManager::ver {
                 64 * 1024,
                 true,
                 fmt!("Kernel GPU Shared"),
+                false,
+            )?,
+            gpu_low: alloc::DefaultAllocator::new(
+                dev,
+                uat.kernel_lower_vm(),
+                IOVA_KERN_GPU_LOW_BASE,
+                IOVA_KERN_GPU_LOW_TOP,
+                0x80,
+                mmu::PROT_GPU_FW_SHARED_RW,
+                64 * 1024,
+                true,
+                fmt!("Kernel GPU Lower"),
                 false,
             )?,
         };
