@@ -130,9 +130,9 @@ pub(crate) struct RunWorkQueueMsg {
     pub(crate) wptr: u32,
     pub(crate) event_slot: u32,
     pub(crate) is_new: bool,
-    #[ver(V >= V13_2 && G >= G14)]
+    #[ver(V >= V13_2 && G == G14)]
     pub(crate) __pad: Pad<0x2b>,
-    #[ver(V < V13_2 || G < G14)]
+    #[ver(V < V13_2 || G != G14)]
     pub(crate) __pad: Pad<0x1b>,
 }
 
@@ -141,11 +141,11 @@ pub(crate) type PipeMsg = RunWorkQueueMsg::ver;
 
 #[versions(AGX)]
 pub(crate) const DEVICECONTROL_SZ: usize = {
-    #[ver(V < V13_2 || G < G14)]
+    #[ver(V < V13_2 || G != G14)]
     {
         0x2c
     }
-    #[ver(V >= V13_2 && G >= G14)]
+    #[ver(V >= V13_2 && G == G14)]
     {
         0x3c
     }
@@ -182,6 +182,8 @@ pub(crate) enum DeviceControlMsg {
     Unk14(Array<DEVICECONTROL_SZ::ver, u8>),
     Unk15(Array<DEVICECONTROL_SZ::ver, u8>),
     Unk16(Array<DEVICECONTROL_SZ::ver, u8>),
+    #[ver(V >= V13_3)]
+    Unk17(Array<DEVICECONTROL_SZ::ver, u8>),
     DestroyContext {
         unk_4: u32,
         ctx_23: u8,
