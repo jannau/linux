@@ -593,6 +593,8 @@ impl Buffer::ver {
             clustering: clustering,
             preempt_buf: preempt_buf,
             seq_buf: seq_buf,
+            #[ver(G >= G14X)]
+            control_word: alloc.gpu.array_empty(1)?,
         })?;
 
         // Could be made strong, but we wind up with a deadlock if we try to grab the
@@ -608,16 +610,24 @@ impl Buffer::ver {
         let scene = alloc.shared.new_boxed(scene_inner, |inner, ptr| {
             Ok(place!(
                 ptr,
-                buffer::raw::Scene {
+                buffer::raw::Scene::ver {
+                    #[ver(G >= G14X)]
+                    control_word: inner.control_word.gpu_pointer(),
+                    #[ver(G >= G14X)]
+                    control_word2: inner.control_word.gpu_pointer(),
                     pass_page_count: AtomicU32::new(0),
                     unk_4: 0,
                     unk_8: U64(0),
                     unk_10: U64(0),
                     user_buffer: inner.user_buffer.gpu_pointer(),
                     unk_20: 0,
+                    #[ver(V >= V13_3)]
+                    unk_28: U64(0),
                     stats: stats_pointer,
                     total_page_count: AtomicU32::new(0),
+                    #[ver(G < G14X)]
                     unk_30: U64(0),
+                    #[ver(G < G14X)]
                     unk_38: U64(0),
                 }
             ))

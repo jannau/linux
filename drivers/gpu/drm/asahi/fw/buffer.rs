@@ -81,18 +81,27 @@ pub(crate) mod raw {
         pub(crate) unk_90: Array<0x30, u8>,
     }
 
+    #[versions(AGX)]
     #[derive(Debug)]
     #[repr(C)]
     pub(crate) struct Scene<'a> {
+        #[ver(G >= G14X)]
+        pub(crate) control_word: GpuPointer<'a, &'a [u32]>,
+        #[ver(G >= G14X)]
+        pub(crate) control_word2: GpuPointer<'a, &'a [u32]>,
         pub(crate) pass_page_count: AtomicU32,
         pub(crate) unk_4: u32,
         pub(crate) unk_8: U64,
         pub(crate) unk_10: U64,
         pub(crate) user_buffer: GpuPointer<'a, &'a [u8]>,
         pub(crate) unk_20: u32,
+        #[ver(V >= V13_3)]
+        pub(crate) unk_28: U64,
         pub(crate) stats: GpuWeakPointer<super::Stats>,
         pub(crate) total_page_count: AtomicU32,
+        #[ver(G < G14X)]
         pub(crate) unk_30: U64, // pad
+        #[ver(G < G14X)]
         pub(crate) unk_38: U64, // pad
     }
 
@@ -143,6 +152,8 @@ pub(crate) struct Scene {
     pub(crate) clustering: Option<ClusterBuffers>,
     pub(crate) preempt_buf: GpuArray<u8>,
     pub(crate) seq_buf: GpuArray<u64>,
+    #[ver(G >= G14X)]
+    pub(crate) control_word: GpuArray<u32>,
 }
 
 #[versions(AGX)]
@@ -150,7 +161,7 @@ no_debug!(Scene::ver);
 
 #[versions(AGX)]
 impl GpuStruct for Scene::ver {
-    type Raw<'a> = raw::Scene<'a>;
+    type Raw<'a> = raw::Scene::ver<'a>;
 }
 
 #[versions(AGX)]
