@@ -835,8 +835,12 @@ impl<'a> InitDataBuilder::ver<'a> {
                 Ok(place!(
                     ptr,
                     raw::InitData::ver {
-                        #[ver(V >= V13_0B4)]
-                        ver_info: Array::new([1, 1, 16, 1]),
+                        #[ver(V == V13_3 && G == G13)]
+                        ver_info: Array::new([1, 1, 16, 1]), // TODO
+                        #[ver(V == V13_3 && G == G14)]
+                        ver_info: Array::new([0x6ba0, 0x1f28, 0x601, 0xb0]),
+                        #[ver(V == V13_3 && G == G14X)]
+                        ver_info: Array::new([0xb390, 0x70f8, 0x601, 0xb0]),
                         unk_buf: inner.unk_buf.gpu_pointer(),
                         unk_8: 0,
                         unk_c: 0,
