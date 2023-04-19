@@ -457,6 +457,9 @@ static arm_lpae_iopte arm_lpae_prot_to_pte(struct arm_lpae_io_pgtable *data,
 			if (prot & IOMMU_WRITE) {
 				/* Firmware RW */
 				pte |= APPLE_UAT_UXN;
+				if (!(prot & IOMMU_READ))
+					/* Hack: Firmware RW, GPU RO */
+					pte |= APPLE_UAT_PXN;
 			} else if (!(prot & IOMMU_READ)) {
 				/* No access */
 				pte |= APPLE_UAT_PXN;
