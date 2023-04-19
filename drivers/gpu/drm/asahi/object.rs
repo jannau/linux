@@ -334,6 +334,7 @@ impl<T: GpuStruct, U: Allocation<T>> GpuObject<T, U> {
         raw_cb: impl for<'a> FnOnce(
             &'a T,
             &'a mut MaybeUninit<T::Raw<'a>>,
+            GpuWeakPointer<T>,
         ) -> Result<&'a mut T::Raw<'a>>,
     ) -> Result<Self> {
         if alloc.size() < mem::size_of::<T::Raw<'static>>() {
@@ -350,7 +351,7 @@ impl<T: GpuStruct, U: Allocation<T>> GpuObject<T, U> {
         let inner = inner_cb(gpu_ptr)?;
         let p = alloc.ptr().ok_or(EINVAL)?.as_ptr() as *mut MaybeUninit<T::Raw<'_>>;
         // SAFETY: `p` is guaranteed to be valid per the Allocation invariant.
-        let raw = raw_cb(&*inner, unsafe { &mut *p })?;
+        let raw = raw_cb(&*inner, unsafe { &mut *p }, gpu_ptr)?;
         if p as *mut T::Raw<'_> != raw as *mut _ {
             dev_err!(
                 alloc.device(),

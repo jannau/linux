@@ -596,7 +596,7 @@ impl super::Queue::ver {
                     timestamps: timestamps.clone(),
                 })?)
             },
-            |inner, ptr| {
+            |inner, ptr, _gpu_ptr| {
                 let aux_fb_info = fw::fragment::raw::AuxFBInfo::ver {
                     iogpu_unk_214: cmdbuf.iogpu_unk_214,
                     unk2: 0,
@@ -1012,7 +1012,7 @@ impl super::Queue::ver {
                     timestamps: timestamps,
                 })?)
             },
-            |inner, ptr| {
+            |inner, ptr, _gpu_ptr| {
                 #[ver(G < G14)]
                 let core_masks = gpu.core_masks_packed();
                 Ok(place!(

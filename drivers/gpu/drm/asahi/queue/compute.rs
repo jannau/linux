@@ -248,7 +248,7 @@ impl super::Queue::ver {
                     timestamps: timestamps.clone(),
                 })?)
             },
-            |inner, ptr| {
+            |inner, ptr, _gpu_ptr| {
                 Ok(place!(
                     ptr,
                     fw::compute::raw::RunCompute::ver {

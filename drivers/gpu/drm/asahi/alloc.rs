@@ -257,6 +257,7 @@ pub(crate) trait Allocator {
         raw_cb: impl for<'a> FnOnce(
             &'a T,
             &'a mut MaybeUninit<T::Raw<'a>>,
+            GpuWeakPointer<T>,
         ) -> Result<&'a mut T::Raw<'a>>,
     ) -> Result<GpuObject<T, GenericAlloc<T, Self::Raw>>> {
         GpuObject::<T, GenericAlloc<T, Self::Raw>>::new_prealloc(
