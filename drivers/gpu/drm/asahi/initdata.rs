@@ -413,6 +413,19 @@ impl<'a> InitDataBuilder::ver<'a> {
                     raw.sram_leak_coef[i] = *coef;
                 }
 
+                #[ver(V >= V13_0B4)]
+                if let Some(csafr) = pwr.csafr.as_ref() {
+                    for (i, coef) in csafr.leak_coef_afr.iter().enumerate() {
+                        raw.aux_leak_coef.cs_1[i] = *coef;
+                        raw.aux_leak_coef.cs_2[i] = *coef;
+                    }
+
+                    for (i, coef) in csafr.leak_coef_cs.iter().enumerate() {
+                        raw.aux_leak_coef.afr_1[i] = *coef;
+                        raw.aux_leak_coef.afr_2[i] = *coef;
+                    }
+                }
+
                 for i in 0..self.dyncfg.id.num_clusters as usize {
                     if let Some(coef_a) = self.cfg.unk_coef_a.get(i) {
                         (*raw.unk_coef_a1[i])[..coef_a.len()].copy_from_slice(coef_a);
@@ -546,6 +559,31 @@ impl<'a> InitDataBuilder::ver<'a> {
                     } else {
                         0
                     };
+                }
+
+                #[ver(V >= V13_0B4)]
+                if let Some(csafr) = self.dyncfg.pwr.csafr.as_ref() {
+                    let aux = &mut raw.aux_ps;
+                    aux.cs_max_pstate = (csafr.perf_states_cs.len() - 1).try_into()?;
+                    aux.afr_max_pstate = (csafr.perf_states_afr.len() - 1).try_into()?;
+
+                    for (i, ps) in csafr.perf_states_cs.iter().enumerate() {
+                        aux.cs_frequencies[i] = ps.freq_hz / 1000000;
+                        for (j, mv) in ps.volt_mv.iter().enumerate() {
+                            let sram_mv = (*mv).max(csafr.min_sram_microvolt / 1000);
+                            aux.cs_voltages[i][j] = *mv;
+                            aux.cs_voltages_sram[i][j] = sram_mv;
+                        }
+                    }
+
+                    for (i, ps) in csafr.perf_states_afr.iter().enumerate() {
+                        aux.afr_frequencies[i] = ps.freq_hz / 1000000;
+                        for (j, mv) in ps.volt_mv.iter().enumerate() {
+                            let sram_mv = (*mv).max(csafr.min_sram_microvolt / 1000);
+                            aux.afr_voltages[i][j] = *mv;
+                            aux.afr_voltages_sram[i][j] = sram_mv;
+                        }
+                    }
                 }
 
                 Ok(raw)

@@ -324,6 +324,23 @@ pub(crate) struct GpuIdConfig {
     pub(crate) core_masks_packed: Vec<u32>,
 }
 
+/// Configurable CS/AFR GPU power settings from the device tree.
+#[derive(Debug)]
+pub(crate) struct CsAfrPwrConfig {
+    /// GPU CS performance state list.
+    pub(crate) perf_states_cs: Vec<PState>,
+    /// GPU AFR performance state list.
+    pub(crate) perf_states_afr: Vec<PState>,
+
+    /// CS leakage coefficient per die.
+    pub(crate) leak_coef_cs: Vec<F32>,
+    /// AFR leakage coefficient per die.
+    pub(crate) leak_coef_afr: Vec<F32>,
+
+    /// Minimum voltage for the CS/AFR SRAM power domain in microvolts.
+    pub(crate) min_sram_microvolt: u32,
+}
+
 /// Configurable GPU power settings from the device tree.
 #[derive(Debug)]
 pub(crate) struct PwrConfig {
@@ -336,6 +353,8 @@ pub(crate) struct PwrConfig {
     pub(crate) core_leak_coef: Vec<F32>,
     /// SRAM leakage coefficient per cluster.
     pub(crate) sram_leak_coef: Vec<F32>,
+
+    pub(crate) csafr: Option<CsAfrPwrConfig>,
 
     /// Maximum total power of the GPU in milliwatts.
     pub(crate) max_power_mw: u32,
@@ -424,17 +443,65 @@ pub(crate) struct PwrConfig {
 }
 
 impl PwrConfig {
-    /// Load the GPU power configuration from the device tree.
-    pub(crate) fn load(dev: &AsahiDevice, cfg: &HwConfig) -> Result<PwrConfig> {
+    fn load_opp(
+        dev: &AsahiDevice,
+        name: &CStr,
+        cfg: &HwConfig,
+        is_main: bool,
+    ) -> Result<Vec<PState>> {
         let mut perf_states = Vec::new();
 
         let node = dev.of_node().ok_or(EIO)?;
-        let opps = node
-            .parse_phandle(c_str!("operating-points-v2"), 0)
-            .ok_or(EIO)?;
+        let opps = node.parse_phandle(name, 0).ok_or(EIO)?;
 
-        let mut max_power_mw: u32 = 0;
-        let mut max_freq_mhz: u32 = 0;
+        for opp in opps.children() {
+            let freq_hz: u64 = opp.get_property(c_str!("opp-hz"))?;
+            let mut volt_uv: Vec<u32> = opp.get_property(c_str!("opp-microvolt"))?;
+            let pwr_uw: u32 = if is_main {
+                opp.get_property(c_str!("opp-microwatt"))?
+            } else {
+                0
+            };
+
+            let voltage_count = if is_main {
+                cfg.max_num_clusters
+            } else {
+                cfg.num_dies
+            };
+
+            if volt_uv.len() != voltage_count as usize {
+                dev_err!(
+                    dev,
+                    "Invalid opp-microvolt length (expected {}, got {})\n",
+                    voltage_count,
+                    volt_uv.len()
+                );
+                return Err(EINVAL);
+            }
+
+            volt_uv.iter_mut().for_each(|a| *a /= 1000);
+            let volt_mv = volt_uv;
+
+            let pwr_mw = pwr_uw / 1000;
+
+            perf_states.try_push(PState {
+                freq_hz: freq_hz.try_into()?,
+                volt_mv,
+                pwr_mw,
+            })?;
+        }
+
+        if perf_states.is_empty() {
+            Err(EINVAL)
+        } else {
+            Ok(perf_states)
+        }
+    }
+
+    /// Load the GPU power configuration from the device tree.
+    pub(crate) fn load(dev: &AsahiDevice, cfg: &HwConfig) -> Result<PwrConfig> {
+        let perf_states = Self::load_opp(dev, c_str!("operating-points-v2"), cfg, true)?;
+        let node = dev.of_node().ok_or(EIO)?;
 
         macro_rules! prop {
             ($prop:expr, $default:expr) => {{
@@ -451,37 +518,6 @@ impl PwrConfig {
                     e
                 })?
             }};
-        }
-
-        for opp in opps.children() {
-            let freq_hz: u64 = opp.get_property(c_str!("opp-hz"))?;
-            let mut volt_uv: Vec<u32> = opp.get_property(c_str!("opp-microvolt"))?;
-            let pwr_uw: u32 = opp.get_property(c_str!("opp-microwatt"))?;
-
-            if volt_uv.len() != cfg.max_num_clusters as usize {
-                dev_err!(
-                    dev,
-                    "Invalid opp-microvolt length (expected {}, got {})\n",
-                    cfg.max_num_clusters,
-                    volt_uv.len()
-                );
-                return Err(EINVAL);
-            }
-
-            volt_uv.iter_mut().for_each(|a| *a /= 1000);
-            let volt_mv = volt_uv;
-
-            let pwr_mw = pwr_uw / 1000;
-            max_power_mw = max_power_mw.max(pwr_mw);
-
-            let freq_mhz: u32 = (freq_hz / 1_000_000).try_into()?;
-            max_freq_mhz = max_freq_mhz.max(freq_mhz);
-
-            perf_states.try_push(PState {
-                freq_hz: freq_hz.try_into()?,
-                volt_mv,
-                pwr_mw,
-            })?;
         }
 
         let pz_data = prop!("apple,power-zones", Vec::new());
@@ -513,14 +549,26 @@ impl PwrConfig {
             return Err(EINVAL);
         }
 
+        let csafr = if cfg.has_csafr {
+            Some(CsAfrPwrConfig {
+                perf_states_cs: Self::load_opp(dev, c_str!("apple,cs-opp"), cfg, false)?,
+                perf_states_afr: Self::load_opp(dev, c_str!("apple,afr-opp"), cfg, false)?,
+                leak_coef_cs: prop!("apple,cs-leak-coef"),
+                leak_coef_afr: prop!("apple,afr-leak-coef"),
+                min_sram_microvolt: prop!("apple,csafr-min-sram-microvolt"),
+            })
+        } else {
+            None
+        };
+
         let power_sample_period: u32 = prop!("apple,power-sample-period");
 
         Ok(PwrConfig {
             core_leak_coef,
             sram_leak_coef,
 
-            max_power_mw,
-            max_freq_mhz,
+            max_power_mw: perf_states.iter().map(|a| a.pwr_mw).max().unwrap(),
+            max_freq_mhz: perf_states.iter().map(|a| a.freq_hz).max().unwrap() / 1_000_000,
 
             perf_base_pstate: prop!("apple,perf-base-pstate", 1),
             perf_max_pstate: perf_states.len() as u32 - 1,
@@ -575,6 +623,7 @@ impl PwrConfig {
 
             perf_states,
             power_zones,
+            csafr,
         })
     }
 
