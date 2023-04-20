@@ -605,15 +605,13 @@ static int apple_pcie_probe_port(struct device_node *np)
 	return 0;
 }
 
-static int apple_pcie_setup_port(struct apple_pcie *pcie,
+static int apple_pcie_setup_link(struct apple_pcie *pcie,
+				 struct apple_pcie_port *port,
 				 struct device_node *np)
 {
-	struct platform_device *platform = to_platform_device(pcie->dev);
-	struct apple_pcie_port *port;
-	struct gpio_desc *reset, *pwren = NULL;
-	u32 stat, idx;
-	int ret, i;
-	char name[16];
+	struct gpio_desc *reset, *pwren;
+	u32 stat;
+	int ret;
 
 	reset = devm_fwnode_gpiod_get(pcie->dev, of_fwnode_handle(np), "reset",
 				      GPIOD_OUT_LOW, "PERST#");
@@ -628,6 +626,53 @@ static int apple_pcie_setup_port(struct apple_pcie *pcie,
 		else
 			return PTR_ERR(pwren);
 	}
+
+	rmw_set(PORT_APPCLK_EN, port->base + PORT_APPCLK);
+
+	/* Assert PERST# before setting up the clock */
+	gpiod_set_value_cansleep(reset, 1);
+
+	/* Power on the device if required */
+	gpiod_set_value_cansleep(pwren, 1);
+
+	ret = apple_pcie_setup_refclk(pcie, port);
+	if (ret < 0)
+		return ret;
+
+	/*
+	* The minimal Tperst-clk value is 100us (PCIe CEM r5.0, 2.9.2)
+	* If powering up, the minimal Tpvperl is 100ms
+	*/
+	if (pwren)
+		msleep(100);
+	else
+		usleep_range(100, 200);
+
+	/* Deassert PERST# */
+	rmw_set(PORT_PERST_OFF, port->base + pcie->hw->port_perst);
+	gpiod_set_value_cansleep(reset, 0);
+
+	/* Wait for 100ms after PERST# deassertion (PCIe r5.0, 6.6.1) */
+	msleep(100);
+
+	ret = readl_relaxed_poll_timeout(port->base + PORT_STATUS, stat,
+					 stat & PORT_STATUS_READY, 100, 250000);
+	if (ret < 0) {
+		dev_err(pcie->dev, "port %pOF ready wait timeout\n", np);
+		return ret;
+	}
+
+	return 0;
+}
+
+static int apple_pcie_setup_port(struct apple_pcie *pcie,
+				 struct device_node *np)
+{
+	struct platform_device *platform = to_platform_device(pcie->dev);
+	struct apple_pcie_port *port;
+	u32 link_stat, idx;
+	int ret, i;
+	char name[16];
 
 	port = devm_kzalloc(pcie->dev, sizeof(*port), GFP_KERNEL);
 	if (!port)
@@ -655,39 +700,12 @@ static int apple_pcie_setup_port(struct apple_pcie *pcie,
 	if (IS_ERR(port->phy))
 		port->phy = pcie->base + CORE_PHY_DEFAULT_BASE(port->idx);
 
-	rmw_set(PORT_APPCLK_EN, port->base + PORT_APPCLK);
-
-	/* Assert PERST# before setting up the clock */
-	gpiod_set_value_cansleep(reset, 1);
-
-	/* Power on the device if required */
-	gpiod_set_value_cansleep(pwren, 1);
-
-	ret = apple_pcie_setup_refclk(pcie, port);
-	if (ret < 0)
-		return ret;
-
-	/*
-	 * The minimal Tperst-clk value is 100us (PCIe CEM r5.0, 2.9.2)
-	 * If powering up, the minimal Tpvperl is 100ms
-	 */
-	if (pwren)
-		msleep(100);
-	else
-		usleep_range(100, 200);
-
-	/* Deassert PERST# */
-	rmw_set(PORT_PERST_OFF, port->base + pcie->hw->port_perst);
-	gpiod_set_value_cansleep(reset, 0);
-
-	/* Wait for 100ms after PERST# deassertion (PCIe r5.0, 6.6.1) */
-	msleep(100);
-
-	ret = readl_relaxed_poll_timeout(port->base + PORT_STATUS, stat,
-					 stat & PORT_STATUS_READY, 100, 250000);
-	if (ret < 0) {
-		dev_err(pcie->dev, "port %pOF ready wait timeout\n", np);
-		return ret;
+	/* link might be already brought up by u-boot, skip setup then */
+	link_stat = readl_relaxed(port->base + PORT_LINKSTS);
+	if (!(link_stat & PORT_LINKSTS_UP)) {
+		ret = apple_pcie_setup_link(pcie, port, np);
+		if (ret)
+			return ret;
 	}
 
 	ret = apple_pcie_port_setup_irq(port);
@@ -714,6 +732,10 @@ static int apple_pcie_setup_port(struct apple_pcie *pcie,
 	ret = apple_pcie_port_register_irqs(port);
 	WARN_ON(ret);
 
+	if (link_stat & PORT_LINKSTS_UP)
+		return 0;
+
+	/* start link training */
 	writel_relaxed(PORT_LTSSMCTL_START, port->base + PORT_LTSSMCTL);
 
 	if (!wait_for_completion_timeout(&pcie->event, HZ / 4))
