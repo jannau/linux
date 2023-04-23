@@ -2,7 +2,7 @@
 /* Copyright The Asahi Linux Contributors */
 
 #include "iomfb_v12_3.h"
-#include "iomfb_v13_2.h"
+#include "iomfb_v13_3.h"
 #include "version_utils.h"
 
 static const struct dcp_method_entry dcp_methods[dcpep_num_methods] = {
@@ -30,8 +30,8 @@ static const struct dcp_method_entry dcp_methods[dcpep_num_methods] = {
 	IOMFB_METHOD("A472", dcpep_set_power_state),
 };
 
-#define DCP_FW v13_2
-#define DCP_FW_VER DCP_FW_VERSION(13, 2, 0)
+#define DCP_FW v13_3
+#define DCP_FW_VER DCP_FW_VERSION(13, 3, 0)
 
 #include "iomfb_template.c"
 

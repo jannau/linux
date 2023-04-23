@@ -12,7 +12,7 @@
 
 #include "iomfb.h"
 #include "iomfb_v12_3.h"
-#include "iomfb_v13_2.h"
+#include "iomfb_v13_3.h"
 
 #define DCP_MAX_PLANES 2
 
@@ -146,7 +146,7 @@ struct apple_dcp {
 	/* Queued swap. Owned by the DCP to avoid per-swap memory allocation */
 	union {
 		struct dcp_swap_submit_req_v12_3 v12_3;
-		struct dcp_swap_submit_req_v13_2 v13_2;
+		struct dcp_swap_submit_req_v13_3 v13_3;
 	} swap;
 
 	/* Current display mode */
