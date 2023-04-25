@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0+ OR MIT
 /*
- * Apple T6001 "M1 Max" SoC
+ * Apple T6021 "M2 Max" SoC
  *
- * Other names: H13J, "Jade"
+ * Other names: H14J, "Jade"
  *
  * Copyright The Asahi Linux Contributors
  */
@@ -20,7 +20,7 @@
 # define GPU_REPEAT(x) <x x x x>
 #endif
 
-#include "t600x-common.dtsi"
+#include "t602x-common.dtsi"
 
 / {
 	compatible = "apple,t6001", "apple,arm-platform";
@@ -61,13 +61,13 @@
 #define DIE_NO 0
 
 &{/soc} {
-	#include "t600x-die0.dtsi"
-	#include "t600x-dieX.dtsi"
-	#include "t600x-nvme.dtsi"
+	#include "t602x-die0.dtsi"
+	#include "t602x-dieX.dtsi"
+	#include "t602x-nvme.dtsi"
 };
 
-#include "t600x-gpio-pins.dtsi"
-#include "t600x-pmgr.dtsi"
+#include "t602x-gpio-pins.dtsi"
+#include "t602x-pmgr.dtsi"
 
 #undef DIE
 #undef DIE_NO
@@ -77,7 +77,7 @@
 	affinities {
 		e-core-pmu-affinity {
 			apple,fiq-index = <AIC_CPU_PMU_E>;
-			cpus = <&cpu_e00 &cpu_e01>;
+			cpus = <&cpu_e00 &cpu_e01 &cpu_e02 &cpu_e03>;
 		};
 
 		p-core-pmu-affinity {
@@ -89,5 +89,5 @@
 };
 
 &gpu {
-	compatible = "apple,agx-t6001", "apple,agx-g13x";
+	compatible = "apple,agx-t6021", "apple,agx-g14x";
 };
