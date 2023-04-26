@@ -815,6 +815,9 @@ impl super::Queue::ver {
                                 address: U64(cmdbuf.partial_reload_pipeline as u64),
                             },
                             zls_ctrl: U64(cmdbuf.zls_ctrl),
+                            #[ver(G >= G14X)]
+                            unk_290: U64(0x4040404),
+                            #[ver(G < G14X)]
                             unk_290: U64(0x0),
                             depth_buffer_ptr1: U64(cmdbuf.depth_buffer_1),
                             unk_2a0: U64(0x0),
@@ -897,7 +900,10 @@ impl super::Queue::ver {
                         unk_after_meta: unk1.into(),
                         unk_buf_0: U64(0),
                         unk_buf_8: U64(0),
+                        #[ver(G < G14X)]
                         unk_buf_10: U64(1),
+                        #[ver(G >= G14X)]
+                        unk_buf_10: U64(0),
                         cur_ts: U64(0),
                         start_ts: Some(inner_ptr!(inner.timestamps.gpu_pointer(), frag.start)),
                         end_ts: Some(inner_ptr!(inner.timestamps.gpu_pointer(), frag.end)),
