@@ -31,7 +31,7 @@ use crate::box_in_place;
 use crate::debug::*;
 use crate::driver::AsahiDevice;
 use crate::fw::channels::PipeType;
-use crate::fw::types::U64;
+use crate::fw::types::{U32, U64};
 use crate::{
     alloc, buffer, channel, event, fw, gem, hw, initdata, mem, mmu, queue, regs, workqueue,
 };
@@ -889,13 +889,16 @@ impl GpuManager::ver {
             |raw, _inner| fw::channels::DeviceControlMsg::ver::DestroyContext {
                 unk_4: 0,
                 ctx_23: raw.unk_23,
+                #[ver(V < V13_3)]
                 __pad0: Default::default(),
-                unk_c: 0,
-                unk_10: 0,
+                unk_c: U32(0),
+                unk_10: U32(0),
                 ctx_0: raw.unk_0,
                 ctx_1: raw.unk_1,
                 ctx_4: raw.unk_4,
+                #[ver(V < V13_3)]
                 __pad1: Default::default(),
+                #[ver(V < V13_3)]
                 unk_18: 0,
                 gpu_context: Some(context.weak_pointer()),
                 __pad2: Default::default(),
@@ -1084,14 +1087,18 @@ impl GpuManager for GpuManager::ver {
 
         let dc = fw::channels::DeviceControlMsg::ver::DestroyContext {
             unk_4: 0,
+
             ctx_23: 0,
+            #[ver(V < V13_3)]
             __pad0: Default::default(),
-            unk_c: 0,
-            unk_10: 0,
+            unk_c: U32(0),
+            unk_10: U32(0),
             ctx_0: 0xff,
             ctx_1: 0xff,
             ctx_4: 0,
+            #[ver(V < V13_3)]
             __pad1: Default::default(),
+            #[ver(V < V13_3)]
             unk_18: 0,
             gpu_context: None,
             __pad2: Default::default(),
