@@ -60,6 +60,13 @@ pub(crate) const HWCONFIG_T6002: super::HwConfig = HwConfig {
     preempt1_size: 0x540,
     preempt2_size: 0x280,
     preempt3_size: 0x20,
+    clustering: Some(HwClusteringConfig {
+        meta1_blocksize: 0x44,
+        meta2_size: 0x190 * 8, // CHECK
+        meta3_size: 0x280 * 8,
+        meta4_size: 0x30 * 16,
+        max_splits: 16,
+    }),
 
     render: HwRenderConfig {
         tiling_control: 0xa540,

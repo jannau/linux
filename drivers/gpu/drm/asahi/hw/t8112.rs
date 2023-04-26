@@ -25,6 +25,7 @@ pub(crate) const HWCONFIG: super::HwConfig = HwConfig {
     preempt1_size: 0x540,
     preempt2_size: 0x280,
     preempt3_size: 0x20,
+    clustering: None,
 
     render: HwRenderConfig {
         // TODO: this is unused here, may be present in newer FW

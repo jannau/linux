@@ -195,6 +195,16 @@ pub(crate) struct HwConfigShared2Curves {
     pub(crate) t3_scales: &'static [u32],
 }
 
+/// Static hardware clustering configuration for multi-cluster SoCs.
+#[derive(Debug)]
+pub(crate) struct HwClusteringConfig {
+    pub(crate) meta1_blocksize: usize,
+    pub(crate) meta2_size: usize,
+    pub(crate) meta3_size: usize,
+    pub(crate) meta4_size: usize,
+    pub(crate) max_splits: usize,
+}
+
 /// Static hardware configuration for a given SoC model.
 #[derive(Debug)]
 pub(crate) struct HwConfig {
@@ -232,6 +242,8 @@ pub(crate) struct HwConfig {
     pub(crate) preempt2_size: usize,
     /// Required size of the third preemption buffer.
     pub(crate) preempt3_size: usize,
+
+    pub(crate) clustering: Option<HwClusteringConfig>,
 
     /// Rendering-relevant configuration.
     pub(crate) render: HwRenderConfig,
