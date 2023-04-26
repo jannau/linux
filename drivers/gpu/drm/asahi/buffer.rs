@@ -36,7 +36,7 @@ use crate::debug::*;
 use crate::fw::buffer;
 use crate::fw::types::*;
 use crate::util::*;
-use crate::{alloc, fw, gpu, mmu, slotalloc};
+use crate::{alloc, fw, gpu, hw, mmu, slotalloc};
 use crate::{box_in_place, place};
 use core::sync::atomic::Ordering;
 use kernel::prelude::*;
@@ -93,8 +93,6 @@ pub(crate) struct TileInfo {
     pub(crate) meta1_blocks: u32,
     /// Minimum number of TVB blocks for this render.
     pub(crate) min_tvb_blocks: usize,
-    /// XXX: Allocation factor for cluster tilemaps and meta4. Always 2?
-    pub(crate) cluster_factor: usize,
     /// Tiling parameter structure passed to firmware.
     pub(crate) params: fw::vertex::raw::TilingParameters,
 }
@@ -292,6 +290,7 @@ struct BufferInner {
     tpc: Option<Arc<GpuArray<u8>>>,
     kernel_buffer: GpuArray<u8>,
     stats: GpuObject<buffer::Stats>,
+    cfg: &'static hw::HwConfig,
     preempt1_size: usize,
     preempt2_size: usize,
     preempt3_size: usize,
@@ -407,6 +406,7 @@ impl Buffer::ver {
                 tpc: None,
                 kernel_buffer,
                 stats,
+                cfg: gpu.get_cfg(),
                 preempt1_size,
                 preempt2_size,
                 preempt3_size,
@@ -521,8 +521,8 @@ impl Buffer::ver {
 
         // This seems to be a list, with 4x2 bytes of headers and 8 bytes per entry.
         // On single-cluster devices, the used length always seems to be 1.
-        // On M1 Ultra, it can grow and usually doesn't exceed 8 * cluster_factor
-        // entries. macOS allocates a whole 64K * 0x80 for this, so let's go with
+        // On M1 Ultra, it can grow and usually doesn't exceed 64 entries.
+        // macOS allocates a whole 64K * 0x80 for this, so let's go with
         // that to be safe...
         let user_buffer = inner.ualloc.lock().array_empty(if inner.num_clusters > 1 {
             0x10080
@@ -562,22 +562,27 @@ impl Buffer::ver {
             }
         };
 
-        // Maybe: (4x4 macro tiles + 1 global page)*n, 32bit each (17*4*n)
-        let meta1_size = align(tile_info.meta1_blocks as usize * 0x44, 0x80);
-        // check
-        let meta2_size = align(0x190 * inner.num_clusters, 0x80);
-        let meta3_size = align(0x280 * inner.num_clusters, 0x80);
-        // Like user_buffer for single-cluster modes, 0x30 per cluster * the cluster
-        // factor.
-        let meta4_size = align(0x30 * inner.num_clusters * tile_info.cluster_factor, 0x80);
-        let meta_size = meta1_size + meta2_size + meta3_size + meta4_size;
+        let mut meta1_size = 0;
+        let mut meta2_size = 0;
+        let mut meta3_size = 0;
 
         let clustering = if inner.num_clusters > 1 {
+            let cfg = inner.cfg.clustering.as_ref().unwrap();
+
+            // Maybe: (4x4 macro tiles + 1 global page)*n, 32bit each (17*4*n)
+            // Unused on t602x?
+            meta1_size = align(tile_info.meta1_blocks as usize * cfg.meta1_blocksize, 0x80);
+            meta2_size = align(cfg.meta2_size, 0x80);
+            meta3_size = align(cfg.meta3_size, 0x80);
+            let meta4_size = cfg.meta4_size;
+
+            let meta_size = meta1_size + meta2_size + meta3_size + meta4_size;
+
             mod_pr_debug!("Buffer: Allocating clustering buffers\n");
             let tilemaps = inner
                 .ualloc
                 .lock()
-                .array_empty(inner.num_clusters * tilemap_size * tile_info.cluster_factor)?;
+                .array_empty(cfg.max_splits * tilemap_size)?;
             let meta = inner.ualloc.lock().array_empty(meta_size)?;
             Some(buffer::ClusterBuffers { tilemaps, meta })
         } else {
