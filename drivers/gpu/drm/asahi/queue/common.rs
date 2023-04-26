@@ -36,13 +36,19 @@ pub(super) fn build_attachments(pointer: u64, count: u32) -> Result<microseq::At
         // SAFETY: All bit patterns in the struct are valid
         let att = unsafe { att.assume_init() };
 
+        if att.flags != 0 {
+            return Err(EINVAL);
+        }
+        if att.order < 1 || att.order > 6 {
+            return Err(EINVAL);
+        }
+
         let cache_lines = (att.size + 127) >> 7;
-        let order = 1;
         attachments.list[i as usize] = microseq::Attachment {
             address: U64(att.pointer),
-            size: cache_lines,
+            size: cache_lines.try_into()?,
             unk_c: 0x17,
-            unk_e: order,
+            unk_e: att.order as u16,
         };
 
         attachments.count += 1;

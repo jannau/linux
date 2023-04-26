@@ -222,8 +222,7 @@ impl super::Queue::ver {
                 | uapi::ASAHI_RENDER_MEMORYLESS_RTS_USED
                 | uapi::ASAHI_RENDER_PROCESS_EMPTY_TILES
                 | uapi::ASAHI_RENDER_NO_VERTEX_CLUSTERING
-                | uapi::ASAHI_RENDER_MSAA_ZS
-                | uapi::ASAHI_RENDER_UNK_FLAG1) as u64
+                | uapi::ASAHI_RENDER_MSAA_ZS) as u64
             != 0
         {
             return Err(EINVAL);
@@ -394,7 +393,7 @@ impl super::Queue::ver {
 
         let timestamps = Arc::try_new(kalloc.shared.new_default::<fw::job::RenderTimestamps>()?)?;
 
-        let unk1 = cmdbuf.flags & uapi::ASAHI_RENDER_UNK_FLAG1 as u64 != 0;
+        let unk1 = false;
 
         let mut tile_config: u64 = 0;
         if !unk1 {
@@ -495,8 +494,8 @@ impl super::Queue::ver {
                     unk_84: unk1.into(),
                     uuid: uuid_3d,
                     attachments: common::build_attachments(
-                        cmdbuf.attachments,
-                        cmdbuf.attachment_count,
+                        cmdbuf.fragment_attachments,
+                        cmdbuf.fragment_attachment_count,
                     )?,
                     padding: 0,
                     #[ver(V >= V13_0B4)]
@@ -573,7 +572,7 @@ impl super::Queue::ver {
                     #[ver(G == G14 && V < V13_0B4)]
                     unk_8c_g14: U64(0),
                     restart_branch_offset: off,
-                    has_attachments: (cmdbuf.attachment_count > 0) as u32,
+                    has_attachments: (cmdbuf.fragment_attachment_count > 0) as u32,
                     #[ver(V >= V13_0B4)]
                     unk_9c: Default::default(),
                 })?;
@@ -645,20 +644,20 @@ impl super::Queue::ver {
                             unk_58_g14_0: U64(0x4040404),
                             #[ver(G >= G14)]
                             unk_58_g14_8: U64(0),
-                            depth_buffer_ptr1: U64(cmdbuf.depth_buffer_1),
-                            depth_buffer_ptr2: U64(cmdbuf.depth_buffer_2),
-                            stencil_buffer_ptr1: U64(cmdbuf.stencil_buffer_1),
-                            stencil_buffer_ptr2: U64(cmdbuf.stencil_buffer_2),
+                            depth_buffer_ptr1: U64(cmdbuf.depth_buffer_load),
+                            depth_buffer_ptr2: U64(cmdbuf.depth_buffer_store),
+                            stencil_buffer_ptr1: U64(cmdbuf.stencil_buffer_load),
+                            stencil_buffer_ptr2: U64(cmdbuf.stencil_buffer_store),
                             #[ver(G >= G14)]
                             unk_68_g14_0: Default::default(),
                             unk_78: Default::default(),
-                            depth_meta_buffer_ptr1: U64(cmdbuf.depth_meta_buffer_1),
+                            depth_meta_buffer_ptr1: U64(cmdbuf.depth_meta_buffer_load),
                             unk_a0: Default::default(),
-                            depth_meta_buffer_ptr2: U64(cmdbuf.depth_meta_buffer_2),
+                            depth_meta_buffer_ptr2: U64(cmdbuf.depth_meta_buffer_store),
                             unk_b0: Default::default(),
-                            stencil_meta_buffer_ptr1: U64(cmdbuf.stencil_meta_buffer_1),
+                            stencil_meta_buffer_ptr1: U64(cmdbuf.stencil_meta_buffer_load),
                             unk_c0: Default::default(),
-                            stencil_meta_buffer_ptr2: U64(cmdbuf.stencil_meta_buffer_2),
+                            stencil_meta_buffer_ptr2: U64(cmdbuf.stencil_meta_buffer_store),
                             unk_d0: Default::default(),
                             tvb_tilemap: inner.scene.tvb_tilemap_pointer(),
                             tvb_heapmeta: inner.scene.tvb_heapmeta_pointer(),
@@ -744,10 +743,10 @@ impl super::Queue::ver {
                                 r.add(0x15319, cmdbuf.zls_ctrl); // ISP_ZLSCTL
                                 r.add(0x15349, 0x4040404); // s2.unk_58_g14_0
                                 r.add(0x15351, 0); // s2.unk_58_g14_8
-                                r.add(0x15329, cmdbuf.depth_buffer_1); // ISP_ZLOAD_BASE
-                                r.add(0x15331, cmdbuf.depth_buffer_2); // ISP_ZSTORE_BASE
-                                r.add(0x15339, cmdbuf.stencil_buffer_1); // ISP_STENCIL_LOAD_BASE
-                                r.add(0x15341, cmdbuf.stencil_buffer_2); // ISP_STENCIL_STORE_BASE
+                                r.add(0x15329, cmdbuf.depth_buffer_load); // ISP_ZLOAD_BASE
+                                r.add(0x15331, cmdbuf.depth_buffer_store); // ISP_ZSTORE_BASE
+                                r.add(0x15339, cmdbuf.stencil_buffer_load); // ISP_STENCIL_LOAD_BASE
+                                r.add(0x15341, cmdbuf.stencil_buffer_store); // ISP_STENCIL_STORE_BASE
                                 r.add(0x15231, 0);
                                 r.add(0x15221, 0);
                                 r.add(0x15239, 0);
@@ -756,13 +755,13 @@ impl super::Queue::ver {
                                 r.add(0x15421, 0);
                                 r.add(0x15409, 0);
                                 r.add(0x15429, 0);
-                                r.add(0x153c1, cmdbuf.depth_meta_buffer_1);
+                                r.add(0x153c1, cmdbuf.depth_meta_buffer_load);
                                 r.add(0x15411, 0);
-                                r.add(0x153c9, cmdbuf.depth_meta_buffer_2);
+                                r.add(0x153c9, cmdbuf.depth_meta_buffer_store);
                                 r.add(0x15431, 0);
-                                r.add(0x153d1, cmdbuf.stencil_meta_buffer_1);
+                                r.add(0x153d1, cmdbuf.stencil_meta_buffer_load);
                                 r.add(0x15419, 0);
-                                r.add(0x153d9, cmdbuf.stencil_meta_buffer_2);
+                                r.add(0x153d9, cmdbuf.stencil_meta_buffer_store);
                                 r.add(0x15439, 0);
                                 r.add(0x16429, inner.scene.tvb_tilemap_pointer().into());
                                 r.add(0x16060, inner.scene.tvb_heapmeta_pointer().into());
@@ -819,18 +818,18 @@ impl super::Queue::ver {
                             unk_290: U64(0x4040404),
                             #[ver(G < G14X)]
                             unk_290: U64(0x0),
-                            depth_buffer_ptr1: U64(cmdbuf.depth_buffer_1),
+                            depth_buffer_ptr1: U64(cmdbuf.depth_buffer_load),
                             unk_2a0: U64(0x0),
                             unk_2a8: U64(0x0),
-                            depth_buffer_ptr2: U64(cmdbuf.depth_buffer_2),
-                            depth_buffer_ptr3: U64(cmdbuf.depth_buffer_3),
-                            depth_meta_buffer_ptr3: U64(cmdbuf.depth_meta_buffer_3),
-                            stencil_buffer_ptr1: U64(cmdbuf.stencil_buffer_1),
+                            depth_buffer_ptr2: U64(cmdbuf.depth_buffer_store),
+                            depth_buffer_ptr3: U64(cmdbuf.depth_buffer_reload),
+                            depth_meta_buffer_ptr3: U64(cmdbuf.depth_meta_buffer_reload),
+                            stencil_buffer_ptr1: U64(cmdbuf.stencil_buffer_load),
                             unk_2d0: U64(0x0),
                             unk_2d8: U64(0x0),
-                            stencil_buffer_ptr2: U64(cmdbuf.stencil_buffer_2),
-                            stencil_buffer_ptr3: U64(cmdbuf.stencil_buffer_3),
-                            stencil_meta_buffer_ptr3: U64(cmdbuf.stencil_meta_buffer_3),
+                            stencil_buffer_ptr2: U64(cmdbuf.stencil_buffer_store),
+                            stencil_buffer_ptr3: U64(cmdbuf.stencil_buffer_reload),
+                            stencil_meta_buffer_ptr3: U64(cmdbuf.stencil_meta_buffer_reload),
                             unk_2f8: Default::default(),
                             tib_blocks: cmdbuf.tib_blocks,
                             unk_30c: 0x0,
@@ -866,8 +865,8 @@ impl super::Queue::ver {
                             unk_8: (cmdbuf.flags
                                 & uapi::ASAHI_RENDER_SET_WHEN_RELOADING_Z_OR_S as u64
                                 != 0) as u32,
-                            large_tib: large_tib as u32, // fixed
-                            unk_10: 0x0,                 // fixed
+                            large_tib: large_tib as u32,
+                            unk_10: 0x0, // fixed
                             encoder_id: cmdbuf.encoder_id,
                             unk_18: 0x0, // fixed
                             iogpu_compute_unk44: 0xffffffff,
@@ -1013,7 +1012,10 @@ impl super::Queue::ver {
                     unk_64: 0x0, // fixed
                     unk_68: unk1.into(),
                     uuid: uuid_ta,
-                    attachments: Default::default(), // TODO: Vertex attachments
+                    attachments: common::build_attachments(
+                        cmdbuf.vertex_attachments,
+                        cmdbuf.vertex_attachment_count,
+                    )?,
                     padding: 0,
                     #[ver(V >= V13_0B4)]
                     counter: U64(count_vtx),
@@ -1085,7 +1087,7 @@ impl super::Queue::ver {
                     #[ver(G >= G14 && V < V13_0B4)]
                     unk_68_g14: U64(0),
                     restart_branch_offset: off,
-                    has_attachments: 0, // TODO: Vertex attachments
+                    has_attachments: (cmdbuf.vertex_attachment_count > 0) as u32,
                     #[ver(V >= V13_0B4)]
                     unk_74: Default::default(), // Ventura
                 })?;
