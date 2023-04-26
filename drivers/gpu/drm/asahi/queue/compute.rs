@@ -298,7 +298,7 @@ impl super::Queue::ver {
                             encoder_id: cmdbuf.encoder_id,
                             unk_18: 0x0, // fixed
                             iogpu_compute_unk44: cmdbuf.iogpu_unk_44,
-                            seq_buffer: inner.seq_buf.gpu_pointer(),
+                            seq_buffer: U64(inner.seq_buf.gpu_pointer().into()),
                             unk_28: U64(0x0), // fixed
                         },
                         meta: fw::job::raw::JobMeta {

@@ -234,7 +234,7 @@ pub(crate) mod raw {
         pub(crate) busy_flag: u32,
         pub(crate) tvb_overflow_count: u32,
         pub(crate) unk_878: u32,
-        pub(crate) encoder_params: job::raw::EncoderParams<'a>,
+        pub(crate) encoder_params: job::raw::EncoderParams,
         pub(crate) process_empty_tiles: u32,
         pub(crate) no_clear_pipeline_textures: u32,
         pub(crate) msaa_zs: u32,

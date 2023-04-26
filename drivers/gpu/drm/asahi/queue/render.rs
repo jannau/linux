@@ -248,6 +248,46 @@ impl super::Queue::ver {
             return Err(EINVAL);
         }
 
+        let mut unks: uapi::drm_asahi_cmd_render_unknowns = Default::default();
+
+        let mut ext_ptr = cmdbuf.extensions;
+        while ext_ptr != 0 {
+            let ext_type = u32::from_ne_bytes(
+                unsafe { UserSlicePtr::new(ext_ptr as usize as *mut _, 4) }
+                    .read_all()?
+                    .try_into()
+                    .or(Err(EINVAL))?,
+            );
+
+            match ext_type {
+                uapi::ASAHI_RENDER_EXT_UNKNOWNS => {
+                    if !debug_enabled(debug::DebugFlags::AllowUnknownOverrides) {
+                        return Err(EINVAL);
+                    }
+                    let mut ext_reader = unsafe {
+                        UserSlicePtr::new(
+                            ext_ptr as usize as *mut _,
+                            core::mem::size_of::<uapi::drm_asahi_cmd_render_unknowns>(),
+                        )
+                        .reader()
+                    };
+                    unsafe {
+                        ext_reader.read_raw(
+                            &mut unks as *mut _ as *mut u8,
+                            core::mem::size_of::<uapi::drm_asahi_cmd_render_unknowns>(),
+                        )?;
+                    }
+
+                    ext_ptr = unks.next;
+                }
+                _ => return Err(EINVAL),
+            }
+        }
+
+        if unks.pad != 0 {
+            return Err(EINVAL);
+        }
+
         let dev = self.dev.data();
         let gpu = match dev.gpu.as_any().downcast_ref::<gpu::GpuManager::ver>() {
             Some(gpu) => gpu,
@@ -270,7 +310,7 @@ impl super::Queue::ver {
         }
 
         #[ver(G != G14)]
-        let tiling_control = {
+        let mut tiling_control = {
             let render_cfg = gpu.get_cfg().render;
             let mut tiling_control = render_cfg.tiling_control;
 
@@ -393,7 +433,7 @@ impl super::Queue::ver {
 
         let timestamps = Arc::try_new(kalloc.shared.new_default::<fw::job::RenderTimestamps>()?)?;
 
-        let unk1 = false;
+        let unk1 = unks.flags & uapi::ASAHI_RENDER_UNK_UNK1 as u64 != 0;
 
         let mut tile_config: u64 = 0;
         if !unk1 {
@@ -446,7 +486,104 @@ impl super::Queue::ver {
         #[ver(V >= V13_0B4)]
         let count_vtx = count_frag + 1;
 
-        let large_tib = cmdbuf.tib_blocks > 8;
+        let mut large_tib = cmdbuf.tib_blocks > 8;
+
+        // Unknowns handling
+
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_TILE_CONFIG as u64 != 0 {
+            tile_config = unks.tile_config;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_UTILE_CONFIG as u64 != 0 {
+            utile_config = unks.utile_config as u32;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_LARGE_TIB as u64 != 0 {
+            large_tib = true;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SMALL_TIB as u64 != 0 {
+            large_tib = false;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_AUX_FB_UNK as u64 == 0 {
+            unks.aux_fb_unk = 0x100000;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_G14_UNK as u64 == 0 {
+            unks.g14_unk = 0x4040404;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_FRG_UNK_140 as u64 == 0 {
+            unks.frg_unk_140 = 0x8c60;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_FRG_UNK_158 as u64 == 0 {
+            unks.frg_unk_158 = 0x1c;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_FRG_TILECFG as u64 == 0 {
+            unks.frg_tilecfg = 0x0000000_00036011
+                | (((tile_info.tiles_x - 1) as u64) << 44)
+                | (((tile_info.tiles_y - 1) as u64) << 53)
+                | (if unk1 { 0 } else { 0x20_00000000 })
+                | ((utile_config as u64 & 0xf000) << 28);
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_LOAD_BGOBJVALS as u64 == 0 {
+            unks.load_bgobjvals = cmdbuf.isp_bgobjvals.into();
+            #[ver(G < G14X)]
+            unks.load_bgobjvals |= 0x400;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_FRG_UNK_38 as u64 == 0 {
+            unks.frg_unk_38 = 0;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_FRG_UNK_3C as u64 == 0 {
+            unks.frg_unk_3c = 1;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_FRG_UNK_40 as u64 == 0 {
+            unks.frg_unk_40 = 0;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_RELOAD_ZLSCTRL as u64 == 0 {
+            unks.reload_zlsctrl = cmdbuf.zls_ctrl;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_UNK_BUF_10 as u64 == 0 {
+            #[ver(G < G14X)]
+            unks.unk_buf_10 = 1;
+            #[ver(G >= G14X)]
+            unks.unk_buf_10 = 0;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_FRG_IGCMPUNK44 as u64 == 0 {
+            unks.frg_iogpucmp_unk44 = 0xffffffff;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_FRG_SEQ_BUFFER as u64 == 0 {
+            unks.frg_seq_buffer = scene.seq_buf_pointer().into();
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_IOGPU_UNK54 as u64 == 0 {
+            unks.iogpu_unk54 = 0x3a0012006b0003;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_IOGPU_UNK56 as u64 == 0 {
+            unks.iogpu_unk56 = 1;
+        }
+        #[ver(G != G14)]
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_TILING_CONTROL as u64 != 0 {
+            tiling_control = unks.tiling_control as u32;
+        }
+        #[ver(G != G14)]
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_TILING_CONTROL_2 as u64 == 0 {
+            #[ver(G < G14X)]
+            unks.tiling_control_2 = 0;
+            #[ver(G >= G14X)]
+            unks.tiling_control_2 = 4;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_VTX_UNK_F0 as u64 == 0 {
+            unks.vtx_unk_f0 = 0x1c;
+            #[ver(G < G14X)]
+            unks.vtx_unk_f0 += align(tile_info.meta1_blocks, 4) as u64;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_VTX_UNK_F8 as u64 == 0 {
+            unks.vtx_unk_f8 = 0x8c60;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_VTX_UNK_118 as u64 == 0 {
+            unks.vtx_unk_118 = 0x1c;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_VTX_IGCMPUNK44 as u64 == 0 {
+            unks.vtx_iogpucmp_unk44 = 0xffffffff;
+        }
+        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_VTX_SEQ_BUFFER as u64 == 0 {
+            unks.vtx_seq_buffer = scene.seq_buf_pointer().into();
+        }
 
         mod_dev_dbg!(self.dev, "[Submission {}] Create Frag\n", id);
         let frag = GpuObject::new_prealloc(
@@ -597,7 +734,7 @@ impl super::Queue::ver {
                     width: cmdbuf.fb_width,
                     height: cmdbuf.fb_height,
                     #[ver(V >= V13_0B4)]
-                    unk3: U64(0x100000),
+                    unk3: U64(unks.aux_fb_unk),
                 };
 
                 Ok(place!(
@@ -641,7 +778,7 @@ impl super::Queue::ver {
                             visibility_result_buffer: U64(cmdbuf.visibility_result_buffer),
                             zls_ctrl: U64(cmdbuf.zls_ctrl),
                             #[ver(G >= G14)]
-                            unk_58_g14_0: U64(0x4040404),
+                            unk_58_g14_0: U64(unks.g14_unk),
                             #[ver(G >= G14)]
                             unk_58_g14_8: U64(0),
                             depth_buffer_ptr1: U64(cmdbuf.depth_buffer_load),
@@ -667,10 +804,10 @@ impl super::Queue::ver {
                             aux_fb: inner.aux_fb.gpu_pointer(),
                             unk_108: Default::default(),
                             pipeline_base: U64(0x11_00000000),
-                            unk_140: U64(0x8c60),
+                            unk_140: U64(unks.frg_unk_140),
                             unk_148: U64(0x0),
                             unk_150: U64(0x0),
-                            unk_158: U64(0x1c),
+                            unk_158: U64(unks.frg_unk_158),
                             unk_160: U64(0),
                             __pad: Default::default(),
                             #[ver(V < V13_0B4)]
@@ -692,10 +829,10 @@ impl super::Queue::ver {
                             tib_blocks: cmdbuf.tib_blocks,
                             isp_bgobjdepth: cmdbuf.isp_bgobjdepth,
                             // TODO: does this flag need to be exposed to userspace?
-                            isp_bgobjvals: cmdbuf.isp_bgobjvals | 0x400,
-                            unk_38: 0x0,
-                            unk_3c: 0x1,
-                            unk_40: 0,
+                            isp_bgobjvals: unks.load_bgobjvals as u32,
+                            unk_38: unks.frg_unk_38 as u32,
+                            unk_3c: unks.frg_unk_3c as u32,
+                            unk_40: unks.frg_unk_40 as u32,
                             __pad: Default::default(),
                         },
                         #[ver(G >= G14X)]
@@ -734,14 +871,14 @@ impl super::Queue::ver {
                                     0x15211,
                                     ((cmdbuf.fb_height as u64) << 32) | cmdbuf.fb_width as u64,
                                 ); // aux_fb_info.{width, heigh
-                                r.add(0x15049, 0x100000); // s2.aux_fb_info.unk3
+                                r.add(0x15049, unks.aux_fb_unk); // s2.aux_fb_info.unk3
                                 r.add(0x10051, cmdbuf.tib_blocks.into()); // s1.unk_2c
                                 r.add(0x15321, cmdbuf.depth_dimensions.into()); // ISP_ZLS_PIXELS
                                 r.add(0x15301, cmdbuf.isp_bgobjdepth.into()); // ISP_BGOBJDEPTH
-                                r.add(0x15309, cmdbuf.isp_bgobjvals.into()); // ISP_BGOBJVALS
+                                r.add(0x15309, unks.load_bgobjvals); // ISP_BGOBJVALS
                                 r.add(0x15311, cmdbuf.visibility_result_buffer); // ISP_OCLQRY_BASE
                                 r.add(0x15319, cmdbuf.zls_ctrl); // ISP_ZLSCTL
-                                r.add(0x15349, 0x4040404); // s2.unk_58_g14_0
+                                r.add(0x15349, unks.g14_unk); // s2.unk_58_g14_0
                                 r.add(0x15351, 0); // s2.unk_58_g14_8
                                 r.add(0x15329, cmdbuf.depth_buffer_load); // ISP_ZLOAD_BASE
                                 r.add(0x15331, cmdbuf.depth_buffer_store); // ISP_ZSTORE_BASE
@@ -776,16 +913,9 @@ impl super::Queue::ver {
                                 r.add(0x16020, 0);
                                 r.add(0x16461, inner.aux_fb.gpu_pointer().into());
                                 r.add(0x16090, inner.aux_fb.gpu_pointer().into());
-                                r.add(0x120a1, 0x1c); // s2.unk_158
+                                r.add(0x120a1, unks.frg_unk_158);
                                 r.add(0x160a8, 0);
-                                r.add(
-                                    0x16068,
-                                    0x0000000_00036011
-                                        | (((tile_info.tiles_x - 1) as u64) << 44)
-                                        | (((tile_info.tiles_y - 1) as u64) << 53)
-                                        | (if unk1 { 0 } else { 0x20_00000000 })
-                                        | ((utile_config as u64 & 0xf000) << 28),
-                                );
+                                r.add(0x16068, unks.frg_tilecfg);
                                 r.add(0x160b8, 0x0);
                             }
                         ),
@@ -813,23 +943,23 @@ impl super::Queue::ver {
                                 pipeline_bind: U64(cmdbuf.partial_reload_pipeline_bind as u64),
                                 address: U64(cmdbuf.partial_reload_pipeline as u64),
                             },
-                            zls_ctrl: U64(cmdbuf.zls_ctrl),
+                            zls_ctrl: U64(unks.reload_zlsctrl),
                             #[ver(G >= G14X)]
-                            unk_290: U64(0x4040404),
+                            unk_290: U64(unks.g14_unk),
                             #[ver(G < G14X)]
                             unk_290: U64(0x0),
                             depth_buffer_ptr1: U64(cmdbuf.depth_buffer_load),
                             unk_2a0: U64(0x0),
                             unk_2a8: U64(0x0),
                             depth_buffer_ptr2: U64(cmdbuf.depth_buffer_store),
-                            depth_buffer_ptr3: U64(cmdbuf.depth_buffer_reload),
-                            depth_meta_buffer_ptr3: U64(cmdbuf.depth_meta_buffer_reload),
+                            depth_buffer_ptr3: U64(cmdbuf.depth_buffer_partial),
+                            depth_meta_buffer_ptr3: U64(cmdbuf.depth_meta_buffer_partial),
                             stencil_buffer_ptr1: U64(cmdbuf.stencil_buffer_load),
                             unk_2d0: U64(0x0),
                             unk_2d8: U64(0x0),
                             stencil_buffer_ptr2: U64(cmdbuf.stencil_buffer_store),
-                            stencil_buffer_ptr3: U64(cmdbuf.stencil_buffer_reload),
-                            stencil_meta_buffer_ptr3: U64(cmdbuf.stencil_meta_buffer_reload),
+                            stencil_buffer_ptr3: U64(cmdbuf.stencil_buffer_partial),
+                            stencil_meta_buffer_ptr3: U64(cmdbuf.stencil_meta_buffer_partial),
                             unk_2f8: Default::default(),
                             tib_blocks: cmdbuf.tib_blocks,
                             unk_30c: 0x0,
@@ -869,8 +999,8 @@ impl super::Queue::ver {
                             unk_10: 0x0, // fixed
                             encoder_id: cmdbuf.encoder_id,
                             unk_18: 0x0, // fixed
-                            iogpu_compute_unk44: 0xffffffff,
-                            seq_buffer: inner.scene.seq_buf_pointer(),
+                            iogpu_compute_unk44: unks.frg_iogpucmp_unk44 as u32,
+                            seq_buffer: U64(unks.frg_seq_buffer),
                             unk_28: U64(0x0), // fixed
                         },
                         process_empty_tiles: (cmdbuf.flags
@@ -1135,9 +1265,8 @@ impl super::Queue::ver {
                                 .scene
                                 .tvb_heapmeta_pointer()
                                 .or(0x8000_0000_0000_0000),
-                            iogpu_unk_54: 0x6b0003, // fixed
-                            iogpu_unk_55: 0x3a0012, // fixed
-                            iogpu_unk_56: U64(0x1), // fixed
+                            iogpu_unk_54: U64(unks.iogpu_unk54), // fixed
+                            iogpu_unk_56: U64(unks.iogpu_unk56), // fixed
                             #[ver(G < G14)]
                             tvb_cluster_meta1: inner
                                 .scene
@@ -1169,7 +1298,7 @@ impl super::Queue::ver {
                             #[ver(G < G14)]
                             tiling_control: tiling_control,
                             #[ver(G < G14)]
-                            unk_ac: Default::default(), // fixed
+                            unk_ac: unks.tiling_control_2 as u32, // fixed
                             unk_b0: Default::default(), // fixed
                             pipeline_base: U64(0x11_00000000),
                             #[ver(G < G14)]
@@ -1178,10 +1307,10 @@ impl super::Queue::ver {
                                 .meta_4_pointer()
                                 .map(|x| x.or(0x3000_0000_0000_0000)),
                             #[ver(G < G14)]
-                            unk_f0: U64(0x1c + align(tile_info.meta1_blocks, 4) as u64),
-                            unk_f8: U64(0x8c60),         // fixed
-                            unk_100: Default::default(), // fixed
-                            unk_118: 0x1c,               // fixed
+                            unk_f0: U64(unks.vtx_unk_f0),
+                            unk_f8: U64(unks.vtx_unk_f8),     // fixed
+                            unk_100: Default::default(),      // fixed
+                            unk_118: unks.vtx_unk_118 as u32, // fixed
                             __pad: Default::default(),
                         },
                         #[ver(G < G14X)]
@@ -1209,8 +1338,8 @@ impl super::Queue::ver {
                                     .into();
                                 r.add(0x1c031, tvb_heapmeta_ptr);
                                 r.add(0x1c9c0, tvb_heapmeta_ptr);
-                                r.add(0x1c051, 0x3a0012006b0003); // iogpu_unk_54/55
-                                r.add(0x1c061, 1); // iogpu_unk_56
+                                r.add(0x1c051, unks.iogpu_unk54); // iogpu_unk_54/55
+                                r.add(0x1c061, unks.iogpu_unk56); // iogpu_unk_56
                                 r.add(0x10149, utile_config.into()); // s2.unk_48 utile_config
                                 r.add(0x10139, cmdbuf.ppp_multisamplectl); // PPP_MULTISAMPLECTL
                                 r.add(0x10111, inner.scene.preempt_buf_1_pointer().into());
@@ -1238,7 +1367,7 @@ impl super::Queue::ver {
                                     inner.scene.meta_3_pointer().map_or(0, |a| a.into()),
                                 ); // tvb_cluster_meta3
                                 r.add(0x1c890, tiling_control.into()); // tvb_tiling_control
-                                r.add(0x1c918, 0x4);
+                                r.add(0x1c918, unks.tiling_control_2);
                                 r.add(0x1c079, inner.scene.tvb_heapmeta_pointer().into());
                                 r.add(0x1c9d8, inner.scene.tvb_heapmeta_pointer().into());
                                 r.add(0x1c089, 0);
@@ -1247,7 +1376,7 @@ impl super::Queue::ver {
                                     inner.scene.meta_4_pointer().map_or(0, |a| a.into());
                                 r.add(0x16c41, cl_meta_4_pointer); // tvb_cluster_meta4
                                 r.add(0x1ca40, cl_meta_4_pointer); // tvb_cluster_meta4
-                                r.add(0x1c9a8, 0x1c); // + meta1_blocks? min_free_tvb_pages?
+                                r.add(0x1c9a8, unks.vtx_unk_f0); // + meta1_blocks? min_free_tvb_pages?
                                 r.add(
                                     0x1c920,
                                     inner.scene.meta_1_pointer().map_or(0, |a| a.into()),
@@ -1278,7 +1407,7 @@ impl super::Queue::ver {
                                 r.add(0x1c0a9, tile_info.params.tpc_stride.into()); // TE_TPC
                                 r.add(0x10171, tile_info.params.unk_24.into());
                                 r.add(0x10169, tile_info.params.unk_28.into()); // TA_RENDER_TARGET_MAX
-                                r.add(0x12099, 0x1c);
+                                r.add(0x12099, unks.vtx_unk_118);
                                 r.add(0x1c9e8, 0);
                             }
                         ),
@@ -1311,8 +1440,8 @@ impl super::Queue::ver {
                             unk_10: 0x0,    // fixed
                             encoder_id: cmdbuf.encoder_id,
                             unk_18: 0x0, // fixed
-                            iogpu_compute_unk44: 0xffffffff,
-                            seq_buffer: inner.scene.seq_buf_pointer(),
+                            iogpu_compute_unk44: unks.vtx_iogpucmp_unk44 as u32,
+                            seq_buffer: U64(unks.vtx_seq_buffer),
                             unk_28: U64(0x0), // fixed
                         },
                         unk_55c: 0,

@@ -26,14 +26,14 @@ pub(crate) mod raw {
 
     #[derive(Debug)]
     #[repr(C)]
-    pub(crate) struct EncoderParams<'a> {
+    pub(crate) struct EncoderParams {
         pub(crate) unk_8: u32,
         pub(crate) large_tib: u32,
         pub(crate) unk_10: u32,
         pub(crate) encoder_id: u32,
         pub(crate) unk_18: u32,
         pub(crate) iogpu_compute_unk44: u32,
-        pub(crate) seq_buffer: GpuPointer<'a, &'a [u64]>,
+        pub(crate) seq_buffer: U64,
         pub(crate) unk_28: U64,
     }
 

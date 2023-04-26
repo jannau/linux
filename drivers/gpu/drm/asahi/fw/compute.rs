@@ -63,7 +63,7 @@ pub(crate) mod raw {
         pub(crate) microsequence: GpuPointer<'a, &'a [u8]>,
         pub(crate) microsequence_size: u32,
         pub(crate) job_params2: JobParameters2::ver<'a>,
-        pub(crate) encoder_params: job::raw::EncoderParams<'a>,
+        pub(crate) encoder_params: job::raw::EncoderParams,
         pub(crate) meta: job::raw::JobMeta,
         pub(crate) cur_ts: U64,
         pub(crate) start_ts: Option<GpuPointer<'a, AtomicU64>>,

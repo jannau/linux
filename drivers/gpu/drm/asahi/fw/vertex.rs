@@ -40,8 +40,7 @@ pub(crate) mod raw {
         pub(crate) tvb_cluster_tilemaps: Option<GpuPointer<'a, &'a [u8]>>,
         pub(crate) tpc: GpuPointer<'a, &'a [u8]>,
         pub(crate) tvb_heapmeta: GpuPointer<'a, &'a [u8]>,
-        pub(crate) iogpu_unk_54: u32,
-        pub(crate) iogpu_unk_55: u32,
+        pub(crate) iogpu_unk_54: U64,
         pub(crate) iogpu_unk_56: U64,
         #[ver(G < G14)]
         pub(crate) tvb_cluster_meta1: Option<GpuPointer<'a, &'a [u8]>>,
@@ -134,7 +133,7 @@ pub(crate) mod raw {
         pub(crate) unk_pointee: u32,
         pub(crate) unk_pad: u32,
         pub(crate) job_params2: JobParameters2<'a>,
-        pub(crate) encoder_params: job::raw::EncoderParams<'a>,
+        pub(crate) encoder_params: job::raw::EncoderParams,
         pub(crate) unk_55c: u32,
         pub(crate) unk_560: u32,
         pub(crate) memoryless_rts_used: u32,
