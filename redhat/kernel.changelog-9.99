@@ -1,3 +1,8 @@
+* Wed Apr 26 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc0.0cfd8703e7da.3]
+- Reset changelog for 6.4 series (Justin M. Forbes)
+- Linux v6.4.0-0.rc0.0cfd8703e7da
+Resolves: 
+
 * Tue Apr 25 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc0.173ea743bf7a.2]
 - Reset RHEL_RELEASE for the 6.4 cycle (Justin M. Forbes)
 - Fix up the RHEL configs for xtables and ipset (Justin M. Forbes)
