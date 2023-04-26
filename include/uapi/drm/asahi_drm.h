@@ -403,7 +403,75 @@ struct drm_asahi_cmd_render {
 	__u32 depth_dimensions;
 	__u32 isp_bgobjdepth;
 	__u32 isp_bgobjvals;
+};
 
+#define ASAHI_RENDER_UNK_UNK1			(1UL << 0)
+#define ASAHI_RENDER_UNK_SET_TILE_CONFIG	(1UL << 1)
+#define ASAHI_RENDER_UNK_SET_UTILE_CONFIG	(1UL << 2)
+#define ASAHI_RENDER_UNK_LARGE_TIB		(1UL << 3)
+#define ASAHI_RENDER_UNK_SMALL_TIB		(1UL << 4)
+#define ASAHI_RENDER_UNK_SET_AUX_FB_UNK		(1UL << 5)
+#define ASAHI_RENDER_UNK_SET_G14_UNK		(1UL << 6)
+#define ASAHI_RENDER_UNK_SET_FRG_UNK_140	(1UL << 7)
+#define ASAHI_RENDER_UNK_SET_FRG_UNK_158	(1UL << 8)
+#define ASAHI_RENDER_UNK_SET_FRG_TILECFG	(1UL << 9)
+#define ASAHI_RENDER_UNK_SET_LOAD_BGOBJVALS	(1UL << 10)
+#define ASAHI_RENDER_UNK_SET_FRG_UNK_38		(1UL << 11)
+#define ASAHI_RENDER_UNK_SET_FRG_UNK_3C		(1UL << 12)
+#define ASAHI_RENDER_UNK_SET_FRG_UNK_40		(1UL << 13)
+#define ASAHI_RENDER_UNK_SET_RELOAD_ZLSCTRL	(1UL << 14)
+#define ASAHI_RENDER_UNK_SET_UNK_BUF_10		(1UL << 15)
+
+#define ASAHI_RENDER_UNK_SET_FRG_IGCMPUNK44	(1UL << 20)
+#define ASAHI_RENDER_UNK_SET_FRG_SEQ_BUFFER	(1UL << 21)
+#define ASAHI_RENDER_UNK_SET_IOGPU_UNK54	(1UL << 22)
+#define ASAHI_RENDER_UNK_SET_IOGPU_UNK56	(1UL << 23)
+#define ASAHI_RENDER_UNK_SET_TILING_CONTROL	(1UL << 24)
+#define ASAHI_RENDER_UNK_SET_TILING_CONTROL_2	(1UL << 25)
+#define ASAHI_RENDER_UNK_SET_VTX_UNK_F0		(1UL << 26)
+#define ASAHI_RENDER_UNK_SET_VTX_UNK_F8		(1UL << 27)
+#define ASAHI_RENDER_UNK_SET_VTX_UNK_118	(1UL << 28)
+#define ASAHI_RENDER_UNK_SET_VTX_IGCMPUNK44	(1UL << 29)
+#define ASAHI_RENDER_UNK_SET_VTX_SEQ_BUFFER	(1UL << 30)
+
+#define ASAHI_RENDER_EXT_UNKNOWNS	0xff00
+
+/* XXX: Do not upstream this struct */
+struct drm_asahi_cmd_render_unknowns {
+	/** @type: Type ID of this extension */
+	__u32 type;
+	__u32 pad;
+	/** @next: Pointer to the next extension struct, if any */
+	__u64 next;
+
+	__u64 flags;
+
+	__u64 tile_config;
+	__u64 utile_config;
+
+	__u64 aux_fb_unk;
+	__u64 g14_unk;
+	__u64 frg_unk_140;
+	__u64 frg_unk_158;
+	__u64 frg_tilecfg;
+	__u64 load_bgobjvals;
+	__u64 frg_unk_38;
+	__u64 frg_unk_3c;
+	__u64 frg_unk_40;
+	__u64 reload_zlsctrl;
+	__u64 unk_buf_10;
+	__u64 frg_iogpucmp_unk44;
+	__u64 frg_seq_buffer;
+
+	__u64 iogpu_unk54;
+	__u64 iogpu_unk56;
+	__u64 tiling_control;
+	__u64 tiling_control_2;
+	__u64 vtx_unk_f0;
+	__u64 vtx_unk_f8;
+	__u64 vtx_unk_118;
+	__u64 vtx_iogpucmp_unk44;
+	__u64 vtx_seq_buffer;
 };
 
 struct drm_asahi_cmd_compute {
@@ -416,10 +484,10 @@ struct drm_asahi_cmd_compute {
 	__u32 attachment_count;
 	__u32 pad;
 
-	__u64 buffer_descriptor;
+	__u64 helper_arg;
 
 	__u32 buffer_descriptor_size; /* ? */
-	__u32 ctx_switch_prog;
+	__u32 helper_program;
 
 	__u32 encoder_id;
 	__u32 cmd_id;
