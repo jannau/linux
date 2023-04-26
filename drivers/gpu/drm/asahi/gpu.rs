@@ -81,9 +81,9 @@ const IOVA_KERN_SHARED_RO_BASE: u64 = 0xffffffaa00000000;
 /// Shared (uncached) read-only firmware structure VA range top.
 const IOVA_KERN_SHARED_RO_TOP: u64 = 0xffffffabffffffff;
 /// GPU/FW shared structure VA range base.
-const IOVA_KERN_GPU_BASE: u64 = 0xffffffaf00000000;
+const IOVA_KERN_GPU_BASE: u64 = 0xffffffac00000000;
 /// GPU/FW shared structure VA range top.
-const IOVA_KERN_GPU_TOP: u64 = 0xffffffafffffffff;
+const IOVA_KERN_GPU_TOP: u64 = 0xffffffadffffffff;
 
 /// GPU/FW low shared structure VA range base.
 const IOVA_KERN_GPU_LOW_BASE: u64 = 0x20_0000_0000;

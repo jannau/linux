@@ -73,6 +73,10 @@ const IOVA_KERN_BASE: usize = 0xffffffa000000000;
 /// Driver-managed kernel top VA
 const IOVA_KERN_TOP: usize = 0xffffffafffffffff;
 
+/// Range reserved for MMIO maps
+const IOVA_KERN_MMIO_BASE: usize = 0xffffffaf00000000;
+const IOVA_KERN_MMIO_TOP: usize = 0xffffffafffffffff;
+
 const TTBR_VALID: u64 = 0x1; // BIT(0)
 const TTBR_ASID_SHIFT: usize = 48;
 
@@ -907,7 +911,7 @@ impl Vm {
         let mut inner = self.inner.lock();
 
         let uat_inner = inner.uat_inner.clone();
-        let node = inner.mm.insert_node(
+        let node = inner.mm.insert_node_in_range(
             MappingInner {
                 owner: self.inner.clone(),
                 uat_inner,
@@ -916,6 +920,11 @@ impl Vm {
                 mapped_size: size,
             },
             (size + UAT_PGSZ) as u64, // Add guard page
+            UAT_PGSZ as u64,
+            0,
+            IOVA_KERN_MMIO_BASE as u64,
+            IOVA_KERN_MMIO_TOP as u64,
+            mm::InsertMode::Best,
         )?;
 
         let iova = node.start() as usize;
