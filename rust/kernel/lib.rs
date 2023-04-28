@@ -18,6 +18,7 @@
 #![feature(dispatch_from_dyn)]
 #![feature(inline_const)]
 #![feature(lint_reasons)]
+#![feature(type_alias_impl_trait)]
 #![feature(unsize)]
 #![allow(stable_features)]
 // Stable in Rust 1.83
