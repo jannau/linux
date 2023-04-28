@@ -16,6 +16,7 @@ use core::cmp;
 use core::sync::atomic::Ordering;
 use kernel::prelude::*;
 use kernel::sync::Arc;
+use kernel::{c_str, static_lock_class};
 
 const DEBUG_CLASS: DebugFlags = DebugFlags::Event;
 
@@ -158,6 +159,9 @@ impl EventManager {
                     gpu_stamp: inner.stamps.weak_item_pointer(slot as usize),
                     gpu_fw_stamp: inner.fw_stamps.weak_item_pointer(slot as usize),
                 },
+                c_str!("EventManager::SlotAllocator"),
+                static_lock_class!(),
+                static_lock_class!(),
             )?,
         })
     }

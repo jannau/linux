@@ -21,8 +21,9 @@ use core::sync::atomic::Ordering;
 use kernel::dma_fence::RawDmaFence;
 use kernel::drm::sched::Job;
 use kernel::io_buffer::IoBufferReader;
+use kernel::new_mutex;
 use kernel::prelude::*;
-use kernel::sync::{smutex::Mutex, Arc};
+use kernel::sync::Arc;
 use kernel::uapi;
 use kernel::user_ptr::UserSlicePtr;
 
@@ -474,7 +475,7 @@ impl super::Queue::ver {
                 }
                 result.result.tvb_size_bytes = buffer.size() as u64;
 
-                Arc::try_new(Mutex::new(result))
+                Arc::pin_init(new_mutex!(result, "render result"))
             })
             .transpose()?;
 

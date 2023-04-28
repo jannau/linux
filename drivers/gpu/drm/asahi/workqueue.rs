@@ -26,7 +26,10 @@ use core::sync::atomic::Ordering;
 use kernel::{
     error::code::*,
     prelude::*,
-    sync::{Arc, Guard, Mutex, UniqueArc},
+    sync::{
+        lock::{mutex::MutexBackend, Guard},
+        Arc, Mutex,
+    },
     uapi,
 };
 
@@ -214,8 +217,10 @@ struct WorkQueueInner {
 
 /// An instance of a work queue.
 #[versions(AGX)]
+#[pin_data]
 pub(crate) struct WorkQueue {
     info_pointer: GpuWeakPointer<QueueInfo::ver>,
+    #[pin]
     inner: Mutex<WorkQueueInner::ver>,
 }
 
@@ -255,7 +260,7 @@ pub(crate) struct Job {
 
 #[versions(AGX)]
 pub(crate) struct JobSubmission<'a> {
-    inner: Option<Guard<'a, Mutex<WorkQueueInner::ver>>>,
+    inner: Option<Guard<'a, WorkQueueInner::ver, MutexBackend>>,
     wptr: u32,
     event_count: usize,
     command_count: usize,
@@ -622,21 +627,18 @@ impl WorkQueue::ver {
             last_submitted: None,
         };
 
-        let mut queue = Pin::from(UniqueArc::try_new(Self {
-            info_pointer: inner.info.weak_pointer(),
-            // SAFETY: `mutex_init!` is called below.
-            inner: unsafe { Mutex::new(inner) },
-        })?);
+        let info_pointer = inner.info.weak_pointer();
 
-        // SAFETY: `inner` is pinned when `queue` is.
-        let pinned = unsafe { queue.as_mut().map_unchecked_mut(|s| &mut s.inner) };
-        match pipe_type {
-            PipeType::Vertex => kernel::mutex_init!(pinned, "WorkQueue::inner (Vertex)"),
-            PipeType::Fragment => kernel::mutex_init!(pinned, "WorkQueue::inner (Fragment)"),
-            PipeType::Compute => kernel::mutex_init!(pinned, "WorkQueue::inner (Compute)"),
-        }
+        let mutex_init = match pipe_type {
+            PipeType::Vertex => kernel::new_mutex!(inner, "WorkQueue::inner (Vertex)"),
+            PipeType::Fragment => kernel::new_mutex!(inner, "WorkQueue::inner (Fragment)"),
+            PipeType::Compute => kernel::new_mutex!(inner, "WorkQueue::inner (Compute)"),
+        };
 
-        Ok(queue.into())
+        Arc::pin_init(pin_init!(Self {
+            info_pointer,
+            inner <- mutex_init,
+        }))
     }
 
     pub(crate) fn event_info(&self) -> Option<QueueEventInfo::ver> {
@@ -879,12 +881,5 @@ impl WorkQueue for WorkQueue::ver {
             cmd.mark_error(error);
             cmd.complete();
         }
-    }
-}
-
-#[versions(AGX)]
-impl Drop for WorkQueue::ver {
-    fn drop(&mut self) {
-        mod_pr_debug!("WorkQueue({:?}): Dropping\n", self.inner.lock().pipe_type);
     }
 }

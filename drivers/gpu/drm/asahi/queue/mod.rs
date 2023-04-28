@@ -12,7 +12,7 @@ use kernel::{
     drm::gem::shmem::VMap,
     drm::sched,
     macros::versions,
-    sync::{smutex::Mutex, Arc},
+    sync::{Arc, Mutex},
     uapi,
 };
 

@@ -19,15 +19,18 @@ use kernel::{
     delay::coarse_sleep,
     error::code::*,
     macros::versions,
+    new_mutex,
     prelude::*,
     soc::apple::rtkit,
-    sync::{smutex::Mutex, Arc, Guard, UniqueArc},
+    sync::{
+        lock::{mutex::MutexBackend, Guard},
+        Arc, Mutex, UniqueArc,
+    },
     time,
     types::ForeignOwnable,
 };
 
 use crate::alloc::Allocator;
-use crate::box_in_place;
 use crate::debug::*;
 use crate::driver::AsahiDevice;
 use crate::fw::channels::PipeType;
@@ -111,6 +114,7 @@ pub(crate) struct KernelAllocators {
 
 /// Receive (GPU->driver) ring buffer channels.
 #[versions(AGX)]
+#[pin_data]
 struct RxChannels {
     event: channel::EventChannel,
     fw_log: channel::FwLogChannel,
@@ -121,13 +125,14 @@ struct RxChannels {
 /// GPU work submission pipe channels (driver->GPU).
 #[versions(AGX)]
 struct PipeChannels {
-    pub(crate) vtx: Vec<Mutex<channel::PipeChannel::ver>>,
-    pub(crate) frag: Vec<Mutex<channel::PipeChannel::ver>>,
-    pub(crate) comp: Vec<Mutex<channel::PipeChannel::ver>>,
+    pub(crate) vtx: Vec<Pin<Box<Mutex<channel::PipeChannel::ver>>>>,
+    pub(crate) frag: Vec<Pin<Box<Mutex<channel::PipeChannel::ver>>>>,
+    pub(crate) comp: Vec<Pin<Box<Mutex<channel::PipeChannel::ver>>>>,
 }
 
 /// Misc command transmit (driver->GPU) channels.
 #[versions(AGX)]
+#[pin_data]
 struct TxChannels {
     pub(crate) device_control: channel::DeviceControlChannel::ver,
 }
@@ -190,19 +195,22 @@ pub(crate) struct GpuManager {
     pub(crate) initdata: Box<fw::types::GpuObject<fw::initdata::InitData::ver>>,
     uat: Box<mmu::Uat>,
     crashed: AtomicBool,
-    alloc: Mutex<KernelAllocators>,
+    alloc: Pin<Box<Mutex<KernelAllocators>>>,
     io_mappings: Vec<mmu::Mapping>,
-    rtkit: Mutex<Option<Box<rtkit::RtKit<GpuManager::ver>>>>,
-    rx_channels: Mutex<Box<RxChannels::ver>>,
-    tx_channels: Mutex<Box<TxChannels::ver>>,
-    fwctl_channel: Mutex<Box<channel::FwCtlChannel>>,
+    rtkit: Pin<Box<Mutex<Option<rtkit::RtKit<GpuManager::ver>>>>>,
+    rx_channels: Pin<Box<Mutex<RxChannels::ver>>>,
+    tx_channels: Pin<Box<Mutex<TxChannels::ver>>>,
+    fwctl_channel: Pin<Box<Mutex<channel::FwCtlChannel>>>,
     pipes: PipeChannels::ver,
     event_manager: Arc<event::EventManager>,
     buffer_mgr: buffer::BufferManager,
     ids: SequenceIDs,
-    garbage_work: Mutex<Vec<Box<dyn workqueue::GenSubmittedWork>>>,
+    #[allow(clippy::type_complexity)]
+    garbage_work: Pin<Box<Mutex<Vec<Box<dyn workqueue::GenSubmittedWork>>>>>,
     #[allow(clippy::vec_box)]
-    garbage_contexts: Mutex<Vec<Box<fw::types::GpuObject<fw::workqueue::GpuContextData>>>>,
+    #[allow(clippy::type_complexity)]
+    garbage_contexts:
+        Pin<Box<Mutex<Vec<Box<fw::types::GpuObject<fw::workqueue::GpuContextData>>>>>>,
 }
 
 /// Trait used to abstract the firmware/GPU-dependent variants of the GpuManager.
@@ -218,7 +226,7 @@ pub(crate) trait GpuManager: Send + Sync {
     /// TODO: Unclear what can and cannot be updated like this.
     fn update_globals(&self);
     /// Get a reference to the KernelAllocators.
-    fn alloc(&self) -> Guard<'_, Mutex<KernelAllocators>>;
+    fn alloc(&self) -> Guard<'_, KernelAllocators, MutexBackend>;
     /// Create a new `Vm` given a unique `File` ID.
     fn new_vm(&self, file_id: u64) -> Result<mmu::Vm>;
     /// Bind a `Vm` to an available slot and return the `VmBind`.
@@ -492,12 +500,7 @@ impl GpuManager::ver {
 
         let mgr = Arc::from(mgr);
 
-        let rtkit = Box::try_new(rtkit::RtKit::<GpuManager::ver>::new(
-            dev,
-            None,
-            0,
-            mgr.clone(),
-        )?)?;
+        let rtkit = rtkit::RtKit::<GpuManager::ver>::new(dev, None, 0, mgr.clone())?;
 
         *mgr.rtkit.lock() = Some(rtkit);
 
@@ -554,44 +557,64 @@ impl GpuManager::ver {
         };
 
         for _i in 0..=NUM_PIPES - 1 {
-            pipes
-                .vtx
-                .try_push(Mutex::new(channel::PipeChannel::ver::new(dev, &mut alloc)?))?;
-            pipes
-                .frag
-                .try_push(Mutex::new(channel::PipeChannel::ver::new(dev, &mut alloc)?))?;
-            pipes
-                .comp
-                .try_push(Mutex::new(channel::PipeChannel::ver::new(dev, &mut alloc)?))?;
+            pipes.vtx.try_push(Box::pin_init(new_mutex!(
+                channel::PipeChannel::ver::new(dev, &mut alloc)?,
+                "pipe_vtx",
+            ))?)?;
+            pipes.frag.try_push(Box::pin_init(new_mutex!(
+                channel::PipeChannel::ver::new(dev, &mut alloc)?,
+                "pipe_frag",
+            ))?)?;
+            pipes.comp.try_push(Box::pin_init(new_mutex!(
+                channel::PipeChannel::ver::new(dev, &mut alloc)?,
+                "pipe_comp",
+            ))?)?;
         }
 
-        UniqueArc::try_new(GpuManager::ver {
+        let fwctl_channel = Box::pin_init(new_mutex!(
+            channel::FwCtlChannel::new(dev, &mut alloc)?,
+            "fwctl_channel"
+        ))?;
+        let rx_channels = Box::pin_init(new_mutex!(
+            RxChannels::ver {
+                event: channel::EventChannel::new(dev, &mut alloc, event_manager.clone())?,
+                fw_log: channel::FwLogChannel::new(dev, &mut alloc)?,
+                ktrace: channel::KTraceChannel::new(dev, &mut alloc)?,
+                stats: channel::StatsChannel::ver::new(dev, &mut alloc)?,
+            },
+            "rx_channels"
+        ))?;
+        let tx_channels = Box::pin_init(new_mutex!(
+            TxChannels::ver {
+                device_control: channel::DeviceControlChannel::ver::new(dev, &mut alloc)?,
+            },
+            "tx_channels"
+        ))?;
+
+        let alloc = Box::pin_init(new_mutex!(alloc, "alloc"))?;
+
+        let x = UniqueArc::try_new(GpuManager::ver {
             dev: dev.clone(),
             cfg,
             dyncfg,
             initdata,
             uat,
             io_mappings: Vec::new(),
-            rtkit: Mutex::new(None),
+            rtkit: Box::pin_init(new_mutex!(None, "rtkit"))?,
             crashed: AtomicBool::new(false),
-            rx_channels: Mutex::new(box_in_place!(RxChannels::ver {
-                event: channel::EventChannel::new(dev, &mut alloc, event_manager.clone())?,
-                fw_log: channel::FwLogChannel::new(dev, &mut alloc)?,
-                ktrace: channel::KTraceChannel::new(dev, &mut alloc)?,
-                stats: channel::StatsChannel::ver::new(dev, &mut alloc)?,
-            })?),
-            tx_channels: Mutex::new(Box::try_new(TxChannels::ver {
-                device_control: channel::DeviceControlChannel::ver::new(dev, &mut alloc)?,
-            })?),
-            fwctl_channel: Mutex::new(Box::try_new(channel::FwCtlChannel::new(dev, &mut alloc)?)?),
-            pipes,
             event_manager,
+            alloc,
+            fwctl_channel,
+            rx_channels,
+            tx_channels,
+            pipes,
             buffer_mgr: buffer::BufferManager::new()?,
-            alloc: Mutex::new(alloc),
             ids: Default::default(),
-            garbage_work: Mutex::new(Vec::new()),
-            garbage_contexts: Mutex::new(Vec::new()),
-        })
+            garbage_work: Box::pin_init(new_mutex!(Vec::new(), "garbage_work"))?,
+            garbage_contexts: Box::pin_init(new_mutex!(Vec::new(), "garbage_contexts"))?,
+        })?;
+
+        Ok(x)
     }
 
     /// Fetch and validate the GPU dynamic configuration from the device tree and hardware.
@@ -697,7 +720,7 @@ impl GpuManager::ver {
 
     /// Create the global GPU event manager, and return an `Arc<>` to it.
     fn make_event_manager(alloc: &mut KernelAllocators) -> Result<Arc<event::EventManager>> {
-        Arc::try_new(event::EventManager::new(alloc)?)
+        Ok(Arc::try_new(event::EventManager::new(alloc)?)?)
     }
 
     /// Create a new MMIO mapping and add it to the mappings list in initdata at the specified
@@ -976,7 +999,7 @@ impl GpuManager for GpuManager::ver {
         });
     }
 
-    fn alloc(&self) -> Guard<'_, Mutex<KernelAllocators>> {
+    fn alloc(&self) -> Guard<'_, KernelAllocators, MutexBackend> {
         /*
          * TODO: This should be done in a workqueue or something.
          * Clean up completed jobs

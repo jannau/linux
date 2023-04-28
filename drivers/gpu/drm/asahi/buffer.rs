@@ -40,7 +40,8 @@ use crate::{alloc, fw, gpu, hw, mmu, slotalloc};
 use crate::{box_in_place, place};
 use core::sync::atomic::Ordering;
 use kernel::prelude::*;
-use kernel::sync::{smutex::Mutex, Arc};
+use kernel::sync::{Arc, Mutex};
+use kernel::{c_str, new_mutex, static_lock_class};
 
 const DEBUG_CLASS: DebugFlags = DebugFlags::Buffer;
 
@@ -392,7 +393,7 @@ impl Buffer::ver {
             })?;
 
         Ok(Buffer::ver {
-            inner: Arc::try_new(Mutex::new(BufferInner::ver {
+            inner: Arc::pin_init(new_mutex!(BufferInner::ver {
                 info,
                 ualloc,
                 ualloc_priv,
@@ -702,6 +703,9 @@ impl BufferManager {
             NUM_BUFFERS,
             (),
             |_inner, _slot| (),
+            c_str!("BufferManager::SlotAllocator"),
+            static_lock_class!(),
+            static_lock_class!(),
         )?))
     }
 }

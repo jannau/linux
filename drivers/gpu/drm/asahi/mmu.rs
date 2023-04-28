@@ -10,6 +10,7 @@
 //!
 //! The actual page table management is delegated to the common kernel `io_pgtable` code.
 
+use core::convert::Infallible;
 use core::fmt::Debug;
 use core::mem::size_of;
 use core::ptr::{addr_of_mut, NonNull};
@@ -22,9 +23,13 @@ use kernel::{
     error::{to_result, Result},
     io_pgtable,
     io_pgtable::{prot, AppleUAT, IoPageTable},
+    new_mutex,
     prelude::*,
-    sync::{smutex::Mutex, Guard},
-    sync::{Arc, LockClassKey, UniqueArc},
+    static_lock_class,
+    sync::{
+        lock::{mutex::MutexBackend, Guard},
+        Arc, Mutex,
+    },
     time,
     types::ForeignOwnable,
 };
@@ -592,19 +597,22 @@ impl UatShared {
 unsafe impl Send for UatShared {}
 
 /// Inner data for the top-level UAT instance.
+#[pin_data]
 struct UatInner {
+    #[pin]
     shared: Mutex<UatShared>,
+    #[pin]
     handoff_flush: [Mutex<HandoffFlush>; UAT_NUM_CTX + 1],
 }
 
 impl UatInner {
     /// Take the lock on the shared data and return the guard.
-    fn lock(&self) -> Guard<'_, Mutex<UatShared>> {
+    fn lock(&self) -> Guard<'_, UatShared, MutexBackend> {
         self.shared.lock()
     }
 
     /// Take a lock on a handoff flush slot and return the guard.
-    fn lock_flush(&self, slot: u32) -> Guard<'_, Mutex<HandoffFlush>> {
+    fn lock_flush(&self, slot: u32) -> Guard<'_, HandoffFlush, MutexBackend> {
         self.handoff_flush[slot as usize].lock()
     }
 }
@@ -755,8 +763,6 @@ impl io_pgtable::FlushOps for Uat {
     }
 }
 
-static LOCK_KEY: LockClassKey = LockClassKey::new();
-
 impl Vm {
     /// Create a new virtual memory address space
     fn new(
@@ -794,25 +800,28 @@ impl Vm {
             (max_va - min_va + 1) as u64,
             (),
             c_str!("asahi Vm"),
-            &LOCK_KEY,
+            static_lock_class!(),
         )?;
 
         Ok(Vm {
             id,
             file_id,
-            inner: Arc::try_new(Mutex::new(VmInner {
-                dev,
-                min_va,
-                max_va,
-                is_kernel,
-                page_table,
-                mm,
-                uat_inner,
-                binding: None,
-                bind_token: None,
-                active_users: 0,
-                id,
-            }))?,
+            inner: Arc::pin_init(new_mutex!(
+                VmInner {
+                    dev,
+                    min_va,
+                    max_va,
+                    is_kernel,
+                    page_table,
+                    mm,
+                    uat_inner,
+                    binding: None,
+                    bind_token: None,
+                    active_users: 0,
+                    id,
+                },
+                "VmInner"
+            ))?,
         })
     }
 
@@ -1178,27 +1187,33 @@ impl Uat {
 
         dev_info!(dev, "MMU: Initializing kernel page table\n");
 
-        let mut inner = UniqueArc::<UatInner>::try_new_uninit()?;
-        let ptr = inner.as_mut_ptr();
+        Arc::pin_init(unsafe {
+            init::pin_init_from_closure(
+                move |slot: *mut UatInner| -> core::result::Result<(), Infallible> {
+                    let handoff = &(handoff_rgn.map.as_ptr() as *mut Handoff).as_ref().unwrap();
 
-        Ok(unsafe {
-            let handoff = &(handoff_rgn.map.as_ptr() as *mut Handoff).as_ref().unwrap();
+                    for i in 0..UAT_NUM_CTX + 1 {
+                        new_mutex!(HandoffFlush(&handoff.flush[i]), "handoff_flush")
+                            .__pinned_init(addr_of_mut!((*slot).handoff_flush[i]))
+                            .expect("infallible");
+                    }
 
-            for i in 0..UAT_NUM_CTX + 1 {
-                addr_of_mut!((*ptr).handoff_flush[i])
-                    .write(Mutex::new(HandoffFlush(&handoff.flush[i])));
-            }
+                    new_mutex!(
+                        UatShared {
+                            kernel_ttb1: 0,
+                            map_kernel_to_user: false,
+                            handoff_rgn,
+                            ttbs_rgn,
+                        },
+                        "uat_shared"
+                    )
+                    .__pinned_init(addr_of_mut!((*slot).shared))
+                    .expect("infallible");
 
-            addr_of_mut!((*ptr).shared).write(Mutex::new(UatShared {
-                kernel_ttb1: 0,
-                map_kernel_to_user: false,
-                handoff_rgn,
-                ttbs_rgn,
-            }));
-
-            inner.assume_init()
-        }
-        .into())
+                    Ok(())
+                },
+            )
+        })
     }
 
     /// Creates a new `Uat` instance given the relevant hardware config.
@@ -1230,9 +1245,14 @@ impl Uat {
             kernel_vm,
             kernel_lower_vm,
             inner,
-            slots: slotalloc::SlotAllocator::new(UAT_USER_CTX as u32, (), |_inner, _slot| {
-                SlotInner()
-            })?,
+            slots: slotalloc::SlotAllocator::new(
+                UAT_USER_CTX as u32,
+                (),
+                |_inner, _slot| SlotInner(),
+                c_str!("Uat::SlotAllocator"),
+                static_lock_class!(),
+                static_lock_class!(),
+            )?,
         };
 
         let mut inner = uat.inner.lock();

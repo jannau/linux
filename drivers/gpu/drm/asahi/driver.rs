@@ -152,12 +152,13 @@ impl platform::Driver for AsahiDriver {
         let data =
             kernel::new_device_data!(reg, res, AsahiData { dev, gpu }, "Asahi::Registrations")?;
 
-        let data = Arc::<DeviceData>::from(data);
+        let data: Arc<DeviceData> = data.into();
 
         data.gpu.init()?;
 
         kernel::drm_device_register!(
-            data.registrations().ok_or(ENXIO)?.as_pinned_mut(),
+            // TODO: Expose an API to get a pinned reference here
+            unsafe { Pin::new_unchecked(&mut *data.registrations().ok_or(ENXIO)?) },
             data.clone(),
             0
         )?;

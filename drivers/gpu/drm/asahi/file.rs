@@ -15,9 +15,9 @@ use kernel::dma_fence::RawDmaFence;
 use kernel::drm::gem::BaseObject;
 use kernel::io_buffer::{IoBufferReader, IoBufferWriter};
 use kernel::prelude::*;
-use kernel::sync::{smutex::Mutex, Arc};
+use kernel::sync::{Arc, Mutex};
 use kernel::user_ptr::UserSlicePtr;
-use kernel::{dma_fence, drm, uapi, xarray};
+use kernel::{dma_fence, drm, new_mutex, uapi, xarray};
 
 const DEBUG_CLASS: DebugFlags = DebugFlags::File;
 
@@ -287,7 +287,7 @@ impl File {
             file_id,
             id
         );
-        let ualloc = Arc::try_new(Mutex::new(alloc::DefaultAllocator::new(
+        let ualloc = Arc::pin_init(new_mutex!(alloc::DefaultAllocator::new(
             device,
             &vm,
             VM_DRV_GPU_START,
@@ -299,7 +299,7 @@ impl File {
             fmt!("File {} VM {} GPU Shared", file_id, id),
             false,
         )?))?;
-        let ualloc_priv = Arc::try_new(Mutex::new(alloc::DefaultAllocator::new(
+        let ualloc_priv = Arc::pin_init(new_mutex!(alloc::DefaultAllocator::new(
             device,
             &vm,
             VM_DRV_GPUFW_START,
@@ -605,7 +605,7 @@ impl File {
                 .new_queue(vm, ualloc, ualloc_priv, data.priority, data.queue_caps)?;
 
         data.queue_id = resv.index().try_into()?;
-        resv.store(Arc::try_new(Mutex::new(queue))?)?;
+        resv.store(Arc::pin_init(new_mutex!(queue))?)?;
 
         Ok(0)
     }

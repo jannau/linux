@@ -10,9 +10,10 @@
 use kernel::{
     drm::{gem, gem::shmem},
     error::Result,
+    new_mutex,
     prelude::*,
     soc::apple::rtkit,
-    sync::smutex::Mutex,
+    sync::Mutex,
     uapi,
 };
 
@@ -25,6 +26,7 @@ use crate::{debug::*, driver::AsahiDevice, file::DrmFile, mmu, util::*};
 const DEBUG_CLASS: DebugFlags = DebugFlags::Gem;
 
 /// Represents the inner data of a GEM object for this driver.
+#[pin_data]
 pub(crate) struct DriverObject {
     /// Whether this is a kernel-created object.
     kernel: bool,
@@ -33,6 +35,7 @@ pub(crate) struct DriverObject {
     /// VM ID for VM-private objects.
     vm_id: Option<u64>,
     /// Locked list of mapping tuples: (file_id, vm_id, mapping)
+    #[pin]
     mappings: Mutex<Vec<(u64, u64, crate::mmu::Mapping)>>,
     /// ID for debug
     id: u64,
@@ -258,15 +261,17 @@ pub(crate) fn lookup_handle(file: &DrmFile, handle: u32) -> Result<ObjectRef> {
 }
 
 impl gem::BaseDriverObject<Object> for DriverObject {
+    type Initializer = impl PinInit<Self, Error>;
+
     /// Callback to create the inner data of a GEM object
-    fn new(_dev: &AsahiDevice, _size: usize) -> Result<DriverObject> {
+    fn new(_dev: &AsahiDevice, _size: usize) -> Self::Initializer {
         let id = GEM_ID.fetch_add(1, Ordering::Relaxed);
         mod_pr_debug!("DriverObject::new id={}\n", id);
-        Ok(DriverObject {
+        try_pin_init!(DriverObject {
             kernel: false,
             flags: 0,
             vm_id: None,
-            mappings: Mutex::new(Vec::new()),
+            mappings <- new_mutex!(Vec::new()),
             id,
         })
     }
@@ -275,12 +280,6 @@ impl gem::BaseDriverObject<Object> for DriverObject {
     fn close(obj: &Object, file: &DrmFile) {
         mod_pr_debug!("DriverObject::close vm_id={:?} id={}\n", obj.vm_id, obj.id);
         obj.drop_file_mappings(file.inner().file_id());
-    }
-}
-
-impl Drop for DriverObject {
-    fn drop(&mut self) {
-        mod_pr_debug!("DriverObject::drop vm_id={:?} id={}\n", self.vm_id, self.id);
     }
 }
 

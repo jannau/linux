@@ -19,7 +19,8 @@ use core::ops::{Deref, DerefMut};
 use kernel::{
     error::{code::*, Result},
     prelude::*,
-    sync::{Arc, CondVar, Mutex, UniqueArc},
+    str::CStr,
+    sync::{Arc, CondVar, LockClassKey, Mutex},
 };
 
 /// Trait representing a single item within a slot.
@@ -109,8 +110,11 @@ struct SlotAllocatorInner<T: SlotItem> {
 }
 
 /// A single slot allocator instance.
+#[pin_data]
 struct SlotAllocatorOuter<T: SlotItem> {
+    #[pin]
     inner: Mutex<SlotAllocatorInner<T>>,
+    #[pin]
     cond: CondVar,
 }
 
@@ -127,6 +131,9 @@ impl<T: SlotItem> SlotAllocator<T> {
         num_slots: u32,
         mut data: T::Data,
         mut constructor: impl FnMut(&mut T::Data, u32) -> T,
+        name: &'static CStr,
+        lock_key1: &'static LockClassKey,
+        lock_key2: &'static LockClassKey,
     ) -> Result<SlotAllocator<T>> {
         let mut slots = Vec::try_with_capacity(num_slots as usize)?;
 
@@ -147,22 +154,14 @@ impl<T: SlotItem> SlotAllocator<T> {
             drop_count: 0,
         };
 
-        let mut alloc = Pin::from(UniqueArc::try_new(SlotAllocatorOuter {
-            // SAFETY: `condvar_init!` is called below.
-            cond: unsafe { CondVar::new() },
+        let alloc = Arc::pin_init(pin_init!(SlotAllocatorOuter {
             // SAFETY: `mutex_init!` is called below.
-            inner: unsafe { Mutex::new(inner) },
-        })?);
+            inner <- Mutex::new(inner, name, lock_key1),
+            // SAFETY: `condvar_init!` is called below.
+            cond <- CondVar::new(name, lock_key2),
+        }))?;
 
-        // SAFETY: `cond` is pinned when `alloc` is.
-        let pinned = unsafe { alloc.as_mut().map_unchecked_mut(|s| &mut s.cond) };
-        kernel::condvar_init!(pinned, "SlotAllocator::cond");
-
-        // SAFETY: `inner` is pinned when `alloc` is.
-        let pinned = unsafe { alloc.as_mut().map_unchecked_mut(|s| &mut s.inner) };
-        kernel::mutex_init!(pinned, "SlotAllocator::inner");
-
-        Ok(SlotAllocator(alloc.into()))
+        Ok(SlotAllocator(alloc))
     }
 
     /// Calls a callback on the inner data associated with this allocator, taking the lock.
