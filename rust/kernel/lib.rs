@@ -20,6 +20,7 @@
 #![feature(offset_of)]
 #![feature(ptr_metadata)]
 #![feature(receiver_trait)]
+#![feature(type_alias_impl_trait)]
 #![feature(unsize)]
 
 // Ensure conditional compilation based on the kernel configuration works;
