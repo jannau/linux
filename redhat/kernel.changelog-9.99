@@ -1,3 +1,10 @@
+* Fri Apr 28 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc0.6e98b09da931.5]
+- Add apple_bl to filter-modules (Justin M. Forbes)
+- Add handshake-test to mod-intenal.list (Justin M. Forbes)
+- Add regmap-kunit to mod-internal.list (Justin M. Forbes)
+- configs: set CONFIG_PAGE_POOL_STATS (Patrick Talbert)
+Resolves: 
+
 * Thu Apr 27 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc0.6e98b09da931.4]
 - Add apple_bl to fedora module_filter (Justin M. Forbes)
 - Fix up some config mismatches in new Fedora config items (Justin M. Forbes)
