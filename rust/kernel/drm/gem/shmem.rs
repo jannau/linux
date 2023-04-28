@@ -10,11 +10,10 @@ use crate::{
     prelude::*,
 };
 use core::{
-    marker::PhantomData,
+    marker::{PhantomData, PhantomPinned},
     mem,
     mem::{ManuallyDrop, MaybeUninit},
     ops::{Deref, DerefMut},
-    ptr::addr_of_mut,
     slice,
 };
 
@@ -66,13 +65,19 @@ const SHMEM_VM_OPS: bindings::vm_operations_struct = vm_numa_fields! {
 
 /// A shmem-backed GEM object.
 #[repr(C)]
+#[pin_data]
 pub struct Object<T: DriverObject> {
+    #[pin]
     obj: bindings::drm_gem_shmem_object,
     // The DRM core ensures the Device exists as long as its objects exist, so we don't need to
     // manage the reference count here.
     dev: ManuallyDrop<device::Device<T::Driver>>,
+    #[pin]
     inner: T,
 }
+
+// SAFETY: drm_gem_shmem_object is safe to zero-initialize
+unsafe impl init::Zeroable for bindings::drm_gem_shmem_object {}
 
 unsafe extern "C" fn gem_create_object<T: DriverObject>(
     raw_dev: *mut bindings::drm_device,
@@ -82,31 +87,30 @@ unsafe extern "C" fn gem_create_object<T: DriverObject>(
     // so we can conjure up a reference from thin air and never drop it.
     let dev = ManuallyDrop::new(unsafe { device::Device::from_raw(raw_dev) });
 
-    let inner = match T::new(&*dev, size) {
-        Ok(v) => v,
-        Err(e) => return e.to_ptr(),
-    };
-
     let p = unsafe {
-        bindings::krealloc(
-            core::ptr::null(),
-            Object::<T>::SIZE,
-            bindings::GFP_KERNEL | bindings::__GFP_ZERO,
-        ) as *mut Object<T>
+        bindings::krealloc(core::ptr::null(), Object::<T>::SIZE, bindings::GFP_KERNEL)
+            as *mut Object<T>
     };
 
     if p.is_null() {
         return ENOMEM.to_ptr();
     }
 
-    // SAFETY: p is valid as long as the alloc succeeded
-    unsafe {
-        addr_of_mut!((*p).dev).write(dev);
-        addr_of_mut!((*p).inner).write(inner);
+    let init = try_pin_init!(Object {
+        obj <- init::zeroed(),
+        inner <- T::new(&*dev, size),
+        dev,
+    });
+
+    // SAFETY: p is a valid pointer to an uninitialized Object<T>.
+    if let Err(e) = unsafe { init.__pinned_init(p) } {
+        // SAFETY: p is a valid pointer from `krealloc` and __pinned_init guarantees we can dealloc it.
+        unsafe { bindings::kfree(p as *mut _) };
+
+        return e.to_ptr();
     }
 
-    // SAFETY: drm_gem_shmem_object is safe to zero-init, and
-    // the rest of Object has been initialized
+    // SAFETY: __pinned_init() guarantees the object has been initialized
     let new: &mut Object<T> = unsafe { &mut *(p as *mut _) };
 
     new.obj.base.funcs = &Object::<T>::VTABLE;
@@ -164,7 +168,10 @@ impl<T: DriverObject> Object<T> {
 
         // SAFETY: The gem_create_object callback ensures this is a valid Object<T>,
         // so we can take a unique reference to it.
-        let obj_ref = gem::UniqueObjectRef { ptr: p };
+        let obj_ref = gem::UniqueObjectRef {
+            ptr: p,
+            _p: PhantomPinned,
+        };
 
         Ok(obj_ref)
     }
