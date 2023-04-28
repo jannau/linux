@@ -462,7 +462,7 @@ static void afk_recv_handle(struct apple_dcp_afkep *ep, u32 channel, u32 type,
 	}
 
 	if (!ep->services[channel].enabled) {
-		if (type != EPIC_TYPE_NOTIFY) {
+		if (type != EPIC_TYPE_NOTIFY && type != EPIC_TYPE_REPLY) {
 			dev_err(ep->dcp->dev,
 				"AFK[ep:%02x]: expected notify but got 0x%x on channel %d\n",
 				ep->endpoint, type, channel);
