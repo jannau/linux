@@ -1,3 +1,7 @@
+* Fri Apr 28 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc0.33afd4b76393.6]
+- Linux v6.4.0-0.rc0.33afd4b76393
+Resolves: 
+
 * Fri Apr 28 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc0.6e98b09da931.5]
 - Add apple_bl to filter-modules (Justin M. Forbes)
 - Add handshake-test to mod-intenal.list (Justin M. Forbes)
