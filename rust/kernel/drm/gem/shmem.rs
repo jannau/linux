@@ -10,11 +10,10 @@ use crate::{
     prelude::*,
 };
 use core::{
-    marker::PhantomData,
+    marker::{PhantomData, PhantomPinned},
     mem,
     mem::MaybeUninit,
     ops::{Deref, DerefMut},
-    ptr::addr_of_mut,
     slice,
 };
 
@@ -66,7 +65,9 @@ const SHMEM_VM_OPS: bindings::vm_operations_struct = vm_numa_fields! {
 
 /// A shmem-backed GEM object.
 #[repr(C)]
+#[pin_data]
 pub struct Object<T: DriverObject> {
+    #[pin]
     obj: bindings::drm_gem_shmem_object,
     // The DRM core ensures the Device exists as long as its objects exist, so we don't need to
     // manage the reference count here.
@@ -75,16 +76,16 @@ pub struct Object<T: DriverObject> {
     inner: T,
 }
 
+// SAFETY: drm_gem_shmem_object is safe to zero-initialize
+unsafe impl init::Zeroable for bindings::drm_gem_shmem_object {}
+
 unsafe extern "C" fn gem_create_object<T: DriverObject>(
     dev: *mut bindings::drm_device,
     size: usize,
 ) -> *mut bindings::drm_gem_object {
     let p = unsafe {
-        bindings::krealloc(
-            core::ptr::null(),
-            Object::<T>::SIZE,
-            bindings::GFP_KERNEL | bindings::__GFP_ZERO,
-        ) as *mut Object<T>
+        bindings::krealloc(core::ptr::null(), Object::<T>::SIZE, bindings::GFP_KERNEL)
+            as *mut Object<T>
     };
 
     if p.is_null() {
@@ -106,8 +107,7 @@ unsafe extern "C" fn gem_create_object<T: DriverObject>(
         return e.to_ptr();
     }
 
-    // SAFETY: drm_gem_shmem_object is safe to zero-init, and
-    // the rest of Object has been initialized
+    // SAFETY: __pinned_init() guarantees the object has been initialized
     let new: &mut Object<T> = unsafe { &mut *(p as *mut _) };
 
     new.obj.base.funcs = &Object::<T>::VTABLE;
@@ -167,7 +167,10 @@ impl<T: DriverObject> Object<T> {
 
         // SAFETY: The gem_create_object callback ensures this is a valid Object<T>,
         // so we can take a unique reference to it.
-        let obj_ref = gem::UniqueObjectRef { ptr: p };
+        let obj_ref = gem::UniqueObjectRef {
+            ptr: p,
+            _p: PhantomPinned,
+        };
 
         Ok(obj_ref)
     }
