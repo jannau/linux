@@ -188,29 +188,34 @@ pub(crate) struct SequenceIDs {
 
 /// Top-level GPU manager that owns all the global state relevant to the driver instance.
 #[versions(AGX)]
+#[pin_data]
 pub(crate) struct GpuManager {
     dev: AsahiDevice,
     cfg: &'static hw::HwConfig,
-    dyncfg: Box<hw::DynConfig>,
-    pub(crate) initdata: Box<fw::types::GpuObject<fw::initdata::InitData::ver>>,
-    uat: Box<mmu::Uat>,
+    dyncfg: hw::DynConfig,
+    pub(crate) initdata: fw::types::GpuObject<fw::initdata::InitData::ver>,
+    uat: mmu::Uat,
     crashed: AtomicBool,
-    alloc: Pin<Box<Mutex<KernelAllocators>>>,
+    #[pin]
+    alloc: Mutex<KernelAllocators>,
     io_mappings: Vec<mmu::Mapping>,
-    rtkit: Pin<Box<Mutex<Option<rtkit::RtKit<GpuManager::ver>>>>>,
-    rx_channels: Pin<Box<Mutex<RxChannels::ver>>>,
-    tx_channels: Pin<Box<Mutex<TxChannels::ver>>>,
-    fwctl_channel: Pin<Box<Mutex<channel::FwCtlChannel>>>,
+    #[pin]
+    rtkit: Mutex<Option<rtkit::RtKit<GpuManager::ver>>>,
+    #[pin]
+    rx_channels: Mutex<RxChannels::ver>,
+    #[pin]
+    tx_channels: Mutex<TxChannels::ver>,
+    #[pin]
+    fwctl_channel: Mutex<channel::FwCtlChannel>,
     pipes: PipeChannels::ver,
     event_manager: Arc<event::EventManager>,
     buffer_mgr: buffer::BufferManager,
     ids: SequenceIDs,
-    #[allow(clippy::type_complexity)]
-    garbage_work: Pin<Box<Mutex<Vec<Box<dyn workqueue::GenSubmittedWork>>>>>,
+    #[pin]
+    garbage_work: Mutex<Vec<Box<dyn workqueue::GenSubmittedWork>>>,
     #[allow(clippy::vec_box)]
-    #[allow(clippy::type_complexity)]
-    garbage_contexts:
-        Pin<Box<Mutex<Vec<Box<fw::types::GpuObject<fw::workqueue::GpuContextData>>>>>>,
+    #[pin]
+    garbage_contexts: Mutex<Vec<Box<fw::types::GpuObject<fw::workqueue::GpuContextData>>>>,
 }
 
 /// Trait used to abstract the firmware/GPU-dependent variants of the GpuManager.
@@ -424,9 +429,12 @@ impl GpuManager::ver {
             let p_fwctl = fwctl.to_raw();
             core::mem::drop(fwctl);
 
-            mgr.initdata.fw_status.with_mut(|raw, _inner| {
-                raw.fwctl_channel = p_fwctl;
-            });
+            mgr.as_mut()
+                .initdata_mut()
+                .fw_status
+                .with_mut(|raw, _inner| {
+                    raw.fwctl_channel = p_fwctl;
+                });
         }
 
         {
@@ -442,14 +450,17 @@ impl GpuManager::ver {
             let p_fwlog_buf = rxc.fw_log.get_buf();
             core::mem::drop(rxc);
 
-            mgr.initdata.runtime_pointers.with_mut(|raw, _inner| {
-                raw.device_control = p_device_control;
-                raw.event = p_event;
-                raw.fw_log = p_fw_log;
-                raw.ktrace = p_ktrace;
-                raw.stats = p_stats;
-                raw.fwlog_buf = Some(p_fwlog_buf);
-            });
+            mgr.as_mut()
+                .initdata_mut()
+                .runtime_pointers
+                .with_mut(|raw, _inner| {
+                    raw.device_control = p_device_control;
+                    raw.event = p_event;
+                    raw.fw_log = p_fw_log;
+                    raw.ktrace = p_ktrace;
+                    raw.stats = p_stats;
+                    raw.fwlog_buf = Some(p_fwlog_buf);
+                });
         }
 
         let mut p_pipes: Vec<fw::initdata::raw::PipeChannels::ver> = Vec::new();
@@ -468,17 +479,20 @@ impl GpuManager::ver {
             })?;
         }
 
-        mgr.initdata.runtime_pointers.with_mut(|raw, _inner| {
-            for (i, p) in p_pipes.into_iter().enumerate() {
-                raw.pipes[i].vtx = p.vtx;
-                raw.pipes[i].frag = p.frag;
-                raw.pipes[i].comp = p.comp;
-            }
-        });
+        mgr.as_mut()
+            .initdata_mut()
+            .runtime_pointers
+            .with_mut(|raw, _inner| {
+                for (i, p) in p_pipes.into_iter().enumerate() {
+                    raw.pipes[i].vtx = p.vtx;
+                    raw.pipes[i].frag = p.frag;
+                    raw.pipes[i].comp = p.comp;
+                }
+            });
 
         for (i, map) in cfg.io_mappings.iter().enumerate() {
             if let Some(map) = map.as_ref() {
-                mgr.iomap(i, map)?;
+                Self::iomap(&mut mgr, i, map)?;
             }
         }
 
@@ -491,11 +505,15 @@ impl GpuManager::ver {
                     .kernel_vm()
                     .map_io(base as usize, size, mmu::PROT_FW_SHARED_RW)?;
 
-            mgr.initdata.runtime_pointers.hwdata_b.with_mut(|raw, _| {
-                raw.sgx_sram_ptr = U64(mapping.iova() as u64);
-            });
+            mgr.as_mut()
+                .initdata_mut()
+                .runtime_pointers
+                .hwdata_b
+                .with_mut(|raw, _| {
+                    raw.sgx_sram_ptr = U64(mapping.iova() as u64);
+                });
 
-            mgr.io_mappings.try_push(mapping)?;
+            mgr.as_mut().io_mappings_mut().try_push(mapping)?;
         }
 
         let mgr = Arc::from(mgr);
@@ -510,6 +528,20 @@ impl GpuManager::ver {
         }
 
         Ok(mgr)
+    }
+
+    /// Return a mutable reference to the initdata member
+    fn initdata_mut(
+        self: Pin<&mut Self>,
+    ) -> &mut fw::types::GpuObject<fw::initdata::InitData::ver> {
+        // SAFETY: initdata does not require structural pinning.
+        unsafe { &mut self.get_unchecked_mut().initdata }
+    }
+
+    /// Return a mutable reference to the io_mappings member
+    fn io_mappings_mut(self: Pin<&mut Self>) -> &mut Vec<mmu::Mapping> {
+        // SAFETY: io_mappings does not require structural pinning.
+        unsafe { &mut self.get_unchecked_mut().io_mappings }
     }
 
     /// Build the entire GPU InitData structure tree and return it as a boxed GpuObject.
@@ -549,7 +581,7 @@ impl GpuManager::ver {
         mut alloc: KernelAllocators,
         event_manager: Arc<event::EventManager>,
         initdata: Box<fw::types::GpuObject<fw::initdata::InitData::ver>>,
-    ) -> Result<UniqueArc<GpuManager::ver>> {
+    ) -> Result<Pin<UniqueArc<GpuManager::ver>>> {
         let mut pipes = PipeChannels::ver {
             vtx: Vec::new(),
             frag: Vec::new(),
@@ -571,48 +603,42 @@ impl GpuManager::ver {
             ))?)?;
         }
 
-        let fwctl_channel = Box::pin_init(new_mutex!(
-            channel::FwCtlChannel::new(dev, &mut alloc)?,
-            "fwctl_channel"
-        ))?;
-        let rx_channels = Box::pin_init(new_mutex!(
-            RxChannels::ver {
-                event: channel::EventChannel::new(dev, &mut alloc, event_manager.clone())?,
-                fw_log: channel::FwLogChannel::new(dev, &mut alloc)?,
-                ktrace: channel::KTraceChannel::new(dev, &mut alloc)?,
-                stats: channel::StatsChannel::ver::new(dev, &mut alloc)?,
-            },
-            "rx_channels"
-        ))?;
-        let tx_channels = Box::pin_init(new_mutex!(
-            TxChannels::ver {
-                device_control: channel::DeviceControlChannel::ver::new(dev, &mut alloc)?,
-            },
-            "tx_channels"
-        ))?;
+        let fwctl_channel = channel::FwCtlChannel::new(dev, &mut alloc)?;
 
-        let alloc = Box::pin_init(new_mutex!(alloc, "alloc"))?;
+        let event_manager_clone = event_manager.clone();
+        let alloc_ref = &mut alloc;
+        let rx_channels = Box::init(try_init!(RxChannels::ver {
+            event: channel::EventChannel::new(dev, alloc_ref, event_manager_clone)?,
+            fw_log: channel::FwLogChannel::new(dev, alloc_ref)?,
+            ktrace: channel::KTraceChannel::new(dev, alloc_ref)?,
+            stats: channel::StatsChannel::ver::new(dev, alloc_ref)?,
+        }))?;
 
-        let x = UniqueArc::try_new(GpuManager::ver {
+        let alloc_ref = &mut alloc;
+        let tx_channels = Box::init(try_init!(TxChannels::ver {
+            device_control: channel::DeviceControlChannel::ver::new(dev, alloc_ref)?,
+        }))?;
+
+        let x = UniqueArc::pin_init(try_pin_init!(GpuManager::ver {
             dev: dev.clone(),
             cfg,
-            dyncfg,
-            initdata,
-            uat,
+            dyncfg: *dyncfg,
+            initdata: *initdata,
+            uat: *uat,
             io_mappings: Vec::new(),
-            rtkit: Box::pin_init(new_mutex!(None, "rtkit"))?,
+            rtkit <- new_mutex!(None, "rtkit"),
             crashed: AtomicBool::new(false),
             event_manager,
-            alloc,
-            fwctl_channel,
-            rx_channels,
-            tx_channels,
+            alloc <- new_mutex!(alloc, "alloc"),
+            fwctl_channel <- new_mutex!(fwctl_channel, "fwctl_channel"),
+            rx_channels <- new_mutex!(*rx_channels, "rx_channels"),
+            tx_channels <- new_mutex!(*tx_channels, "tx_channels"),
             pipes,
             buffer_mgr: buffer::BufferManager::new()?,
             ids: Default::default(),
-            garbage_work: Box::pin_init(new_mutex!(Vec::new(), "garbage_work"))?,
-            garbage_contexts: Box::pin_init(new_mutex!(Vec::new(), "garbage_contexts"))?,
-        })?;
+            garbage_work <- new_mutex!(Vec::new(), "garbage_work"),
+            garbage_contexts <- new_mutex!(Vec::new(), "garbage_contexts"),
+        }))?;
 
         Ok(x)
     }
@@ -725,11 +751,15 @@ impl GpuManager::ver {
 
     /// Create a new MMIO mapping and add it to the mappings list in initdata at the specified
     /// index.
-    fn iomap(&mut self, index: usize, map: &hw::IOMapping) -> Result {
+    fn iomap(
+        this: &mut Pin<UniqueArc<GpuManager::ver>>,
+        index: usize,
+        map: &hw::IOMapping,
+    ) -> Result {
         let off = map.base & mmu::UAT_PGMSK;
         let base = map.base - off;
         let end = (map.base + map.size + mmu::UAT_PGMSK) & !mmu::UAT_PGMSK;
-        let mapping = self.uat.kernel_vm().map_io(
+        let mapping = this.uat.kernel_vm().map_io(
             base,
             end - base,
             if map.writable {
@@ -739,17 +769,21 @@ impl GpuManager::ver {
             },
         )?;
 
-        self.initdata.runtime_pointers.hwdata_b.with_mut(|raw, _| {
-            raw.io_mappings[index] = fw::initdata::raw::IOMapping {
-                phys_addr: U64(map.base as u64),
-                virt_addr: U64((mapping.iova() + off) as u64),
-                size: map.size as u32,
-                range_size: map.range_size as u32,
-                readwrite: U64(map.writable as u64),
-            };
-        });
+        this.as_mut()
+            .initdata_mut()
+            .runtime_pointers
+            .hwdata_b
+            .with_mut(|raw, _| {
+                raw.io_mappings[index] = fw::initdata::raw::IOMapping {
+                    phys_addr: U64(map.base as u64),
+                    virt_addr: U64((mapping.iova() + off) as u64),
+                    size: map.size as u32,
+                    range_size: map.range_size as u32,
+                    readwrite: U64(map.writable as u64),
+                };
+            });
 
-        self.io_mappings.try_push(mapping)?;
+        this.as_mut().io_mappings_mut().try_push(mapping)?;
         Ok(())
     }
 
