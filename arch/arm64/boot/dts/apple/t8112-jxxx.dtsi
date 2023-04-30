@@ -1,25 +1,23 @@
 // SPDX-License-Identifier: GPL-2.0+ OR MIT
 /*
- * Apple M1 Mac mini, MacBook Air/Pro, iMac 24" (M1, 2020/2021)
+ * Apple M2 MacBook Air/Pro (M2, 2022)
  *
- * This file contains parts common to all Apple M1 devices using the t8103.
+ * This file contains parts common to all Apple M2 devices using the t8112.
  *
- * target-type: J274, J293, J313, J456, J457
+ * target-type: J493, J413
  *
  * Copyright The Asahi Linux Contributors
  */
 
 / {
 	aliases {
-		bluetooth0 = &bluetooth0;
+		atcphy0 = &atcphy0;
+		atcphy1 = &atcphy1;
 		dcp = &dcp;
 		disp0 = &display;
 		disp0_piodma = &disp0_piodma;
 		serial0 = &serial0;
 		serial2 = &serial2;
-		wifi0 = &wifi0;
-		atcphy0 = &atcphy0;
-		atcphy1 = &atcphy1;
 	};
 
 	chosen {
@@ -60,11 +58,13 @@
 };
 
 &i2c0 {
+	status = "okay";
+
 	hpm0: usb-pd@38 {
 		compatible = "apple,cd321x";
 		reg = <0x38>;
 		interrupt-parent = <&pinctrl_ap>;
-		interrupts = <106 IRQ_TYPE_LEVEL_LOW>;
+		interrupts = <8 IRQ_TYPE_LEVEL_LOW>;
 		interrupt-names = "irq";
 
 		typec0: connector {
@@ -95,7 +95,7 @@
 		compatible = "apple,cd321x";
 		reg = <0x3f>;
 		interrupt-parent = <&pinctrl_ap>;
-		interrupts = <106 IRQ_TYPE_LEVEL_LOW>;
+		interrupts = <8 IRQ_TYPE_LEVEL_LOW>;
 		interrupt-names = "irq";
 
 		typec1: connector {
@@ -157,28 +157,16 @@
 	};
 };
 
-/*
- * Force the bus number assignments so that we can declare some of the
- * on-board devices and properties that are populated by the bootloader
- * (such as MAC addresses).
- */
-&port00 {
-	bus-range = <1 1>;
-	pwren-gpios = <&smc_gpio 13 GPIO_ACTIVE_HIGH>;
-	wifi0: network@0,0 {
-		compatible = "pci14e4,4425";
-		reg = <0x10000 0x0 0x0 0x0 0x0>;
-		/* To be filled by the loader */
-		local-mac-address = [00 00 00 00 00 00];
-		apple,antenna-sku = "XX";
-	};
+&i2c1 {
+	status = "okay";
+};
 
-	bluetooth0: bluetooth@0,1 {
-		compatible = "pci14e4,5f69";
-		reg = <0x10100 0x0 0x0 0x0 0x0>;
-		/* To be filled by the loader */
-		local-bd-address = [00 00 00 00 00 00];
-	};
+&i2c2 {
+	status = "okay";
+};
+
+&i2c3 {
+	status = "okay";
 };
 
 &nco_clkref {
