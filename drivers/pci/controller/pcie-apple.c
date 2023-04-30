@@ -590,7 +590,7 @@ static int apple_pcie_setup_port(struct apple_pcie *pcie,
 
 	writel_relaxed(PORT_LTSSMCTL_START, port->base + PORT_LTSSMCTL);
 
-	if (!wait_for_completion_timeout(&pcie->event, HZ / 10))
+	if (!wait_for_completion_timeout(&pcie->event, HZ / 4))
 		dev_warn(pcie->dev, "%pOF link didn't come up\n", np);
 
 	return 0;
