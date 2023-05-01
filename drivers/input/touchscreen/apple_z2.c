@@ -446,4 +446,4 @@ static struct spi_driver apple_z2_driver = {
 module_spi_driver(apple_z2_driver);
 
 MODULE_LICENSE("GPL");
-MODULE_FIRMWARE("apple/mtfw-*.bin");
+MODULE_FIRMWARE("apple/dfrmtfw-*.bin");
