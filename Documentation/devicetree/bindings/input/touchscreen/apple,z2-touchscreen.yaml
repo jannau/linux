@@ -20,8 +20,7 @@ properties:
   compatible:
     const: apple,z2-touchscreen
 
-  reg:
-    maxItems: 1
+  label: true
 
   interrupts-extended:
     maxItems: 1
@@ -29,29 +28,23 @@ properties:
   reset-gpios:
     maxItems: 1
 
-  cs-gpios:
-    maxItems: 1
-
   firmware-name:
     maxItems: 1
 
-  apple,z2-device-name:
-    description: The name to be used for the input device
-    $ref: /schemas/types.yaml#/definitions/string
-
   touchscreen-size-x: true
   touchscreen-size-y: true
-  spi-max-frequency: true
 
 required:
   - compatible
+  - label
   - interrupts-extended
   - reset-gpios
-  - cs-gpios
   - firmware-name
-  - apple,z2-device-name
   - touchscreen-size-x
   - touchscreen-size-y
+
+allOf:
+  $ref: /schemas/spi/spi-peripheral-props.yaml
 
 additionalProperties: false
 
@@ -67,14 +60,13 @@ examples:
             touchscreen@0 {
                     compatible = "apple,z2-touchscreen";
                     reg = <0>;
+                    label = "MacBookPro17,1 Touch Bar";
                     spi-max-frequency = <11500000>;
                     reset-gpios = <&pinctrl_ap 139 0>;
-                    cs-gpios = <&pinctrl_ap 109 0>;
                     interrupts-extended = <&pinctrl_ap 194 IRQ_TYPE_EDGE_FALLING>;
                     firmware-name = "apple/dfrmtfw-j293.bin";
                     touchscreen-size-x = <23045>;
                     touchscreen-size-y = <640>;
-                    apple,z2-device-name = "MacBookPro17,1 Touch Bar";
             };
     };
 
