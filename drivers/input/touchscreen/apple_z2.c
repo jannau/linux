@@ -365,9 +365,9 @@ static int apple_z2_probe(struct spi_device *spi)
 	z2->input_dev->dev.parent = dev;
 	z2->input_dev->id.bustype = BUS_SPI;
 	input_set_abs_params(z2->input_dev, ABS_MT_POSITION_X, 0, x_size, 0, 0);
-	input_abs_set_res(z2->input_dev, ABS_MT_POSITION_X, 1);
+	input_abs_set_res(z2->input_dev, ABS_MT_POSITION_X, 100);
 	input_set_abs_params(z2->input_dev, ABS_MT_POSITION_Y, 0, z2->y_size, 0, 0);
-	input_abs_set_res(z2->input_dev, ABS_MT_POSITION_Y, 1);
+	input_abs_set_res(z2->input_dev, ABS_MT_POSITION_Y, 100);
 	input_set_abs_params(z2->input_dev, ABS_MT_WIDTH_MAJOR, 0, 65535, 0, 0);
 	input_set_abs_params(z2->input_dev, ABS_MT_WIDTH_MINOR, 0, 65535, 0, 0);
 	input_set_abs_params(z2->input_dev, ABS_MT_TOUCH_MAJOR, 0, 65535, 0, 0);
