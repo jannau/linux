@@ -317,7 +317,7 @@ static int apple_z2_probe(struct spi_device *spi)
 	struct apple_z2 *z2;
 	int err;
 	int x_size;
-	const char *device_name;
+	const char *label;
 
 	z2 = devm_kzalloc(dev, sizeof(*z2), GFP_KERNEL);
 	if (!z2)
@@ -337,6 +337,10 @@ static int apple_z2_probe(struct spi_device *spi)
 	if (err < 0)
 		return dev_err_probe(dev, z2->spidev->irq, "unable to request irq");
 
+	err = device_property_read_string(dev, "label", &label);
+	if (err)
+		return dev_err_probe(dev, err, "unable to get device label");
+
 	err = device_property_read_u32(dev, "touchscreen-size-x", &x_size);
 	if (err)
 		return dev_err_probe(dev, err, "unable to get touchscreen size");
@@ -344,10 +348,6 @@ static int apple_z2_probe(struct spi_device *spi)
 	err = device_property_read_u32(dev, "touchscreen-size-y", &z2->y_size);
 	if (err)
 		return dev_err_probe(dev, err, "unable to get touchscreen size");
-
-	err = device_property_read_string(dev, "apple,z2-device-name", &device_name);
-	if (err)
-		return dev_err_probe(dev, err, "unable to get device name");
 
 	err = device_property_read_string(dev, "firmware-name", &z2->fw_name);
 	if (err)
@@ -360,7 +360,7 @@ static int apple_z2_probe(struct spi_device *spi)
 	z2->input_dev = devm_input_allocate_device(dev);
 	if (!z2->input_dev)
 		return -ENOMEM;
-	z2->input_dev->name = device_name;
+	z2->input_dev->name = label;
 	z2->input_dev->phys = "apple_z2";
 	z2->input_dev->dev.parent = dev;
 	z2->input_dev->id.bustype = BUS_SPI;
