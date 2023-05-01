@@ -26,7 +26,6 @@
 
 struct apple_z2 {
 	struct spi_device *spidev;
-	struct gpio_desc *cs_gpio;
 	struct gpio_desc *reset_gpio;
 	struct input_dev *input_dev;
 	struct completion boot_irq;
@@ -118,17 +117,6 @@ static void apple_z2_parse_touches(struct apple_z2 *z2, char *msg, size_t msg_le
 	input_sync(z2->input_dev);
 }
 
-static int apple_z2_spi_sync(struct apple_z2 *z2, struct spi_message *msg)
-{
-	int err;
-	gpiod_direction_output(z2->cs_gpio, 0);
-	usleep_range(1000, 2000);
-	err = spi_sync(z2->spidev, msg);
-	usleep_range(1000, 2000);
-	gpiod_direction_output(z2->cs_gpio, 1);
-	return err;
-}
-
 static int apple_z2_read_packet(struct apple_z2 *z2)
 {
 	struct spi_message msg;
@@ -150,7 +138,7 @@ static int apple_z2_read_packet(struct apple_z2 *z2)
 	xfer.rx_buf = len_rx;
 	xfer.len = sizeof(len_cmd);
 	spi_message_add_tail(&xfer, &msg);
-	err = apple_z2_spi_sync(z2, &msg);
+	err = spi_sync(z2->spidev, &msg);
 	if (err)
 		return err;
 
@@ -163,7 +151,7 @@ static int apple_z2_read_packet(struct apple_z2 *z2)
 	xfer.rx_buf = pkt_rx;
 	xfer.len = pkt_len;
 	spi_message_add_tail(&xfer, &msg);
-	err = apple_z2_spi_sync(z2, &msg);
+	err = spi_sync(z2->spidev, &msg);
 
 	if (!err)
 		apple_z2_parse_touches(z2, pkt_rx + 5, pkt_len - 5);
@@ -238,7 +226,7 @@ static int apple_z2_send_firmware_blob(struct apple_z2 *z2, const char *data, u3
 	ack_xfer.len = 2;
 	spi_message_add_tail(&ack_xfer, &msg);
 	reinit_completion(&z2->boot_irq);
-	err = apple_z2_spi_sync(z2, &msg);
+	err = spi_sync(z2->spidev, &msg);
 	if (err)
 		return err;
 	wait_for_completion_timeout(&z2->boot_irq, msecs_to_jiffies(20));
@@ -338,10 +326,6 @@ static int apple_z2_probe(struct spi_device *spi)
 	z2->spidev = spi;
 	init_completion(&z2->boot_irq);
 	spi_set_drvdata(spi, z2);
-
-	z2->cs_gpio = devm_gpiod_get_index(dev, "cs", 0, 0);
-	if (IS_ERR(z2->cs_gpio))
-		return dev_err_probe(dev, PTR_ERR(z2->cs_gpio), "unable to get cs");
 
 	z2->reset_gpio = devm_gpiod_get_index(dev, "reset", 0, 0);
 	if (IS_ERR(z2->reset_gpio))
