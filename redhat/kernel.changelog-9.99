@@ -1,3 +1,11 @@
+* Mon May 01 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc0.58390c8ce1bd.9]
+- Change FORCE_MAX_ORDER for ppc64 to be 8 (Justin M. Forbes)
+- kernel.spec.template: Add global compression variables (Prarit Bhargava)
+- kernel.spec.template: Use xz for KABI (Prarit Bhargava)
+- kernel.spec.template: Remove gzip related aarch64 code (Prarit Bhargava)
+- Linux v6.4.0-0.rc0.58390c8ce1bd
+Resolves: 
+
 * Sun Apr 30 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc0.825a0714d2b3.8]
 - Linux v6.4.0-0.rc0.825a0714d2b3
 Resolves: 
