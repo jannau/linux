@@ -69,14 +69,15 @@
 	touchbar0: touchbar@0 {
 		compatible = "apple,z2-touchscreen";
 		reg = <0>;
+		label = "MacBookPro17,1 Touch Bar";
 		spi-max-frequency = <11500000>;
+		spi-cs-setup-delay-ns = <2000>;
+		spi-cs-hold-delay-ns = <2000>;
 		reset-gpios = <&pinctrl_ap 139 0>;
-		cs-gpios = <&pinctrl_ap 109 0>;
 		interrupts-extended = <&pinctrl_ap 194 IRQ_TYPE_EDGE_FALLING>;
 		firmware-name = "apple/dfrmtfw-j293.bin";
 		touchscreen-size-x = <23045>;
 		touchscreen-size-y = <640>;
-		apple,z2-device-name = "MacBookPro17,1 Touch Bar";
 	};
 };
 
