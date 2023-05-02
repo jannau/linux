@@ -1,3 +1,10 @@
+* Tue May 02 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc0.865fdb08197e.10]
+- kernel.spec: package unstripped test_progs-no_alu32 (Felix Maurer)
+- bpf/selftests: fix bpf selftests install (Jerome Marchand)
+- kernel.spec: add bonding selftest (Hangbin Liu)
+- Linux v6.4.0-0.rc0.865fdb08197e
+Resolves: 
+
 * Mon May 01 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc0.58390c8ce1bd.9]
 - Change FORCE_MAX_ORDER for ppc64 to be 8 (Justin M. Forbes)
 - kernel.spec.template: Add global compression variables (Prarit Bhargava)
