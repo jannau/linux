@@ -1,3 +1,7 @@
+* Wed May 03 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc0.348551ddaf31.11]
+- Linux v6.4.0-0.rc0.348551ddaf31
+Resolves: 
+
 * Tue May 02 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc0.865fdb08197e.10]
 - kernel.spec: package unstripped test_progs-no_alu32 (Felix Maurer)
 - bpf/selftests: fix bpf selftests install (Jerome Marchand)
