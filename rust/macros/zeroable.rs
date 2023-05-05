@@ -1,7 +1,4 @@
-use crate::{
-    helpers::{parse_generics, Generics},
-    quote,
-};
+use crate::helpers::{parse_generics, Generics};
 use proc_macro::TokenStream;
 
 pub(crate) fn derive(input: TokenStream) -> TokenStream {
