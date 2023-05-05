@@ -505,14 +505,18 @@ macro_rules! stack_try_pin_init {
 /// - Fields that you want to initialize in-place have to use `<-` instead of `:`.
 /// - In front of the initializer you can write `&this in` to have access to a [`NonNull<Self>`]
 ///   pointer named `this` inside of the initializer.
+/// - Using struct update syntax one can place `..Zeroable::zeroed()` at the very end of the
+///   struct, this initializes every field with 0 and then runs all initializers specified in the
+///   body. This can only be done if [`Zeroable`] is implemented for the struct.
 ///
 /// For instance:
 ///
 /// ```rust
 /// # use kernel::pin_init;
-/// # use macros::pin_data;
+/// # use macros::{pin_data, Zeroable};
 /// # use core::{ptr::addr_of_mut, marker::PhantomPinned};
 /// #[pin_data]
+/// #[derive(Zeroable)]
 /// struct Buf {
 ///     // `ptr` points into `buf`.
 ///     ptr: *mut u8,
@@ -525,6 +529,10 @@ macro_rules! stack_try_pin_init {
 ///     ptr: unsafe { addr_of_mut!((*this.as_ptr()).buf).cast() },
 ///     pin: PhantomPinned,
 /// });
+/// pin_init!(Buf {
+///     buf: [1; 64],
+///     ..Zeroable::zeroed(),
+/// });
 /// ```
 ///
 /// [`try_pin_init!`]: kernel::try_pin_init
@@ -536,11 +544,12 @@ macro_rules! pin_init {
     ($(&$this:ident in)? $t:ident $(::<$($generics:ty),* $(,)?>)? {
         $($fields:tt)*
     }) => {
-        $crate::try_pin_init!(
+        $crate::try_pin_init!(parse_zeroable_end:
             @this($($this)?),
             @typ($t $(::<$($generics),*>)?),
             @fields($($fields)*),
             @error(::core::convert::Infallible),
+            @munch_fields($($fields)*),
         )
     };
 }
@@ -589,28 +598,76 @@ macro_rules! try_pin_init {
     ($(&$this:ident in)? $t:ident $(::<$($generics:ty),* $(,)?>)? {
         $($fields:tt)*
     }) => {
-        $crate::try_pin_init!(
+        $crate::try_pin_init!(parse_zeroable_end:
             @this($($this)?),
             @typ($t $(::<$($generics),*>)? ),
             @fields($($fields)*),
             @error($crate::error::Error),
+            @munch_fields($($fields)*),
         )
     };
     ($(&$this:ident in)? $t:ident $(::<$($generics:ty),* $(,)?>)? {
         $($fields:tt)*
     }? $err:ty) => {
-        $crate::try_pin_init!(
+        $crate::try_pin_init!(parse_zeroable_end:
             @this($($this)?),
             @typ($t $(::<$($generics),*>)? ),
             @fields($($fields)*),
             @error($err),
+            @munch_fields($($fields)*),
         )
     };
+    (parse_zeroable_end:
+        @this($($this:ident)?),
+        @typ($t:ident $(::<$($generics:ty),*>)?),
+        @fields($($fields:tt)*),
+        @error($err:ty),
+        @munch_fields(),
+    ) => {
+        $crate::try_pin_init!(
+            @this($($this)?),
+            @typ($t $(::<$($generics),*>)?),
+            @fields($($fields)*),
+            @error($err),
+            @zeroed(), // nothing means we do not zero unmentioned fields
+        )
+    };
+    (parse_zeroable_end:
+        @this($($this:ident)?),
+        @typ($t:ident $(::<$($generics:ty),*>)?),
+        @fields($($fields:tt)*),
+        @error($err:ty),
+        @munch_fields(..Zeroable::zeroed()),
+    ) => {
+        $crate::try_pin_init!(
+            @this($($this)?),
+            @typ($t $(::<$($generics),*>)?),
+            @fields($($fields)*),
+            @error($err),
+            @zeroed(()), // () means we zero unmentioned fields
+        )
+    };
+    (parse_zeroable_end:
+        @this($($this:ident)?),
+        @typ($t:ident $(::<$($generics:ty),*>)?),
+        @fields($($fields:tt)*),
+        @error($err:ty),
+        @munch_fields($ignore:tt $($rest:tt)*),
+    ) => {
+        $crate::try_pin_init!(parse_zeroable_end:
+            @this($($this)?),
+            @typ($t $(::<$($generics),*>)?),
+            @fields($($fields)*),
+            @error($err),
+            @munch_fields($($rest)*),
+         )
+     };
     (
         @this($($this:ident)?),
         @typ($t:ident $(::<$($generics:ty),*>)?),
         @fields($($fields:tt)*),
         @error($err:ty),
+        @zeroed($($init_zeroed:expr)?),
     ) => {{
         // We do not want to allow arbitrary returns, so we declare this type as the `Ok` return
         // type and shadow it later when we insert the arbitrary user code. That way there will be
@@ -628,6 +685,19 @@ macro_rules! try_pin_init {
                 {
                     // Shadow the structure so it cannot be used to return early.
                     struct __InitOk;
+                    // If `$init_zeroed` is present, we should not error on unmentioned fields and
+                    // set the whole struct to zero first.
+                    //
+                    // For type inference reasons we do not use `init::zeroed`, but instead
+                    // write_bytes.
+                    $({
+                        // We need to ensure the type actually implements `Zeroable`.
+                        fn is_zeroable<T: Zeroable>(ptr: *mut T) {}
+                        is_zeroable(slot);
+                        // SAFETY: the type implements `Zeroable`.
+                        unsafe { ::core::ptr::write_bytes(slot, 0, 1) };
+                        $init_zeroed
+                    })?
                     // Create the `this` so it can be referenced by the user inside of the
                     // expressions creating the individual fields.
                     $(let $this = unsafe { ::core::ptr::NonNull::new_unchecked(slot) };)?
@@ -666,7 +736,7 @@ macro_rules! try_pin_init {
         @data($data:ident),
         @slot($slot:ident),
         @guards($($guards:ident,)*),
-        @munch_fields($(,)?),
+        @munch_fields($(..Zeroable::zeroed())? $(,)?),
     ) => {
         // Endpoint of munching, no fields are left. If execution reaches this point, all fields
         // have been initialized. Therefore we can now dismiss the guards by forgetting them.
@@ -733,6 +803,28 @@ macro_rules! try_pin_init {
     (make_initializer:
         @slot($slot:ident),
         @type_name($t:ident),
+        @munch_fields(..Zeroable::zeroed() $(,)?),
+        @acc($($acc:tt)*),
+    ) => {
+        // Endpoint, nothing more to munch, create the initializer. Without erroring on extra
+        // fields. We want to have the same semantics as a struct initializer with struct update
+        // syntax, so we create one first.
+        // Since we are in the `if false` branch, this will never get executed. We abuse `slot` to
+        // get the correct type inference here:
+        unsafe {
+            // We have to force zeroed to have the correct type.
+            let mut zeroed = ::core::mem::zeroed();
+            ::core::ptr::write($slot, zeroed);
+            zeroed = ::core::mem::zeroed();
+            ::core::ptr::write($slot, $t {
+                $($acc)*
+                ..zeroed
+            });
+        }
+    };
+    (make_initializer:
+        @slot($slot:ident),
+        @type_name($t:ident),
         @munch_fields($(,)?),
         @acc($($acc:tt)*),
     ) => {
@@ -793,11 +885,12 @@ macro_rules! init {
     ($(&$this:ident in)? $t:ident $(::<$($generics:ty),* $(,)?>)? {
         $($fields:tt)*
     }) => {
-        $crate::try_init!(
+        $crate::try_init!(parse_zeroable_end:
             @this($($this)?),
             @typ($t $(::<$($generics),*>)?),
             @fields($($fields)*),
             @error(::core::convert::Infallible),
+            @munch_fields($($fields)*),
         )
     }
 }
@@ -840,28 +933,76 @@ macro_rules! try_init {
     ($(&$this:ident in)? $t:ident $(::<$($generics:ty),* $(,)?>)? {
         $($fields:tt)*
     }) => {
-        $crate::try_init!(
+        $crate::try_init!(parse_zeroable_end:
             @this($($this)?),
             @typ($t $(::<$($generics),*>)?),
             @fields($($fields)*),
             @error($crate::error::Error),
+            @munch_fields($($fields)*),
         )
     };
     ($(&$this:ident in)? $t:ident $(::<$($generics:ty),* $(,)?>)? {
         $($fields:tt)*
     }? $err:ty) => {
+        $crate::try_init!(parse_zeroable_end:
+            @this($($this)?),
+            @typ($t $(::<$($generics),*>)?),
+            @fields($($fields)*),
+            @error($err),
+            @munch_fields($($fields)*),
+        )
+    };
+    (parse_zeroable_end:
+        @this($($this:ident)?),
+        @typ($t:ident $(::<$($generics:ty),*>)?),
+        @fields($($fields:tt)*),
+        @error($err:ty),
+        @munch_fields(),
+    ) => {
         $crate::try_init!(
             @this($($this)?),
             @typ($t $(::<$($generics),*>)?),
             @fields($($fields)*),
             @error($err),
+            @zeroed(), // Nothing means we do not zero unmentioned fields.
         )
     };
+    (parse_zeroable_end:
+        @this($($this:ident)?),
+        @typ($t:ident $(::<$($generics:ty),*>)?),
+        @fields($($fields:tt)*),
+        @error($err:ty),
+        @munch_fields(..Zeroable::zeroed()),
+    ) => {
+        $crate::try_init!(
+            @this($($this)?),
+            @typ($t $(::<$($generics),*>)?),
+            @fields($($fields)*),
+            @error($err),
+            @zeroed(()), // () means we zero unmentioned fields.
+        )
+    };
+    (parse_zeroable_end:
+        @this($($this:ident)?),
+        @typ($t:ident $(::<$($generics:ty),*>)?),
+        @fields($($fields:tt)*),
+        @error($err:ty),
+        @munch_fields($ignore:tt $($rest:tt)*),
+    ) => {
+        $crate::try_init!(parse_zeroable_end:
+            @this($($this)?),
+            @typ($t $(::<$($generics),*>)?),
+            @fields($($fields)*),
+            @error($err),
+            @munch_fields($($rest)*),
+         )
+     };
     (
         @this($($this:ident)?),
         @typ($t:ident $(::<$($generics:ty),*>)?),
         @fields($($fields:tt)*),
         @error($err:ty),
+        @zeroed($($init_zeroed:expr)?),
     ) => {{
         // We do not want to allow arbitrary returns, so we declare this type as the `Ok` return
         // type and shadow it later when we insert the arbitrary user code. That way there will be
@@ -879,6 +1020,19 @@ macro_rules! try_init {
                 {
                     // Shadow the structure so it cannot be used to return early.
                     struct __InitOk;
+                    // If `$init_zeroed` is present, we should not error on unmentioned fields and
+                    // set the whole struct to zero first.
+                    //
+                    // For type inference reasons we do not use `init::zeroed`, but instead
+                    // write_bytes.
+                    $({
+                        // We need to ensure the type actually implements `Zeroable`.
+                        fn is_zeroable<T: Zeroable>(ptr: *mut T) {}
+                        is_zeroable(slot);
+                        // SAFETY: the type implements `Zeroable`.
+                        unsafe { ::core::ptr::write_bytes(slot, 0, 1) };
+                        $init_zeroed
+                    })?
                     // Create the `this` so it can be referenced by the user inside of the
                     // expressions creating the individual fields.
                     $(let $this = unsafe { ::core::ptr::NonNull::new_unchecked(slot) };)?
@@ -915,7 +1069,7 @@ macro_rules! try_init {
     (init_slot:
         @slot($slot:ident),
         @guards($($guards:ident,)*),
-        @munch_fields( $(,)?),
+        @munch_fields($(..Zeroable::zeroed())? $(,)?),
     ) => {
         // Endpoint of munching, no fields are left. If execution reaches this point, all fields
         // have been initialized. Therefore we can now dismiss the guards by forgetting them.
@@ -982,7 +1136,29 @@ macro_rules! try_init {
     (make_initializer:
         @slot($slot:ident),
         @type_name($t:ident),
-        @munch_fields( $(,)?),
+        @munch_fields(..Zeroable::zeroed() $(,)?),
+        @acc($($acc:tt)*),
+    ) => {
+        // Endpoint, nothing more to munch, create the initializer. Without erroring on extra
+        // fields. We want to have the same semantics as a struct initializer with struct update
+        // syntax, so we create one first.
+        // Since we are in the `if false` branch, this will never get executed. We abuse `slot` to
+        // get the correct type inference here:
+        unsafe {
+            // We have to force zeroed to have the correct type.
+            let mut zeroed = ::core::mem::zeroed();
+            ::core::ptr::write($slot, zeroed);
+            zeroed = ::core::mem::zeroed();
+            ::core::ptr::write($slot, $t {
+                $($acc)*
+                ..zeroed
+            });
+        }
+    };
+    (make_initializer:
+        @slot($slot:ident),
+        @type_name($t:ident),
+        @munch_fields($(,)?),
         @acc($($acc:tt)*),
     ) => {
         // Endpoint, nothing more to munch, create the initializer.
