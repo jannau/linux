@@ -1334,6 +1334,96 @@ pub fn uninit<T, E>() -> impl Init<MaybeUninit<T>, E> {
     unsafe { init_from_closure(|_| Ok(())) }
 }
 
+/// Initializes an array by initializing each element via the provided initializer.
+///
+/// # Examples
+///
+/// ```rust
+/// let array: Box<[usize; 1000_000_000]>= Box::init(init_array_from_fn(|i| i)).unwrap();
+/// println!("{array:?}");
+/// ```
+pub fn init_array_from_fn<I, const N: usize, T, E>(
+    mut make_init: impl FnMut(usize) -> I,
+) -> impl Init<[T; N], E>
+where
+    I: Init<T, E>,
+{
+    let init = move |slot: *mut [T; N]| {
+        let slot = slot.cast::<T>();
+        for i in 0..N {
+            let init = make_init(i);
+            // SAFETY: since 0 <= `i` < N, it is still in bounds of `[T; N]`.
+            let ptr = unsafe { slot.add(i) };
+            // SAFETY: The pointer is derived from `slot` and thus satisfies the `__init`
+            // requirements.
+            match unsafe { init.__init(ptr) } {
+                Ok(()) => {}
+                Err(e) => {
+                    // We now free every element that has been initialized before:
+                    for j in 0..i {
+                        let ptr = unsafe { slot.add(j) };
+                        // SAFETY: The value was initialized in a previous iteration of the loop
+                        // and since we return `Err` below, the caller will consider the memory at
+                        // `slot` as uninitialized.
+                        unsafe { ptr::drop_in_place(ptr) };
+                    }
+                    return Err(e);
+                }
+            }
+        }
+        Ok(())
+    };
+    // SAFETY: The initializer above initializes every element of the array. On failure it drops
+    // any initialized elements and returns `Err`.
+    unsafe { init_from_closure(init) }
+}
+
+/// Initializes an array by initializing each element via the provided initializer.
+///
+/// # Examples
+///
+/// ```rust
+/// let array: Arc<[Mutex<usize>; 1000_000_000]>=
+///     Arc::pin_init(init_array_from_fn(|i| new_mutex!(i))).unwrap();
+/// println!("{array:?}");
+/// ```
+pub fn pin_init_array_from_fn<I, const N: usize, T, E>(
+    mut make_init: impl FnMut(usize) -> I,
+) -> impl PinInit<[T; N], E>
+where
+    I: PinInit<T, E>,
+{
+    let init = move |slot: *mut [T; N]| {
+        let slot = slot.cast::<T>();
+        for i in 0..N {
+            let init = make_init(i);
+            // SAFETY: since 0 <= `i` < N, it is still in bounds of `[T; N]`.
+            let ptr = unsafe { slot.add(i) };
+            // SAFETY: The pointer is derived from `slot` and thus satisfies the `__pinned_init`
+            // requirements.
+            match unsafe { init.__pinned_init(ptr) } {
+                Ok(()) => {}
+                Err(e) => {
+                    // We now have to free every element that has been initialized before, since we
+                    // have to abide by the drop guarantee.
+                    for j in 0..i {
+                        let ptr = unsafe { slot.add(j) };
+                        // SAFETY: The value was initialized in a previous iteration of the loop
+                        // and since we return `Err` below, the caller will consider the memory at
+                        // `slot` as uninitialized.
+                        unsafe { ptr::drop_in_place(ptr) };
+                    }
+                    return Err(e);
+                }
+            }
+        }
+        Ok(())
+    };
+    // SAFETY: The initializer above initializes every element of the array. On failure it drops
+    // any initialized elements and returns `Err`.
+    unsafe { pin_init_from_closure(init) }
+}
+
 // SAFETY: Every type can be initialized by-value.
 unsafe impl<T, E> Init<T, E> for T {
     unsafe fn __init(self, slot: *mut T) -> Result<(), E> {
