@@ -1,3 +1,16 @@
+* Sat May 06 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc0.2e1e1337881b.14]
+- redhat: Remove editconfig (Prarit Bhargava)
+- redhat: configs: fix CONFIG_WERROR replace in build_configs (Jan Stancek)
+- redhat/configs: enable Maxim MAX77620 PMIC for RHEL (Mark Salter)
+- kernel.spec: skip kernel meta package when building without up (Jan Stancek)
+- redhat/configs: enable RDMA_RXE for RHEL (Kamal Heib) [2022578]
+- redhat/configs: update RPCSEC_GSS_KRB5 configs (Scott Mayhew)
+- redhat/Makefile: Support building linux-next (Thorsten Leemhuis)
+- redhat/Makefile: support building stable-rc versions (Thorsten Leemhuis)
+- redhat/Makefile: Add target to print DISTRELEASETAG (Thorsten Leemhuis)
+- Linux v6.4.0-0.rc0.2e1e1337881b
+Resolves: rhbz#2022578
+
 * Fri May 05 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc0.78b421b6a7c6.13]
 - Remove EXPERT from ARCH_FORCE_MAX_ORDER for aarch64 (Justin M. Forbes)
 - Revert "Merge branch 'unstripped-no_alu32' into 'os-build'" (Patrick Talbert)
