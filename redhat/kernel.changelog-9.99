@@ -1,3 +1,7 @@
+* Sun May 07 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc0.fc4354c6e5c2.15]
+- Linux v6.4.0-0.rc0.fc4354c6e5c2
+Resolves: 
+
 * Sat May 06 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc0.2e1e1337881b.14]
 - redhat: Remove editconfig (Prarit Bhargava)
 - redhat: configs: fix CONFIG_WERROR replace in build_configs (Jan Stancek)
