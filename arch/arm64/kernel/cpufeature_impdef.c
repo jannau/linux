@@ -4,9 +4,22 @@
  */
 
 #include <asm/cpufeature.h>
+#include <asm/apple_cpufeature.h>
 
 void __init init_cpucap_indirect_list_from_array(const struct arm64_cpu_capabilities *caps);
 bool feature_matches(u64 reg, const struct arm64_cpu_capabilities *entry);
+
+bool has_apple_feature(const struct arm64_cpu_capabilities *entry, int scope)
+{
+	u64 val;
+	WARN_ON(scope != SCOPE_SYSTEM);
+
+	if (read_cpuid_implementor() != ARM_CPU_IMP_APPLE)
+		return false;
+
+	val = read_sysreg(aidr_el1);
+	return feature_matches(val, entry);
+}
 
 bool has_tso_fixed(const struct arm64_cpu_capabilities *entry, int scope)
 {
@@ -23,6 +36,16 @@ bool has_tso_fixed(const struct arm64_cpu_capabilities *entry, int scope)
 
 static const struct arm64_cpu_capabilities arm64_impdef_features[] = {
 #ifdef CONFIG_ARM64_MEMORY_MODEL_CONTROL
+	{
+		.desc = "TSO memory model (Apple)",
+		.capability = ARM64_HAS_TSO_APPLE,
+		.type = ARM64_CPUCAP_SYSTEM_FEATURE,
+		.matches = has_apple_feature,
+		.field_pos = AIDR_APPLE_TSO_SHIFT,
+		.field_width = 1,
+		.sign = FTR_UNSIGNED,
+		.min_field_value = 1,
+	},
 	{
 		.desc = "TSO memory model (Fixed)",
 		.capability = ARM64_HAS_TSO_FIXED,
