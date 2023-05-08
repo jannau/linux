@@ -374,6 +374,11 @@ int copy_thread(struct task_struct *p, const struct kernel_clone_args *args)
 		if (system_supports_tpidr2())
 			p->thread.tpidr2_el0 = read_sysreg_s(SYS_TPIDR2_EL0);
 
+#ifdef CONFIG_ARM64_ACTLR_STATE
+		if (system_has_actlr_state())
+			p->thread.actlr = read_sysreg(actlr_el1);
+#endif
+
 		if (stack_start) {
 			if (is_compat_thread(task_thread_info(p)))
 				childregs->compat_sp = stack_start;
@@ -516,6 +521,25 @@ void update_sctlr_el1(u64 sctlr)
 	isb();
 }
 
+#ifdef CONFIG_ARM64_ACTLR_STATE
+/*
+ * IMPDEF control register ACTLR_EL1 handling. Some CPUs use this to
+ * expose features that can be controlled by userspace.
+ */
+static void actlr_thread_switch(struct task_struct *next)
+{
+	if (!system_has_actlr_state())
+		return;
+
+	current->thread.actlr = read_sysreg(actlr_el1);
+	write_sysreg(next->thread.actlr, actlr_el1);
+}
+#else
+static inline void actlr_thread_switch(struct task_struct *next)
+{
+}
+#endif
+
 /*
  * Thread switching.
  */
@@ -533,6 +557,7 @@ struct task_struct *__switch_to(struct task_struct *prev,
 	ssbs_thread_switch(next);
 	erratum_1418040_thread_switch(next);
 	ptrauth_thread_switch_user(next);
+	actlr_thread_switch(next);
 
 	/*
 	 * Complete any pending TLB or cache maintenance on this CPU in case
