@@ -1,3 +1,8 @@
+* Tue May 09 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc1.ba0ad6ed89fd.17]
+- Turn on IO_URING for RHEL in pending (Justin M. Forbes)
+- Linux v6.4.0-0.rc1.ba0ad6ed89fd
+Resolves: 
+
 * Mon May 08 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc1.16]
 - Linux v6.4.0-0.rc1
 Resolves: 
