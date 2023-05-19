@@ -12,7 +12,7 @@ use crate::{
 use core::{
     marker::PhantomData,
     mem,
-    mem::{ManuallyDrop, MaybeUninit},
+    mem::MaybeUninit,
     ops::{Deref, DerefMut},
     ptr::addr_of_mut,
     slice,
@@ -70,23 +70,15 @@ pub struct Object<T: DriverObject> {
     obj: bindings::drm_gem_shmem_object,
     // The DRM core ensures the Device exists as long as its objects exist, so we don't need to
     // manage the reference count here.
-    dev: ManuallyDrop<device::Device<T::Driver>>,
+    dev: *const bindings::drm_device,
+    #[pin]
     inner: T,
 }
 
 unsafe extern "C" fn gem_create_object<T: DriverObject>(
-    raw_dev: *mut bindings::drm_device,
+    dev: *mut bindings::drm_device,
     size: usize,
 ) -> *mut bindings::drm_gem_object {
-    // SAFETY: GEM ensures the device lives as long as its objects live,
-    // so we can conjure up a reference from thin air and never drop it.
-    let dev = ManuallyDrop::new(unsafe { device::Device::from_raw(raw_dev) });
-
-    let inner = match T::new(&*dev, size) {
-        Ok(v) => v,
-        Err(e) => return e.to_ptr(),
-    };
-
     let p = unsafe {
         bindings::krealloc(
             core::ptr::null(),
@@ -99,10 +91,19 @@ unsafe extern "C" fn gem_create_object<T: DriverObject>(
         return ENOMEM.to_ptr();
     }
 
-    // SAFETY: p is valid as long as the alloc succeeded
-    unsafe {
-        addr_of_mut!((*p).dev).write(dev);
-        addr_of_mut!((*p).inner).write(inner);
+    let init = try_pin_init!(Object {
+        obj <- init::zeroed(),
+        // SAFETY: GEM ensures the device lives as long as its objects live
+        inner <- T::new(unsafe { device::Device::borrow(dev)}, size),
+        dev,
+    });
+
+    // SAFETY: p is a valid pointer to an uninitialized Object<T>.
+    if let Err(e) = unsafe { init.__pinned_init(p) } {
+        // SAFETY: p is a valid pointer from `krealloc` and __pinned_init guarantees we can dealloc it.
+        unsafe { bindings::kfree(p as *mut _) };
+
+        return e.to_ptr();
     }
 
     // SAFETY: drm_gem_shmem_object is safe to zero-init, and
@@ -161,7 +162,7 @@ impl<T: DriverObject> Object<T> {
     pub fn new(dev: &device::Device<T::Driver>, size: usize) -> Result<gem::UniqueObjectRef<Self>> {
         // SAFETY: This function can be called as long as the ALLOC_OPS are set properly
         // for this driver, and the gem_create_object is called.
-        let p = unsafe { bindings::drm_gem_shmem_create(dev.raw() as *mut _, size) };
+        let p = unsafe { bindings::drm_gem_shmem_create(dev.raw_mut(), size) };
         let p = crate::container_of!(p, Object<T>, obj) as *mut _;
 
         // SAFETY: The gem_create_object callback ensures this is a valid Object<T>,
@@ -173,7 +174,9 @@ impl<T: DriverObject> Object<T> {
 
     /// Returns the `Device` that owns this GEM object.
     pub fn dev(&self) -> &device::Device<T::Driver> {
-        &self.dev
+        // SAFETY: GEM ensures that the device outlives its objects, so we can
+        // just borrow here.
+        unsafe { device::Device::borrow(self.dev) }
     }
 
     /// Creates (if necessary) and returns a scatter-gather table of DMA pages for this object.
