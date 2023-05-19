@@ -17,9 +17,9 @@ use crate::debug::*;
 use crate::fw::channels::PipeType;
 use crate::fw::types::*;
 use crate::fw::workqueue::*;
+use crate::no_debug;
 use crate::object::OpaqueGpuObject;
 use crate::regs::FaultReason;
-use crate::{box_in_place, no_debug, place};
 use crate::{channel, driver, event, fw, gpu, object, regs};
 use core::num::NonZeroU64;
 use core::sync::atomic::Ordering;
@@ -561,25 +561,27 @@ impl WorkQueue::ver {
         priority: u32,
         size: u32,
     ) -> Result<Arc<WorkQueue::ver>> {
-        let mut info = box_in_place!(QueueInfo::ver {
-            state: alloc.shared.new_default::<RingState>()?,
-            ring: alloc.shared.array_empty(size as usize)?,
-            gpu_buf: alloc.private.array_empty(0x2c18)?,
-            notifier_list: notifier_list,
-            gpu_context: gpu_context,
-        })?;
-
-        info.state.with_mut(|raw, _inner| {
-            raw.rb_size = size;
-        });
-
+        let gpu_buf = alloc.private.array_empty(0x2c18)?;
+        let shared = &mut alloc.shared;
         let inner = WorkQueueInner::ver {
             dev: dev.clone(),
             event_manager,
-            info: alloc.private.new_boxed(info, |inner, ptr| {
-                Ok(place!(
-                    ptr,
-                    raw::QueueInfo::ver {
+            info: alloc.private.new_init(
+                try_init!(QueueInfo::ver {
+                    state: {
+                        let mut s = shared.new_default::<RingState>()?;
+                        s.with_mut(|raw, _inner| {
+                            raw.rb_size = size;
+                        });
+                        s
+                    },
+                    ring: shared.array_empty(size as usize)?,
+                    gpu_buf,
+                    notifier_list: notifier_list,
+                    gpu_context: gpu_context,
+                }),
+                |inner, _p| {
+                    try_init!(raw::QueueInfo::ver {
                         state: inner.state.gpu_pointer(),
                         ring: inner.ring.gpu_pointer(),
                         notifier_list: inner.notifier_list.gpu_pointer(),
@@ -608,9 +610,9 @@ impl WorkQueue::ver {
                         unk_a8: Default::default(),
                         #[ver(V >= V13_2 && G < G14X)]
                         unk_b0: 0,
-                    }
-                ))
-            })?,
+                    })
+                },
+            )?,
             new: true,
             pipe_type,
             size,
