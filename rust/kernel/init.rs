@@ -1275,6 +1275,57 @@ pub unsafe trait Init<T: ?Sized, E = Infallible>: Sized {
     unsafe fn __init(self, slot: *mut T) -> Result<(), E>;
 }
 
+/// Chains a closure to the initializer to be called on successful initialization.
+///
+/// Returns a new initializer. If the closure returns `Err`, the object is
+/// dropped.
+// TODO: Once return_position_impl_trait_in_trait works, this should probably be
+// a trait method and called `and_then()` or so.
+pub fn chain<T: ?Sized, E>(
+    this: impl Init<T, E>,
+    f: impl FnOnce(&mut T) -> Result<(), E>,
+) -> impl Init<T, E> {
+    unsafe {
+        init_from_closure(|slot: *mut T| {
+            this.__init(slot)?;
+
+            f(&mut *slot).map_err(|e| {
+                // SAFETY: The value was initialized above, and since we return
+                // `Err` here, the caller will consider the memory at `slot` to
+                // be uninitialized.
+                ptr::drop_in_place(slot);
+                e
+            })
+        })
+    }
+}
+
+/// Chains a closure to the pinned initializer to be called on successful
+/// initialization.
+///
+/// Returns a new initializer. If the closure returns `Err`, the object is
+/// dropped.
+// TODO: Once return_position_impl_trait_in_trait works, this should probably be
+// a trait method and called `and_then()` or so.
+pub fn pin_chain<T: ?Sized, E>(
+    this: impl PinInit<T, E>,
+    f: impl FnOnce(&mut T) -> Result<(), E>,
+) -> impl PinInit<T, E> {
+    unsafe {
+        init_from_closure(|slot: *mut T| {
+            this.__pinned_init(slot)?;
+
+            f(&mut *slot).map_err(|e| {
+                // SAFETY: The value was initialized above, and since we return
+                // `Err` here, the caller will consider the memory at `slot` to
+                // be uninitialized.
+                ptr::drop_in_place(slot);
+                e
+            })
+        })
+    }
+}
+
 // SAFETY: Every in-place initializer can also be used as a pin-initializer.
 unsafe impl<T: ?Sized, E, I> PinInit<T, E> for I
 where
