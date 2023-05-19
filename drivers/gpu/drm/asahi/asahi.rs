@@ -20,7 +20,6 @@ mod mem;
 mod microseq;
 mod mmu;
 mod object;
-mod place;
 mod queue;
 mod regs;
 mod slotalloc;
