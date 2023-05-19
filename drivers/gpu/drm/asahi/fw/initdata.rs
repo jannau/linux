@@ -156,7 +156,6 @@ pub(crate) mod raw {
     }
     default_zeroed!(HwDataA130Extra);
 
-    #[derive(Default)]
     #[repr(C)]
     pub(crate) struct T81xxData {
         pub(crate) unk_d8c: u32,
@@ -177,6 +176,7 @@ pub(crate) mod raw {
         pub(crate) unk_dc8: u32,
         pub(crate) max_pstate_scaled: u32,
     }
+    default_zeroed!(T81xxData);
 
     #[versions(AGX)]
     #[derive(Default, Copy, Clone)]
@@ -1262,22 +1262,10 @@ trivial_gpustruct!(GpuGlobalStatsFrag);
 trivial_gpustruct!(GpuStatsComp);
 
 #[versions(AGX)]
-#[derive(Debug, Default)]
-pub(crate) struct HwDataA {}
+trivial_gpustruct!(HwDataA::ver);
 
 #[versions(AGX)]
-impl GpuStruct for HwDataA::ver {
-    type Raw<'a> = raw::HwDataA::ver;
-}
-
-#[versions(AGX)]
-#[derive(Debug, Default)]
-pub(crate) struct HwDataB {}
-
-#[versions(AGX)]
-impl GpuStruct for HwDataB::ver {
-    type Raw<'a> = raw::HwDataB::ver;
-}
+trivial_gpustruct!(HwDataB::ver);
 
 #[versions(AGX)]
 #[derive(Debug)]
@@ -1310,13 +1298,7 @@ impl GpuStruct for RuntimePointers::ver {
 }
 
 #[versions(AGX)]
-#[derive(Debug, Default)]
-pub(crate) struct Globals {}
-
-#[versions(AGX)]
-impl GpuStruct for Globals::ver {
-    type Raw<'a> = raw::Globals::ver;
-}
+trivial_gpustruct!(Globals::ver);
 
 #[versions(AGX)]
 #[derive(Debug)]
