@@ -10,10 +10,9 @@
 //!
 //! The actual page table management is delegated to the common kernel `io_pgtable` code.
 
-use core::convert::Infallible;
 use core::fmt::Debug;
 use core::mem::size_of;
-use core::ptr::{addr_of_mut, NonNull};
+use core::ptr::NonNull;
 use core::sync::atomic::{fence, AtomicU32, AtomicU64, AtomicU8, Ordering};
 use core::time::Duration;
 
@@ -1185,35 +1184,24 @@ impl Uat {
         let handoff_rgn = Self::map_region(dev, c_str!("handoff"), HANDOFF_SIZE, false)?;
         let ttbs_rgn = Self::map_region(dev, c_str!("ttbs"), SLOTS_SIZE, false)?;
 
+        let handoff = unsafe { &(handoff_rgn.map.as_ptr() as *mut Handoff).as_ref().unwrap() };
+
         dev_info!(dev, "MMU: Initializing kernel page table\n");
 
-        Arc::pin_init(unsafe {
-            init::pin_init_from_closure(
-                move |slot: *mut UatInner| -> core::result::Result<(), Infallible> {
-                    let handoff = &(handoff_rgn.map.as_ptr() as *mut Handoff).as_ref().unwrap();
-
-                    for i in 0..UAT_NUM_CTX + 1 {
-                        new_mutex!(HandoffFlush(&handoff.flush[i]), "handoff_flush")
-                            .__pinned_init(addr_of_mut!((*slot).handoff_flush[i]))
-                            .expect("infallible");
-                    }
-
-                    new_mutex!(
-                        UatShared {
-                            kernel_ttb1: 0,
-                            map_kernel_to_user: false,
-                            handoff_rgn,
-                            ttbs_rgn,
-                        },
-                        "uat_shared"
-                    )
-                    .__pinned_init(addr_of_mut!((*slot).shared))
-                    .expect("infallible");
-
-                    Ok(())
+        Arc::pin_init(try_pin_init!(UatInner {
+            handoff_flush <- init::pin_init_array_from_fn(|i| {
+                new_mutex!(HandoffFlush(&handoff.flush[i]), "handoff_flush")
+            }),
+            shared <- new_mutex!(
+                UatShared {
+                    kernel_ttb1: 0,
+                    map_kernel_to_user: false,
+                    handoff_rgn,
+                    ttbs_rgn,
                 },
-            )
-        })
+                "uat_shared"
+            ),
+        }))
     }
 
     /// Creates a new `Uat` instance given the relevant hardware config.
