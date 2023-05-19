@@ -380,6 +380,46 @@ impl<T: GpuStruct, U: Allocation<T>> GpuObject<T, U> {
         })
     }
 
+    /// Create a new GpuObject given an allocator and the boxed inner data (a type implementing
+    /// GpuStruct).
+    ///
+    /// The caller passes a closure that initializes the `T::Raw` type given a reference to the
+    /// `GpuStruct` and a `MaybeUninit<T::Raw>`. This is intended to be used with the place!()
+    /// macro to avoid constructing the whole `T::Raw` object on the stack.
+    pub(crate) fn new_init_prealloc<'a, I: Init<T, E>, R: PinInit<T::Raw<'a>, F>, E, F>(
+        alloc: U,
+        inner_init: impl FnOnce(GpuWeakPointer<T>) -> I,
+        raw_init: impl FnOnce(&'a T, GpuWeakPointer<T>) -> R,
+    ) -> Result<Self>
+    where
+        kernel::error::Error: core::convert::From<E>,
+        kernel::error::Error: core::convert::From<F>,
+    {
+        if alloc.size() < mem::size_of::<T::Raw<'static>>() {
+            return Err(ENOMEM);
+        }
+        let gpu_ptr =
+            GpuWeakPointer::<T>(NonZeroU64::new(alloc.gpu_ptr()).ok_or(EINVAL)?, PhantomData);
+        mod_dev_dbg!(
+            alloc.device(),
+            "Allocating {} @ {:#x}\n",
+            core::any::type_name::<T>(),
+            alloc.gpu_ptr()
+        );
+        let inner = inner_init(gpu_ptr);
+        let p = alloc.ptr().ok_or(EINVAL)?.as_ptr() as *mut T::Raw<'_>;
+        let ret = Self {
+            raw: p as *mut u8 as *mut T::Raw<'static>,
+            gpu_ptr,
+            alloc,
+            inner: Box::init(inner)?,
+        };
+        let q = &*ret.inner as *const T;
+        // SAFETY: `p` is guaranteed to be valid per the Allocation invariant.
+        unsafe { raw_init(&*q, gpu_ptr).__pinned_init(p) }?;
+        Ok(ret)
+    }
+
     /// Returns the GPU VA of this object (as a raw [`NonZeroU64`])
     pub(crate) fn gpu_va(&self) -> NonZeroU64 {
         self.gpu_ptr.0

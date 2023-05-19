@@ -267,6 +267,43 @@ pub(crate) trait Allocator {
         )
     }
 
+    /// Allocate a new GpuStruct object. See [`GpuObject::new_init_prealloc`].
+    #[inline(never)]
+    fn new_init_prealloc<
+        'a,
+        T: GpuStruct,
+        I: Init<T, kernel::error::Error>,
+        R: PinInit<T::Raw<'a>, kernel::error::Error>,
+    >(
+        &mut self,
+        inner_init: impl FnOnce(GpuWeakPointer<T>) -> I,
+        raw_init: impl FnOnce(&'a T, GpuWeakPointer<T>) -> R,
+    ) -> Result<GpuObject<T, GenericAlloc<T, Self::Raw>>> {
+        GpuObject::<T, GenericAlloc<T, Self::Raw>>::new_init_prealloc(
+            self.alloc_object()?,
+            inner_init,
+            raw_init,
+        )
+    }
+
+    /// Allocate a new GpuStruct object. See [`GpuObject::new_init`].
+    #[inline(never)]
+    fn new_init<'a, T: GpuStruct, R: PinInit<T::Raw<'a>, F>, E, F>(
+        &mut self,
+        inner_init: impl Init<T, E>,
+        raw_init: impl FnOnce(&'a T, GpuWeakPointer<T>) -> R,
+    ) -> Result<GpuObject<T, GenericAlloc<T, Self::Raw>>>
+    where
+        kernel::error::Error: core::convert::From<E>,
+        kernel::error::Error: core::convert::From<F>,
+    {
+        GpuObject::<T, GenericAlloc<T, Self::Raw>>::new_init_prealloc(
+            self.alloc_object()?,
+            |_p| inner_init,
+            raw_init,
+        )
+    }
+
     /// Allocate a generic buffer of the given size and alignment, applying the debug features if
     /// enabled to tag it and detect overflows.
     fn alloc_generic<T>(
