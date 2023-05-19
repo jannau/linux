@@ -21,10 +21,9 @@ use crate::debug::*;
 use crate::driver::AsahiDevice;
 use crate::fw::types::*;
 use crate::gpu::GpuManager;
+use crate::inner_weak_ptr;
 use crate::{alloc, buffer, channel, event, file, fw, gem, gpu, mmu, workqueue};
-use crate::{inner_weak_ptr, place};
 
-use core::mem::MaybeUninit;
 use core::sync::atomic::{AtomicU64, Ordering};
 
 const DEBUG_CLASS: DebugFlags = DebugFlags::Queue;
@@ -374,19 +373,16 @@ impl Queue::ver {
         let threshold = alloc.shared.new_default::<fw::event::Threshold>()?;
 
         let notifier: Arc<GpuObject<fw::event::Notifier::ver>> =
-            Arc::try_new(alloc.private.new_inplace(
-                fw::event::Notifier::ver { threshold },
-                |inner, ptr: &mut MaybeUninit<fw::event::raw::Notifier::ver<'_>>| {
-                    Ok(place!(
-                        ptr,
-                        fw::event::raw::Notifier::ver {
-                            threshold: inner.threshold.gpu_pointer(),
-                            generation: AtomicU32::new(id as u32),
-                            cur_count: AtomicU32::new(0),
-                            unk_10: AtomicU32::new(0x50),
-                            state: Default::default()
-                        }
-                    ))
+            Arc::try_new(alloc.private.new_init(
+                try_init!(fw::event::Notifier::ver { threshold }),
+                |inner, _p| {
+                    try_init!(fw::event::raw::Notifier::ver {
+                        threshold: inner.threshold.gpu_pointer(),
+                        generation: AtomicU32::new(id as u32),
+                        cur_count: AtomicU32::new(0),
+                        unk_10: AtomicU32::new(0x50),
+                        state: Default::default()
+                    })
                 },
             )?)?;
 
@@ -618,22 +614,20 @@ impl Queue for Queue::ver {
                         _ => return Err(EINVAL),
                     };
                     mod_dev_dbg!(self.dev, "[Submission {}] Create Explicit Barrier\n", id);
-                    let barrier: GpuObject<fw::workqueue::Barrier> = alloc.private.new_inplace(
-                        Default::default(),
-                        |_inner, ptr: &mut MaybeUninit<fw::workqueue::raw::Barrier>| {
-                            Ok(place!(
-                                ptr,
-                                fw::workqueue::raw::Barrier {
-                                    tag: fw::workqueue::CommandType::Barrier,
-                                    wait_stamp: event.fw_stamp_pointer,
-                                    wait_value: event.value,
-                                    wait_slot: event.slot,
-                                    stamp_self: queue_job.event_info().value.next(),
-                                    uuid: 0xffffbbbb,
-                                    barrier_type: 0,
-                                    padding: Default::default(),
-                                }
-                            ))
+                    let barrier = alloc.private.new_init(
+                        kernel::init::zeroed::<fw::workqueue::Barrier>(),
+                        |_inner, _p| {
+                            let queue_job = &queue_job;
+                            try_init!(fw::workqueue::raw::Barrier {
+                                tag: fw::workqueue::CommandType::Barrier,
+                                wait_stamp: event.fw_stamp_pointer,
+                                wait_value: event.value,
+                                wait_slot: event.slot,
+                                stamp_self: queue_job.event_info().value.next(),
+                                uuid: 0xffffbbbb,
+                                barrier_type: 0,
+                                padding: Default::default(),
+                            })
                         },
                     )?;
                     mod_dev_dbg!(self.dev, "[Submission {}] Add Explicit Barrier\n", id);
