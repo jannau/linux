@@ -334,52 +334,6 @@ impl<T: GpuStruct, U: Allocation<T>> GpuObject<T, U> {
         GpuObject::<T, U>::new_boxed(alloc, Box::try_new(inner)?, callback)
     }
 
-    /// Create a new GpuObject given an allocator, with callback-based initialization.
-    ///
-    /// This is used when the construction of the `T` type requires knowing the GPU VA address of
-    /// the structure that is being constructed ahead of time. The first callback constructs a
-    /// `Box<T>` given the pointer to the about-to-be-initialized GPU structure, and the second
-    /// callback initializes that structure as in `new_boxed`.
-    pub(crate) fn new_prealloc(
-        alloc: U,
-        inner_cb: impl FnOnce(GpuWeakPointer<T>) -> Result<Box<T>>,
-        raw_cb: impl for<'a> FnOnce(
-            &'a T,
-            &'a mut MaybeUninit<T::Raw<'a>>,
-            GpuWeakPointer<T>,
-        ) -> Result<&'a mut T::Raw<'a>>,
-    ) -> Result<Self> {
-        if alloc.size() < mem::size_of::<T::Raw<'static>>() {
-            return Err(ENOMEM);
-        }
-        let gpu_ptr =
-            GpuWeakPointer::<T>(NonZeroU64::new(alloc.gpu_ptr()).ok_or(EINVAL)?, PhantomData);
-        mod_dev_dbg!(
-            alloc.device(),
-            "Allocating {} @ {:#x}\n",
-            core::any::type_name::<T>(),
-            alloc.gpu_ptr()
-        );
-        let inner = inner_cb(gpu_ptr)?;
-        let p = alloc.ptr().ok_or(EINVAL)?.as_ptr() as *mut MaybeUninit<T::Raw<'_>>;
-        // SAFETY: `p` is guaranteed to be valid per the Allocation invariant.
-        let raw = raw_cb(&*inner, unsafe { &mut *p }, gpu_ptr)?;
-        if p as *mut T::Raw<'_> != raw as *mut _ {
-            dev_err!(
-                alloc.device(),
-                "Allocation callback returned a mismatched reference ({})\n",
-                core::any::type_name::<T>(),
-            );
-            return Err(EINVAL);
-        }
-        Ok(Self {
-            raw: p as *mut u8 as *mut T::Raw<'static>,
-            gpu_ptr,
-            alloc,
-            inner,
-        })
-    }
-
     /// Create a new GpuObject given an allocator and the boxed inner data (a type implementing
     /// GpuStruct).
     ///

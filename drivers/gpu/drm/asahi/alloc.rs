@@ -249,24 +249,6 @@ pub(crate) trait Allocator {
         GpuObject::<T, GenericAlloc<T, Self::Raw>>::new_default(self.alloc_object()?)
     }
 
-    /// Allocate a new GpuStruct object. See [`GpuObject::new_prealloc`].
-    #[inline(never)]
-    fn new_prealloc<T: GpuStruct>(
-        &mut self,
-        inner_cb: impl FnOnce(GpuWeakPointer<T>) -> Result<Box<T>>,
-        raw_cb: impl for<'a> FnOnce(
-            &'a T,
-            &'a mut MaybeUninit<T::Raw<'a>>,
-            GpuWeakPointer<T>,
-        ) -> Result<&'a mut T::Raw<'a>>,
-    ) -> Result<GpuObject<T, GenericAlloc<T, Self::Raw>>> {
-        GpuObject::<T, GenericAlloc<T, Self::Raw>>::new_prealloc(
-            self.alloc_object()?,
-            inner_cb,
-            raw_cb,
-        )
-    }
-
     /// Allocate a new GpuStruct object. See [`GpuObject::new_init_prealloc`].
     #[inline(never)]
     fn new_init_prealloc<
