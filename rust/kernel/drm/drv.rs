@@ -12,12 +12,13 @@ use crate::{
     prelude::*,
     private::Sealed,
     str::CStr,
-    types::ForeignOwnable,
+    types::{ARef, ForeignOwnable},
     ThisModule,
 };
 use core::{
     marker::{PhantomData, PhantomPinned},
     pin::Pin,
+    ptr::NonNull,
 };
 use macros::vtable;
 
@@ -163,7 +164,7 @@ pub trait Driver {
 ///
 /// drm is always a valid pointer to an allocated drm_device
 pub struct Registration<T: Driver> {
-    drm: drm::device::Device<T>,
+    drm: ARef<drm::device::Device<T>>,
     registered: bool,
     fops: bindings::file_operations,
     vtable: Pin<Box<bindings::drm_driver>>,
@@ -253,11 +254,11 @@ impl<T: Driver> Registration<T> {
     pub fn new(parent: &dyn device::RawDevice) -> Result<Self> {
         let vtable = Pin::new(Box::try_new(Self::VTABLE)?);
         let raw_drm = unsafe { bindings::drm_dev_alloc(&*vtable, parent.raw_device()) };
-        let raw_drm = from_err_ptr(raw_drm)?;
+        let raw_drm = NonNull::new(from_err_ptr(raw_drm)? as *mut _).ok_or(ENOMEM)?;
 
         // The reference count is one, and now we take ownership of that reference as a
         // drm::device::Device.
-        let drm = unsafe { drm::device::Device::from_raw(raw_drm) };
+        let drm = unsafe { ARef::from_raw(raw_drm) };
 
         Ok(Self {
             drm,
@@ -287,10 +288,9 @@ impl<T: Driver> Registration<T> {
         // SAFETY: We never move out of `this`.
         let this = unsafe { self.get_unchecked_mut() };
         let data_pointer = <T::Data as ForeignOwnable>::into_foreign(data);
-        // SAFETY: `drm` is valid per the type invariant
-        unsafe {
-            (*this.drm.raw_mut()).dev_private = data_pointer as *mut _;
-        }
+        // SAFETY: This is the only code touching dev_private, so it is safe to upgrade to a
+        // mutable reference.
+        unsafe { this.drm.raw_mut() }.dev_private = data_pointer as *mut _;
 
         this.fops.owner = module.0;
         this.vtable.fops = &this.fops;
@@ -309,6 +309,7 @@ impl<T: Driver> Registration<T> {
 
     /// Returns a reference to the `Device` instance for this registration.
     pub fn device(&self) -> &drm::device::Device<T> {
+        // TODO: rework this, ensure this only works after registration
         &self.drm
     }
 }
@@ -329,7 +330,7 @@ impl<T: Driver> Drop for Registration<T> {
         if self.registered {
             // Get a pointer to the data stored in device before destroying it.
             // SAFETY: `drm` is valid per the type invariant
-            let data_pointer = unsafe { (*self.drm.raw_mut()).dev_private };
+            let data_pointer = unsafe { self.drm.raw_mut().dev_private };
 
             // SAFETY: Since `registered` is true, `self.drm` is both valid and registered.
             unsafe { bindings::drm_dev_unregister(self.drm.raw_mut()) };
