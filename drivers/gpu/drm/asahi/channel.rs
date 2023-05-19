@@ -22,7 +22,7 @@ pub(crate) use crate::fw::channels::PipeType;
 /// A receive (FW->driver) channel.
 pub(crate) struct RxChannel<T: RxChannelState, U: Copy + Default>
 where
-    for<'a> <T as GpuStruct>::Raw<'a>: Debug + Default + Zeroed,
+    for<'a> <T as GpuStruct>::Raw<'a>: Debug + Default + Zeroable,
 {
     ring: ChannelRing<T, U>,
     // FIXME: needs feature(generic_const_exprs)
@@ -33,7 +33,7 @@ where
 
 impl<T: RxChannelState, U: Copy + Default> RxChannel<T, U>
 where
-    for<'a> <T as GpuStruct>::Raw<'a>: Debug + Default + Zeroed,
+    for<'a> <T as GpuStruct>::Raw<'a>: Debug + Default + Zeroable,
 {
     /// Allocates a new receive channel with a given message count.
     pub(crate) fn new(alloc: &mut gpu::KernelAllocators, count: usize) -> Result<RxChannel<T, U>> {
@@ -87,7 +87,7 @@ where
 /// A transmit (driver->FW) channel.
 pub(crate) struct TxChannel<T: TxChannelState, U: Copy + Default>
 where
-    for<'a> <T as GpuStruct>::Raw<'a>: Debug + Default + Zeroed,
+    for<'a> <T as GpuStruct>::Raw<'a>: Debug + Default + Zeroable,
 {
     ring: ChannelRing<T, U>,
     wptr: u32,
@@ -96,7 +96,7 @@ where
 
 impl<T: TxChannelState, U: Copy + Default> TxChannel<T, U>
 where
-    for<'a> <T as GpuStruct>::Raw<'a>: Debug + Default + Zeroed,
+    for<'a> <T as GpuStruct>::Raw<'a>: Debug + Default + Zeroable,
 {
     /// Allocates a new cached transmit channel with a given message count.
     pub(crate) fn new(alloc: &mut gpu::KernelAllocators, count: usize) -> Result<TxChannel<T, U>> {

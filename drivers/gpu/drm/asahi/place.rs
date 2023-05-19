@@ -30,9 +30,9 @@
 ///
 /// The macro supports most Rust initialization syntax including type paths, generic arguments,
 /// and nested structures. Nested structures are themselves initialized in-place field by field.
-/// `..Default::default()` is supported, but this macro converts it to `..Zeroed::zeroed()`, as it
+/// `..Default::default()` is supported, but this macro converts it to `..Zeroable::zeroed()`, as it
 /// initializes those structs by zero-initializing the underlying memory. Usage of
-/// `..Default::default()` with a type not implementing `Zeroed` will result in a compile error.
+/// `..Default::default()` with a type not implementing `Zeroable` will result in a compile error.
 ///
 /// Usage:
 /// ```
@@ -81,11 +81,11 @@ macro_rules! place {
     // Zero-initialize structure if the initializer ends in ..default::Default()
     (@STRUCT_ZERO $ptr:ident, {$($typ_init:tt)*} { $($f:ident $(: $v:expr)?),* $(,)? }) => {};
     (@STRUCT_ZERO $ptr:ident, {$($typ_init:tt)*} { $($($f:ident $(: $v:expr)?),*,)? ..Default::default() }) => {{
-        // Check that the structure actually implements Zeroed
+        // Check that the structure actually implements Zeroable
         const _: () = {
             fn _check_default() {
                 let _ = $($typ_init)* {
-                    ..Zeroed::zeroed()
+                    ..Zeroable::zeroed()
                 };
             }
         };
@@ -103,7 +103,7 @@ macro_rules! place {
                     $f $(: $v)?
                 ),*
                 ,)?
-                ..Zeroed::zeroed()
+                ..Zeroable::zeroed()
             };
         } else {
             {$($body)*}

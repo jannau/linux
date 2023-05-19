@@ -23,11 +23,13 @@
 //! related to slightly non-compliant rounding.
 
 use core::ops;
-use kernel::{of, prelude::*};
+use kernel::{init::Zeroable, of, prelude::*};
 
 /// An IEEE754-compatible floating point number implemented in software.
 #[derive(Default, Debug, Copy, Clone)]
 pub(crate) struct F32(u32);
+
+unsafe impl Zeroable for F32 {}
 
 #[derive(Default, Debug, Copy, Clone)]
 struct F32U {

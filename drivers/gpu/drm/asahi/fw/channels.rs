@@ -34,7 +34,7 @@ pub(crate) mod raw {
 
 pub(crate) trait RxChannelState: GpuStruct + Debug + Default
 where
-    for<'a> <Self as GpuStruct>::Raw<'a>: Default + Zeroed,
+    for<'a> <Self as GpuStruct>::Raw<'a>: Default + Zeroable,
 {
     const SUB_CHANNELS: usize;
 

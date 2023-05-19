@@ -57,7 +57,7 @@ use core::{mem, ptr, slice};
 
 use crate::alloc::Allocation;
 use crate::debug::*;
-use crate::fw::types::Zeroed;
+use crate::fw::types::Zeroable;
 
 const DEBUG_CLASS: DebugFlags = DebugFlags::Object;
 
@@ -450,13 +450,13 @@ where
 
 impl<T: GpuStruct + Default, U: Allocation<T>> GpuObject<T, U>
 where
-    for<'a> <T as GpuStruct>::Raw<'a>: Default + Zeroed,
+    for<'a> <T as GpuStruct>::Raw<'a>: Default + Zeroable,
 {
     /// Create a new GpuObject with default data. `T` must implement `Default` and `T::Raw` must
-    /// implement `Zeroed`, since the GPU-side memory is initialized by zeroing.
+    /// implement `Zeroable`, since the GPU-side memory is initialized by zeroing.
     pub(crate) fn new_default(alloc: U) -> Result<Self> {
         GpuObject::<T, U>::new_inplace(alloc, Default::default(), |_inner, raw| {
-            // SAFETY: `raw` is valid here, and `T::Raw` implements `Zeroed`.
+            // SAFETY: `raw` is valid here, and `T::Raw` implements `Zeroable`.
             Ok(unsafe {
                 ptr::write_bytes(raw, 0, 1);
                 (*raw).assume_init_mut()
