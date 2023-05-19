@@ -32,11 +32,11 @@ pub(super) unsafe extern "C" fn open_callback<T: DriverFile>(
     raw_dev: *mut bindings::drm_device,
     raw_file: *mut bindings::drm_file,
 ) -> core::ffi::c_int {
-    let drm = core::mem::ManuallyDrop::new(unsafe { drm::device::Device::from_raw(raw_dev) });
+    let drm = unsafe { drm::device::Device::borrow(raw_dev) };
     // SAFETY: This reference won't escape this function
     let file = unsafe { &mut *raw_file };
 
-    let inner = match T::open(&drm) {
+    let inner = match T::open(drm) {
         Err(e) => {
             return e.to_errno();
         }
