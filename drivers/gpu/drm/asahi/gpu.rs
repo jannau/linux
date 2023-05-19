@@ -32,7 +32,7 @@ use kernel::{
 
 use crate::alloc::Allocator;
 use crate::debug::*;
-use crate::driver::AsahiDevice;
+use crate::driver::{AsahiDevRef, AsahiDevice};
 use crate::fw::channels::PipeType;
 use crate::fw::types::{U32, U64};
 use crate::{
@@ -190,7 +190,7 @@ pub(crate) struct SequenceIDs {
 #[versions(AGX)]
 #[pin_data]
 pub(crate) struct GpuManager {
-    dev: AsahiDevice,
+    dev: AsahiDevRef,
     cfg: &'static hw::HwConfig,
     dyncfg: hw::DynConfig,
     pub(crate) initdata: fw::types::GpuObject<fw::initdata::InitData::ver>,
@@ -620,7 +620,7 @@ impl GpuManager::ver {
         }))?;
 
         let x = UniqueArc::pin_init(try_pin_init!(GpuManager::ver {
-            dev: dev.clone(),
+            dev: dev.into(),
             cfg,
             dyncfg: *dyncfg,
             initdata: *initdata,

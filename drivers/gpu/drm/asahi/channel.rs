@@ -9,7 +9,7 @@
 //! implementation.
 
 use crate::debug::*;
-use crate::driver::AsahiDevice;
+use crate::driver::{AsahiDevRef, AsahiDevice};
 use crate::fw::channels::*;
 use crate::fw::initdata::{raw, ChannelRing};
 use crate::fw::types::*;
@@ -185,7 +185,7 @@ where
 /// Device Control channel for global device management commands.
 #[versions(AGX)]
 pub(crate) struct DeviceControlChannel {
-    dev: AsahiDevice,
+    dev: AsahiDevRef,
     ch: TxChannel<ChannelState, DeviceControlMsg::ver>,
 }
 
@@ -199,7 +199,7 @@ impl DeviceControlChannel::ver {
         alloc: &mut gpu::KernelAllocators,
     ) -> Result<DeviceControlChannel::ver> {
         Ok(DeviceControlChannel::ver {
-            dev: dev.clone(),
+            dev: dev.into(),
             ch: TxChannel::<ChannelState, DeviceControlMsg::ver>::new(alloc, 0x100)?,
         })
     }
@@ -224,7 +224,7 @@ impl DeviceControlChannel::ver {
 /// Pipe channel to submit WorkQueue execution requests.
 #[versions(AGX)]
 pub(crate) struct PipeChannel {
-    dev: AsahiDevice,
+    dev: AsahiDevRef,
     ch: TxChannel<ChannelState, PipeMsg::ver>,
 }
 
@@ -236,7 +236,7 @@ impl PipeChannel::ver {
         alloc: &mut gpu::KernelAllocators,
     ) -> Result<PipeChannel::ver> {
         Ok(PipeChannel::ver {
-            dev: dev.clone(),
+            dev: dev.into(),
             ch: TxChannel::<ChannelState, PipeMsg::ver>::new(alloc, 0x100)?,
         })
     }
@@ -255,7 +255,7 @@ impl PipeChannel::ver {
 
 /// Firmware Control channel, used for secure cache flush requests.
 pub(crate) struct FwCtlChannel {
-    dev: AsahiDevice,
+    dev: AsahiDevRef,
     ch: TxChannel<FwCtlChannelState, FwCtlMsg>,
 }
 
@@ -268,7 +268,7 @@ impl FwCtlChannel {
         alloc: &mut gpu::KernelAllocators,
     ) -> Result<FwCtlChannel> {
         Ok(FwCtlChannel {
-            dev: dev.clone(),
+            dev: dev.into(),
             ch: TxChannel::<FwCtlChannelState, FwCtlMsg>::new_uncached(alloc, 0x100)?,
         })
     }
@@ -293,7 +293,7 @@ impl FwCtlChannel {
 /// Event channel, used to notify the driver of command completions, GPU faults and errors, and
 /// other events.
 pub(crate) struct EventChannel {
-    dev: AsahiDevice,
+    dev: AsahiDevRef,
     ch: RxChannel<ChannelState, RawEventMsg>,
     mgr: Arc<event::EventManager>,
     gpu: Option<Arc<dyn gpu::GpuManager>>,
@@ -307,7 +307,7 @@ impl EventChannel {
         mgr: Arc<event::EventManager>,
     ) -> Result<EventChannel> {
         Ok(EventChannel {
-            dev: dev.clone(),
+            dev: dev.into(),
             ch: RxChannel::<ChannelState, RawEventMsg>::new(alloc, 0x100)?,
             mgr,
             gpu: None,
@@ -378,7 +378,7 @@ impl EventChannel {
 /// levels), and it also uses a side buffer to actually hold the log messages, only passing around
 /// pointers in the main buffer.
 pub(crate) struct FwLogChannel {
-    dev: AsahiDevice,
+    dev: AsahiDevRef,
     ch: RxChannel<FwLogChannelState, RawFwLogMsg>,
     payload_buf: GpuArray<RawFwLogPayloadMsg>,
 }
@@ -393,7 +393,7 @@ impl FwLogChannel {
         alloc: &mut gpu::KernelAllocators,
     ) -> Result<FwLogChannel> {
         Ok(FwLogChannel {
-            dev: dev.clone(),
+            dev: dev.into(),
             ch: RxChannel::<FwLogChannelState, RawFwLogMsg>::new(alloc, Self::RING_SIZE)?,
             payload_buf: alloc
                 .shared
@@ -467,7 +467,7 @@ impl FwLogChannel {
 }
 
 pub(crate) struct KTraceChannel {
-    dev: AsahiDevice,
+    dev: AsahiDevRef,
     ch: RxChannel<ChannelState, RawKTraceMsg>,
 }
 
@@ -480,7 +480,7 @@ impl KTraceChannel {
         alloc: &mut gpu::KernelAllocators,
     ) -> Result<KTraceChannel> {
         Ok(KTraceChannel {
-            dev: dev.clone(),
+            dev: dev.into(),
             ch: RxChannel::<ChannelState, RawKTraceMsg>::new(alloc, 0x200)?,
         })
     }
@@ -502,7 +502,7 @@ impl KTraceChannel {
 /// Not really implemented other than debug logs yet...
 #[versions(AGX)]
 pub(crate) struct StatsChannel {
-    dev: AsahiDevice,
+    dev: AsahiDevRef,
     ch: RxChannel<ChannelState, RawStatsMsg::ver>,
 }
 
@@ -514,7 +514,7 @@ impl StatsChannel::ver {
         alloc: &mut gpu::KernelAllocators,
     ) -> Result<StatsChannel::ver> {
         Ok(StatsChannel::ver {
-            dev: dev.clone(),
+            dev: dev.into(),
             ch: RxChannel::<ChannelState, RawStatsMsg::ver>::new(alloc, 0x100)?,
         })
     }

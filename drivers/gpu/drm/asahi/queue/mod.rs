@@ -18,7 +18,7 @@ use kernel::{
 
 use crate::alloc::Allocator;
 use crate::debug::*;
-use crate::driver::AsahiDevice;
+use crate::driver::{AsahiDevRef, AsahiDevice};
 use crate::fw::types::*;
 use crate::gpu::GpuManager;
 use crate::inner_weak_ptr;
@@ -94,7 +94,7 @@ impl SubQueueJob::ver {
 
 #[versions(AGX)]
 pub(crate) struct Queue {
-    dev: AsahiDevice,
+    dev: AsahiDevRef,
     _sched: sched::Scheduler<QueueJob::ver>,
     entity: sched::Entity<QueueJob::ver>,
     vm: mmu::Vm,
@@ -156,7 +156,7 @@ impl dma_fence::FenceOps for JobFence::ver {
 
 #[versions(AGX)]
 pub(crate) struct QueueJob {
-    dev: AsahiDevice,
+    dev: AsahiDevRef,
     vm_bind: mmu::VmBind,
     op_guard: Option<gpu::OpGuard>,
     sj_vtx: Option<SubQueueJob::ver>,
@@ -404,7 +404,7 @@ impl Queue::ver {
         };
 
         let mut ret = Queue::ver {
-            dev: dev.clone(),
+            dev: dev.into(),
             _sched: sched,
             entity,
             vm,

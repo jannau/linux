@@ -15,7 +15,7 @@
 use kernel::{c_str, drm::mm, error::Result, prelude::*, str::CString, sync::LockClassKey};
 
 use crate::debug::*;
-use crate::driver::AsahiDevice;
+use crate::driver::{AsahiDevRef, AsahiDevice};
 use crate::fw::types::Zeroable;
 use crate::mmu;
 use crate::object::{GpuArray, GpuObject, GpuOnlyArray, GpuStruct, GpuWeakPointer};
@@ -410,7 +410,7 @@ pub(crate) trait Allocator {
 /// `ptr` is either None or a valid, non-null pointer to the CPU view of the object.
 /// `gpu_ptr` is the GPU-side VA of the object.
 pub(crate) struct SimpleAllocation {
-    dev: AsahiDevice,
+    dev: AsahiDevRef,
     ptr: Option<NonNull<u8>>,
     gpu_ptr: u64,
     size: usize,
@@ -461,7 +461,7 @@ impl RawAllocation for SimpleAllocation {
 /// the guard page after the allocation, which can be useful to validate that the firmware's or
 /// GPU's idea of object size what we expect.
 pub(crate) struct SimpleAllocator {
-    dev: AsahiDevice,
+    dev: AsahiDevRef,
     start: u64,
     end: u64,
     prot: u32,
@@ -490,7 +490,7 @@ impl SimpleAllocator {
             cpu_maps = true;
         }
         Ok(SimpleAllocator {
-            dev: dev.clone(),
+            dev: dev.into(),
             vm: vm.clone(),
             start,
             end,
@@ -572,7 +572,7 @@ impl Allocator for SimpleAllocator {
 ///
 /// This is wrapped in an `mm::Node`.
 pub(crate) struct HeapAllocationInner {
-    dev: AsahiDevice,
+    dev: AsahiDevRef,
     ptr: Option<NonNull<u8>>,
     real_size: usize,
 }
@@ -664,7 +664,7 @@ impl RawAllocation for HeapAllocation {
 ///
 /// This is wrapped by an `mm::Allocator`.
 struct HeapAllocatorInner {
-    dev: AsahiDevice,
+    dev: AsahiDevRef,
     allocated: usize,
     backing_objects: Vec<(crate::gem::ObjectRef, u64)>,
     garbage: Option<Vec<mm::Node<HeapAllocatorInner, HeapAllocationInner>>>,
@@ -678,7 +678,7 @@ struct HeapAllocatorInner {
 /// The heap is composed of a series of GEM objects. This implementation only ever grows the heap,
 /// never shrinks it.
 pub(crate) struct HeapAllocator {
-    dev: AsahiDevice,
+    dev: AsahiDevRef,
     start: u64,
     end: u64,
     top: u64,
@@ -720,7 +720,7 @@ impl HeapAllocator {
         let name = CString::try_from_fmt(name)?;
 
         let inner = HeapAllocatorInner {
-            dev: dev.clone(),
+            dev: dev.into(),
             allocated: 0,
             backing_objects: Vec::new(),
             // TODO: This clearly needs a try_clone() or similar
@@ -739,7 +739,7 @@ impl HeapAllocator {
         )?;
 
         Ok(HeapAllocator {
-            dev: dev.clone(),
+            dev: dev.into(),
             vm: vm.clone(),
             start,
             end,

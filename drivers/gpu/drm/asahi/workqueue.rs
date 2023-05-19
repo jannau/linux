@@ -101,7 +101,7 @@ impl From<WorkError> for kernel::error::Error {
 
 /// A GPU context tracking structure, which must be explicitly invalidated when dropped.
 pub(crate) struct GpuContext {
-    dev: driver::AsahiDevice,
+    dev: driver::AsahiDevRef,
     data: Option<Box<GpuObject<fw::workqueue::GpuContextData>>>,
 }
 no_debug!(GpuContext);
@@ -114,7 +114,7 @@ impl GpuContext {
         buffer: Option<Arc<dyn core::any::Any + Send + Sync>>,
     ) -> Result<GpuContext> {
         Ok(GpuContext {
-            dev: dev.clone(),
+            dev: dev.into(),
             data: Some(Box::try_new(alloc.shared.new_object(
                 fw::workqueue::GpuContextData { _buffer: buffer },
                 |_inner| Default::default(),
@@ -196,7 +196,7 @@ impl<O: OpaqueGpuObject, C: FnOnce(&mut O, Option<WorkError>) + Send + Sync> Gen
 /// Inner data for managing a single work queue.
 #[versions(AGX)]
 struct WorkQueueInner {
-    dev: driver::AsahiDevice,
+    dev: driver::AsahiDevRef,
     event_manager: Arc<event::EventManager>,
     info: GpuObject<QueueInfo::ver>,
     new: bool,
@@ -564,7 +564,7 @@ impl WorkQueue::ver {
         let gpu_buf = alloc.private.array_empty(0x2c18)?;
         let shared = &mut alloc.shared;
         let inner = WorkQueueInner::ver {
-            dev: dev.clone(),
+            dev: dev.into(),
             event_manager,
             info: alloc.private.new_init(
                 try_init!(QueueInfo::ver {

@@ -10,6 +10,7 @@ use crate::{debug, file, gem, gpu, hw, regs};
 
 use kernel::device::RawDevice;
 use kernel::macros::vtable;
+use kernel::types::ARef;
 
 /// Driver metadata
 const INFO: drv::DriverInfo = drv::DriverInfo {
@@ -37,6 +38,7 @@ pub(crate) struct AsahiDriver;
 
 /// Convenience type alias for the DRM device type for this driver.
 pub(crate) type AsahiDevice = kernel::drm::device::Device<AsahiDriver>;
+pub(crate) type AsahiDevRef = ARef<AsahiDevice>;
 
 /// DRM Driver implementation for `AsahiDriver`.
 #[vtable]

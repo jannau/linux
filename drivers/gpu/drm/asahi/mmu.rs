@@ -181,7 +181,7 @@ const PAGETABLES_SIZE: usize = UAT_PGSZ;
 
 /// Inner data for a Vm instance. This is reference-counted by the outer Vm object.
 struct VmInner {
-    dev: driver::AsahiDevice,
+    dev: driver::AsahiDevRef,
     is_kernel: bool,
     min_va: usize,
     max_va: usize,
@@ -618,7 +618,7 @@ impl UatInner {
 
 /// Top-level UAT manager object
 pub(crate) struct Uat {
-    dev: driver::AsahiDevice,
+    dev: driver::AsahiDevRef,
     cfg: &'static hw::HwConfig,
     pagetables_rgn: UatRegion,
 
@@ -765,7 +765,7 @@ impl io_pgtable::FlushOps for Uat {
 impl Vm {
     /// Create a new virtual memory address space
     fn new(
-        dev: driver::AsahiDevice,
+        dev: &driver::AsahiDevice,
         uat_inner: Arc<UatInner>,
         cfg: &'static hw::HwConfig,
         is_kernel: bool,
@@ -773,7 +773,7 @@ impl Vm {
         file_id: u64,
     ) -> Result<Vm> {
         let page_table = AppleUAT::new(
-            &dev,
+            dev,
             io_pgtable::Config {
                 pgsize_bitmap: UAT_PGSZ,
                 ias: if is_kernel { UAT_IAS_KERN } else { UAT_IAS },
@@ -807,7 +807,7 @@ impl Vm {
             file_id,
             inner: Arc::pin_init(new_mutex!(
                 VmInner {
-                    dev,
+                    dev: dev.into(),
                     min_va,
                     max_va,
                     is_kernel,
@@ -1168,14 +1168,7 @@ impl Uat {
 
     /// Creates a new `Vm` linked to this UAT.
     pub(crate) fn new_vm(&self, id: u64, file_id: u64) -> Result<Vm> {
-        Vm::new(
-            self.dev.clone(),
-            self.inner.clone(),
-            self.cfg,
-            false,
-            id,
-            file_id,
-        )
+        Vm::new(&self.dev, self.inner.clone(), self.cfg, false, id, file_id)
     }
 
     /// Creates the reference-counted inner data for a new `Uat` instance.
@@ -1218,8 +1211,8 @@ impl Uat {
         let pagetables_rgn = Self::map_region(dev, c_str!("pagetables"), PAGETABLES_SIZE, true)?;
 
         dev_info!(dev, "MMU: Creating kernel page tables\n");
-        let kernel_lower_vm = Vm::new(dev.clone(), inner.clone(), cfg, false, 1, 0)?;
-        let kernel_vm = Vm::new(dev.clone(), inner.clone(), cfg, true, 0, 0)?;
+        let kernel_lower_vm = Vm::new(dev, inner.clone(), cfg, false, 1, 0)?;
+        let kernel_vm = Vm::new(dev, inner.clone(), cfg, true, 0, 0)?;
 
         dev_info!(dev, "MMU: Kernel page tables created\n");
 
@@ -1227,7 +1220,7 @@ impl Uat {
         let ttb1 = kernel_vm.ttb();
 
         let uat = Self {
-            dev: dev.clone(),
+            dev: dev.into(),
             cfg,
             pagetables_rgn,
             kernel_vm,
