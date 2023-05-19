@@ -553,12 +553,12 @@ macro_rules! stack_try_pin_init {
 // module `__internal` inside of `init/__internal.rs`.
 #[macro_export]
 macro_rules! pin_init {
-    ($(&$this:ident in)? $t:ident $(::<$($generics:ty),* $(,)?>)? {
+    ($(&$this:ident in)? $t:ident $(::$p:ident)* $(::<$($generics:ty),* $(,)?>)? {
         $($fields:tt)*
     }) => {
         $crate::__init_internal!(
             @this($($this)?),
-            @typ($t $(::<$($generics),*>)?),
+            @typ($t $(::$p)* $(::<$($generics),*>)?),
             @fields($($fields)*),
             @error(::core::convert::Infallible),
             @data(PinData, use_data),
@@ -609,12 +609,12 @@ macro_rules! pin_init {
 // module `__internal` inside of `init/__internal.rs`.
 #[macro_export]
 macro_rules! try_pin_init {
-    ($(&$this:ident in)? $t:ident $(::<$($generics:ty),* $(,)?>)? {
+    ($(&$this:ident in)? $t:ident $(::$p:ident)* $(::<$($generics:ty),* $(,)?>)? {
         $($fields:tt)*
     }) => {
         $crate::__init_internal!(
             @this($($this)?),
-            @typ($t $(::<$($generics),*>)? ),
+            @typ($t $(::$p)* $(::<$($generics),*>)? ),
             @fields($($fields)*),
             @error($crate::error::Error),
             @data(PinData, use_data),
@@ -623,12 +623,12 @@ macro_rules! try_pin_init {
             @munch_fields($($fields)*),
         )
     };
-    ($(&$this:ident in)? $t:ident $(::<$($generics:ty),* $(,)?>)? {
+    ($(&$this:ident in)? $t:ident $(::$p:ident)* $(::<$($generics:ty),* $(,)?>)? {
         $($fields:tt)*
     }? $err:ty) => {
         $crate::__init_internal!(
             @this($($this)?),
-            @typ($t $(::<$($generics),*>)? ),
+            @typ($t $(::$p)* $(::<$($generics),*>)? ),
             @fields($($fields)*),
             @error($err),
             @data(PinData, use_data),
@@ -658,12 +658,12 @@ macro_rules! try_pin_init {
 // module `__internal` inside of `init/__internal.rs`.
 #[macro_export]
 macro_rules! init {
-    ($(&$this:ident in)? $t:ident $(::<$($generics:ty),* $(,)?>)? {
+    ($(&$this:ident in)? $t:ident $(::$p:ident)* $(::<$($generics:ty),* $(,)?>)? {
         $($fields:tt)*
     }) => {
         $crate::__init_internal!(
             @this($($this)?),
-            @typ($t $(::<$($generics),*>)?),
+            @typ($t $(::$p)* $(::<$($generics),*>)?),
             @fields($($fields)*),
             @error(::core::convert::Infallible),
             @data(InitData, /*no use_data*/),
@@ -709,12 +709,12 @@ macro_rules! init {
 // module `__internal` inside of `init/__internal.rs`.
 #[macro_export]
 macro_rules! try_init {
-    ($(&$this:ident in)? $t:ident $(::<$($generics:ty),* $(,)?>)? {
+    ($(&$this:ident in)? $t:ident $(::$p:ident)* $(::<$($generics:ty),* $(,)?>)? {
         $($fields:tt)*
     }) => {
         $crate::__init_internal!(
             @this($($this)?),
-            @typ($t $(::<$($generics),*>)?),
+            @typ($t $(::$p)* $(::<$($generics),*>)?),
             @fields($($fields)*),
             @error($crate::error::Error),
             @data(InitData, /*no use_data*/),
@@ -723,12 +723,12 @@ macro_rules! try_init {
             @munch_fields($($fields)*),
         )
     };
-    ($(&$this:ident in)? $t:ident $(::<$($generics:ty),* $(,)?>)? {
+    ($(&$this:ident in)? $t:ident $(::$p:ident)* $(::<$($generics:ty),* $(,)?>)? {
         $($fields:tt)*
     }? $err:ty) => {
         $crate::__init_internal!(
             @this($($this)?),
-            @typ($t $(::<$($generics),*>)?),
+            @typ($t $(::$p)* $(::<$($generics),*>)?),
             @fields($($fields)*),
             @error($err),
             @data(InitData, /*no use_data*/),
