@@ -37,7 +37,6 @@ use crate::fw::buffer;
 use crate::fw::types::*;
 use crate::util::*;
 use crate::{alloc, fw, gpu, hw, mmu, slotalloc};
-use crate::{box_in_place, place};
 use core::sync::atomic::Ordering;
 use kernel::prelude::*;
 use kernel::sync::{Arc, Mutex};
@@ -335,17 +334,19 @@ impl Buffer::ver {
         let preempt2_size = num_clusters_adj * gpu.get_cfg().preempt2_size;
         let preempt3_size = num_clusters_adj * gpu.get_cfg().preempt3_size;
 
-        let inner = box_in_place!(buffer::Info::ver {
-            block_ctl: alloc.shared.new_default::<buffer::BlockControl>()?,
-            counter: alloc.shared.new_default::<buffer::Counter>()?,
-            page_list: ualloc_priv.lock().array_empty(max_pages)?,
-            block_list: ualloc_priv.lock().array_empty(max_blocks * 2)?,
-        })?;
-
-        let info = alloc.private.new_boxed(inner, |inner, ptr| {
-            Ok(place!(
-                ptr,
-                buffer::raw::Info::ver {
+        let shared = &mut alloc.shared;
+        let info = alloc.private.new_init(
+            {
+                let ualloc_priv = &ualloc_priv;
+                try_init!(buffer::Info::ver {
+                    block_ctl: shared.new_default::<buffer::BlockControl>()?,
+                    counter: shared.new_default::<buffer::Counter>()?,
+                    page_list: ualloc_priv.lock().array_empty(max_pages)?,
+                    block_list: ualloc_priv.lock().array_empty(max_blocks * 2)?,
+                })
+            },
+            |inner, _p| {
+                try_init!(buffer::raw::Info::ver {
                     gpu_counter: 0x0,
                     unk_4: 0,
                     last_id: 0x0,
@@ -379,9 +380,9 @@ impl Buffer::ver {
                     max_pages_nomemless: max_pages_nomemless.try_into()?,
                     unk_8c: 0x0,
                     unk_90: Default::default(),
-                }
-            ))
-        })?;
+                })
+            },
+        )?;
 
         // Technically similar to Scene below, let's play it safe.
         let kernel_buffer = alloc.shared.array_empty(0x40)?;
@@ -590,22 +591,11 @@ impl Buffer::ver {
             None
         };
 
-        let scene_inner = box_in_place!(buffer::Scene::ver {
-            user_buffer: user_buffer,
-            buffer: self.clone(),
-            tvb_heapmeta: tvb_heapmeta,
-            tvb_tilemap: tvb_tilemap,
-            tpc: tpc,
-            clustering: clustering,
-            preempt_buf: preempt_buf,
-            seq_buf: seq_buf,
-            #[ver(G >= G14X)]
-            control_word: alloc.gpu.array_empty(1)?,
-        })?;
-
         // Could be made strong, but we wind up with a deadlock if we try to grab the
         // pointer through the inner.buffer path inside the closure.
         let stats_pointer = inner.stats.weak_pointer();
+
+        let _gpu = &mut alloc.gpu;
 
         // macOS allocates this as private. However, the firmware does not
         // DC CIVAC this before reading it (like it does most other things),
@@ -613,10 +603,21 @@ impl Buffer::ver {
         // speculation on the firmware side (maybe). This doesn't happen
         // on macOS because these structs are a circular pool that is mapped
         // already initialized. Just mark this shared for now.
-        let scene = alloc.shared.new_boxed(scene_inner, |inner, ptr| {
-            Ok(place!(
-                ptr,
-                buffer::raw::Scene::ver {
+        let scene = alloc.shared.new_init(
+            try_init!(buffer::Scene::ver {
+                user_buffer: user_buffer,
+                buffer: self.clone(),
+                tvb_heapmeta: tvb_heapmeta,
+                tvb_tilemap: tvb_tilemap,
+                tpc: tpc,
+                clustering: clustering,
+                preempt_buf: preempt_buf,
+                seq_buf: seq_buf,
+                #[ver(G >= G14X)]
+                control_word: _gpu.array_empty(1)?,
+            }),
+            |inner, _p| {
+                try_init!(buffer::raw::Scene::ver {
                     #[ver(G >= G14X)]
                     control_word: inner.control_word.gpu_pointer(),
                     #[ver(G >= G14X)]
@@ -635,9 +636,9 @@ impl Buffer::ver {
                     unk_30: U64(0),
                     #[ver(G < G14X)]
                     unk_38: U64(0),
-                }
-            ))
-        })?;
+                })
+            },
+        )?;
 
         let mut rebind = false;
 
