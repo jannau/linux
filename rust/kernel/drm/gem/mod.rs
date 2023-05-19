@@ -12,7 +12,7 @@ use crate::{
     error::{to_result, Result},
     prelude::*,
 };
-use core::{mem, mem::ManuallyDrop, ops::Deref, ops::DerefMut};
+use core::{mem, ops::Deref, ops::DerefMut};
 
 /// GEM object functions, which must be implemented by drivers.
 pub trait BaseDriverObject<T: BaseObject>: Sync + Send + Sized {
@@ -192,7 +192,7 @@ pub struct Object<T: DriverObject> {
     obj: bindings::drm_gem_object,
     // The DRM core ensures the Device exists as long as its objects exist, so we don't need to
     // manage the reference count here.
-    dev: ManuallyDrop<device::Device<T::Driver>>,
+    dev: *const bindings::drm_device,
     inner: T,
 }
 
@@ -224,7 +224,7 @@ impl<T: DriverObject> Object<T> {
             obj: unsafe { mem::zeroed() },
             // SAFETY: The drm subsystem guarantees that the drm_device will live as long as
             // the GEM object lives, so we can conjure a reference out of thin air.
-            dev: ManuallyDrop::new(unsafe { device::Device::from_raw(dev.ptr) }),
+            dev: dev.drm.get(),
             inner: T::new(dev, size)?,
         })?;
 
@@ -242,7 +242,9 @@ impl<T: DriverObject> Object<T> {
 
     /// Returns the `Device` that owns this GEM object.
     pub fn dev(&self) -> &device::Device<T::Driver> {
-        &self.dev
+        // SAFETY: The drm subsystem guarantees that the drm_device will live as long as
+        // the GEM object lives, so we can just borrow from the raw pointer.
+        unsafe { device::Device::borrow(self.dev) }
     }
 }
 
