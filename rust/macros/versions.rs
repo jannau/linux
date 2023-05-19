@@ -18,18 +18,29 @@ fn expect_punct(it: &mut impl Iterator<Item = TokenTree>) -> String {
     }
 }
 
-fn drop_until_punct(it: &mut impl Iterator<Item = TokenTree>, delimiter: &str) {
+fn drop_until_punct(it: &mut impl Iterator<Item = TokenTree>, delimiter: &str, is_struct: bool) {
     let mut depth: isize = 0;
+    let mut colons: isize = 0;
     for token in it.by_ref() {
         if let TokenTree::Punct(punct) = token {
             match punct.as_char() {
+                ':' => {
+                    colons += 1;
+                }
                 '<' => {
-                    depth += 1;
+                    if depth > 0 || colons == 2 || is_struct {
+                        depth += 1;
+                    }
+                    colons = 0;
                 }
                 '>' => {
-                    depth -= 1;
+                    if depth > 0 {
+                        depth -= 1;
+                    }
+                    colons = 0;
                 }
                 _ => {
+                    colons = 0;
                     if depth == 0 && delimiter.contains(&punct.to_string()) {
                         break;
                     }
@@ -41,16 +52,26 @@ fn drop_until_punct(it: &mut impl Iterator<Item = TokenTree>, delimiter: &str) {
 
 fn drop_until_braces(it: &mut impl Iterator<Item = TokenTree>) {
     let mut depth: isize = 0;
+    let mut colons: isize = 0;
     for token in it.by_ref() {
         match token {
             TokenTree::Punct(punct) => match punct.as_char() {
+                ':' => {
+                    colons += 1;
+                }
                 '<' => {
-                    depth += 1;
+                    if depth > 0 || colons == 2 {
+                        depth += 1;
+                    }
+                    colons = 0;
                 }
                 '>' => {
-                    depth -= 1;
+                    if depth > 0 {
+                        depth -= 1;
+                    }
+                    colons = 0;
                 }
-                _ => (),
+                _ => colons = 0,
             },
             TokenTree::Group(group) if group.delimiter() == Delimiter::Brace => {
                 if depth == 0 {
@@ -169,7 +190,7 @@ fn filter_versions(
                     TokenTree::Ident(ident) if ident.to_string() == "ver" => {
                         if check_version(config, ver, &mut grp_it) {
                         } else if is_struct {
-                            drop_until_punct(&mut it, ",");
+                            drop_until_punct(&mut it, ",", true);
                         } else {
                             let first = it.next().unwrap();
                             match &first {
@@ -181,7 +202,7 @@ fn filter_versions(
                                 }
                                 TokenTree::Group(_) => (),
                                 _ => {
-                                    drop_until_punct(&mut it, ",;");
+                                    drop_until_punct(&mut it, ",;", false);
                                 }
                             }
                         }
