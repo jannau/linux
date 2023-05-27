@@ -230,6 +230,14 @@ impl<T> Opaque<T> {
         }
     }
 
+    /// Creates a zeroed value.
+    pub fn zeroed() -> Self {
+        Self {
+            value: UnsafeCell::new(MaybeUninit::zeroed()),
+            _pin: PhantomPinned,
+        }
+    }
+
     /// Creates a pin-initializer from the given initializer closure.
     ///
     /// The returned initializer calls the given closure with the pointer to the inner `T` of this
