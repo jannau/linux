@@ -132,8 +132,8 @@ impl<T: SlotItem> SlotAllocator<T> {
         mut data: T::Data,
         mut constructor: impl FnMut(&mut T::Data, u32) -> T,
         name: &'static CStr,
-        lock_key1: &'static LockClassKey,
-        lock_key2: &'static LockClassKey,
+        lock_key1: LockClassKey,
+        lock_key2: LockClassKey,
     ) -> Result<SlotAllocator<T>> {
         let mut slots = Vec::try_with_capacity(num_slots as usize)?;
 

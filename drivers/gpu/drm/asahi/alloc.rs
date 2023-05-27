@@ -692,7 +692,7 @@ pub(crate) struct HeapAllocator {
     name: CString,
 }
 
-static LOCK_KEY: LockClassKey = LockClassKey::new();
+static LOCK_KEY: LockClassKey = kernel::static_lock_class!();
 
 impl HeapAllocator {
     /// Create a new HeapAllocator for a given `Vm` and address range.
@@ -735,7 +735,7 @@ impl HeapAllocator {
             end - start + 1,
             inner,
             c_str!("HeapAllocator"),
-            &LOCK_KEY,
+            LOCK_KEY,
         )?;
 
         Ok(HeapAllocator {

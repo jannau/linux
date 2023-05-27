@@ -341,7 +341,7 @@ impl ResultWriter {
 }
 
 static QUEUE_NAME: &CStr = c_str!("asahi_fence");
-static QUEUE_CLASS_KEY: kernel::sync::LockClassKey = kernel::sync::LockClassKey::new();
+static QUEUE_CLASS_KEY: kernel::sync::LockClassKey = kernel::static_lock_class!();
 
 #[versions(AGX)]
 impl Queue::ver {
@@ -421,7 +421,7 @@ impl Queue::ver {
             notifier_list: Arc::try_new(notifier_list)?,
             notifier,
             id,
-            fence_ctx: FenceContexts::new(1, QUEUE_NAME, &QUEUE_CLASS_KEY)?,
+            fence_ctx: FenceContexts::new(1, QUEUE_NAME, QUEUE_CLASS_KEY)?,
             #[ver(V >= V13_0B4)]
             counter: AtomicU64::new(0),
         };
