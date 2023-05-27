@@ -22,7 +22,6 @@ use kernel::{
     error::{to_result, Result},
     io_pgtable,
     io_pgtable::{prot, AppleUAT, IoPageTable},
-    new_mutex,
     prelude::*,
     static_lock_class,
     sync::{
@@ -799,7 +798,7 @@ impl Vm {
         Ok(Vm {
             id,
             file_id,
-            inner: Arc::pin_init(new_mutex!(
+            inner: Arc::pin_init(Mutex::new_named(
                 VmInner {
                     dev: dev.into(),
                     min_va,
@@ -813,7 +812,7 @@ impl Vm {
                     active_users: 0,
                     id,
                 },
-                "VmInner"
+                c_str!("VmInner"),
             ))?,
         })
     }
@@ -1177,16 +1176,16 @@ impl Uat {
 
         Arc::pin_init(try_pin_init!(UatInner {
             handoff_flush <- init::pin_init_array_from_fn(|i| {
-                new_mutex!(HandoffFlush(&handoff.flush[i]), "handoff_flush")
+                Mutex::new_named(HandoffFlush(&handoff.flush[i]), c_str!("handoff_flush"))
             }),
-            shared <- new_mutex!(
+            shared <- Mutex::new_named(
                 UatShared {
                     kernel_ttb1: 0,
                     map_kernel_to_user: false,
                     handoff_rgn,
                     ttbs_rgn,
                 },
-                "uat_shared"
+                c_str!("uat_shared")
             ),
         }))
     }

@@ -10,7 +10,6 @@
 use kernel::{
     drm::{gem, gem::shmem},
     error::Result,
-    new_mutex,
     prelude::*,
     soc::apple::rtkit,
     sync::Mutex,
@@ -271,7 +270,7 @@ impl gem::BaseDriverObject<Object> for DriverObject {
             kernel: false,
             flags: 0,
             vm_id: None,
-            mappings <- new_mutex!(Vec::new()),
+            mappings <- Mutex::new(Vec::new()),
             id,
         })
     }

@@ -40,7 +40,7 @@ use crate::{alloc, fw, gpu, hw, mmu, slotalloc};
 use core::sync::atomic::Ordering;
 use kernel::prelude::*;
 use kernel::sync::{Arc, Mutex};
-use kernel::{c_str, new_mutex, static_lock_class};
+use kernel::{c_str, static_lock_class};
 
 const DEBUG_CLASS: DebugFlags = DebugFlags::Buffer;
 
@@ -394,7 +394,7 @@ impl Buffer::ver {
             })?;
 
         Ok(Buffer::ver {
-            inner: Arc::pin_init(new_mutex!(BufferInner::ver {
+            inner: Arc::pin_init(Mutex::new(BufferInner::ver {
                 info,
                 ualloc,
                 ualloc_priv,

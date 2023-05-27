@@ -16,10 +16,10 @@ use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use core::time::Duration;
 
 use kernel::{
+    c_str,
     delay::coarse_sleep,
     error::code::*,
     macros::versions,
-    new_mutex,
     prelude::*,
     soc::apple::rtkit,
     sync::{
@@ -589,17 +589,17 @@ impl GpuManager::ver {
         };
 
         for _i in 0..=NUM_PIPES - 1 {
-            pipes.vtx.try_push(Box::pin_init(new_mutex!(
+            pipes.vtx.try_push(Box::pin_init(Mutex::new_named(
                 channel::PipeChannel::ver::new(dev, &mut alloc)?,
-                "pipe_vtx",
+                c_str!("pipe_vtx"),
             ))?)?;
-            pipes.frag.try_push(Box::pin_init(new_mutex!(
+            pipes.frag.try_push(Box::pin_init(Mutex::new_named(
                 channel::PipeChannel::ver::new(dev, &mut alloc)?,
-                "pipe_frag",
+                c_str!("pipe_frag"),
             ))?)?;
-            pipes.comp.try_push(Box::pin_init(new_mutex!(
+            pipes.comp.try_push(Box::pin_init(Mutex::new_named(
                 channel::PipeChannel::ver::new(dev, &mut alloc)?,
-                "pipe_comp",
+                c_str!("pipe_comp"),
             ))?)?;
         }
 
@@ -626,18 +626,18 @@ impl GpuManager::ver {
             initdata: *initdata,
             uat: *uat,
             io_mappings: Vec::new(),
-            rtkit <- new_mutex!(None, "rtkit"),
+            rtkit <- Mutex::new_named(None, c_str!("rtkit")),
             crashed: AtomicBool::new(false),
             event_manager,
-            alloc <- new_mutex!(alloc, "alloc"),
-            fwctl_channel <- new_mutex!(fwctl_channel, "fwctl_channel"),
-            rx_channels <- new_mutex!(*rx_channels, "rx_channels"),
-            tx_channels <- new_mutex!(*tx_channels, "tx_channels"),
+            alloc <- Mutex::new_named(alloc, c_str!("alloc")),
+            fwctl_channel <- Mutex::new_named(fwctl_channel, c_str!("fwctl_channel")),
+            rx_channels <- Mutex::new_named(*rx_channels, c_str!("rx_channels")),
+            tx_channels <- Mutex::new_named(*tx_channels, c_str!("tx_channels")),
             pipes,
             buffer_mgr: buffer::BufferManager::new()?,
             ids: Default::default(),
-            garbage_work <- new_mutex!(Vec::new(), "garbage_work"),
-            garbage_contexts <- new_mutex!(Vec::new(), "garbage_contexts"),
+            garbage_work <- Mutex::new_named(Vec::new(), c_str!("garbage_work")),
+            garbage_contexts <- Mutex::new_named(Vec::new(), c_str!("garbage_contexts")),
         }))?;
 
         Ok(x)

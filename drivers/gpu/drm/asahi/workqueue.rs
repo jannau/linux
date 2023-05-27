@@ -24,6 +24,7 @@ use crate::{channel, driver, event, fw, gpu, object, regs};
 use core::num::NonZeroU64;
 use core::sync::atomic::Ordering;
 use kernel::{
+    c_str,
     error::code::*,
     prelude::*,
     sync::{
@@ -632,9 +633,9 @@ impl WorkQueue::ver {
         let info_pointer = inner.info.weak_pointer();
 
         let mutex_init = match pipe_type {
-            PipeType::Vertex => kernel::new_mutex!(inner, "WorkQueue::inner (Vertex)"),
-            PipeType::Fragment => kernel::new_mutex!(inner, "WorkQueue::inner (Fragment)"),
-            PipeType::Compute => kernel::new_mutex!(inner, "WorkQueue::inner (Compute)"),
+            PipeType::Vertex => Mutex::new_named(inner, c_str!("WorkQueue::inner (Vertex)")),
+            PipeType::Fragment => Mutex::new_named(inner, c_str!("WorkQueue::inner (Fragment)")),
+            PipeType::Compute => Mutex::new_named(inner, c_str!("WorkQueue::inner (Compute)")),
         };
 
         Arc::pin_init(pin_init!(Self {
