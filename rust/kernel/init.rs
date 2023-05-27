@@ -36,7 +36,7 @@
 //!
 //! ```rust
 //! # #![allow(clippy::disallowed_names, clippy::new_ret_no_self)]
-//! use kernel::{prelude::*, sync::Mutex, new_mutex};
+//! use kernel::{prelude::*, sync::Mutex};
 //! # use core::pin::Pin;
 //! #[pin_data]
 //! struct Foo {
@@ -46,7 +46,7 @@
 //! }
 //!
 //! let foo = pin_init!(Foo {
-//!     a <- new_mutex!(42, "Foo::a"),
+//!     a <- Mutex::new_named(42, "Foo::a"),
 //!     b: 24,
 //! });
 //! ```
@@ -56,7 +56,7 @@
 //!
 //! ```rust
 //! # #![allow(clippy::disallowed_names, clippy::new_ret_no_self)]
-//! # use kernel::{prelude::*, sync::Mutex, new_mutex};
+//! # use kernel::{prelude::*, sync::Mutex};
 //! # use core::pin::Pin;
 //! # #[pin_data]
 //! # struct Foo {
@@ -65,7 +65,7 @@
 //! #     b: u32,
 //! # }
 //! # let foo = pin_init!(Foo {
-//! #     a <- new_mutex!(42, "Foo::a"),
+//! #     a <- Mutex::new_named(42, "Foo::a"),
 //! #     b: 24,
 //! # });
 //! let foo: Result<Pin<Box<Foo>>> = Box::pin_init(foo);
@@ -98,7 +98,7 @@
 //! impl DriverData {
 //!     fn new() -> impl PinInit<Self, Error> {
 //!         try_pin_init!(Self {
-//!             status <- new_mutex!(0, "DriverData::status"),
+//!             status <- Mutex::new_named(0, "DriverData::status"),
 //!             buffer: Box::init(kernel::init::zeroed())?,
 //!         })
 //!     }
@@ -240,7 +240,7 @@ pub mod macros;
 /// }
 ///
 /// stack_pin_init!(let foo = pin_init!(Foo {
-///     a <- new_mutex!(42),
+///     a <- Mutex::new(42),
 ///     b: Bar {
 ///         x: 64,
 ///     },
@@ -290,7 +290,7 @@ macro_rules! stack_pin_init {
 /// }
 ///
 /// stack_try_pin_init!(let foo: Result<Pin<&mut Foo>, AllocError> = pin_init!(Foo {
-///     a <- new_mutex!(42),
+///     a <- Mutex::new(42),
 ///     b: Box::try_new(Bar {
 ///         x: 64,
 ///     })?,
@@ -316,7 +316,7 @@ macro_rules! stack_pin_init {
 /// }
 ///
 /// stack_try_pin_init!(let foo: Pin<&mut Foo> =? pin_init!(Foo {
-///     a <- new_mutex!(42),
+///     a <- Mutex::new(42),
 ///     b: Box::try_new(Bar {
 ///         x: 64,
 ///     })?,
@@ -1435,7 +1435,7 @@ where
 ///
 /// ```rust
 /// let array: Arc<[Mutex<usize>; 1000_000_000]>=
-///     Arc::pin_init(init_array_from_fn(|i| new_mutex!(i))).unwrap();
+///     Arc::pin_init(init_array_from_fn(|i| Mutex::new(i))).unwrap();
 /// println!("{array:?}");
 /// ```
 pub fn pin_init_array_from_fn<I, const N: usize, T, E>(
