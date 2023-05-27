@@ -34,6 +34,7 @@
 #include <linux/platform_device.h>
 #include <linux/refcount.h>
 #include <linux/mutex.h>
+#include <linux/siphash.h>
 #include <linux/spinlock.h>
 #include <linux/sched/signal.h>
 #include <linux/wait.h>
@@ -150,6 +151,13 @@ const char *rust_helper_errname(int err)
 	return errname(err);
 }
 EXPORT_SYMBOL_GPL(rust_helper_errname);
+
+u64 rust_helper_siphash(const void *data, size_t len,
+			const siphash_key_t *key)
+{
+	return siphash(data, len, key);
+}
+EXPORT_SYMBOL_GPL(rust_helper_siphash);
 
 void rust_helper_xa_init_flags(struct xarray *xa, gfp_t flags)
 {
