@@ -29,6 +29,8 @@
 #include <linux/dma-mapping.h>
 #include <linux/err.h>
 #include <linux/errname.h>
+#include <linux/instruction_pointer.h>
+#include <linux/lockdep.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
 #include <linux/platform_device.h>
@@ -158,6 +160,20 @@ u64 rust_helper_siphash(const void *data, size_t len,
 	return siphash(data, len, key);
 }
 EXPORT_SYMBOL_GPL(rust_helper_siphash);
+
+void rust_helper_lock_acquire_ret(struct lockdep_map *lock, unsigned int subclass,
+				  int trylock, int read, int check,
+				  struct lockdep_map *nest_lock)
+{
+	lock_acquire(lock, subclass, trylock, read, check, nest_lock, _RET_IP_);
+}
+EXPORT_SYMBOL_GPL(rust_helper_lock_acquire_ret);
+
+void rust_helper_lock_release_ret(struct lockdep_map *lock)
+{
+	lock_release(lock, _RET_IP_);
+}
+EXPORT_SYMBOL_GPL(rust_helper_lock_release_ret);
 
 void rust_helper_xa_init_flags(struct xarray *xa, gfp_t flags)
 {

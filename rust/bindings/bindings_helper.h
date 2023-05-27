@@ -23,6 +23,7 @@
 #include <linux/iosys-map.h>
 #include <linux/io-pgtable.h>
 #include <linux/ktime.h>
+#include <linux/lockdep.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/of_device.h>
