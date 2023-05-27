@@ -12,7 +12,7 @@
 //! debugging with a GPU memory snapshot, since it makes it easier to identify use-after-free and
 //! caching issues.
 
-use kernel::{c_str, drm::mm, error::Result, prelude::*, str::CString, sync::LockClassKey};
+use kernel::{drm::mm, error::Result, prelude::*, str::CString};
 
 use crate::debug::*;
 use crate::driver::{AsahiDevRef, AsahiDevice};
@@ -692,8 +692,6 @@ pub(crate) struct HeapAllocator {
     name: CString,
 }
 
-static LOCK_KEY: LockClassKey = kernel::static_lock_class!();
-
 impl HeapAllocator {
     /// Create a new HeapAllocator for a given `Vm` and address range.
     #[allow(dead_code)]
@@ -730,13 +728,7 @@ impl HeapAllocator {
             total_garbage: 0,
         };
 
-        let mm = mm::Allocator::new(
-            start,
-            end - start + 1,
-            inner,
-            c_str!("HeapAllocator"),
-            LOCK_KEY,
-        )?;
+        let mm = mm::Allocator::new(start, end - start + 1, inner)?;
 
         Ok(HeapAllocator {
             dev: dev.into(),

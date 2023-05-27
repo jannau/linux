@@ -794,13 +794,7 @@ impl Vm {
             IOVA_USER_TOP
         };
 
-        let mm = mm::Allocator::new(
-            min_va as u64,
-            (max_va - min_va + 1) as u64,
-            (),
-            c_str!("asahi Vm"),
-            static_lock_class!(),
-        )?;
+        let mm = mm::Allocator::new(min_va as u64, (max_va - min_va + 1) as u64, ())?;
 
         Ok(Vm {
             id,

@@ -156,7 +156,7 @@ impl<T: SlotItem> SlotAllocator<T> {
 
         let alloc = Arc::pin_init(pin_init!(SlotAllocatorOuter {
             // SAFETY: `mutex_init!` is called below.
-            inner <- Mutex::new(inner, name, lock_key1),
+            inner <- Mutex::new_with_key(inner, name, lock_key1),
             // SAFETY: `condvar_init!` is called below.
             cond <- CondVar::new(name, lock_key2),
         }))?;

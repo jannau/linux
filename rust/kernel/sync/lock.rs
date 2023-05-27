@@ -110,6 +110,7 @@ impl<T, B: Backend> Lock<T, B> {
     }
 
     /// Constructs a new lock initialiser taking an initialiser/
+    #[track_caller]
     pub fn pin_init<E>(t: impl PinInit<T, E>) -> impl PinInit<Self, E>
     where
         E: core::convert::From<core::convert::Infallible>,
@@ -119,7 +120,6 @@ impl<T, B: Backend> Lock<T, B> {
     }
 
     /// Constructs a new lock initialiser.
-    #[allow(clippy::new_ret_no_self)]
     #[track_caller]
     pub fn new_named(t: T, name: &'static CStr) -> impl PinInit<Self> {
         let (key, _) = caller_lock_class();
@@ -127,6 +127,7 @@ impl<T, B: Backend> Lock<T, B> {
     }
 
     /// Constructs a new lock initialiser taking an initialiser/
+    #[track_caller]
     pub fn pin_init_named<E>(t: impl PinInit<T, E>, name: &'static CStr) -> impl PinInit<Self, E>
     where
         E: core::convert::From<core::convert::Infallible>,
