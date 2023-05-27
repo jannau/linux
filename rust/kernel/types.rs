@@ -237,6 +237,11 @@ impl<T> Opaque<T> {
         Self(MaybeUninit::uninit())
     }
 
+    /// Creates a zeroed value.
+    pub fn zeroed() -> Self {
+        Self(MaybeUninit::zeroed())
+    }
+
     /// Creates a pin-initializer from the given initializer closure.
     ///
     /// The returned initializer calls the given closure with the pointer to the inner `T` of this
