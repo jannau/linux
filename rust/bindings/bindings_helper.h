@@ -14,6 +14,7 @@
 #include <linux/slab.h>
 #include <linux/refcount.h>
 #include <linux/wait.h>
+#include <linux/siphash.h>
 #include <linux/sched.h>
 #include <linux/workqueue.h>
 
