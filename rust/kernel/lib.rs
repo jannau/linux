@@ -61,6 +61,7 @@ pub mod prelude;
 pub mod print;
 pub mod rbtree;
 pub mod revocable;
+pub mod siphash;
 pub mod sizes;
 mod static_assert;
 #[doc(hidden)]
