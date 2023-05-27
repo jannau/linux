@@ -20,6 +20,7 @@
 #include <linux/firmware.h>
 #include <linux/fs.h>
 #include <linux/jiffies.h>
+#include <linux/lockdep.h>
 #include <linux/mdio.h>
 #include <linux/of_device.h>
 #include <linux/pci.h>
