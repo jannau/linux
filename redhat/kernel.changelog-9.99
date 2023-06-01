@@ -1,3 +1,9 @@
+* Thu Jun 01 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc4.929ed21dfdb6.38]
+- redhat/configs: turn on IMX8ULP CCM Clock Driver (Steve Best)
+- redhat: update filter-modules fsdrvs list to reference smb instead of cifs (Patrick Talbert)
+- Linux v6.4.0-0.rc4.929ed21dfdb6
+Resolves: 
+
 * Wed May 31 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc4.48b1320a674e.37]
 - Linux v6.4.0-0.rc4.48b1320a674e
 Resolves: 
