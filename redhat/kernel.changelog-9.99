@@ -1,3 +1,8 @@
+* Fri Jun 09 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc5.8d15d5e1851b.45]
+- Change aarch64 CONFIG_ARCH_FORCE_MAX_ORDER to 10 for 4K pages (Justin M. Forbes)
+- Linux v6.4.0-0.rc5.8d15d5e1851b
+Resolves: 
+
 * Fri Jun 09 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc5.a4d7d7011219.44]
 - kernel.spec: remove "RPM_VMLINUX_H=$DevelDir/vmlinux.h" code chunk in %%install (Denys Vlasenko)
 Resolves: 
