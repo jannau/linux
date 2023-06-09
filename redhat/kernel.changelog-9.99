@@ -1,3 +1,7 @@
+* Fri Jun 09 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc5.a4d7d7011219.44]
+- kernel.spec: remove "RPM_VMLINUX_H=$DevelDir/vmlinux.h" code chunk in %%install (Denys Vlasenko)
+Resolves: 
+
 * Thu Jun 08 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc5.a4d7d7011219.43]
 - redhat/configs: aarch64: Turn on Display for OnePlus 6 (Eric Curtin)
 - redhat/configs: NXP i.MX93 pinctrl, clk, analog to digital converters (Steve Best)
