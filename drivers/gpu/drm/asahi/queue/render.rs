@@ -134,9 +134,11 @@ impl super::Queue::ver {
         let tpc_size = (num_clusters * (4 * tpc_mtile_stride * mtiles) * layers) as usize;
 
         // No idea where this comes from, but it fits what macOS does...
-        // TODO: layers?
+        // GUESS: Number of 32K heap blocks to fit a 5-byte region header/pointer per tile?
+        // That would make a ton of sense...
+        // TODO: Layers? Why the sample count factor here?
         let meta1_blocks = if num_clusters > 1 {
-            div_ceil(align(tiles_x, 2) * align(tiles_y, 4), 0x1980)
+            div_ceil(align(tiles_x, 2) * align(tiles_y, 4) * cmdbuf.samples, 0x1980)
         } else {
             0
         };
