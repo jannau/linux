@@ -126,13 +126,17 @@ static int apple_z2_spi_sync(struct apple_z2 *z2, struct spi_message *msg)
 {
 	int error;
 
-	gpiod_direction_output(z2->cs_gpio, 0);
-	usleep_range(1000, 2000);
+	if (z2->cs_gpio) {
+		gpiod_direction_output(z2->cs_gpio, 0);
+		usleep_range(1000, 2000);
+	}
 
 	error = spi_sync(z2->spidev, msg);
-	usleep_range(1000, 2000);
 
-	gpiod_direction_output(z2->cs_gpio, 1);
+	if (z2->cs_gpio) {
+		usleep_range(1000, 2000);
+		gpiod_direction_output(z2->cs_gpio, 1);
+	}
 
 	return error;
 }
@@ -376,8 +380,13 @@ static int apple_z2_probe(struct spi_device *spi)
 
 	z2->cs_gpio = devm_gpiod_get_index(dev, "cs", 0, 0);
 	if (IS_ERR(z2->cs_gpio)) {
-	        dev_err(dev, "unable to get cs");
-		return PTR_ERR(z2->cs_gpio);
+		if (PTR_ERR(z2->cs_gpio) != -ENOENT)
+		{
+			dev_err(dev, "unable to get cs");
+			return PTR_ERR(z2->cs_gpio);
+		} else {
+			z2->cs_gpio = NULL;
+		}
 	}
 
 	z2->reset_gpio = devm_gpiod_get_index(dev, "reset", 0, 0);
