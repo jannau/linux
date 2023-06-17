@@ -172,7 +172,7 @@ static void adp_plane_atomic_update(struct drm_plane *plane,
 	writel(src_size, adp->be + ADBE_SRC_SIZE);
 	writel(dst_pos, adp->be + ADBE_DST_START);
 	writel(dst_size, adp->be + ADBE_DST_SIZE);
-	writel(ALIGN(fb->width, 8) * 4, adp->be + ADBE_STRIDE);
+	writel(fb->pitches[0], adp->be + ADBE_STRIDE);
 	obj = drm_fb_dma_get_gem_obj(fb, 0);
 	if (obj)
 		writel(obj->dma_addr + fb->offsets[0], adp->be + ADBE_FB_BASE);
