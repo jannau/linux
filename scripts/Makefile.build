@@ -277,7 +277,7 @@ $(obj)/%.lst: $(src)/%.c FORCE
 # Compile Rust sources (.rs)
 # ---------------------------------------------------------------------------
 
-rust_allowed_features := allocator_api,const_refs_to_cell,new_uninit,pin_macro,type_alias_impl_trait
+rust_allowed_features := allocator_api,const_refs_to_cell,new_uninit,pin_macro,type_alias_impl_trait$(shell expr $$($(RUSTC) --version | cut -d' ' -f2) \> 1.69.0 >/dev/null && echo -n ,impl_trait_in_assoc_type)
 
 rust_common_cmd = \
 	RUST_MODFILE=$(modfile) $(RUSTC_OR_CLIPPY) $(rust_flags) \
