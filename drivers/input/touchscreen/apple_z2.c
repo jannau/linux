@@ -327,16 +327,13 @@ static int apple_z2_upload_firmware(struct apple_z2 *z2)
 
 static int apple_z2_boot(struct apple_z2 *z2)
 {
-	int error;
+	int timeout;
 	enable_irq(z2->spidev->irq);
 	gpiod_direction_output(z2->reset_gpio, 0);
-	wait_for_completion_timeout(&z2->boot_irq, msecs_to_jiffies(20));
-	error = apple_z2_upload_firmware(z2);
-	if (error) { /* Boot failed, let's put the device into reset just in case. */
-		gpiod_direction_output(z2->reset_gpio, 1);
-		disable_irq(z2->spidev->irq);
-	}
-	return error;
+	timeout = wait_for_completion_timeout(&z2->boot_irq, msecs_to_jiffies(20));
+	if (timeout == 0)
+		return -ETIMEDOUT;
+	return apple_z2_upload_firmware(z2);
 }
 
 static int apple_z2_open(struct input_dev *dev)
@@ -348,7 +345,10 @@ static int apple_z2_open(struct input_dev *dev)
 	gpiod_direction_output(z2->reset_gpio, 1);
 	usleep_range(5000, 10000);
 	error = apple_z2_boot(z2);
-	if (!error)
+	if (error) {
+		gpiod_direction_output(z2->reset_gpio, 1);
+		disable_irq(z2->spidev->irq);
+	} else
 		z2->open = 1;
 	return error;
 }
