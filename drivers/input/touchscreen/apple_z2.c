@@ -174,6 +174,7 @@ static int apple_z2_read_packet(struct apple_z2 *z2)
 		return -ENOMEM;
 
 	spi_message_init(&msg);
+	memset(&xfer, 0, sizeof(xfer));
 	xfer.rx_buf = pkt_rx;
 	xfer.len = pkt_len;
 
