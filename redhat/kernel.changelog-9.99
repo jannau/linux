@@ -1,3 +1,12 @@
+* Sat Jun 17 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc6.1639fae5132b.51]
+- redhat/configs: arm: enable SERIAL_TEGRA UART for RHEL (Mark Salter)
+- redhat/configs: enable CONFIG_X86_AMD_PSTATE_UT (David Arcari)
+- redhat/configs: Enable CONFIG_TCG_VTPM_PROXY for RHEL (Štěpán Horáček)
+- redhat: do not package *.mod.c generated files (Denys Vlasenko)
+- ALSA configuration changes for ARK/RHEL 9.3 (Jaroslav Kysela)
+- Linux v6.4.0-0.rc6.1639fae5132b
+Resolves: 
+
 * Fri Jun 16 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc6.40f71e7cd3c6.50]
 - spec: remove resolve_btfids from kernel-devel (Viktor Malik)
 - tools/resolve_btfids: Fix setting HOSTCFLAGS (Viktor Malik)
