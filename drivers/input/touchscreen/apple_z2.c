@@ -474,6 +474,7 @@ MODULE_DEVICE_TABLE(of, apple_z2_of_match);
 
 static struct spi_device_id apple_z2_of_id[] = {
 	{ .name = "j293-touchbar" },
+	{ .name = "j493-touchbar" },
 	{ .name = "z2-touchbar" },
 	{ .name = "z2-multitouch" },
 	{}
