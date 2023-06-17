@@ -47,6 +47,13 @@
 
 &display_dfr {
 	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	dfr_panel: panel@0 {
+		compatible = "apple,summit";
+		reg = <0>;
+	};
 };
 
 &displaydfr_dart {

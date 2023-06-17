@@ -543,7 +543,7 @@
 		};
 
 		display_dfr: display-pipe@228200000 {
-			compatible = "apple,t8103-display-pipe", "apple,h7-display-pipe";
+			compatible = "apple,t8112-display-pipe", "apple,h7-display-pipe";
 			reg-names = "be", "fe", "mipi";
 			reg = <0x2 0x28200000 0x0 0xc000>,
 				<0x2 0x28400000 0x0 0x4000>,
