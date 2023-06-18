@@ -1,3 +1,7 @@
+* Sun Jun 18 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc6.1b29d271614a.52]
+- Linux v6.4.0-0.rc6.1b29d271614a
+Resolves: 
+
 * Sat Jun 17 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc6.1639fae5132b.51]
 - redhat/configs: arm: enable SERIAL_TEGRA UART for RHEL (Mark Salter)
 - redhat/configs: enable CONFIG_X86_AMD_PSTATE_UT (David Arcari)
