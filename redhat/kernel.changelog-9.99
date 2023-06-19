@@ -1,3 +1,10 @@
+* Mon Jun 19 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc7.53]
+- common: remove deleted USB PCCARD drivers (Peter Robinson)
+- fedora: further cleanup of pccard/cardbus subsystem (Peter Robinson)
+- common: properly disable PCCARD subsystem (Peter Robinson)
+- Linux v6.4.0-0.rc7
+Resolves: 
+
 * Sun Jun 18 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc6.1b29d271614a.52]
 - Linux v6.4.0-0.rc6.1b29d271614a
 Resolves: 
