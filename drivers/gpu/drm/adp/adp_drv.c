@@ -82,7 +82,7 @@
 #define GEN_RD_CMD_BUSY BIT(6)
 #define CMD_PKT_STATUS_TIMEOUT_US 20000
 
-int adp_open(struct inode *inode, struct file *filp)
+static int adp_open(struct inode *inode, struct file *filp)
 {
 	/*
 	 * The modesetting driver does not check the non-desktop connector
