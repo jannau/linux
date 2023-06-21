@@ -1,3 +1,22 @@
+* Wed Jun 21 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc7.e660abd551f1.55]
+- redhat/configs: enable CONFIG_MANA_INFINIBAND=m for ARK (Vitaly Kuznetsov)
+- redhat/config: common: Enable CONFIG_GPIO_SIM for software development (Kate Hsuan)
+- redhat: fix problem with RT kvm modules listed twice in rpm generation (Clark Williams)
+- redhat: turn off 64k kernel builds with rtonly (Clark Williams)
+- redhat: turn off zfcpdump for rtonly (Clark Williams)
+- redhat: don't allow with_rtonly to turn on unsupported arches (Clark Williams)
+- redhat: update self-test data for addition of RT and 64k-page variants (Clark Williams)
+- redhat: fix realtime and efiuki build conflict (Jan Stancek)
+- arm64-64k: Add new kernel variant to RHEL9/CS9 for 64K page-size'd ARM64 (Donald Dutile) [2153073]
+- redhat: TEMPORARY set configs to deal with PREEMPT_RT not available (Clark Williams)
+- redhat: TEMPORARY default realtime to off (Clark Williams)
+- redhat: moved ARM errata configs to arm dir (Clark Williams)
+- redhat: RT packaging changes (Clark Williams)
+- redhat: miscellaneous commits needed due to CONFIG_EXPERT (Clark Williams)
+- redhat: realtime config entries (Clark Williams)
+- Linux v6.4.0-0.rc7.e660abd551f1
+Resolves: rhbz#2153073
+
 * Tue Jun 20 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc7.692b7dc87ca6.54]
 - Linux v6.4.0-0.rc7.692b7dc87ca6
 Resolves: 
