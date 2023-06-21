@@ -513,6 +513,12 @@ static int adp_setup_mode_config(struct adp_drv_private *adp)
 	if (ret)
 		return ret;
 
+	/* This should come from the dts / panel */
+	ret = drm_connector_set_panel_orientation(&adp->connector,
+				DRM_MODE_PANEL_ORIENTATION_RIGHT_UP);
+	if (ret)
+		return ret;
+
 	drm_connector_attach_encoder(&adp->connector, &adp->encoder);
 
 	ret = drm_vblank_init(drm, drm->mode_config.num_crtc);
