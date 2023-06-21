@@ -252,7 +252,8 @@ static const u32 plane_formats[] = {
 
 #define ALL_CRTCS 1
 
-struct adp_plane *adp_plane_new(struct adp_drv_private *adp, u8 id)
+static struct adp_plane *adp_plane_new(struct adp_drv_private *adp,
+				       u8 id)
 {
 	struct drm_device *drm = &adp->drm;
 	struct adp_plane *plane;
@@ -434,7 +435,7 @@ static int adp_get_modes(struct drm_connector *connector)
 	return 1;
 }
 
-int adp_detect_ctx(struct drm_connector *connector,
+static int adp_detect_ctx(struct drm_connector *connector,
 		   struct drm_modeset_acquire_ctx *ctx,
 		   bool force) {
 	connector->display_info.non_desktop = true;
