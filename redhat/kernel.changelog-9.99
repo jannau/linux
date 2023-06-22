@@ -1,3 +1,10 @@
+* Thu Jun 22 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc7.dad9774deaf1.56]
+- kernel.spec: drop obsolete ldconfig (Jan Stancek)
+- Consolidate config items to common for 6.4 cycle (Justin M. Forbes)
+- Turn on CO?NFIg_RMNET for Fedora (Justin M. Forbes)
+- Linux v6.4.0-0.rc7.dad9774deaf1
+Resolves: 
+
 * Wed Jun 21 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc7.e660abd551f1.55]
 - redhat/configs: enable CONFIG_MANA_INFINIBAND=m for ARK (Vitaly Kuznetsov)
 - redhat/config: common: Enable CONFIG_GPIO_SIM for software development (Kate Hsuan)
