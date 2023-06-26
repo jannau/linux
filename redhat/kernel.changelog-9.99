@@ -1,3 +1,12 @@
+* Mon Jun 26 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-59]
+- redhat/kernel.spec.template: Disable 'extracting debug info' messages (Prarit Bhargava)
+- kernel/rh_messages.c: Another gcc12 warning on redundant NULL test (Florian Weimer) [2216678]
+- redhat: fix signing for realtime and arm64_64k non-debug variants (Jan Stancek)
+- redhat: treat with_up consistently (Jan Stancek)
+- redhat: make with_realtime opt-in (Jan Stancek)
+- Linux v6.4.0
+Resolves: rhbz#2216678
+
 * Sat Jun 24 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.4.0-0.rc7.a92b7d26c743.58]
 - Linux v6.4.0-0.rc7.a92b7d26c743
 Resolves: 
