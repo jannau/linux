@@ -1,3 +1,9 @@
+* Wed Jun 28 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc0.1ef6663a587b.1]
+- Revert "Remove EXPERT from ARCH_FORCE_MAX_ORDER for aarch64" (Justin M. Forbes)
+- Reset the release number and dedup the changelog after rebase (Justin M. Forbes)
+- Fix up rebase issue with CONFIG_ARCH_FORCE_MAX_ORDER (Justin M. Forbes)
+Resolves: 
+
 * Tue Jun 27 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc0.1ef6663a587b.60]
 - redhat/kernel.spec.template: Disable 'extracting debug info' messages (Prarit Bhargava)
 - kernel/rh_messages.c: Another gcc12 warning on redundant NULL test (Florian Weimer) [2216678]
