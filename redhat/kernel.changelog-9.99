@@ -1,3 +1,8 @@
+* Thu Jun 29 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc0.3a8a670eeeaa.3]
+- redhat: remove extra + (plus) from meta package Requires definitions (Patrick Talbert)
+- Linux v6.5.0-0.rc0.3a8a670eeeaa
+Resolves: 
+
 * Wed Jun 28 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc0.6aeadf7896bf.2]
 - Add intel-m10-bmc-hwmon to singlemods (Thorsten Leemhuis)
 - Add hid-uclogic-test to mod-internal.list (Thorsten Leemhuis)
