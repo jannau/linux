@@ -1,3 +1,13 @@
+* Fri Jun 30 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc0.3a8a670eeeaa.4]
+- redhat: update self-test data (Patrick Talbert)
+- redhat: ignore SPECBPFTOOLVERSION/bpftoolversion in self-test create-data.sh (Patrick Talbert)
+- fedora/rhel: Move I2C_DESIGNWARE_PLATFORM, I2C_SLAVE, & GPIOLIB from pending (Patrick Talbert)
+- redhat/filter-modules.sh.rhel: add needed deps for intel_rapl_tpmi (Jan Stancek)
+- fedora: Enable CONFIG_SPI_SLAVE (Patrick Talbert)
+- fedora/rhel: enable I2C_DESIGNWARE_PLATFORM, I2C_SLAVE, and GPIOLIB (Patrick Talbert)
+- fedora: Enable CONFIG_SPI_SLAVE in fedora-pending (Patrick Talbert)
+Resolves: 
+
 * Thu Jun 29 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc0.3a8a670eeeaa.3]
 - redhat: remove extra + (plus) from meta package Requires definitions (Patrick Talbert)
 - Linux v6.5.0-0.rc0.3a8a670eeeaa
