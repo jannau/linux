@@ -1,3 +1,7 @@
+* Fri Jun 30 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc0.e55e5df193d2.5]
+- Linux v6.5.0-0.rc0.e55e5df193d2
+Resolves: 
+
 * Fri Jun 30 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc0.3a8a670eeeaa.4]
 - redhat: update self-test data (Patrick Talbert)
 - redhat: ignore SPECBPFTOOLVERSION/bpftoolversion in self-test create-data.sh (Patrick Talbert)
