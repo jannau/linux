@@ -1,3 +1,7 @@
+* Sun Jul 02 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc0.995b406c7e97.7]
+- Linux v6.5.0-0.rc0.995b406c7e97
+Resolves: 
+
 * Sat Jul 01 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc0.a507db1d8fdc.6]
 - Fix up armv7 configs for Fedora (Justin M. Forbes)
 - redhat: Set pending-rhel x86 values for various SND configs (Patrick Talbert)
