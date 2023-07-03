@@ -1,3 +1,16 @@
+* Mon Jul 03 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc0.a901a3568fd2.8]
+- Allow ELN pipelines failures (Michael Hofmann)
+- Enable cs-like CI (Michael Hofmann)
+- Allow to auto-cancel redundant pipelines (Michael Hofmann)
+- Remove obsolete unused trigger variable (Michael Hofmann)
+- Fix linter warnings in .gitlab-ci.yml (Michael Hofmann)
+- config: wifi: debug options for ath11k, brcm80211 and iwlwifi (Íñigo Huguet)
+- redhat: allow dbgonly cross builds (Jan Stancek)
+- redhat/configs: Clean up x86-64 call depth tracking configs (Waiman Long)
+- redhat: move SND configs from pending-rhel to rhel (Patrick Talbert)
+- Linux v6.5.0-0.rc0.a901a3568fd2
+Resolves: 
+
 * Sun Jul 02 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc0.995b406c7e97.7]
 - Linux v6.5.0-0.rc0.995b406c7e97
 Resolves: 
