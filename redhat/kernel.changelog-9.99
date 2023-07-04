@@ -1,3 +1,7 @@
+* Tue Jul 04 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc0.24be4d0b46bb.9]
+- Linux v6.5.0-0.rc0.24be4d0b46bb
+Resolves: 
+
 * Mon Jul 03 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc0.a901a3568fd2.8]
 - Allow ELN pipelines failures (Michael Hofmann)
 - Enable cs-like CI (Michael Hofmann)
