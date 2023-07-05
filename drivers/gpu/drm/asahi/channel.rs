@@ -13,7 +13,7 @@ use crate::driver::{AsahiDevRef, AsahiDevice};
 use crate::fw::channels::*;
 use crate::fw::initdata::{raw, ChannelRing};
 use crate::fw::types::*;
-use crate::{event, gpu, mem};
+use crate::{buffer, event, gpu, mem};
 use core::time::Duration;
 use kernel::{c_str, delay::coarse_sleep, prelude::*, sync::Arc, time};
 
@@ -292,24 +292,29 @@ impl FwCtlChannel {
 
 /// Event channel, used to notify the driver of command completions, GPU faults and errors, and
 /// other events.
+#[versions(AGX)]
 pub(crate) struct EventChannel {
     dev: AsahiDevRef,
     ch: RxChannel<ChannelState, RawEventMsg>,
-    mgr: Arc<event::EventManager>,
+    ev_mgr: Arc<event::EventManager>,
+    buf_mgr: buffer::BufferManager::ver,
     gpu: Option<Arc<dyn gpu::GpuManager>>,
 }
 
-impl EventChannel {
+#[versions(AGX)]
+impl EventChannel::ver {
     /// Allocate a new Event channel.
     pub(crate) fn new(
         dev: &AsahiDevice,
         alloc: &mut gpu::KernelAllocators,
-        mgr: Arc<event::EventManager>,
-    ) -> Result<EventChannel> {
-        Ok(EventChannel {
+        ev_mgr: Arc<event::EventManager>,
+        buf_mgr: buffer::BufferManager::ver,
+    ) -> Result<EventChannel::ver> {
+        Ok(EventChannel::ver {
             dev: dev.into(),
             ch: RxChannel::<ChannelState, RawEventMsg>::new(alloc, 0x100)?,
-            mgr,
+            ev_mgr,
+            buf_mgr,
             gpu: None,
         })
     }
@@ -354,11 +359,25 @@ impl EventChannel {
                             for (i, flags) in firing.iter().enumerate() {
                                 for j in 0..32 {
                                     if flags & (1u32 << j) != 0 {
-                                        self.mgr.signal((i * 32 + j) as u32);
+                                        self.ev_mgr.signal((i * 32 + j) as u32);
                                     }
                                 }
                             }
                         }
+                        EventMsg::GrowTVB {
+                            vm_slot,
+                            buffer_slot,
+                            counter,
+                            ..
+                        } => match self.gpu.as_ref() {
+                            Some(gpu) => {
+                                self.buf_mgr.grow(buffer_slot);
+                                gpu.ack_grow(buffer_slot, vm_slot, counter);
+                            }
+                            None => {
+                                dev_crit!(self.dev, "EventChannel: No GPU manager available!\n")
+                            }
+                        },
                         msg => {
                             dev_crit!(self.dev, "Unknown event message: {:?}\n", msg);
                         }

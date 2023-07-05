@@ -452,6 +452,17 @@ impl Buffer::ver {
         }
     }
 
+    /// Synchronously grow the Buffer.
+    pub(crate) fn sync_grow(&self) {
+        let inner = self.inner.lock();
+
+        let cur_count = inner.blocks.len();
+        core::mem::drop(inner);
+        if self.ensure_blocks(cur_count + 10).is_err() {
+            pr_err!("BufferManager: Failed to grow buffer synchronously\n");
+        }
+    }
+
     /// Ensure that the buffer has at least a certain minimum size in blocks.
     pub(crate) fn ensure_blocks(&self, min_blocks: usize) -> Result<bool> {
         let mut inner = self.inner.lock();
@@ -739,6 +750,28 @@ impl BufferManager::ver {
             static_lock_class!(),
             static_lock_class!(),
         )?))
+    }
+
+    /// Signals a Buffer to synchronously grow.
+    pub(crate) fn grow(&self, slot: u32) {
+        match self
+            .0
+            .with_inner(|inner| inner.owners[slot as usize].as_ref().cloned())
+        {
+            Some(owner) => {
+                pr_info!(
+                    "BufferManager: Received synchronous grow request for slot {}, this is not generally expected\n",
+                    slot
+                );
+                owner.sync_grow();
+            }
+            None => {
+                pr_err!(
+                    "BufferManager: Received grow request for empty slot {}\n",
+                    slot
+                );
+            }
+        }
     }
 }
 

@@ -116,7 +116,7 @@ pub(crate) struct KernelAllocators {
 #[versions(AGX)]
 #[pin_data]
 struct RxChannels {
-    event: channel::EventChannel,
+    event: channel::EventChannel::ver,
     fw_log: channel::FwLogChannel,
     ktrace: channel::KTraceChannel,
     stats: channel::StatsChannel::ver,
@@ -260,6 +260,8 @@ pub(crate) trait GpuManager: Send + Sync {
     fn handle_timeout(&self, counter: u32, event_slot: u32);
     /// Handle a GPU fault event.
     fn handle_fault(&self);
+    /// Acknowledge a Buffer grow op.
+    fn ack_grow(&self, buffer_slot: u32, vm_slot: u32, counter: u32);
     /// Wait for the GPU to become idle and power off.
     fn wait_for_poweroff(&self, timeout: usize) -> Result;
     /// Send a firmware control command (secure cache flush).
@@ -605,10 +607,17 @@ impl GpuManager::ver {
 
         let fwctl_channel = channel::FwCtlChannel::new(dev, &mut alloc)?;
 
+        let buffer_mgr = buffer::BufferManager::ver::new()?;
         let event_manager_clone = event_manager.clone();
+        let buffer_mgr_clone = buffer_mgr.clone();
         let alloc_ref = &mut alloc;
         let rx_channels = Box::init(try_init!(RxChannels::ver {
-            event: channel::EventChannel::new(dev, alloc_ref, event_manager_clone)?,
+            event: channel::EventChannel::ver::new(
+                dev,
+                alloc_ref,
+                event_manager_clone,
+                buffer_mgr_clone,
+            )?,
             fw_log: channel::FwLogChannel::new(dev, alloc_ref)?,
             ktrace: channel::KTraceChannel::new(dev, alloc_ref)?,
             stats: channel::StatsChannel::ver::new(dev, alloc_ref)?,
@@ -634,7 +643,7 @@ impl GpuManager::ver {
             rx_channels <- Mutex::new_named(*rx_channels, c_str!("rx_channels")),
             tx_channels <- Mutex::new_named(*tx_channels, c_str!("tx_channels")),
             pipes,
-            buffer_mgr: buffer::BufferManager::ver::new()?,
+            buffer_mgr,
             ids: Default::default(),
             garbage_work <- Mutex::new_named(Vec::new(), c_str!("garbage_work")),
             garbage_contexts <- Mutex::new_named(Vec::new(), c_str!("garbage_contexts")),
@@ -1212,6 +1221,32 @@ impl GpuManager for GpuManager::ver {
         };
         self.mark_pending_events(None, error);
         self.recover();
+    }
+
+    fn ack_grow(&self, buffer_slot: u32, vm_slot: u32, counter: u32) {
+        let dc = fw::channels::DeviceControlMsg::ver::GrowTVBAck {
+            unk_4: 1,
+            buffer_slot,
+            vm_slot,
+            counter,
+            __pad: Default::default(),
+        };
+
+        mod_dev_dbg!(self.dev, "TVB Grow Ack command: {:?}\n", &dc);
+
+        let mut txch = self.tx_channels.lock();
+
+        txch.device_control.send(&dc);
+        {
+            let mut guard = self.rtkit.lock();
+            let rtk = guard.as_mut().unwrap();
+            if rtk
+                .send_message(EP_DOORBELL, MSG_TX_DOORBELL | DOORBELL_DEVCTRL)
+                .is_err()
+            {
+                dev_err!(self.dev, "Failed to send TVB Grow Ack command\n");
+            }
+        }
     }
 
     fn wait_for_poweroff(&self, timeout: usize) -> Result {
