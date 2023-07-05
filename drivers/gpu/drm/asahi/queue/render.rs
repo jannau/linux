@@ -110,7 +110,6 @@ impl super::Queue::ver {
         let mtiles_y = 4u32;
         let mtiles = mtiles_x * mtiles_y;
 
-        // TODO: *samples
         let tiles_per_mtile_x = align(div_ceil(tiles_x, mtiles_x), 4);
         let tiles_per_mtile_y = align(div_ceil(tiles_y, mtiles_y), 4);
         let tiles_per_mtile = tiles_per_mtile_x * tiles_per_mtile_y;
@@ -138,14 +137,20 @@ impl super::Queue::ver {
         // That would make a ton of sense...
         // TODO: Layers? Why the sample count factor here?
         let meta1_blocks = if num_clusters > 1 {
-            div_ceil(align(tiles_x, 2) * align(tiles_y, 4) * cmdbuf.samples, 0x1980)
+            div_ceil(
+                align(tiles_x, 2) * align(tiles_y, 4) * utiles_per_tile,
+                0x1980,
+            )
         } else {
             0
         };
 
         // TODO: large_tib needs larger min_tvb_blocks apparently
-        let min_tvb_blocks =
-            div_ceil(tiles_x * tiles_y, 128).max(if num_clusters > 1 { 9 } else { 8 }) as usize;
+        let mut min_tvb_blocks = align(div_ceil(tiles_x * tiles_y, 128), 8);
+
+        if num_clusters > 1 {
+            min_tvb_blocks = min_tvb_blocks.max(7 + 2 * layers);
+        }
 
         Ok(buffer::TileInfo {
             tiles_x,
@@ -164,7 +169,7 @@ impl super::Queue::ver {
             tilemap_size,
             tpc_size,
             meta1_blocks,
-            min_tvb_blocks,
+            min_tvb_blocks: min_tvb_blocks as usize,
             params: fw::vertex::raw::TilingParameters {
                 rgn_size,
                 unk_4: 0x88,
