@@ -497,12 +497,15 @@ impl Buffer::ver {
             raw.wptr.store(new_count as u32, Ordering::SeqCst);
         });
 
-        let page_count = (new_count * PAGES_PER_BLOCK) as u32;
-        inner.info.with(|raw, _inner| {
-            raw.page_count.store(page_count, Ordering::Relaxed);
-            raw.block_count.store(new_count as u32, Ordering::Relaxed);
-            raw.last_page.store(page_count - 1, Ordering::Relaxed);
-        });
+        /* Only do this update if the buffer manager is idle (which means we own it) */
+        if inner.active_scenes == 0 {
+            let page_count = (new_count * PAGES_PER_BLOCK) as u32;
+            inner.info.with(|raw, _inner| {
+                raw.page_count.store(page_count, Ordering::Relaxed);
+                raw.block_count.store(new_count as u32, Ordering::Relaxed);
+                raw.last_page.store(page_count - 1, Ordering::Relaxed);
+            });
+        }
 
         Ok(true)
     }

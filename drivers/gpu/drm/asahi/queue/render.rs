@@ -339,8 +339,6 @@ impl super::Queue::ver {
 
         let buffer = self.buffer.as_ref().ok_or(EINVAL)?;
 
-        let scene = Arc::try_new(buffer.new_scene(kalloc, &tile_info)?)?;
-
         let notifier = self.notifier.clone();
 
         let tvb_autogrown = buffer.auto_grow()?;
@@ -369,6 +367,8 @@ impl super::Queue::ver {
                 cmdbuf.fb_height
             );
         }
+
+        let scene = Arc::try_new(buffer.new_scene(kalloc, &tile_info)?)?;
 
         let vm_bind = job.vm_bind.clone();
 
