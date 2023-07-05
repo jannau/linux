@@ -236,11 +236,6 @@ impl super::Queue::ver {
             return Err(EINVAL);
         }
 
-        if cmdbuf.flags & uapi::ASAHI_RENDER_MEMORYLESS_RTS_USED as u64 != 0 {
-            // Not supported yet
-            return Err(EINVAL);
-        }
-
         if cmdbuf.fb_width == 0
             || cmdbuf.fb_height == 0
             || cmdbuf.fb_width > 16384
