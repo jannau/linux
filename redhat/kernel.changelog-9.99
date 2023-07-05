@@ -1,3 +1,10 @@
+* Wed Jul 05 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc0.d528014517f2.10]
+- redhat: fix the 'eln BUILD_TARGET' self-test (Patrick Talbert)
+- redhat: update the self-test-data (Patrick Talbert)
+- redhat: remove trailing space in dist-dump-variables output (Patrick Talbert)
+- Linux v6.5.0-0.rc0.d528014517f2
+Resolves: 
+
 * Tue Jul 04 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc0.24be4d0b46bb.9]
 - Linux v6.5.0-0.rc0.24be4d0b46bb
 Resolves: 
