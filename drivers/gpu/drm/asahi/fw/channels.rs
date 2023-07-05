@@ -172,7 +172,13 @@ pub(crate) enum DeviceControlMsg {
     Unk0a(Array<DEVICECONTROL_SZ::ver, u8>),
     Unk0b(Array<DEVICECONTROL_SZ::ver, u8>),
     Unk0c(Array<DEVICECONTROL_SZ::ver, u8>),
-    Unk0d(Array<DEVICECONTROL_SZ::ver, u8>),
+    GrowTVBAck {
+        unk_4: u32,
+        buffer_slot: u32,
+        vm_slot: u32,
+        counter: u32,
+        __pad: Pad<{ DEVICECONTROL_SZ::ver - 0x10 }>,
+    },
     Unk0e(Array<DEVICECONTROL_SZ::ver, u8>),
     Unk0f(Array<DEVICECONTROL_SZ::ver, u8>),
     Unk10(Array<DEVICECONTROL_SZ::ver, u8>),
@@ -239,10 +245,17 @@ pub(crate) enum EventMsg {
         counter: u32,
         unk_8: u32,
         event_slot: u32,
-    }, // Max discriminant: 0x4
+    },
+    Unk5(Array<EVENT_SZ, u8>),
+    Unk6(Array<EVENT_SZ, u8>),
+    GrowTVB {
+        vm_slot: u32,
+        buffer_slot: u32,
+        counter: u32,
+    }, // Max discriminant: 0x7
 }
 
-pub(crate) const EVENT_MAX: u32 = 0x4;
+pub(crate) const EVENT_MAX: u32 = 0x7;
 
 #[derive(Copy, Clone)]
 #[repr(C)]
