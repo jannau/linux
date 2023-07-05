@@ -253,7 +253,7 @@ pub(crate) struct StartFragment<'a> {
     pub(crate) unk_50: u32,
     pub(crate) event_generation: u32,
     pub(crate) buffer_slot: u32,
-    pub(crate) large_tib: u32,
+    pub(crate) sync_grow: u32,
     pub(crate) event_seq: U64,
     pub(crate) unk_68: u32,
     pub(crate) unk_758_flag: GpuWeakPointer<u32>,

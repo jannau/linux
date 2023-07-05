@@ -136,7 +136,7 @@ pub(crate) mod raw {
         pub(crate) encoder_params: job::raw::EncoderParams,
         pub(crate) unk_55c: u32,
         pub(crate) unk_560: u32,
-        pub(crate) memoryless_rts_used: u32,
+        pub(crate) sync_grow: u32,
         pub(crate) unk_568: u32,
         pub(crate) unk_56c: u32,
         pub(crate) meta: job::raw::JobMeta,

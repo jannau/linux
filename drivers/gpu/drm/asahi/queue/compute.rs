@@ -296,7 +296,7 @@ impl super::Queue::ver {
                     }),
                     encoder_params <- try_init!(fw::job::raw::EncoderParams {
                         unk_8: 0x0,     // fixed
-                        large_tib: 0x0, // check!
+                        sync_grow: 0x0, // check!
                         unk_10: 0x0,    // fixed
                         encoder_id: cmdbuf.encoder_id,
                         unk_18: 0x0, // fixed

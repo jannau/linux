@@ -28,7 +28,7 @@ pub(crate) mod raw {
     #[repr(C)]
     pub(crate) struct EncoderParams {
         pub(crate) unk_8: u32,
-        pub(crate) large_tib: u32,
+        pub(crate) sync_grow: u32,
         pub(crate) unk_10: u32,
         pub(crate) encoder_id: u32,
         pub(crate) unk_18: u32,

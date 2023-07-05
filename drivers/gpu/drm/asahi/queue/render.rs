@@ -145,7 +145,6 @@ impl super::Queue::ver {
             0
         };
 
-        // TODO: large_tib needs larger min_tvb_blocks apparently
         let mut min_tvb_blocks = align(div_ceil(tiles_x * tiles_y, 128), 8);
 
         if num_clusters > 1 {
@@ -227,7 +226,7 @@ impl super::Queue::ver {
         if cmdbuf.flags
             & !(uapi::ASAHI_RENDER_NO_CLEAR_PIPELINE_TEXTURES
                 | uapi::ASAHI_RENDER_SET_WHEN_RELOADING_Z_OR_S
-                | uapi::ASAHI_RENDER_MEMORYLESS_RTS_USED
+                | uapi::ASAHI_RENDER_SYNC_TVB_GROWTH
                 | uapi::ASAHI_RENDER_PROCESS_EMPTY_TILES
                 | uapi::ASAHI_RENDER_NO_VERTEX_CLUSTERING
                 | uapi::ASAHI_RENDER_MSAA_ZS) as u64
@@ -486,8 +485,6 @@ impl super::Queue::ver {
         #[ver(V >= V13_0B4)]
         let count_vtx = count_frag + 1;
 
-        let mut large_tib = cmdbuf.tib_blocks > 8;
-
         // Unknowns handling
 
         if unks.flags & uapi::ASAHI_RENDER_UNK_SET_TILE_CONFIG as u64 != 0 {
@@ -495,12 +492,6 @@ impl super::Queue::ver {
         }
         if unks.flags & uapi::ASAHI_RENDER_UNK_SET_UTILE_CONFIG as u64 != 0 {
             utile_config = unks.utile_config as u32;
-        }
-        if unks.flags & uapi::ASAHI_RENDER_UNK_LARGE_TIB as u64 != 0 {
-            large_tib = true;
-        }
-        if unks.flags & uapi::ASAHI_RENDER_UNK_SMALL_TIB as u64 != 0 {
-            large_tib = false;
         }
         if unks.flags & uapi::ASAHI_RENDER_UNK_SET_AUX_FB_UNK as u64 == 0 {
             unks.aux_fb_unk = 0x100000;
@@ -627,7 +618,8 @@ impl super::Queue::ver {
                             unk_50: 0x1, // fixed
                             event_generation: self.id as u32,
                             buffer_slot: scene.slot(),
-                            large_tib: large_tib as u32,
+                            sync_grow: (cmdbuf.flags & uapi::ASAHI_RENDER_SYNC_TVB_GROWTH as u64
+                                != 0) as u32,
                             event_seq: U64(ev_frag.event_seq),
                             unk_68: 0,
                             unk_758_flag: inner_weak_ptr!(ptr, unk_758_flag),
@@ -999,7 +991,8 @@ impl super::Queue::ver {
                     encoder_params <- try_init!(fw::job::raw::EncoderParams {
                         unk_8: (cmdbuf.flags & uapi::ASAHI_RENDER_SET_WHEN_RELOADING_Z_OR_S as u64
                             != 0) as u32,
-                        large_tib: large_tib as u32,
+                        sync_grow: (cmdbuf.flags & uapi::ASAHI_RENDER_SYNC_TVB_GROWTH as u64
+                                    != 0) as u32,
                         unk_10: 0x0, // fixed
                         encoder_id: cmdbuf.encoder_id,
                         unk_18: 0x0, // fixed
@@ -1438,7 +1431,7 @@ impl super::Queue::ver {
                     }),
                     encoder_params <- try_init!(fw::job::raw::EncoderParams {
                         unk_8: 0x0,     // fixed
-                        large_tib: 0x0, // fixed
+                        sync_grow: 0x0, // fixed
                         unk_10: 0x0,    // fixed
                         encoder_id: cmdbuf.encoder_id,
                         unk_18: 0x0, // fixed
@@ -1448,8 +1441,8 @@ impl super::Queue::ver {
                     }),
                     unk_55c: 0,
                     unk_560: 0,
-                    memoryless_rts_used: (cmdbuf.flags
-                        & uapi::ASAHI_RENDER_MEMORYLESS_RTS_USED as u64
+                    sync_grow: (cmdbuf.flags
+                        & uapi::ASAHI_RENDER_SYNC_TVB_GROWTH as u64
                         != 0) as u32,
                     unk_568: 0,
                     unk_56c: 0,
