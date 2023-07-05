@@ -209,7 +209,7 @@ pub(crate) struct GpuManager {
     fwctl_channel: Mutex<channel::FwCtlChannel>,
     pipes: PipeChannels::ver,
     event_manager: Arc<event::EventManager>,
-    buffer_mgr: buffer::BufferManager,
+    buffer_mgr: buffer::BufferManager::ver,
     ids: SequenceIDs,
     #[pin]
     garbage_work: Mutex<Vec<Box<dyn workqueue::GenSubmittedWork>>>,
@@ -634,7 +634,7 @@ impl GpuManager::ver {
             rx_channels <- Mutex::new_named(*rx_channels, c_str!("rx_channels")),
             tx_channels <- Mutex::new_named(*tx_channels, c_str!("tx_channels")),
             pipes,
-            buffer_mgr: buffer::BufferManager::new()?,
+            buffer_mgr: buffer::BufferManager::ver::new()?,
             ids: Default::default(),
             garbage_work <- Mutex::new_named(Vec::new(), c_str!("garbage_work")),
             garbage_contexts <- Mutex::new_named(Vec::new(), c_str!("garbage_contexts")),

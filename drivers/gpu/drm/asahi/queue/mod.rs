@@ -354,7 +354,7 @@ impl Queue::ver {
         ualloc: Arc<Mutex<alloc::DefaultAllocator>>,
         ualloc_priv: Arc<Mutex<alloc::DefaultAllocator>>,
         event_manager: Arc<event::EventManager>,
-        mgr: &buffer::BufferManager,
+        mgr: &buffer::BufferManager::ver,
         id: u64,
         priority: u32,
         caps: u32,

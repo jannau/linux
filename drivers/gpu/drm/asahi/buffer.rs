@@ -283,9 +283,9 @@ struct BufferInner {
     blocks: Vec<GpuOnlyArray<u8>>,
     max_blocks: usize,
     max_blocks_nomemless: usize,
-    mgr: BufferManager,
+    mgr: BufferManager::ver,
     active_scenes: usize,
-    active_slot: Option<slotalloc::Guard<()>>,
+    active_slot: Option<slotalloc::Guard<BufferSlotInner::ver>>,
     last_token: Option<slotalloc::SlotToken>,
     tpc: Option<Arc<GpuArray<u8>>>,
     kernel_buffer: GpuArray<u8>,
@@ -311,7 +311,7 @@ impl Buffer::ver {
         alloc: &mut gpu::KernelAllocators,
         ualloc: Arc<Mutex<alloc::DefaultAllocator>>,
         ualloc_priv: Arc<Mutex<alloc::DefaultAllocator>>,
-        mgr: &BufferManager,
+        mgr: &BufferManager::ver,
     ) -> Result<Buffer::ver> {
         // These are the typical max numbers on macOS.
         // 8GB machines have this halved.
@@ -645,7 +645,10 @@ impl Buffer::ver {
         if inner.active_slot.is_none() {
             assert_eq!(inner.active_scenes, 0);
 
-            let slot = inner.mgr.0.get(inner.last_token)?;
+            let slot = inner.mgr.0.get_inner(inner.last_token, |inner, mgr| {
+                inner.owners[mgr.slot() as usize] = Some(self.clone());
+                Ok(())
+            })?;
             rebind = slot.changed();
 
             mod_pr_debug!("Buffer: assigning slot {} (rebind={})", slot.slot(), rebind);
@@ -695,15 +698,40 @@ impl Clone for Buffer::ver {
     }
 }
 
-/// The GPU-global buffer manager, used to allocate and release buffer slots from the pool.
-pub(crate) struct BufferManager(slotalloc::SlotAllocator<()>);
+#[versions(AGX)]
+struct BufferSlotInner();
 
-impl BufferManager {
-    pub(crate) fn new() -> Result<BufferManager> {
-        Ok(BufferManager(slotalloc::SlotAllocator::new(
+#[versions(AGX)]
+impl slotalloc::SlotItem for BufferSlotInner::ver {
+    type Data = BufferManagerInner::ver;
+
+    fn release(&mut self, data: &mut Self::Data, slot: u32) {
+        mod_pr_debug!("EventManager: Released slot {}\n", slot);
+        data.owners[slot as usize] = None;
+    }
+}
+
+/// Inner data for the event manager, to be protected by the SlotAllocator lock.
+#[versions(AGX)]
+pub(crate) struct BufferManagerInner {
+    owners: Vec<Option<Buffer::ver>>,
+}
+
+/// The GPU-global buffer manager, used to allocate and release buffer slots from the pool.
+#[versions(AGX)]
+pub(crate) struct BufferManager(slotalloc::SlotAllocator<BufferSlotInner::ver>);
+
+#[versions(AGX)]
+impl BufferManager::ver {
+    pub(crate) fn new() -> Result<BufferManager::ver> {
+        let mut owners = Vec::new();
+        for _i in 0..(NUM_BUFFERS as usize) {
+            owners.try_push(None)?;
+        }
+        Ok(BufferManager::ver(slotalloc::SlotAllocator::new(
             NUM_BUFFERS,
-            (),
-            |_inner, _slot| (),
+            BufferManagerInner::ver { owners },
+            |_inner, _slot| BufferSlotInner::ver(),
             c_str!("BufferManager::SlotAllocator"),
             static_lock_class!(),
             static_lock_class!(),
@@ -711,8 +739,9 @@ impl BufferManager {
     }
 }
 
-impl Clone for BufferManager {
+#[versions(AGX)]
+impl Clone for BufferManager::ver {
     fn clone(&self) -> Self {
-        BufferManager(self.0.clone())
+        BufferManager::ver(self.0.clone())
     }
 }
