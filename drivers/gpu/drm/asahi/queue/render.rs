@@ -915,6 +915,13 @@ impl super::Queue::ver {
                             r.add(0x160a8, 0);
                             r.add(0x16068, unks.frg_tilecfg);
                             r.add(0x160b8, 0x0);
+                            /*
+                            r.add(0x10201, 0x100); // Some kind of counter?? Does this matter?
+                            r.add(0x10428, 0x100); // Some kind of counter?? Does this matter?
+                            r.add(0x1c838, 1);  // ?
+                            r.add(0x1ca28, 0x1502960f00); // ??
+                            r.add(0x1731, 0x1); // ??
+                            */
                         }
                     ),
                     job_params3 <- try_init!(fw::fragment::raw::JobParameters3::ver {
@@ -1404,6 +1411,16 @@ impl super::Queue::ver {
                             r.add(0x10169, tile_info.params.unk_28.into()); // TA_RENDER_TARGET_MAX
                             r.add(0x12099, unks.vtx_unk_118);
                             r.add(0x1c9e8, 0);
+                            /*
+                            r.add(0x10209, 0x100); // Some kind of counter?? Does this matter?
+                            r.add(0x1c9f0, 0x100); // Some kind of counter?? Does this matter?
+                            r.add(0x1c830, 1); // ?
+                            r.add(0x1ca30, 0x1502960e60); // ?
+                            r.add(0x16c39, 0x1502960e60); // ?
+                            r.add(0x1c910, 0xa0000b011d); // ?
+                            r.add(0x1c8e0, 0xff); // ?
+                            r.add(0x1c8e8, 0); // ?
+                            */
                         }
                     ),
                     tpc: inner.scene.tpc_pointer(),
