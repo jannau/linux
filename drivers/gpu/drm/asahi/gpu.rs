@@ -88,10 +88,10 @@ const IOVA_KERN_GPU_BASE: u64 = 0xffffffac00000000;
 /// GPU/FW shared structure VA range top.
 const IOVA_KERN_GPU_TOP: u64 = 0xffffffadffffffff;
 
-/// GPU/FW low shared structure VA range base.
-const IOVA_KERN_GPU_LOW_BASE: u64 = 0x20_0000_0000;
-/// GPU/FW low shared structure VA range top.
-const IOVA_KERN_GPU_LOW_TOP: u64 = 0x20_ffff_ffff;
+/// GPU/FW buffer manager control address (context 0 low)
+pub(crate) const IOVA_KERN_GPU_BUFMGR_LOW: u64 = 0x20_0000_0000;
+/// GPU/FW buffer manager control address (context 0 high)
+pub(crate) const IOVA_KERN_GPU_BUFMGR_HIGH: u64 = 0xffffffaeffff0000;
 
 /// Timeout for entering the halt state after a fault or request.
 const HALT_ENTER_TIMEOUT_MS: u64 = 100;
@@ -109,7 +109,6 @@ pub(crate) struct KernelAllocators {
     #[allow(dead_code)]
     pub(crate) gpu: alloc::DefaultAllocator,
     pub(crate) gpu_ro: alloc::DefaultAllocator,
-    pub(crate) gpu_low: alloc::DefaultAllocator,
 }
 
 /// Receive (GPU->driver) ring buffer channels.
@@ -408,22 +407,24 @@ impl GpuManager::ver {
                 fmt!("Kernel GPU RO Shared"),
                 true,
             )?,
-            gpu_low: alloc::DefaultAllocator::new(
-                dev,
-                uat.kernel_lower_vm(),
-                IOVA_KERN_GPU_LOW_BASE,
-                IOVA_KERN_GPU_LOW_TOP,
-                0x80,
-                mmu::PROT_GPU_FW_SHARED_RW,
-                64 * 1024,
-                true,
-                fmt!("Kernel GPU Lower"),
-                false,
-            )?,
         };
 
         let event_manager = Self::make_event_manager(&mut alloc)?;
-        let initdata = Self::make_initdata(cfg, &dyncfg, &mut alloc)?;
+        let mut initdata = Self::make_initdata(dev, cfg, &dyncfg, &mut alloc)?;
+
+        initdata.runtime_pointers.buffer_mgr_ctl.map_at(
+            uat.kernel_lower_vm(),
+            IOVA_KERN_GPU_BUFMGR_LOW,
+            mmu::PROT_GPU_SHARED_RW,
+            false,
+        )?;
+        initdata.runtime_pointers.buffer_mgr_ctl.map_at(
+            uat.kernel_vm(),
+            IOVA_KERN_GPU_BUFMGR_HIGH,
+            mmu::PROT_FW_SHARED_RW,
+            false,
+        )?;
+
         let mut mgr = Self::make_mgr(dev, cfg, dyncfg, uat, alloc, event_manager, initdata)?;
 
         {
@@ -548,11 +549,12 @@ impl GpuManager::ver {
 
     /// Build the entire GPU InitData structure tree and return it as a boxed GpuObject.
     fn make_initdata(
+        dev: &AsahiDevice,
         cfg: &'static hw::HwConfig,
         dyncfg: &hw::DynConfig,
         alloc: &mut KernelAllocators,
     ) -> Result<Box<fw::types::GpuObject<fw::initdata::InitData::ver>>> {
-        let mut builder = initdata::InitDataBuilder::ver::new(alloc, cfg, dyncfg);
+        let mut builder = initdata::InitDataBuilder::ver::new(dev, alloc, cfg, dyncfg);
         builder.build()
     }
 

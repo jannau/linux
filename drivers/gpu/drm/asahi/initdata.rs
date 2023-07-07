@@ -14,7 +14,7 @@
 use crate::f32;
 use crate::fw::initdata::*;
 use crate::fw::types::*;
-use crate::{gpu, hw, mmu};
+use crate::{driver::AsahiDevice, gem, gpu, hw, mmu};
 use alloc::vec::Vec;
 use kernel::error::{Error, Result};
 use kernel::macros::versions;
@@ -23,6 +23,7 @@ use kernel::{init, init::Init, try_init};
 /// Builder helper for the global GPU InitData.
 #[versions(AGX)]
 pub(crate) struct InitDataBuilder<'a> {
+    dev: &'a AsahiDevice,
     alloc: &'a mut gpu::KernelAllocators,
     cfg: &'static hw::HwConfig,
     dyncfg: &'a hw::DynConfig,
@@ -32,11 +33,17 @@ pub(crate) struct InitDataBuilder<'a> {
 impl<'a> InitDataBuilder::ver<'a> {
     /// Create a new InitData builder
     pub(crate) fn new(
+        dev: &'a AsahiDevice,
         alloc: &'a mut gpu::KernelAllocators,
         cfg: &'static hw::HwConfig,
         dyncfg: &'a hw::DynConfig,
     ) -> InitDataBuilder::ver<'a> {
-        InitDataBuilder::ver { alloc, cfg, dyncfg }
+        InitDataBuilder::ver {
+            dev,
+            alloc,
+            cfg,
+            dyncfg,
+        }
     }
 
     /// Create the HwDataShared1 structure, which is used in two places in InitData.
@@ -733,6 +740,9 @@ impl<'a> InitDataBuilder::ver<'a> {
         let hwa = self.hwdata_a()?;
         let hwb = self.hwdata_b()?;
 
+        let mut buffer_mgr_ctl = gem::new_kernel_object(self.dev, 0x4000)?;
+        buffer_mgr_ctl.vmap()?.as_mut_slice().fill(0);
+
         GpuObject::new_init_prealloc(
             self.alloc.private.alloc_object()?,
             |_ptr| {
@@ -756,10 +766,7 @@ impl<'a> InitDataBuilder::ver<'a> {
                     unkptr_1c0: alloc.private.array_empty(0x300)?,
                     unkptr_1c8: alloc.private.array_empty(0x1000)?,
 
-                    #[ver(V < V13_3)]
-                    buffer_mgr_ctl: alloc.gpu.array_empty(127)?,
-                    #[ver(V >= V13_3)]
-                    buffer_mgr_ctl: alloc.gpu_low.array_empty(127)?,
+                    buffer_mgr_ctl,
                 })
             },
             |inner, _ptr| {
@@ -790,8 +797,8 @@ impl<'a> InitDataBuilder::ver<'a> {
                     #[ver(G < G14X)]
                     unkptr_1c8: inner.unkptr_1c8.gpu_pointer(),
 
-                    buffer_mgr_ctl: inner.buffer_mgr_ctl.gpu_pointer(),
-                    buffer_mgr_ctl_2: inner.buffer_mgr_ctl.gpu_pointer(),
+                    buffer_mgr_ctl_gpu_addr: U64(gpu::IOVA_KERN_GPU_BUFMGR_LOW),
+                    buffer_mgr_ctl_fw_addr: U64(gpu::IOVA_KERN_GPU_BUFMGR_HIGH),
 
                     __pad0: Default::default(),
                     unk_160: U64(0),

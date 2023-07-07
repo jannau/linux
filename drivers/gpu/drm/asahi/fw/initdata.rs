@@ -4,7 +4,7 @@
 
 use super::channels;
 use super::types::*;
-use crate::{default_zeroed, no_debug, trivial_gpustruct};
+use crate::{default_zeroed, gem, no_debug, trivial_gpustruct};
 
 pub(crate) mod raw {
     use super::*;
@@ -913,8 +913,6 @@ pub(crate) mod raw {
     #[versions(AGX)]
     default_zeroed!(RuntimeScratch::ver);
 
-    pub(crate) type BufferMgrCtl = Array<4, u32>;
-
     #[versions(AGX)]
     #[repr(C)]
     pub(crate) struct RuntimePointers<'a> {
@@ -949,8 +947,8 @@ pub(crate) mod raw {
         pub(crate) unk_1d0: u32,
         pub(crate) unk_1d4: u32,
         pub(crate) unk_1d8: Array<0x3c, u8>,
-        pub(crate) buffer_mgr_ctl: GpuPointer<'a, &'a [BufferMgrCtl]>,
-        pub(crate) buffer_mgr_ctl_2: GpuPointer<'a, &'a [BufferMgrCtl]>,
+        pub(crate) buffer_mgr_ctl_gpu_addr: U64,
+        pub(crate) buffer_mgr_ctl_fw_addr: U64,
         pub(crate) __pad1: Pad<0x5c>,
         pub(crate) gpu_scratch: RuntimeScratch::ver,
     }
@@ -1298,7 +1296,7 @@ pub(crate) struct RuntimePointers {
     pub(crate) unkptr_1c0: GpuArray<u8>,
     pub(crate) unkptr_1c8: GpuArray<u8>,
 
-    pub(crate) buffer_mgr_ctl: GpuArray<raw::BufferMgrCtl>,
+    pub(crate) buffer_mgr_ctl: gem::ObjectRef,
 }
 
 #[versions(AGX)]

@@ -54,6 +54,8 @@ pub(crate) struct ObjectRef {
     vmap: Option<shmem::VMap<DriverObject>>,
 }
 
+crate::no_debug!(ObjectRef);
+
 static GEM_ID: AtomicU64 = AtomicU64::new(0);
 
 impl DriverObject {

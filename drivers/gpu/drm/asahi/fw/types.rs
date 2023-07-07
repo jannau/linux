@@ -85,7 +85,7 @@ impl fmt::Debug for U32 {
 #[macro_export]
 macro_rules! no_debug {
     ($type:ty) => {
-        impl Debug for $type {
+        impl ::core::fmt::Debug for $type {
             fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                 write!(f, "...")
             }
