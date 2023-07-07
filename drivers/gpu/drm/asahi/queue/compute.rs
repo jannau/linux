@@ -262,6 +262,7 @@ impl super::Queue::ver {
                     vm_slot,
                     notifier: inner.notifier.gpu_pointer(),
                     unk_pointee: Default::default(),
+                    __pad0: Default::default(),
                     job_params1 <- try_init!(fw::compute::raw::JobParameters1 {
                         preempt_buf1: inner.preempt_buf.gpu_pointer(),
                         encoder: U64(cmdbuf.encoder_ptr),
@@ -272,16 +273,17 @@ impl super::Queue::ver {
                         preempt_buf5: inner.preempt_buf.gpu_offset_pointer(preempt5_off),
                         pipeline_base: U64(0x11_00000000),
                         unk_38: U64(0x8c60),
-                        unk_40: cmdbuf.ctx_switch_prog, // Internal program addr | 1
+                        helper_program: cmdbuf.helper_program, // Internal program addr | 1
                         unk_44: 0,
-                        compute_layout_addr: U64(cmdbuf.buffer_descriptor), // Only if internal program used
+                        helper_arg: U64(cmdbuf.helper_arg), // Only if internal program used
                         unk_50: cmdbuf.buffer_descriptor_size, // 0x40 if internal program used
                         unk_54: 0,
                         unk_58: 1,
                         unk_5c: 0,
                         iogpu_unk_40: cmdbuf.iogpu_unk_40, // 0x1c if internal program used
+                        __pad: Default::default(),
                     }),
-                    unk_b8: Default::default(),
+                    __pad1: Default::default(),
                     microsequence: inner.micro_seq.gpu_pointer(),
                     microsequence_size: inner.micro_seq.len() as u32,
                     job_params2 <- try_init!(fw::compute::raw::JobParameters2::ver {
@@ -291,6 +293,8 @@ impl super::Queue::ver {
                         preempt_buf1: inner.preempt_buf.gpu_pointer(),
                         encoder_end: U64(cmdbuf.encoder_end),
                         unk_34: Default::default(),
+                        unk_g14x: 0,
+                        unk_58: 0,
                         #[ver(V < V13_0B4)]
                         unk_5c: 0,
                     }),
@@ -308,7 +312,7 @@ impl super::Queue::ver {
                         unk_0: 0,
                         unk_2: 0,
                         // TODO: make separate flag
-                        no_preemption: ((cmdbuf.ctx_switch_prog & 1) == 0) as u8,
+                        no_preemption: ((cmdbuf.helper_program & 1) == 0) as u8,
                         stamp: ev_comp.stamp_pointer,
                         fw_stamp: ev_comp.fw_stamp_pointer,
                         stamp_value: ev_comp.value.next(),

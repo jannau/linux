@@ -21,14 +21,15 @@ pub(crate) mod raw {
         pub(crate) preempt_buf5: GpuPointer<'a, &'a [u8]>,
         pub(crate) pipeline_base: U64,
         pub(crate) unk_38: U64,
-        pub(crate) unk_40: u32,
+        pub(crate) helper_program: u32,
         pub(crate) unk_44: u32,
-        pub(crate) compute_layout_addr: U64,
+        pub(crate) helper_arg: U64,
         pub(crate) unk_50: u32,
         pub(crate) unk_54: u32,
         pub(crate) unk_58: u32,
         pub(crate) unk_5c: u32,
         pub(crate) iogpu_unk_40: u32,
+        pub(crate) __pad: Pad<0xfc>,
     }
 
     #[versions(AGX)]
@@ -40,7 +41,9 @@ pub(crate) mod raw {
         pub(crate) unk_0: Array<0x24, u8>,
         pub(crate) preempt_buf1: GpuPointer<'a, &'a [u8]>,
         pub(crate) encoder_end: U64,
-        pub(crate) unk_34: Array<0x28, u8>,
+        pub(crate) unk_34: Array<0x20, u8>,
+        pub(crate) unk_g14x: u32,
+        pub(crate) unk_58: u32,
         #[ver(V < V13_0B4)]
         pub(crate) unk_5c: u32,
     }
@@ -57,9 +60,10 @@ pub(crate) mod raw {
         pub(crate) unk_4: u32,
         pub(crate) vm_slot: u32,
         pub(crate) notifier: GpuPointer<'a, event::Notifier::ver>,
-        pub(crate) unk_pointee: Array<0x54, u8>,
+        pub(crate) unk_pointee: u32,
+        pub(crate) __pad0: Array<0x50, u8>,
         pub(crate) job_params1: JobParameters1<'a>,
-        pub(crate) unk_b8: Array<0x11c, u8>,
+        pub(crate) __pad1: Array<0x20, u8>,
         pub(crate) microsequence: GpuPointer<'a, &'a [u8]>,
         pub(crate) microsequence_size: u32,
         pub(crate) job_params2: JobParameters2::ver<'a>,
