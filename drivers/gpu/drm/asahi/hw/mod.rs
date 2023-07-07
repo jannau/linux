@@ -243,6 +243,9 @@ pub(crate) struct HwConfig {
     /// Required size of the third preemption buffer.
     pub(crate) preempt3_size: usize,
 
+    /// Required size of the compute preemption buffer.
+    pub(crate) compute_preempt1_size: usize,
+
     pub(crate) clustering: Option<HwClusteringConfig>,
 
     /// Rendering-relevant configuration.

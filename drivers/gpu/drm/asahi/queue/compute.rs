@@ -95,12 +95,11 @@ impl super::Queue::ver {
         let comp_job = job.get_comp()?;
         let ev_comp = comp_job.event_info();
 
-        // TODO: Is this the same on all GPUs? Is this really for preemption?
-        let preempt_size = 0x7fa0;
-        let preempt2_off = 0x7f80;
-        let preempt3_off = 0x7f88;
-        let preempt4_off = 0x7f90;
-        let preempt5_off = 0x7f98;
+        let preempt2_off = gpu.get_cfg().compute_preempt1_size;
+        let preempt3_off = preempt2_off + 8;
+        let preempt4_off = preempt3_off + 8;
+        let preempt5_off = preempt4_off + 8;
+        let preempt_size = preempt5_off + 8;
 
         let preempt_buf = self.ualloc.lock().array_empty(preempt_size)?;
 

@@ -60,6 +60,7 @@ pub(crate) const HWCONFIG_T6002: super::HwConfig = HwConfig {
     preempt1_size: 0x540,
     preempt2_size: 0x280,
     preempt3_size: 0x20,
+    compute_preempt1_size: 0x3bd00,
     clustering: Some(HwClusteringConfig {
         meta1_blocksize: 0x44,
         meta2_size: 0xc0 * 8,
