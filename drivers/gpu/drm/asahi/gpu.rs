@@ -256,7 +256,7 @@ pub(crate) trait GpuManager: Send + Sync {
     /// TODO: Does this actually work?
     fn flush_fw_cache(&self) -> Result;
     /// Handle a GPU work timeout event.
-    fn handle_timeout(&self, counter: u32, event_slot: u32);
+    fn handle_timeout(&self, counter: u32, event_slot: i32);
     /// Handle a GPU fault event.
     fn handle_fault(&self);
     /// Acknowledge a Buffer grow op.
@@ -1196,7 +1196,7 @@ impl GpuManager for GpuManager::ver {
         &self.ids
     }
 
-    fn handle_timeout(&self, counter: u32, event_slot: u32) {
+    fn handle_timeout(&self, counter: u32, event_slot: i32) {
         dev_err!(self.dev, " (\\________/) \n");
         dev_err!(self.dev, "  |        |  \n");
         dev_err!(self.dev, "'.| \\  , / |.'\n");
@@ -1212,7 +1212,7 @@ impl GpuManager for GpuManager::ver {
             Some(info) => workqueue::WorkError::Fault(info),
             None => workqueue::WorkError::Timeout,
         };
-        self.mark_pending_events(Some(event_slot), error);
+        self.mark_pending_events(event_slot.try_into().ok(), error);
         self.recover();
     }
 

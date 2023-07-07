@@ -244,7 +244,7 @@ pub(crate) enum EventMsg {
     Timeout {
         counter: u32,
         unk_8: u32,
-        event_slot: u32,
+        event_slot: i32,
     },
     Unk5(Array<EVENT_SZ, u8>),
     Unk6(Array<EVENT_SZ, u8>),
