@@ -143,8 +143,9 @@ impl platform::Driver for AsahiDriver {
             _ => {
                 dev_info!(
                     dev,
-                    "Unsupported GPU/firmware combination ({:?}, {:?})\n",
+                    "Unsupported GPU/firmware combination ({:?}, {:?}, {:?})\n",
                     cfg.gpu_gen,
+                    cfg.gpu_variant,
                     compat
                 );
                 return Err(ENODEV);
