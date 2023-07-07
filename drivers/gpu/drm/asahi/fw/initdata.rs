@@ -819,8 +819,11 @@ pub(crate) mod raw {
         #[ver(G >= G14X)]
         pub(crate) unk_c3c_0: Array<0x8, u8>,
 
-        #[ver(G >= G14X && V >= V13_5)]
-        pub(crate) unk_c3c_8: Array<0x20, u8>,
+        #[ver(G < G14X && V >= V13_5)]
+        pub(crate) unk_c3c_8: Array<0x10, u8>,
+
+        #[ver(V >= V13_5)]
+        pub(crate) unk_c3c_18: Array<0x20, u8>,
 
         #[ver(V >= V13_0B4)]
         pub(crate) unk_c3c: u32,
@@ -1123,7 +1126,7 @@ pub(crate) mod raw {
         pub(crate) unk_10e50: u32,
         pub(crate) unk_10e54: Array<0x2c, u8>,
 
-        #[ver(G >= G14X && V < V13_3 || G <= G14 && V >= V13_3)]
+        #[ver((G >= G14X && V < V13_3) || (G <= G14 && V >= V13_3))]
         pub(crate) unk_x_pad: Array<0x4, u8>,
 
         pub(crate) fault_control: u32,

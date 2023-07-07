@@ -177,19 +177,22 @@ impl<'a> InitDataBuilder::ver<'a> {
         cfg: &'static hw::HwConfig,
         dyncfg: &'a hw::DynConfig,
     ) -> impl Init<raw::T81xxData> {
-        let perf_max_pstate = dyncfg.pwr.perf_max_pstate;
+        let _perf_max_pstate = dyncfg.pwr.perf_max_pstate;
 
-        init::chain(init::zeroed::<raw::T81xxData>(), move |ret| {
+        init::chain(init::zeroed::<raw::T81xxData>(), move |_ret| {
             match cfg.chip_id {
                 0x8103 | 0x8112 => {
-                    ret.unk_d8c = 0x80000000;
-                    ret.unk_d90 = 4;
-                    ret.unk_d9c = f32!(0.6);
-                    ret.unk_da4 = f32!(0.4);
-                    ret.unk_dac = f32!(0.38552);
-                    ret.unk_db8 = f32!(65536.0);
-                    ret.unk_dbc = f32!(13.56);
-                    ret.max_pstate_scaled = 100 * perf_max_pstate;
+                    #[ver(V < V13_3)]
+                    {
+                        _ret.unk_d8c = 0x80000000;
+                        _ret.unk_d90 = 4;
+                        _ret.unk_d9c = f32!(0.6);
+                        _ret.unk_da4 = f32!(0.4);
+                        _ret.unk_dac = f32!(0.38552);
+                        _ret.unk_db8 = f32!(65536.0);
+                        _ret.unk_dbc = f32!(13.56);
+                        _ret.max_pstate_scaled = 100 * _perf_max_pstate;
+                    }
                 }
                 _ => (),
             }
@@ -457,7 +460,7 @@ impl<'a> InitDataBuilder::ver<'a> {
                         raw.power_zones[i].unk_10 = 1320000000;
                     }
 
-                    #[ver(V >= V13_0B4)]
+                    #[ver(V >= V13_0B4 && G >= G14X)]
                     for (i, j) in raw.hws2.g14.curve2.t1.iter().enumerate() {
                         raw.unk_hws2[i] = if *j == 0xffff { 0 } else { j / 2 };
                     }
@@ -634,9 +637,9 @@ impl<'a> InitDataBuilder::ver<'a> {
                     #[ver(V >= V13_0B4)]
                     debug: 0,
                     unk_28: 1,
-                    #[ver(V >= V13_3)]
+                    #[ver(G >= G14X)]
                     unk_2c_0: 1,
-                    #[ver(V >= V13_0B4 && V < V13_3)]
+                    #[ver(V >= V13_0B4 && G < G14X)]
                     unk_2c_0: 0,
                     unk_2c: 1,
                     unk_30: 0,
