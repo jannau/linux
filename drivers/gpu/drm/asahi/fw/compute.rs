@@ -61,8 +61,12 @@ pub(crate) mod raw {
         pub(crate) vm_slot: u32,
         pub(crate) notifier: GpuPointer<'a, event::Notifier::ver>,
         pub(crate) unk_pointee: u32,
+        #[ver(G < G14X)]
         pub(crate) __pad0: Array<0x50, u8>,
+        #[ver(G < G14X)]
         pub(crate) job_params1: JobParameters1<'a>,
+        #[ver(G >= G14X)]
+        pub(crate) registers: job::raw::RegisterArray,
         pub(crate) __pad1: Array<0x20, u8>,
         pub(crate) microsequence: GpuPointer<'a, &'a [u8]>,
         pub(crate) microsequence_size: u32,

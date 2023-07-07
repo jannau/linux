@@ -145,7 +145,12 @@ impl super::Queue::ver {
                         let start_comp = builder.add(microseq::StartCompute::ver {
                             header: microseq::op::StartCompute::HEADER,
                             unk_pointer: inner_weak_ptr!(ptr, unk_pointee),
-                            job_params1: inner_weak_ptr!(ptr, job_params1),
+                            #[ver(G < G14X)]
+                            job_params1: Some(inner_weak_ptr!(ptr, job_params1)),
+                            #[ver(G >= G14X)]
+                            job_params1: None,
+                            #[ver(G >= G14X)]
+                            registers: inner_weak_ptr!(ptr, registers),
                             stats,
                             work_queue: ev_comp.info_ptr,
                             vm_slot: vm_bind.slot(),
@@ -252,7 +257,7 @@ impl super::Queue::ver {
                     timestamps,
                 })
             },
-            |inner, _p| {
+            |inner, _ptr| {
                 let vm_slot = vm_bind.slot();
                 try_init!(fw::compute::raw::RunCompute::ver {
                     tag: fw::workqueue::CommandType::RunCompute,
@@ -262,7 +267,9 @@ impl super::Queue::ver {
                     vm_slot,
                     notifier: inner.notifier.gpu_pointer(),
                     unk_pointee: Default::default(),
+                    #[ver(G < G14X)]
                     __pad0: Default::default(),
+                    #[ver(G < G14X)]
                     job_params1 <- try_init!(fw::compute::raw::JobParameters1 {
                         preempt_buf1: inner.preempt_buf.gpu_pointer(),
                         encoder: U64(cmdbuf.encoder_ptr),
@@ -283,6 +290,29 @@ impl super::Queue::ver {
                         iogpu_unk_40: cmdbuf.iogpu_unk_40, // 0x1c if internal program used
                         __pad: Default::default(),
                     }),
+                    #[ver(G >= G14X)]
+                    registers: fw::job::raw::RegisterArray::new(
+                        inner_weak_ptr!(_ptr, registers.registers),
+                        |r| {
+                            r.add(0x1a510, inner.preempt_buf.gpu_pointer().into());
+                            r.add(0x1a420, cmdbuf.encoder_ptr);
+                            // buf2-5 Only if internal program is used
+                            r.add(0x1a4d0, inner.preempt_buf.gpu_offset_pointer(preempt2_off).into());
+                            r.add(0x1a4d8, inner.preempt_buf.gpu_offset_pointer(preempt3_off).into());
+                            r.add(0x1a4e0, inner.preempt_buf.gpu_offset_pointer(preempt4_off).into());
+                            r.add(0x1a4e8, inner.preempt_buf.gpu_offset_pointer(preempt5_off).into());
+                            r.add(0x10071, 0x1100000000); // USC_EXEC_BASE_CP
+                            r.add(0x11841, cmdbuf.helper_program.into());
+                            r.add(0x11849, cmdbuf.helper_arg);
+                            r.add(0x11f81, cmdbuf.buffer_descriptor_size.into());
+                            r.add(0x1a440, 0x24201);
+                            r.add(0x12091, cmdbuf.iogpu_unk_40.into());
+                            /*
+                            r.add(0x10201, 0x100); // Some kind of counter?? Does this matter?
+                            r.add(0x10428, 0x100); // Some kind of counter?? Does this matter?
+                            */
+                        }
+                    ),
                     __pad1: Default::default(),
                     microsequence: inner.micro_seq.gpu_pointer(),
                     microsequence_size: inner.micro_seq.len() as u32,
@@ -293,7 +323,10 @@ impl super::Queue::ver {
                         preempt_buf1: inner.preempt_buf.gpu_pointer(),
                         encoder_end: U64(cmdbuf.encoder_end),
                         unk_34: Default::default(),
+                        #[ver(G < G14X)]
                         unk_g14x: 0,
+                        #[ver(G >= G14X)]
+                        unk_g14x: 0x24201,
                         unk_58: 0,
                         #[ver(V < V13_0B4)]
                         unk_5c: 0,

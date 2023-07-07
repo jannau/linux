@@ -324,7 +324,10 @@ impl Operation for FinalizeFragment::ver {}
 #[repr(C)]
 pub(crate) struct StartCompute<'a> {
     pub(crate) header: op::StartCompute,
-    pub(crate) job_params1: GpuWeakPointer<compute::raw::JobParameters1<'a>>,
+    pub(crate) unk_pointer: GpuWeakPointer<u32>,
+    pub(crate) job_params1: Option<GpuWeakPointer<compute::raw::JobParameters1<'a>>>,
+    #[ver(G >= G14X)]
+    pub(crate) registers: GpuWeakPointer<job::raw::RegisterArray>,
     pub(crate) stats: GpuWeakPointer<initdata::GpuStatsComp>,
     pub(crate) work_queue: GpuWeakPointer<workqueue::QueueInfo::ver>,
     pub(crate) vm_slot: u32,
