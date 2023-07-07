@@ -131,14 +131,14 @@ impl platform::Driver for AsahiDriver {
             (hw::GpuGen::G14, hw::GpuVariant::G, &[12, 4, 0]) => {
                 gpu::GpuManagerG14V12_4::new(reg.device(), &res, cfg)? as Arc<dyn gpu::GpuManager>
             }
-            (hw::GpuGen::G13, _, &[13, 3, 0]) => {
-                gpu::GpuManagerG13V13_3::new(reg.device(), &res, cfg)? as Arc<dyn gpu::GpuManager>
+            (hw::GpuGen::G13, _, &[13, 4, 99, 4]) => {
+                gpu::GpuManagerG13V13_5::new(reg.device(), &res, cfg)? as Arc<dyn gpu::GpuManager>
             }
-            (hw::GpuGen::G14, hw::GpuVariant::G, &[13, 3, 0]) => {
-                gpu::GpuManagerG14V13_3::new(reg.device(), &res, cfg)? as Arc<dyn gpu::GpuManager>
+            (hw::GpuGen::G14, hw::GpuVariant::G, &[13, 4, 99, 4]) => {
+                gpu::GpuManagerG14V13_5::new(reg.device(), &res, cfg)? as Arc<dyn gpu::GpuManager>
             }
-            (hw::GpuGen::G14, _, &[13, 3, 0]) => {
-                gpu::GpuManagerG14XV13_3::new(reg.device(), &res, cfg)? as Arc<dyn gpu::GpuManager>
+            (hw::GpuGen::G14, _, &[13, 4, 99, 4]) => {
+                gpu::GpuManagerG14XV13_5::new(reg.device(), &res, cfg)? as Arc<dyn gpu::GpuManager>
             }
             _ => {
                 dev_info!(

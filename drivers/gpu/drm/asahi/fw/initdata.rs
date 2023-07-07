@@ -443,6 +443,8 @@ pub(crate) mod raw {
 
         #[ver(V >= V13_3)]
         pub(crate) pad_bb8_0: Pad<0x200>,
+        #[ver(V >= V13_5)]
+        pub(crate) pad_bb8_200: Pad<0x8>,
 
         pub(crate) pad_bb8: Pad<0x74>,
         pub(crate) unk_c2c: u32,
@@ -604,9 +606,13 @@ pub(crate) mod raw {
         {
             0x17
         }
-        #[ver(V >= V13_3)]
+        #[ver(V >= V13_3 && V < V13_5)]
         {
             0x18
+        }
+        #[ver(V >= V13_5)]
+        {
+            0x19
         }
     };
 
@@ -812,6 +818,9 @@ pub(crate) mod raw {
 
         #[ver(G >= G14X)]
         pub(crate) unk_c3c_0: Array<0x8, u8>,
+
+        #[ver(G >= G14X && V >= V13_5)]
+        pub(crate) unk_c3c_8: Array<0x20, u8>,
 
         #[ver(V >= V13_0B4)]
         pub(crate) unk_c3c: u32,
