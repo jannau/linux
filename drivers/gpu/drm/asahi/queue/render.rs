@@ -1160,7 +1160,10 @@ impl super::Queue::ver {
                             counter: U64(count_vtx),
                             #[ver(V >= V13_0B4)]
                             notifier_buf: inner_weak_ptr!(notifier.weak_pointer(), state.unk_buf),
+                            #[ver(V < V13_0B4)]
                             unk_178: 0x0, // padding?
+                            #[ver(V >= V13_0B4)]
+                            unk_178: (!clustering) as u32,
                         })?;
 
                         if has_result {
@@ -1418,7 +1421,7 @@ impl super::Queue::ver {
                             r.add(0x1ca30, 0x1502960e60); // ?
                             r.add(0x16c39, 0x1502960e60); // ?
                             r.add(0x1c910, 0xa0000b011d); // ?
-                            r.add(0x1c8e0, 0xff); // ?
+                            r.add(0x1c8e0, 0xff); // cluster mask
                             r.add(0x1c8e8, 0); // ?
                             */
                         }
