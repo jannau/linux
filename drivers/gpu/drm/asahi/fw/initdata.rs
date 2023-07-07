@@ -1154,10 +1154,10 @@ pub(crate) mod raw {
         pub(crate) idle_off_delay_ms: AtomicU32,
         pub(crate) fender_idle_off_delay_ms: u32,
         pub(crate) fw_early_wake_timeout_ms: u32,
-        #[ver(V >= V13_3)]
+        #[ver(V == V13_3)]
         pub(crate) ps_pad_0: Pad<0x8>,
         pub(crate) pending_stamps: Array<0x100, PendingStamp>,
-        #[ver(V < V13_3)]
+        #[ver(V != V13_3)]
         pub(crate) ps_pad_0: Pad<0x8>,
         pub(crate) unkpad_ps: Pad<0x78>,
         pub(crate) unk_117bc: u32,

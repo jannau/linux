@@ -804,16 +804,23 @@ impl GpuManager::ver {
         dev_err!(self.dev, "  Pending events:\n");
 
         self.initdata.globals.with(|raw, _inner| {
-            for i in raw.pending_stamps.iter() {
+            for (index, i) in raw.pending_stamps.iter().enumerate() {
                 let info = i.info.load(Ordering::Relaxed);
                 let wait_value = i.wait_value.load(Ordering::Relaxed);
 
                 if info & 1 != 0 {
-                    let slot = info >> 3;
+                    #[ver(V >= V13_5)]
+                    let slot = (info >> 4) & 0x7f;
+                    #[ver(V < V13_5)]
+                    let slot = (info >> 3) & 0x7f;
+                    #[ver(V >= V13_5)]
+                    let flags = info & 0xf;
+                    #[ver(V < V13_5)]
                     let flags = info & 0x7;
                     dev_err!(
                         self.dev,
-                        "    [{}] flags={} value={:#x}\n",
+                        "    [{}:{}] flags={} value={:#x}\n",
+                        index,
                         slot,
                         flags,
                         wait_value
