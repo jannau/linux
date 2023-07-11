@@ -1,3 +1,23 @@
+* Tue Jul 11 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc1.3f01e9fed845.12.el127]
+- redhat: use the eln builder for daily jobs (Patrick Talbert)
+- redhat: set CONFIG_XILINX_WINDOW_WATCHDOG as disabled in pending (Patrick Talbert)
+- Add baseline ARK/ELN pipelines (Michael Hofmann)
+- Simplify job rules (Michael Hofmann)
+- Build ELN srpm for bot changes (Michael Hofmann)
+- Run RH selftests for ELN (Michael Hofmann)
+- Simplify job templates (Michael Hofmann)
+- Extract rules to allow orthogonal configuration (Michael Hofmann)
+- Require ELN pipelines if started automatically (Michael Hofmann)
+- Add ARK debug pipeline (Michael Hofmann)
+- Extract common parts of child pipeline job (Michael Hofmann)
+- Move ARK pipeline variables into job template (Michael Hofmann)
+- Simplify ARK pipeline rules (Michael Hofmann)
+- Change pathfix.py to %%py3_shebang_fix (Justin M. Forbes)
+- Turn on NET_VENDOR_QUALCOMM for Fedora to enable rmnet (Justin M. Forbes)
+- redhat: add intel-m10-bmc-hwmon to filter-modules singlemods list (Patrick Talbert)
+- Linux v6.5.0-0.rc1.3f01e9fed845
+Resolves: 
+
 * Thu Jul 06 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc0.c17414a273b8.11]
 - fedira: enable pending-fedora CONFIG_CPUFREQ_DT_PLATDEV as a module (Patrick Talbert)
 - Linux v6.5.0-0.rc0.c17414a273b8
