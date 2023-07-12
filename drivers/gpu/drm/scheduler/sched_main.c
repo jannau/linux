@@ -261,7 +261,10 @@ drm_sched_rq_select_entity_fifo(struct drm_sched_rq *rq)
 static void drm_sched_job_done(struct drm_sched_job *s_job)
 {
 	struct drm_sched_fence *s_fence = s_job->s_fence;
-	struct drm_gpu_scheduler *sched = s_fence->sched;
+	struct drm_gpu_scheduler *sched;
+
+	WARN_ON(!s_fence);
+	sched = s_fence->sched;
 
 	atomic_dec(&sched->hw_rq_count);
 	atomic_dec(sched->score);
@@ -1114,7 +1117,8 @@ int drm_sched_init(struct drm_gpu_scheduler *sched,
 	if (IS_ERR(sched->thread)) {
 		ret = PTR_ERR(sched->thread);
 		sched->thread = NULL;
-		DRM_DEV_ERROR(sched->dev, "Failed to create scheduler for %s.\n", name);
+		if (ret != -EINTR)
+			DRM_DEV_ERROR(sched->dev, "Failed to create scheduler for %s: %d.\n", name, ret);
 		return ret;
 	}
 
@@ -1170,15 +1174,16 @@ void drm_sched_fini(struct drm_gpu_scheduler *sched)
 		struct drm_sched_rq *rq = &sched->sched_rq[i];
 
 		spin_lock(&rq->lock);
-		list_for_each_entry(s_entity, &rq->entities, list)
+		list_for_each_entry(s_entity, &rq->entities, list) {
 			/*
 			 * Prevents reinsertion and marks job_queue as idle,
 			 * it will removed from rq in drm_sched_entity_fini
 			 * eventually
 			 */
 			s_entity->stopped = true;
+			WARN_ON(1);
+		}
 		spin_unlock(&rq->lock);
-
 	}
 
 	/* Wakeup everyone stuck in drm_sched_entity_flush for this scheduler */
