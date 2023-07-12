@@ -118,31 +118,6 @@ impl ObjectRef {
         self.gem.size()
     }
 
-    /// Maps an object into a given `Vm` at any free address.
-    ///
-    /// Returns Err(EBUSY) if there is already a mapping.
-    pub(crate) fn map_into(&mut self, vm: &crate::mmu::Vm) -> Result<usize> {
-        let vm_id = vm.id();
-
-        if self.gem.vm_id.is_some() && self.gem.vm_id != Some(vm_id) {
-            return Err(EINVAL);
-        }
-
-        let mut mappings = self.gem.mappings.lock();
-        for (_mapped_fid, mapped_vmid, _mapping) in mappings.iter() {
-            if *mapped_vmid == vm_id {
-                return Err(EBUSY);
-            }
-        }
-
-        let sgt = self.gem.sg_table()?;
-        let new_mapping = vm.map(self.gem.size(), sgt)?;
-
-        let iova = new_mapping.iova();
-        mappings.try_push((vm.file_id(), vm_id, new_mapping))?;
-        Ok(iova)
-    }
-
     /// Maps an object into a given `Vm` at any free address within a given range.
     ///
     /// Returns Err(EBUSY) if there is already a mapping.

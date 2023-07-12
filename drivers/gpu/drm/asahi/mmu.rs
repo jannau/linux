@@ -822,26 +822,6 @@ impl Vm {
         self.inner.lock().ttb()
     }
 
-    /// Map a GEM object (using its `SGTable`) into this Vm at a free address.
-    pub(crate) fn map(&self, size: usize, sgt: gem::SGTable) -> Result<Mapping> {
-        let mut inner = self.inner.lock();
-
-        let uat_inner = inner.uat_inner.clone();
-        let node = inner.mm.insert_node(
-            MappingInner {
-                owner: self.inner.clone(),
-                uat_inner,
-                prot: PROT_FW_SHARED_RW,
-                sgt: Some(sgt),
-                mapped_size: size,
-            },
-            (size + UAT_PGSZ) as u64, // Add guard page
-        )?;
-
-        inner.map_node(&node, PROT_FW_SHARED_RW)?;
-        Ok(Mapping(node))
-    }
-
     /// Map a GEM object (using its `SGTable`) into this Vm at a free address in a given range.
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn map_in_range(
