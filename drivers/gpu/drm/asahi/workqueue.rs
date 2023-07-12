@@ -24,7 +24,7 @@ use crate::{channel, driver, event, fw, gpu, object, regs};
 use core::num::NonZeroU64;
 use core::sync::atomic::Ordering;
 use kernel::{
-    c_str,
+    c_str, dma_fence,
     error::code::*,
     prelude::*,
     sync::{
@@ -149,6 +149,7 @@ where
     wptr: u32,
     vm_slot: u32,
     callback: Option<C>,
+    fence: dma_fence::Fence,
 }
 
 pub(crate) trait GenSubmittedWork: Send + Sync {
@@ -158,6 +159,7 @@ pub(crate) trait GenSubmittedWork: Send + Sync {
     fn set_wptr(&mut self, wptr: u32);
     fn mark_error(&mut self, error: WorkError);
     fn complete(&mut self);
+    fn get_fence(&self) -> dma_fence::Fence;
 }
 
 impl<O: OpaqueGpuObject, C: FnOnce(&mut O, Option<WorkError>) + Send + Sync> GenSubmittedWork
@@ -191,6 +193,10 @@ impl<O: OpaqueGpuObject, C: FnOnce(&mut O, Option<WorkError>) + Send + Sync> Gen
             WorkError::Fault(info) if info.vm_slot != self.vm_slot => WorkError::Killed,
             err => err,
         });
+    }
+
+    fn get_fence(&self) -> dma_fence::Fence {
+        self.fence.clone()
     }
 }
 
@@ -257,6 +263,7 @@ pub(crate) struct Job {
     committed: bool,
     submitted: bool,
     event_count: usize,
+    fence: dma_fence::Fence,
 }
 
 #[versions(AGX)]
@@ -308,6 +315,7 @@ impl Job::ver {
             callback: Some(callback),
             wptr: 0,
             vm_slot,
+            fence: self.fence.clone(),
         })?)?;
 
         Ok(())
@@ -346,8 +354,16 @@ impl Job::ver {
         Ok(())
     }
 
-    pub(crate) fn can_submit(&self) -> bool {
-        self.wq.free_slots() > self.event_count && self.wq.free_space() > self.pending.len()
+    pub(crate) fn can_submit(&self) -> Option<dma_fence::Fence> {
+        let inner = self.wq.inner.lock();
+        if inner.free_slots() > self.event_count && inner.free_space() > self.pending.len() {
+            None
+        } else if let Some(work) = inner.pending.first() {
+            Some(work.get_fence())
+        } else {
+            pr_err!("WorkQueue: Cannot submit, but queue is empty?\n");
+            None
+        }
     }
 
     pub(crate) fn submit(&mut self) -> Result<JobSubmission::ver<'_>> {
@@ -658,7 +674,7 @@ impl WorkQueue::ver {
         })
     }
 
-    pub(crate) fn new_job(self: &Arc<Self>) -> Result<Job::ver> {
+    pub(crate) fn new_job(self: &Arc<Self>, fence: dma_fence::Fence) -> Result<Job::ver> {
         let mut inner = self.inner.lock();
 
         if inner.event.is_none() {
@@ -698,17 +714,8 @@ impl WorkQueue::ver {
             event_count: 0,
             committed: false,
             submitted: false,
+            fence,
         })
-    }
-
-    /// Return the number of free entries in the workqueue
-    pub(crate) fn free_space(&self) -> usize {
-        self.inner.lock().free_space()
-    }
-
-    /// Return the number of free job slots in the workqueue
-    pub(crate) fn free_slots(&self) -> usize {
-        self.inner.lock().free_slots()
     }
 
     pub(crate) fn pipe_type(&self) -> PipeType {

@@ -53,9 +53,10 @@ struct SubQueue {
 
 #[versions(AGX)]
 impl SubQueue::ver {
-    fn new_job(&mut self) -> SubQueueJob::ver {
+    fn new_job(&mut self, fence: dma_fence::Fence) -> SubQueueJob::ver {
         SubQueueJob::ver {
             wq: self.wq.clone(),
+            fence: Some(fence),
             job: None,
         }
     }
@@ -65,6 +66,7 @@ impl SubQueue::ver {
 struct SubQueueJob {
     wq: Arc<workqueue::WorkQueue::ver>,
     job: Option<workqueue::Job::ver>,
+    fence: Option<dma_fence::Fence>,
 }
 
 #[versions(AGX)]
@@ -72,7 +74,8 @@ impl SubQueueJob::ver {
     fn get(&mut self) -> Result<&mut workqueue::Job::ver> {
         if self.job.is_none() {
             mod_pr_debug!("SubQueueJob: Creating {:?} job\n", self.wq.pipe_type());
-            self.job.replace(self.wq.new_job()?);
+            self.job
+                .replace(self.wq.new_job(self.fence.take().unwrap())?);
         }
         Ok(self.job.as_mut().expect("expected a Job"))
     }
@@ -84,11 +87,8 @@ impl SubQueueJob::ver {
         }
     }
 
-    fn can_submit(&self) -> bool {
-        match self.job.as_ref() {
-            None => true,
-            Some(job) => job.can_submit(),
-        }
+    fn can_submit(&self) -> Option<Fence> {
+        self.job.as_ref().and_then(|job| job.can_submit())
     }
 }
 
@@ -193,40 +193,40 @@ impl QueueJob::ver {
 
 #[versions(AGX)]
 impl sched::JobImpl for QueueJob::ver {
-    fn can_run(job: &mut sched::Job<Self>) -> bool {
+    fn prepare(job: &mut sched::Job<Self>) -> Option<Fence> {
         mod_dev_dbg!(job.dev, "QueueJob {}: Checking runnability\n", job.id);
 
         if let Some(sj) = job.sj_vtx.as_ref() {
-            if !sj.can_submit() {
-                mod_dev_dbg!(
+            if let Some(fence) = sj.can_submit() {
+                dev_info!(
                     job.dev,
                     "QueueJob {}: Blocking due to vertex queue full\n",
                     job.id
                 );
-                return false;
+                return Some(fence);
             }
         }
         if let Some(sj) = job.sj_frag.as_ref() {
-            if !sj.can_submit() {
-                mod_dev_dbg!(
+            if let Some(fence) = sj.can_submit() {
+                dev_info!(
                     job.dev,
                     "QueueJob {}: Blocking due to fragment queue full\n",
                     job.id
                 );
-                return false;
+                return Some(fence);
             }
         }
         if let Some(sj) = job.sj_comp.as_ref() {
-            if !sj.can_submit() {
-                mod_dev_dbg!(
+            if let Some(fence) = sj.can_submit() {
+                dev_info!(
                     job.dev,
                     "QueueJob {}: Blocking due to compute queue full\n",
                     job.id
                 );
-                return false;
+                return Some(fence);
             }
         }
-        true
+        None
     }
 
     #[allow(unused_assignments)]
@@ -553,23 +553,35 @@ impl Queue for Queue::ver {
         let vm_slot = vm_bind.slot();
 
         mod_dev_dbg!(self.dev, "[Submission {}] Creating job\n", id);
+
+        let fence: UserFence<JobFence::ver> = self
+            .fence_ctx
+            .new_fence::<JobFence::ver>(
+                0,
+                JobFence::ver {
+                    id,
+                    pending: Default::default(),
+                },
+            )?
+            .into();
+
         let mut job = self.entity.new_job(QueueJob::ver {
             dev: self.dev.clone(),
             vm_bind,
             op_guard,
-            sj_vtx: self.q_vtx.as_mut().map(|a| a.new_job()),
-            sj_frag: self.q_frag.as_mut().map(|a| a.new_job()),
-            sj_comp: self.q_comp.as_mut().map(|a| a.new_job()),
-            fence: self
-                .fence_ctx
-                .new_fence::<JobFence::ver>(
-                    0,
-                    JobFence::ver {
-                        id,
-                        pending: Default::default(),
-                    },
-                )?
-                .into(),
+            sj_vtx: self
+                .q_vtx
+                .as_mut()
+                .map(|a| a.new_job(Fence::from_fence(&fence))),
+            sj_frag: self
+                .q_frag
+                .as_mut()
+                .map(|a| a.new_job(Fence::from_fence(&fence))),
+            sj_comp: self
+                .q_comp
+                .as_mut()
+                .map(|a| a.new_job(Fence::from_fence(&fence))),
+            fence,
             did_run: false,
             id,
         })?;
