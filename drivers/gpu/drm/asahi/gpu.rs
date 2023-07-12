@@ -87,6 +87,10 @@ const IOVA_KERN_SHARED_RO_TOP: u64 = 0xffffffabffffffff;
 const IOVA_KERN_GPU_BASE: u64 = 0xffffffac00000000;
 /// GPU/FW shared structure VA range top.
 const IOVA_KERN_GPU_TOP: u64 = 0xffffffadffffffff;
+/// GPU/FW shared structure VA range base.
+const IOVA_KERN_RTKIT_BASE: u64 = 0xffffffae00000000;
+/// GPU/FW shared structure VA range top.
+const IOVA_KERN_RTKIT_TOP: u64 = 0xffffffae0fffffff;
 
 /// GPU/FW buffer manager control address (context 0 low)
 pub(crate) const IOVA_KERN_GPU_BUFMGR_LOW: u64 = 0x20_0000_0000;
@@ -328,7 +332,14 @@ impl rtkit::Operations for GpuManager::ver {
 
         let mut obj = gem::new_kernel_object(dev, size)?;
         obj.vmap()?;
-        let iova = obj.map_into(data.uat.kernel_vm())?;
+        let iova = obj.map_into_range(
+            data.uat.kernel_vm(),
+            IOVA_KERN_RTKIT_BASE,
+            IOVA_KERN_RTKIT_TOP,
+            mmu::UAT_PGSZ as u64,
+            mmu::PROT_FW_SHARED_RW,
+            true,
+        )?;
         mod_dev_dbg!(dev, "shmem_alloc() -> VA {:#x}\n", iova);
         Ok(obj)
     }
