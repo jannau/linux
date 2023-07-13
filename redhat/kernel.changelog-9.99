@@ -1,3 +1,12 @@
+* Thu Jul 13 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc1.eb26cbb1a754.13.el127]
+- Simplify documentation jobs (Michael Hofmann)
+- Auto-cancel pipelines only on MRs (Michael Hofmann)
+- CI: Call script directly (Don Zickus)
+- CI: Remove stale TAG and Makefile cruft (Don Zickus)
+- CI: Move os-build tracking to common area (Don Zickus)
+- Linux v6.5.0-0.rc1.eb26cbb1a754
+Resolves: 
+
 * Tue Jul 11 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc1.3f01e9fed845.12.el127]
 - redhat: use the eln builder for daily jobs (Patrick Talbert)
 - redhat: set CONFIG_XILINX_WINDOW_WATCHDOG as disabled in pending (Patrick Talbert)
