@@ -1,3 +1,7 @@
+* Fri Jul 14 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc1.4b810bf037e5.14.el127]
+- Linux v6.5.0-0.rc1.4b810bf037e5
+Resolves: 
+
 * Thu Jul 13 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc1.eb26cbb1a754.13.el127]
 - Simplify documentation jobs (Michael Hofmann)
 - Auto-cancel pipelines only on MRs (Michael Hofmann)
