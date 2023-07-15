@@ -1,3 +1,9 @@
+* Sat Jul 15 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc1.b6e6cc1f78c7.15.el127]
+- scsi: sd: Add "probe_type" module parameter to allow synchronous probing (Ewan D. Milne) [2140017]
+- redhat/configs: allow IMA to use MOK keys (Coiby Xu)
+- Linux v6.5.0-0.rc1.b6e6cc1f78c7
+Resolves: rhbz#2140017
+
 * Fri Jul 14 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc1.4b810bf037e5.14.el127]
 - Linux v6.5.0-0.rc1.4b810bf037e5
 Resolves: 
