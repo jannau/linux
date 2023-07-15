@@ -197,4 +197,7 @@ struct apple_dcp {
 int dcp_backlight_register(struct apple_dcp *dcp);
 bool dcp_has_panel(struct apple_dcp *dcp);
 
+void __init dcp_piodma_register(void);
+void __exit dcp_piodma_unregister(void);
+
 #endif /* __APPLE_DCP_INTERNAL_H__ */

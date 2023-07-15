@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only OR MIT
 /* Copyright 2021 Alyssa Rosenzweig <alyssa@rosenzweig.io> */
 
-#include <drm/drm_module.h>
-
 #include <linux/component.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>
@@ -45,11 +43,11 @@ static void dcp_piodma_shutdown(struct platform_device *pdev)
 	component_del(&pdev->dev, &dcp_piodma_comp_ops);
 }
 
-static const struct of_device_id of_match[] = {
+static const struct of_device_id piodma_of_match[] = {
 	{ .compatible = "apple,dcp-piodma" },
 	{}
 };
-MODULE_DEVICE_TABLE(of, of_match);
+MODULE_DEVICE_TABLE(of, piodma_of_match);
 
 static struct platform_driver dcp_piodma_platform_driver = {
 	.probe		= dcp_piodma_probe,
@@ -57,12 +55,17 @@ static struct platform_driver dcp_piodma_platform_driver = {
 	.shutdown	= dcp_piodma_shutdown,
 	.driver	= {
 		.name = "apple,dcp-piodma",
-		.of_match_table	= of_match,
+		.of_match_table	= piodma_of_match,
 	},
 };
 
-drm_module_platform_driver(dcp_piodma_platform_driver);
 
-MODULE_AUTHOR("Alyssa Rosenzweig <alyssa@rosenzweig.io>");
-MODULE_DESCRIPTION("[HACK] Apple DCP PIODMA shim");
-MODULE_LICENSE("Dual MIT/GPL");
+void __init dcp_piodma_register(void)
+{
+        platform_driver_register(&dcp_piodma_platform_driver);
+}
+
+void __exit dcp_piodma_unregister(void)
+{
+        platform_driver_unregister(&dcp_piodma_platform_driver);
+}

@@ -14,6 +14,7 @@
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/of_device.h>
+#include <linux/of_platform.h>
 #include <linux/slab.h>
 #include <linux/soc/apple/rtkit.h>
 #include <linux/string.h>
@@ -317,10 +318,10 @@ out_unlock:
 	mutex_unlock(&dcp->bl_register_mutex);
 }
 
-static struct platform_device *dcp_get_dev(struct device *dev, const char *name)
+static struct platform_device *dcp_get_dev(struct device *dev, const char *compat)
 {
 	struct platform_device *pdev;
-	struct device_node *node = of_parse_phandle(dev->of_node, name, 0);
+	struct device_node *node = of_get_compatible_child(dev->of_node, compat);
 
 	if (!node)
 		return NULL;
@@ -433,8 +434,6 @@ static int dcp_comp_bind(struct device *dev, struct device *main, void *data)
 	if (IS_ERR(dcp->coproc_reg))
 		return PTR_ERR(dcp->coproc_reg);
 
-	of_platform_default_populate(dev->of_node, NULL, dev);
-
 	if (!show_notch)
 		ret = of_property_read_u32(dev->of_node, "apple,notch-height",
 					   &dcp->notch_height);
@@ -483,7 +482,7 @@ static int dcp_comp_bind(struct device *dev, struct device *main, void *data)
 	 * the piodma device is only used for its iommu. The iommu is fully
 	 * initialized by the time dcp_piodma_probe() calls component_add().
 	 */
-	dcp->piodma = dcp_get_dev(dev, "apple,piodma-mapper");
+	dcp->piodma = dcp_get_dev(dev, "apple,dcp-piodma");
 	if (!dcp->piodma) {
 		dev_err(dev, "failed to find piodma\n");
 		return -ENODEV;
@@ -561,6 +560,7 @@ static int dcp_platform_probe(struct platform_device *pdev)
 	enum dcp_firmware_version fw_compat;
 	struct device *dev = &pdev->dev;
 	struct apple_dcp *dcp;
+	int ret;
 
 	fw_compat = dcp_check_firmware_version(dev);
 	if (fw_compat == DCP_FIRMWARE_UNKNOWN)
@@ -574,6 +574,12 @@ static int dcp_platform_probe(struct platform_device *pdev)
 	dcp->dev = dev;
 
 	platform_set_drvdata(pdev, dcp);
+
+	ret = devm_of_platform_populate(dev);
+	if (ret) {
+		dev_err(dev, "failed to populate child devices: %d\n", ret);
+		return ret;
+	}
 
 	return component_add(&pdev->dev, &dcp_comp_ops);
 }
@@ -634,6 +640,8 @@ static int __init dcp_init(void)
 	if (drm_firmware_drivers_only())
 		return -ENODEV;
 
+	dcp_piodma_register();
+
 	ret = platform_driver_register(&apple_platform_driver);
 	if (ret)
 		return ret;
@@ -645,6 +653,7 @@ module_init(dcp_init);
 static void __exit dcp_exit(void)
 {
 	platform_driver_unregister(&apple_platform_driver);
+	dcp_piodma_unregister();
 }
 module_exit(dcp_exit);
 
