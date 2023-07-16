@@ -627,7 +627,26 @@ static struct platform_driver apple_platform_driver = {
 	},
 };
 
-drm_module_platform_driver(apple_platform_driver);
+static int __init dcp_init(void)
+{
+	int ret;
+
+	if (drm_firmware_drivers_only())
+		return -ENODEV;
+
+	ret = platform_driver_register(&apple_platform_driver);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+module_init(dcp_init);
+
+static void __exit dcp_exit(void)
+{
+	platform_driver_unregister(&apple_platform_driver);
+}
+module_exit(dcp_exit);
 
 MODULE_AUTHOR("Alyssa Rosenzweig <alyssa@rosenzweig.io>");
 MODULE_DESCRIPTION("Apple Display Controller DRM driver");
