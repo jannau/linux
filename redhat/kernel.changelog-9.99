@@ -1,3 +1,8 @@
+* Sun Jul 16 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc1.831fe284d827.16.el127]
+- fedora: wifi: tweak ZYDAS WiFI config options (Peter Robinson)
+- Linux v6.5.0-0.rc1.831fe284d827
+Resolves: 
+
 * Sat Jul 15 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc1.b6e6cc1f78c7.15.el127]
 - scsi: sd: Add "probe_type" module parameter to allow synchronous probing (Ewan D. Milne) [2140017]
 - redhat/configs: allow IMA to use MOK keys (Coiby Xu)
