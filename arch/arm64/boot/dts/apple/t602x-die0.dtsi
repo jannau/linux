@@ -255,11 +255,6 @@
 
 	};
 
-	disp0_piodma: mapper@388000000 {
-		compatible = "apple,t6020-dcp-piodma", "apple,dcp-piodma";
-		iommus = <&disp0_dart 4>;
-	};
-
 	disp0_dart: iommu@389304000 {
 		compatible = "apple,t6020-dart", "apple,t8110-dart";
 		reg = <0x3 0x89304000 0x0 0x4000>;
@@ -313,8 +308,14 @@
 		resets = <&ps_disp0_cpu0>;
 		clocks = <&clk_disp0>;
 		apple,asc-dram-mask = <0 0>;
-		apple,piodma-mapper = <&disp0_piodma>;
 		phandle = <&dcp>;
+		#address-cells = <0>;
+		#size-cells = <0>;
+
+		disp0_piodma: mapper {
+			compatible = "apple,t6020-dcp-piodma", "apple,dcp-piodma";
+			iommus = <&disp0_dart 4>;
+		};
 	};
 
 	display: display-subsystem {
