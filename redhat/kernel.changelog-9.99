@@ -1,3 +1,7 @@
+* Mon Jul 17 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc2.17.el127]
+- Linux v6.5.0-0.rc2
+Resolves: 
+
 * Sun Jul 16 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc1.831fe284d827.16.el127]
 - fedora: wifi: tweak ZYDAS WiFI config options (Peter Robinson)
 - Linux v6.5.0-0.rc1.831fe284d827
