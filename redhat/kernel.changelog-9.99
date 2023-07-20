@@ -1,3 +1,11 @@
+* Thu Jul 20 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc2.bfa3037d8280.19.el127]
+- move ownership of /lib/modules/<ver>/ to kernel-core (Thorsten Leemhuis)
+- Let kernel-modules-core own the files depmod generates. (Thorsten Leemhuis)
+- redhat: configs: Enable CONFIG_TYPEC_STUSB160X for rhel on aarch64 (Desnes Nunes)
+- Add filters for ptp_dfl_tod on Fedora (Justin M. Forbes)
+- Linux v6.5.0-0.rc2.bfa3037d8280
+Resolves: 
+
 * Wed Jul 19 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc2.ccff6d117d8d.18.el127]
 - Fedora 6.5 configs part 1 (Justin M. Forbes)
 - fedora: enable CONFIG_ZYNQMP_IPI_MBOX as a builtin in pending-fedora (Patrick Talbert)
