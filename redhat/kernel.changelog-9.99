@@ -1,3 +1,9 @@
+* Fri Jul 21 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc2.f7e3a1bafdea.20.el127]
+- redhat/configs: disable pre-UVC cameras for RHEL on aarch64 (Dean Nelson)
+- redhat/configs: enable CONFIG_MEDIA_SUPPORT for RHEL on aarch64 (Dean Nelson)
+- Linux v6.5.0-0.rc2.f7e3a1bafdea
+Resolves: 
+
 * Thu Jul 20 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc2.bfa3037d8280.19.el127]
 - move ownership of /lib/modules/<ver>/ to kernel-core (Thorsten Leemhuis)
 - Let kernel-modules-core own the files depmod generates. (Thorsten Leemhuis)
