@@ -1,3 +1,9 @@
+* Sat Jul 22 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc2.d192f5382581.21.el127]
+- Update filters for new config items (Justin M. Forbes)
+- More Fedora 6.5 configs (Justin M. Forbes)
+- Linux v6.5.0-0.rc2.d192f5382581
+Resolves: 
+
 * Fri Jul 21 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc2.f7e3a1bafdea.20.el127]
 - redhat/configs: disable pre-UVC cameras for RHEL on aarch64 (Dean Nelson)
 - redhat/configs: enable CONFIG_MEDIA_SUPPORT for RHEL on aarch64 (Dean Nelson)
