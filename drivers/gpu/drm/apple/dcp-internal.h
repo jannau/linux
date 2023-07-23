@@ -134,6 +134,8 @@ struct apple_dcp {
 	struct resource *disp_registers[MAX_DISP_REGISTERS];
 	unsigned int nr_disp_registers;
 
+	u32 index;
+
 	/* Bitmap of memory descriptors used for mappings made by the DCP */
 	DECLARE_BITMAP(memdesc_map, DCP_MAX_MAPPINGS);
 
