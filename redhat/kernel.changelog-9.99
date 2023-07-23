@@ -1,3 +1,7 @@
+* Sun Jul 23 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc2.c2782531397f.22.el127]
+- Linux v6.5.0-0.rc2.c2782531397f
+Resolves: 
+
 * Sat Jul 22 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc2.d192f5382581.21.el127]
 - Update filters for new config items (Justin M. Forbes)
 - More Fedora 6.5 configs (Justin M. Forbes)
