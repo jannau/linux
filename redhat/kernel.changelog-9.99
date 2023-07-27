@@ -1,3 +1,8 @@
+* Thu Jul 27 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc3.0a8db05b571a.26.el127]
+- redhat/configs: Disable FIREWIRE for RHEL (Prarit Bhargava)
+- Linux v6.5.0-0.rc3.0a8db05b571a
+Resolves: 
+
 * Wed Jul 26 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc3.18b44bc5a672.25.el127]
 - redhat/scripts/rh-dist-git.sh: print list of uploaded files (Denys Vlasenko)
 - redhat/scripts/expand_srpm.sh: add missing function, robustify (Denys Vlasenko)
