@@ -1,3 +1,17 @@
+* Wed Aug 02 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc4.31.el127]
+- [CI] add exit 0 to the end of CI scripts (Don Zickus)
+- redhat: configs: Disable CONFIG_CRYPTO_STATS since performance issue for storage (Kate Hsuan) [2227793]
+- Remove obsolete variable from gitlab-ci.yml (Ondrej Kinst)
+- redhat/configs: Move GVT-g to Fedora only (Alex Williamson)
+- [CI] Make sure we are on correct branch before running script (Don Zickus)
+- CI: ark-update-configs: sync push command and output (Don Zickus)
+- CI: ark-update-configs: misc changes (Don Zickus)
+- CI: sync ark-create-release push commands with output (Don Zickus)
+- CI: ark-create-release: Add a robust check if nothing changed (Don Zickus)
+- CI: Remove legacy tag check cruft (Don Zickus)
+- CI: Introduce simple environment script (Don Zickus)
+Resolves: rhbz#2227793
+
 * Mon Jul 31 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc4.30.el127]
 - Linux v6.5.0-0.rc4
 Resolves: 
