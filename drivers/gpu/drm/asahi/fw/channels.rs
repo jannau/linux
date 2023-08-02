@@ -186,9 +186,9 @@ pub(crate) enum DeviceControlMsg {
     Unk11(Array<DEVICECONTROL_SZ::ver, u8>),
     Unk12(Array<DEVICECONTROL_SZ::ver, u8>),
     Unk13(Array<DEVICECONTROL_SZ::ver, u8>),
-    Unk14(Array<DEVICECONTROL_SZ::ver, u8>),
-    Unk15(Array<DEVICECONTROL_SZ::ver, u8>),
-    Unk16(Array<DEVICECONTROL_SZ::ver, u8>),
+    Unk14(Array<DEVICECONTROL_SZ::ver, u8>), // Init?
+    Unk15(Array<DEVICECONTROL_SZ::ver, u8>), // Enable something
+    Unk16(Array<DEVICECONTROL_SZ::ver, u8>), // Disable something
     #[ver(V >= V13_3)]
     Unk17(Array<DEVICECONTROL_SZ::ver, u8>),
     DestroyContext {
@@ -212,7 +212,7 @@ pub(crate) enum DeviceControlMsg {
         __pad2: Pad<{ DEVICECONTROL_SZ::ver - 0x18 }>,
     },
     Unk18(Array<DEVICECONTROL_SZ::ver, u8>),
-    Initialize(Pad<DEVICECONTROL_SZ::ver>),
+    Initialize(Pad<DEVICECONTROL_SZ::ver>), // Update RegionC
 }
 
 #[versions(AGX)]
