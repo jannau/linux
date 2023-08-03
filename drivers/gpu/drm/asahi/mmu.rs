@@ -1207,7 +1207,7 @@ impl Uat {
             slots: slotalloc::SlotAllocator::new(
                 UAT_USER_CTX as u32,
                 (),
-                |_inner, _slot| SlotInner(),
+                |_inner, _slot| Some(SlotInner()),
                 c_str!("Uat::SlotAllocator"),
                 static_lock_class!(),
                 static_lock_class!(),
