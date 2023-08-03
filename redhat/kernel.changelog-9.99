@@ -1,3 +1,9 @@
+* Thu Aug 03 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc4.ec351c8f2e62.32.el127]
+- Description: Set config for Tegra234 pinctrl driver (Joel Slebodnick)
+- Update RPM Scriptlet for kernel-install Changes (Jonathan Steffan)
+- Linux v6.5.0-0.rc4.ec351c8f2e62
+Resolves: 
+
 * Wed Aug 02 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc4.31.el127]
 - [CI] add exit 0 to the end of CI scripts (Don Zickus)
 - redhat: configs: Disable CONFIG_CRYPTO_STATS since performance issue for storage (Kate Hsuan) [2227793]
