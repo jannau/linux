@@ -1,3 +1,7 @@
+* Fri Aug 04 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc4.c1a515d3c027.33.el127]
+- Linux v6.5.0-0.rc4.c1a515d3c027
+Resolves: 
+
 * Thu Aug 03 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc4.ec351c8f2e62.32.el127]
 - Description: Set config for Tegra234 pinctrl driver (Joel Slebodnick)
 - Update RPM Scriptlet for kernel-install Changes (Jonathan Steffan)
