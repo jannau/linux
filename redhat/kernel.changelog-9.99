@@ -1,3 +1,8 @@
+* Sat Aug 05 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc4.024ff300db33.34.el127]
+- arm: i.MX: Some minor NXP i.MX cleanups (Peter Robinson)
+- Linux v6.5.0-0.rc4.024ff300db33
+Resolves: 
+
 * Fri Aug 04 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc4.c1a515d3c027.33.el127]
 - Linux v6.5.0-0.rc4.c1a515d3c027
 Resolves: 
