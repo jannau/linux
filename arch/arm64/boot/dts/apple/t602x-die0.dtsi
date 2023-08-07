@@ -800,5 +800,3 @@
 		power-domains = <&ps_apcie_gp_sys>;
 		status = "disabled";
 	};
-
-
