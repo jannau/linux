@@ -1,3 +1,8 @@
+* Tue Aug 08 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc5.14f9643dc90a.37.el127]
+- redhat/configs: Texas Instruments INA3221 driver (Steve Best)
+- Linux v6.5.0-0.rc5.14f9643dc90a
+Resolves: 
+
 * Mon Aug 07 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc5.36.el127]
 - Linux v6.5.0-0.rc5
 Resolves: 
