@@ -1,3 +1,11 @@
+* Wed Aug 09 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc5.13b937206866.38.el127]
+- redhat/configs: turn on the framework for SPI NOR for ARM (Steve Best)
+- configs: add new ChromeOS UART driver (Mark Langsdorf)
+- configs: add new ChromeOS Human Presence Sensor (Mark Langsdorf)
+- redhat/configs: Enable CONFIG_NVIDIA_WMI_EC_BACKLIGHT for both Fedora and RHEL (Kate Hsuan)
+- Linux v6.5.0-0.rc5.13b937206866
+Resolves: 
+
 * Tue Aug 08 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc5.14f9643dc90a.37.el127]
 - redhat/configs: Texas Instruments INA3221 driver (Steve Best)
 - Linux v6.5.0-0.rc5.14f9643dc90a
