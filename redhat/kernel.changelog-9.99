@@ -1,3 +1,8 @@
+* Thu Aug 10 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc5.374a7f47bf40.39.el127]
+- redhat/configs: Remove `CONFIG_HZ_1000 is not set` for aarch64 (Enric Balletbo i Serra)
+- Linux v6.5.0-0.rc5.374a7f47bf40
+Resolves: 
+
 * Wed Aug 09 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc5.13b937206866.38.el127]
 - redhat/configs: turn on the framework for SPI NOR for ARM (Steve Best)
 - configs: add new ChromeOS UART driver (Mark Langsdorf)
