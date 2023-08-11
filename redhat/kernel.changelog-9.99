@@ -1,3 +1,11 @@
+* Fri Aug 11 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc5.25aa0bebba72.40.el127]
+- redhat/configs: enable CONFIG_VIRTIO_MEM on aarch64 (David Hildenbrand) [2044155]
+- redhat/configs: enable CONFIG_MEMORY_HOTREMOVE aarch64 (David Hildenbrand) [2062054]
+- redhat: Add arm64-16k kernel flavor scaffold for 16K page-size'd AArch64 (Neal Gompa)
+- fedora: enable i3c on aarch64 (Peter Robinson)
+- Linux v6.5.0-0.rc5.25aa0bebba72
+Resolves: rhbz#2044155, rhbz#2062054
+
 * Thu Aug 10 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc5.374a7f47bf40.39.el127]
 - redhat/configs: Remove `CONFIG_HZ_1000 is not set` for aarch64 (Enric Balletbo i Serra)
 - Linux v6.5.0-0.rc5.374a7f47bf40
