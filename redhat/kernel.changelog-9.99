@@ -1,3 +1,7 @@
+* Sat Aug 12 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc5.f8de32cc060b.41.el127]
+- Linux v6.5.0-0.rc5.f8de32cc060b
+Resolves: 
+
 * Fri Aug 11 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc5.25aa0bebba72.40.el127]
 - redhat/configs: enable CONFIG_VIRTIO_MEM on aarch64 (David Hildenbrand) [2044155]
 - redhat/configs: enable CONFIG_MEMORY_HOTREMOVE aarch64 (David Hildenbrand) [2062054]
