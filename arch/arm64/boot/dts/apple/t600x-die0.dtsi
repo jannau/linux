@@ -227,7 +227,6 @@
 		resets = <&ps_disp0_cpu0>;
 		clocks = <&clk_disp0>;
 		apple,asc-dram-mask = <0>;
-		apple,piodma-mapper = <&disp0_piodma>;
 		phandle = <&dcp>;
 		#address-cells = <0>;
 		#size-cells = <0>;
