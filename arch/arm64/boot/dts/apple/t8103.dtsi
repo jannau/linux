@@ -568,11 +568,10 @@
 			clocks = <&clk_disp0>;
 			apple,asc-dram-mask = <0xf 0x00000000>;
 			phandle = <&dcp>;
-			#address-cells = <0>;
-			#size-cells = <0>;
 
 			disp0_piodma: piodma {
 				iommus = <&disp0_dart 4>;
+				phandle = <&disp0_piodma>;
 			};
 		};
 
