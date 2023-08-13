@@ -1,3 +1,11 @@
+* Sun Aug 13 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc5.a785fd28d31f.42.el127]
+- all: run evaluate_configs to de-dupe merged aarch64 (Peter Robinson)
+- all: arm: merge the arm and arm/aarch64 (Peter Robinson)
+- fedora: remove ARMv7 AKA armhfp configurations (Peter Robinson)
+- fedora: remove ARMv7 AKA armhfp support (Peter Robinson)
+- Linux v6.5.0-0.rc5.a785fd28d31f
+Resolves: 
+
 * Sat Aug 12 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc5.f8de32cc060b.41.el127]
 - Linux v6.5.0-0.rc5.f8de32cc060b
 Resolves: 
