@@ -1,3 +1,11 @@
+* Wed Aug 16 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc6.4853c74bd7ab.45.el130]
+- New configs in arch/x86 (Fedora Kernel Team)
+- Add an armv7 directory back for the Fedora configs (Justin M. Forbes)
+- Fedora 6.5 config updates (Justin M. Forbes)
+- Turn off DMABUF_SYSFS_STATS (Justin M. Forbes)
+- Linux v6.5.0-0.rc6.4853c74bd7ab
+Resolves: 
+
 * Tue Aug 15 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc6.91aa6c412d7f.44.el130]
 - CI: rawhide_release: switch to using script to push (Don Zickus)
 - redhat/self-test: Update self-test data (Prarit Bhargava)
