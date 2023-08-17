@@ -271,6 +271,10 @@ int dcp_dptx_connect(struct platform_device *pdev, u32 port, struct phy *phy)
 {
 	struct apple_dcp *dcp = platform_get_drvdata(pdev);
 
+	if (dcp->dptxport[port].connecting)
+		return 0;
+	dcp->dptxport[port].connecting = true;
+
 	dcp->dptxport[port].atcphy = phy;
 	dptxport_validate_connection(dcp->dptxport[port].service, 0, 1, 0);
 	dptxport_connect(dcp->dptxport[port].service, 0, 1, 0);
@@ -287,6 +291,7 @@ int dcp_dptx_disconnect(struct platform_device *pdev, u32 port)
 
 	dptxport_release_display(dcp->dptxport[port].service);
 	dptxport_set_hpd(dcp->dptxport[port].service, false);
+	dcp->dptxport[port].connecting = false;
 
 	return 0;
 }

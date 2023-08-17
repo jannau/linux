@@ -48,6 +48,7 @@ struct apple_epic_service;
 
 struct dptx_port {
 	bool enabled;
+	bool connecting;
 	struct completion enable_completion;
 	u32 unit;
 	struct apple_epic_service *service;
