@@ -93,7 +93,7 @@
 };
 
 &display {
-	status = "disabled";
+	iommus = <&dispext0_dart 0>;
 };
 
 &dcp {
