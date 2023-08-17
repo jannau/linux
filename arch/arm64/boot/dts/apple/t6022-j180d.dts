@@ -24,9 +24,7 @@
 		atcphy6 = &atcphy2_die1;
 		atcphy7 = &atcphy3_die1;
 		//bluetooth0 = &bluetooth0;
-		dcp = &dcp;
-		disp0 = &display;
-		disp0_piodma = &disp0_piodma;
+		dcpext0 = &dcpext0;
 		//ethernet0 = &ethernet0;
 		//ethernet1 = &ethernet1;
 		serial0 = &serial0;
@@ -67,7 +65,16 @@
 };
 
 &dcp {
-	apple,connector-type = "HDMI-A";
+	status = "disabled";
+};
+
+&dcpext0 {
+	apple,connector-type = "DP";
+};
+
+/* disable dcpext4 for now */
+&dcpext0_die1 {
+	status = "disabled";
 };
 
 /* USB Type C Rear */
@@ -329,7 +336,21 @@
 						remote-endpoint = <&typec1_usb_ss>;
 					};
 				};
+				port@2 {
+					reg = <2>;
+					typec1_con_dp: endpoint {
+						remote-endpoint = <&typec1_dp>;
+					};
+				};
 			};
+		};
+	};
+};
+
+&display {
+	port {
+		typec1_dp: endpoint {
+			remote-endpoint = <&typec1_con_dp>;
 		};
 	};
 };
