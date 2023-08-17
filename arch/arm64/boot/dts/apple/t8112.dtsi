@@ -564,6 +564,7 @@
 			compatible = "apple,t8112-dart", "apple,t8110-dart";
 			reg = <0x2 0x31304000 0x0 0x4000>;
 			#iommu-cells = <1>;
+			apple,dma-range = <0x0 0x0 0xf 0xffff0000>;
 			interrupt-parent = <&aic>;
 			interrupts = <AIC_IRQ 553 IRQ_TYPE_LEVEL_HIGH>;
 			power-domains = <&ps_disp0_cpu0>;
@@ -574,6 +575,7 @@
 			compatible = "apple,t8112-dart", "apple,t8110-dart";
 			reg = <0x2 0x3130c000 0x0 0x4000>;
 			#iommu-cells = <1>;
+			apple,dma-range = <0x8 0x0 0x7 0xffff0000>;
 			interrupt-parent = <&aic>;
 			interrupts = <AIC_IRQ 553 IRQ_TYPE_LEVEL_HIGH>;
 			power-domains = <&ps_disp0_cpu0>;
