@@ -534,6 +534,9 @@ static int dcp_comp_bind(struct device *dev, struct device *main, void *data)
 
 	dcp->is_dptx = of_device_is_compatible(dev->of_node, "apple,dcpext");
 
+	of_property_read_u32(dev->of_node, "apple,dcp-index",
+					   &dcp->index);
+
 	if (!show_notch)
 		ret = of_property_read_u32(dev->of_node, "apple,notch-height",
 					   &dcp->notch_height);
