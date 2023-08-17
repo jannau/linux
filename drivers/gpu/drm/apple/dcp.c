@@ -514,6 +514,8 @@ static int dcp_comp_bind(struct device *dev, struct device *main, void *data)
 		mutex_init(&dcp->bl_register_mutex);
 	} else if (of_property_match_string(dev->of_node, "apple,connector-type", "HDMI-A") >= 0)
 		dcp->connector_type = DRM_MODE_CONNECTOR_HDMIA;
+	else if (of_property_match_string(dev->of_node, "apple,connector-type", "DP") >= 0)
+		dcp->connector_type = DRM_MODE_CONNECTOR_DisplayPort;
 	else if (of_property_match_string(dev->of_node, "apple,connector-type", "USB-C") >= 0)
 		dcp->connector_type = DRM_MODE_CONNECTOR_USB;
 	else
