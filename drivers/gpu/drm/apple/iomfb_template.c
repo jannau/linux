@@ -139,6 +139,10 @@ static void complete_vi_set_temperature_hint(struct apple_dcp *dcp, void *out, v
 static bool iomfbep_cb_match_pmu_service(struct apple_dcp *dcp, int tag, void *out, void *in)
 {
 	trace_iomfb_callback(dcp, tag, __func__);
+
+	if (dcp->is_dptx)
+		return true;
+
 	iomfb_a358_vi_set_temperature_hint(dcp, false,
 					   complete_vi_set_temperature_hint,
 					   NULL);
@@ -161,6 +165,12 @@ static void complete_pmu_service_matched(struct apple_dcp *dcp, void *out, void 
 static bool iomfbep_cb_match_pmu_service_2(struct apple_dcp *dcp, int tag, void *out, void *in)
 {
 	trace_iomfb_callback(dcp, tag, __func__);
+
+	if (dcp->is_dptx) {
+		u8 *ret = out;
+		ret[0] = 1;
+		return true;
+	}
 
 	iomfb_a131_pmu_service_matched(dcp, false, complete_pmu_service_matched,
 				       out);
@@ -1041,6 +1051,11 @@ dcpep_cb_get_tiling_state(struct apple_dcp *dcp,
 	};
 }
 
+static u8 dcpep_cb_create_pmu_service(struct apple_dcp *dcp)
+{
+	return !dcp->is_dptx;
+}
+
 static u8 dcpep_cb_create_backlight_service(struct apple_dcp *dcp)
 {
 	return dcp_has_panel(dcp);
@@ -1096,6 +1111,7 @@ TRAMPOLINE_IN(trampoline_pr_publish, iomfb_cb_pr_publish,
 	      struct iomfb_property);
 TRAMPOLINE_INOUT(trampoline_get_tiling_state, dcpep_cb_get_tiling_state,
 		 struct dcpep_get_tiling_state_req, struct dcpep_get_tiling_state_resp);
+TRAMPOLINE_OUT(trampoline_create_pmu_service, dcpep_cb_create_pmu_service, u8);
 TRAMPOLINE_OUT(trampoline_create_backlight_service, dcpep_cb_create_backlight_service, u8);
 
 /*
