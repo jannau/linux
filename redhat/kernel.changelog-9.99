@@ -1,3 +1,8 @@
+* Thu Aug 17 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc6.4853c74bd7ab.46.el130]
+- all: properly cleanup firewire once and for all (Peter Robinson)
+- Fix up filters for Fedora (Justin M. Forbes)
+Resolves: 
+
 * Wed Aug 16 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc6.4853c74bd7ab.45.el130]
 - New configs in arch/x86 (Fedora Kernel Team)
 - Add an armv7 directory back for the Fedora configs (Justin M. Forbes)
