@@ -1,3 +1,8 @@
+* Fri Aug 18 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc6.0e8860d2125f.47.el130]
+- redhat/configs: enable tegra114 SPI (Mark Salter)
+- Linux v6.5.0-0.rc6.0e8860d2125f
+Resolves: 
+
 * Thu Aug 17 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc6.4853c74bd7ab.46.el130]
 - all: properly cleanup firewire once and for all (Peter Robinson)
 - Fix up filters for Fedora (Justin M. Forbes)
