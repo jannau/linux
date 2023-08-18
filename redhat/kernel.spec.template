@@ -307,8 +307,10 @@ Summary: The Linux kernel
 %define with_verbose 1
 %endif
 
-# No arm64-16k flavor for now
+%if !0%{?fedora}
+# No arm64-16k flavor for non-Fedora
 %define with_arm64_16k 0
+%endif
 
 %if %{with_verbose}
 %define make_opts V=1
