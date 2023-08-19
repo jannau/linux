@@ -643,6 +643,7 @@
 			phy-names = "atcphy1-dpphy";
 			mux-controls = <&atcphy1_xbar 0>;
 			mux-control-names = "atcphy1-dpphy";
+			mux-dcpext0 = <2>;
 			displayport;
 		};
 
