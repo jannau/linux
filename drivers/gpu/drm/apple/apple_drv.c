@@ -487,6 +487,7 @@ static int apple_drm_init(struct device *dev)
 	struct apple_drm_private *apple;
 	struct resource fb_r;
 	resource_size_t fb_size;
+	u32 mux_dcpext0 = 0;
 	int ret;
 
 	ret = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(42));
@@ -518,12 +519,14 @@ static int apple_drm_init(struct device *dev)
 		dev_err(dev, "Failed to get atcphy: %ld", PTR_ERR(apple->atc1));
 		return PTR_ERR(apple->atc1);
 	}
+
+	of_property_read_u32(dev->of_node, "mux-dcpext0", &mux_dcpext0);
 	apple->xbar_atc1 = devm_mux_control_get(dev, "atcphy1-dpphy");
 	if (IS_ERR(apple->xbar_atc1)) {
 		dev_err(dev, "Failed to get atcphy-xbar: %ld", PTR_ERR(apple->xbar_atc1));
 		return PTR_ERR(apple->xbar_atc1);
 	}
-	ret = mux_control_select(apple->xbar_atc1, 0);
+	ret = mux_control_select(apple->xbar_atc1, mux_dcpext0);
 	if (ret)
 		dev_warn(dev, "mux_control_select failed: %d\n", ret);
 	// </HACK>
