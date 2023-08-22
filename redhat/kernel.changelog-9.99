@@ -1,3 +1,9 @@
+* Tue Aug 22 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc7.f7757129e3de.51.eln130]
+- redhat/configs: Enable CONFIG_DEVICE_PRIVATE on aarch64 (David Hildenbrand) [2231407]
+- redhat/configs: disable CONFIG_ROCKCHIP_ERRATUM_3588001 for RHEL (Mark Salter)
+- redhat: shellcheck fixes (Prarit Bhargava)
+Resolves: rhbz#2231407
+
 * Mon Aug 21 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc7.f7757129e3de.50.el130]
 - Linux v6.5.0-0.rc7.f7757129e3de
 Resolves: 
