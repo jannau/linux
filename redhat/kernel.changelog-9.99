@@ -1,3 +1,10 @@
+* Wed Aug 23 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc7.89bf6209cad6.52.eln130]
+- redhat/self-test: Remove rpmlint test (Prarit Bhargava)
+- Remove the armv7 config directory from Fedora again (Justin M. Forbes)
+- Enable CONFIG_EXPERT for both RHEL and Fedora (Justin M. Forbes)
+- Linux v6.5.0-0.rc7.89bf6209cad6
+Resolves: 
+
 * Tue Aug 22 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc7.f7757129e3de.51.eln130]
 - redhat/configs: Enable CONFIG_DEVICE_PRIVATE on aarch64 (David Hildenbrand) [2231407]
 - redhat/configs: disable CONFIG_ROCKCHIP_ERRATUM_3588001 for RHEL (Mark Salter)
