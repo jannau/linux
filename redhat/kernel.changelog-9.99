@@ -1,3 +1,9 @@
+* Thu Aug 24 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc7.93f5de5f648d.53.eln130]
+- Consolidate configs to common for 6.5 (Justin M. Forbes)
+- Remove unused config entry for Fedora (Justin M. Forbes)
+- Linux v6.5.0-0.rc7.93f5de5f648d
+Resolves: 
+
 * Wed Aug 23 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc7.89bf6209cad6.52.eln130]
 - redhat/self-test: Remove rpmlint test (Prarit Bhargava)
 - Remove the armv7 config directory from Fedora again (Justin M. Forbes)
