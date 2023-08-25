@@ -1,3 +1,7 @@
+* Fri Aug 25 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc7.4f9e7fabf864.54.eln130]
+- Linux v6.5.0-0.rc7.4f9e7fabf864
+Resolves: 
+
 * Thu Aug 24 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc7.93f5de5f648d.53.eln130]
 - Consolidate configs to common for 6.5 (Justin M. Forbes)
 - Remove unused config entry for Fedora (Justin M. Forbes)
