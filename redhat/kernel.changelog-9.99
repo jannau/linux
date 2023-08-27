@@ -1,3 +1,7 @@
+* Sun Aug 27 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc7.28f20a19294d.56.eln130]
+- Linux v6.5.0-0.rc7.28f20a19294d
+Resolves: 
+
 * Sat Aug 26 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-0.rc7.7d2f353b2682.55.eln130]
 - redhat/kernel.spec.template: update compression variables to support zstd (Brian Masney)
 - Linux v6.5.0-0.rc7.7d2f353b2682
