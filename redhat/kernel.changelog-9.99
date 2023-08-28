@@ -1,3 +1,8 @@
+* Mon Aug 28 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-58.eln130]
+- redhat: Fix UKI install with systemd >= 254 (Vitaly Kuznetsov)
+- redhat: Use named parameters for kernel_variant_posttrans()/kernel_variant_preun() (Vitaly Kuznetsov)
+Resolves: 
+
 * Mon Aug 28 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-57.eln130]
 - Linux v6.5.0
 Resolves: 
