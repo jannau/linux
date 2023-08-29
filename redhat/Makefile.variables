@@ -36,7 +36,7 @@ BUILD_TARGET ?=
 # 'make dist-release'.  It should be set to "yes" if you expect to do
 # multiple updates and builds without bumping the base version, and no
 # when you expect every build to use a different base kernel version.
-BUMP_RELEASE:=yes
+BUMP_RELEASE:=no
 
 # This is the dist release suffix used in the package release, eg. .fc34,
 # .el8 etc. In a different branch this may be set to a fixed value.
@@ -44,7 +44,7 @@ DIST ?=
 
 # This is the source branch that you are building out of typically this is
 # the current branch.
-DIST_BRANCH ?= "os-build"
+DIST_BRANCH ?= "fedora-6.5"
 
 # This is a human readable distribution variable that is used to determine the
 # OS version (fedora, centos, or rhel).
@@ -96,7 +96,7 @@ PATCHLIST_URL ?= "https://gitlab.com/cki-project/kernel-ark/-/commit"
 #  kernel release. (This includes prepatch or "rc" releases.)
 # Set RELEASED_KERNEL to 0 when the upstream source tarball contains an
 #  unreleased kernel development snapshot.
-RELEASED_KERNEL:=0
+RELEASED_KERNEL:=1
 
 # This variable is used by the redhat/self-tests.  It should not be
 # considered stable and my be changed or removed without warning.
@@ -145,7 +145,7 @@ SPECPACKAGE_NAME ?= kernel
 # should be tracked in a local branch. This would be "master" for the
 # Linus master branch or linux-5.x.y for a stable branch. It can also be
 # any other upstream you have added as a branch locally.
-UPSTREAM_BRANCH ?= master
+UPSTREAM_BRANCH ?= linux-6.5.y
 
 # If VERSION_ON_UPSTREAM is set, the versioning of the rpm package is based
 # on a branch tracking upstream. This allows for generating rpms
