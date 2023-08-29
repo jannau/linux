@@ -5,15 +5,15 @@
 %global include_rt 1
 %global patchlist_changelog 0
 %global released_kernel 0
-%define buildid .test
+# define buildid .local
 %define specrpmversion 5.17.0
 %define specversion 5.17.0
 %define patchversion 5.17
-%define pkgrelease 0.rc0.78e36f3b0dae.6.test
+%define pkgrelease 0.rc0.78e36f3b0dae.6
 %define kversion 5
-%define tarfile_release 5.17.0-0.rc0.78e36f3b0dae.6.test.el7
+%define tarfile_release 5.17.0-0.rc0.78e36f3b0dae.6.el7
 %define patchlevel 17
 %define specrelease 0.rc0.78e36f3b0dae.6%{?buildid}%{?dist}
-%define kabiversion 5.17.0-0.rc0.78e36f3b0dae.6.test.el7
+%define kabiversion 5.17.0-0.rc0.78e36f3b0dae.6.el7
 %define selftests_must_build 0
-Mon Mar 28 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17.0-0.rc0.78e36f3b0dae.6.test]
+Mon Mar 28 2022 Fedora Kernel Team <kernel-team@fedoraproject.org> [5.17.0-0.rc0.78e36f3b0dae.6]
