@@ -494,17 +494,17 @@ static int apple_drm_init(struct device *dev)
 	if (ret)
 		return ret;
 
-	ret = apple_get_fb_resource(dev, "framebuffer", &fb_r);
-	if (ret)
-		return ret;
-
-	fb_size = fb_r.end - fb_r.start + 1;
-	ret = drm_aperture_remove_conflicting_framebuffers(fb_r.start, fb_size,
-						false, &apple_drm_driver);
-	if (ret) {
-		dev_err(dev, "Failed remove fb: %d\n", ret);
-		goto err_unbind;
-	}
+	// ret = apple_get_fb_resource(dev, "framebuffer", &fb_r);
+	// if (ret)
+	// 	return ret;
+ //
+	// fb_size = fb_r.end - fb_r.start + 1;
+	// ret = drm_aperture_remove_conflicting_framebuffers(fb_r.start, fb_size,
+	// 					false, &apple_drm_driver);
+	// if (ret) {
+	// 	dev_err(dev, "Failed remove fb: %d\n", ret);
+	// 	goto err_unbind;
+	// }
 
 	apple = devm_drm_dev_alloc(dev, &apple_drm_driver,
 				   struct apple_drm_private, drm);
