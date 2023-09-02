@@ -1,3 +1,19 @@
+* Sat Sep 02 2023 Justin M. Forbes <jforbes@fedoraproject.org> [6.5.1-0]
+- erofs: ensure that the post-EOF tails are all zeroed (Gao Xiang)
+- Add bug to BugsFixed (Justin M. Forbes)
+- Turn off CONFIG_MEMORY_HOTPLUG_DEFAULT_ONLINE for Fedora s390x (Justin M. Forbes)
+- drm/msm/a690: Switch to a660_gmu.bin (Rob Clark)
+- drivers/firmware: skip simpledrm if nvidia-drm.modeset=1 is set (Javier Martinez Canillas)
+- Turn E1000 back on (Justin M. Forbes)
+- Set up variables and scripts for Fedora stable (Justin M. Forbes)
+- Update self-test data (Justin M. Forbes)
+- all: x86: move wayward x86 specific config home (Peter Robinson)
+- all: de-dupe non standard config options (Peter Robinson)
+- all: x86: clean up microcode loading options (Peter Robinson)
+- common: remove unnessary CONFIG_SND_MESON_AXG* (Peter Robinson)
+- Linux v6.5.1
+Resolves: 
+
 * Mon Aug 28 2023 Fedora Kernel Team <kernel-team@fedoraproject.org> [6.5.0-58.eln130]
 - redhat: Fix UKI install with systemd >= 254 (Vitaly Kuznetsov)
 - redhat: Use named parameters for kernel_variant_posttrans()/kernel_variant_preun() (Vitaly Kuznetsov)
