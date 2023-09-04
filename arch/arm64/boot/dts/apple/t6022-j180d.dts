@@ -42,7 +42,7 @@
 			reg = <0 0 0 0>; /* To be filled by loader */
 			/* Format properties will be added by loader */
 			status = "disabled";
-			power-domains = <&ps_disp0_cpu0>;
+			power-domains = <&ps_dispext0_cpu0_die1>, <&ps_dptx_phy_ps_die1>;
 		};
 	};
 
