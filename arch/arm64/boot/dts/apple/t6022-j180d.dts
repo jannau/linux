@@ -24,9 +24,6 @@
 		atcphy6 = &atcphy2_die1;
 		atcphy7 = &atcphy3_die1;
 		//bluetooth0 = &bluetooth0;
-		dcp = &dcp;
-		disp0 = &display;
-		disp0_piodma = &disp0_piodma;
 		//ethernet0 = &ethernet0;
 		//ethernet1 = &ethernet1;
 		serial0 = &serial0;
@@ -64,10 +61,6 @@
 
 &serial0 {
 	status = "okay";
-};
-
-&dcp {
-	apple,connector-type = "HDMI-A";
 };
 
 /* USB Type C Rear */
