@@ -1,3 +1,10 @@
+* Wed Sep 06 2023 Justin M. Forbes <jforbes@fedoraproject.org> [6.5.2-0]
+- Move squashfs to kernel-modules-core (Justin M. Forbes)
+- Add TPM bug to BugsFixed (Justin M. Forbes)
+- tpm: Enable hwrng only for Pluton on AMD CPUs (Jarkko Sakkinen)
+- Linux v6.5.2
+Resolves: 
+
 * Sat Sep 02 2023 Justin M. Forbes <jforbes@fedoraproject.org> [6.5.1-0]
 - erofs: ensure that the post-EOF tails are all zeroed (Gao Xiang)
 - Add bug to BugsFixed (Justin M. Forbes)
