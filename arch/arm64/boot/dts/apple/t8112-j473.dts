@@ -23,6 +23,10 @@
 	};
 };
 
+&framebuffer0 {
+	power-domains = <&ps_disp0_cpu0>, <&ps_dptx_ext_phy>;
+};
+
 /*
  * Provide labels for the USB type C ports.
  */
