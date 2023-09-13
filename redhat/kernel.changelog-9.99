@@ -1,3 +1,10 @@
+* Wed Sep 13 2023 Justin M. Forbes <jforbes@fedoraproject.org> [6.5.3-0]
+- Revert "misc: rtsx: judge ASPM Mode to set PETXCFG Reg" (Justin M. Forbes)
+- Config updates for 6.5.3 (Justin M. Forbes)
+- Fix up buildReqs for UKI (Justin M. Forbes)
+- Linux v6.5.3
+Resolves: 
+
 * Wed Sep 06 2023 Justin M. Forbes <jforbes@fedoraproject.org> [6.5.2-0]
 - Move squashfs to kernel-modules-core (Justin M. Forbes)
 - Add TPM bug to BugsFixed (Justin M. Forbes)
