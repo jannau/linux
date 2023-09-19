@@ -1,3 +1,11 @@
+* Tue Sep 19 2023 Justin M. Forbes <jforbes@fedoraproject.org> [6.5.4-0]
+- Add F38 and F37 as release targets (Justin M. Forbes)
+- Add NFS bug fix for 6.5.4 (Justin M. Forbes)
+- selinux: fix handling of empty opts in selinux_fs_context_submount() (Ondrej Mosnacek)
+- Turn off appletalk for fedora (Justin M. Forbes)
+- Linux v6.5.4
+Resolves: 
+
 * Wed Sep 13 2023 Justin M. Forbes <jforbes@fedoraproject.org> [6.5.3-0]
 - Revert "misc: rtsx: judge ASPM Mode to set PETXCFG Reg" (Justin M. Forbes)
 - Config updates for 6.5.3 (Justin M. Forbes)
