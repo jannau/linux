@@ -3342,7 +3342,7 @@ fi\
 %endif
 
 %if %{with_debug} && %{with_arm64_16k}
-%kernel_variant_preun 16k-debug
+%kernel_variant_preun -v 16k-debug
 %kernel_variant_post -v 16k-debug
 %endif
 
