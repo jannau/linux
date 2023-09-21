@@ -83,3 +83,5 @@
 	apple,ppm-filter-time-constant-ms = <34>;
 	apple,ppm-ki = <18.0>;
 };
+
+#include "hwmon-t602x.dtsi"

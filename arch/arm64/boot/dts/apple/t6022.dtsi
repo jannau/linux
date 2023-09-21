@@ -374,3 +374,5 @@
 		pinmux = <APPLE_PINMUX(8, 1)>;
 	};
 };
+
+#include "hwmon-t602x.dtsi"

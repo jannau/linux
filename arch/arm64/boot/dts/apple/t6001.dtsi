@@ -91,3 +91,5 @@
 &gpu {
 	compatible = "apple,agx-t6001", "apple,agx-g13x";
 };
+
+#include "hwmon-t600x.dtsi"
