@@ -1440,6 +1440,13 @@ S:	Maintained
 T:	git git://anongit.freedesktop.org/drm/drm-misc
 F:	drivers/gpu/drm/apple/
 
+APPLE MACSMC HWMON DRIVER
+M:	James Calligeros <jcalligeros99@gmail.com>
+L:	asahi@lists.linux.dev
+L:	linux-hwmon@vger.kernel.org
+S:	Maintained
+F:	drivers/hwmon/macsmc-hwmon.c
+
 APPLE PCIE CONTROLLER DRIVER
 M:	Alyssa Rosenzweig <alyssa@rosenzweig.io>
 M:	Marc Zyngier <maz@kernel.org>

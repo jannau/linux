@@ -345,6 +345,17 @@ config SENSORS_FAM15H_POWER
 	  This driver can also be built as a module. If so, the module
 	  will be called fam15h_power.
 
+config SENSORS_APPLESMC_ARM
+	tristate "Apple SMC (Apple Silicon)"
+	depends on ARCH_APPLE && ARM64
+	help
+	  This driver provides support for the Apple System Management Controller
+	  as found on Apple Silicon SoCs. Say Y here if you have an Apple Silicon
+	  Mac (M1, M2, etc.)
+
+	  This driver can also be built as a module. If so, the module will be
+	  called applesmc-arm.
+
 config SENSORS_APPLESMC
 	tristate "Apple SMC (Motion sensor, light sensor, keyboard backlight)"
 	depends on INPUT && X86
