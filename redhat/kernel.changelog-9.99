@@ -1,3 +1,15 @@
+* Sat Sep 23 2023 Justin M. Forbes <jforbes@fedoraproject.org> [6.5.5-0]
+- iommu/apple-dart: Handle DMA_FQ domains in attach_dev() (Hector Martin)
+- Note fix for atomic locking in BugsFixed (Justin M. Forbes)
+- locking/atomic: scripts: fix fallback ifdeffery (Mark Rutland)
+- redhat: spec: Fix typo for kernel_variant_preun for 16k-debug flavor (Neal Gompa)
+- Fix installreq for UKI (Justin M. Forbes)
+- Add btrfs bug to BugsFixed for 6.5.5 (Justin M. Forbes)
+- btrfs: adjust overcommit logic when very close to full (Josef Bacik)
+- btrfs: properly report 0 avail for very full file systems (Josef Bacik)
+- Linux v6.5.5
+Resolves: 
+
 * Tue Sep 19 2023 Justin M. Forbes <jforbes@fedoraproject.org> [6.5.4-0]
 - Add F38 and F37 as release targets (Justin M. Forbes)
 - Add NFS bug fix for 6.5.4 (Justin M. Forbes)
