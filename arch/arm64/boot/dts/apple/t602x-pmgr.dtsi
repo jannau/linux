@@ -434,7 +434,7 @@
 		#power-domain-cells = <0>;
 		#reset-cells = <0>;
 		label = DIE_LABEL(dispext1_cpu0);
-		power-domains = <&DIE_NODE(ps_dispext1_sys)>;
+		power-domains = <&DIE_NODE(ps_dispext1_fe)>;
 	};
 
 	DIE_NODE(ps_dispext0_fe): power-controller@2c0 {
@@ -471,7 +471,7 @@
 		#power-domain-cells = <0>;
 		#reset-cells = <0>;
 		label = DIE_LABEL(dispext0_cpu0);
-		power-domains = <&DIE_NODE(ps_dispext0_sys)>;
+		power-domains = <&DIE_NODE(ps_dispext0_fe)>;
 	};
 
 	DIE_NODE(ps_ane_cpu): power-controller@2e0 {
