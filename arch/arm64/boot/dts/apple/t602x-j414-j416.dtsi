@@ -119,6 +119,10 @@
 	status = "okay";
 };
 
+&ps_mtp_fabric {
+	status = "okay";
+};
+
 &mtp {
 	status = "okay";
 };
