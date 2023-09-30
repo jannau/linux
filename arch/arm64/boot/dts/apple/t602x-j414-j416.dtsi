@@ -17,11 +17,6 @@
 #define NO_SPI_TRACKPAD
 #include "t600x-j314-j316.dtsi"
 
-&nvram {
-	/* nvram is larger than on previous machines */
-	reg = <0x700000 0x100000>;
-};
-
 &hpm0 {
 	interrupts = <44 IRQ_TYPE_LEVEL_LOW>;
 };
