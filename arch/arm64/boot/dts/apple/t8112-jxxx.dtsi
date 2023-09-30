@@ -16,6 +16,7 @@
 		dcp = &dcp;
 		disp0 = &display;
 		disp0_piodma = &disp0_piodma;
+		nvram = &nvram;
 		serial0 = &serial0;
 		serial2 = &serial2;
 	};
@@ -172,3 +173,5 @@
 &nco_clkref {
 	clock-frequency = <900000000>;
 };
+
+#include "spi1-nvram.dtsi"
