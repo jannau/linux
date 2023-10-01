@@ -96,7 +96,7 @@ static int macsmc_hwmon_read(struct device *dev, enum hwmon_sensor_types type,
 			u32 attr, int channel, long *val)
 {
 	struct macsmc_hwmon *hwmon = dev_get_drvdata(dev);
-	// u64 ui64 = 0;
+	u64 ui64 = 0;
 	u32 flt32 = 0;
 	// u16 ui16 = 0;
 	// u8 ui8 = 0;
@@ -130,6 +130,14 @@ static int macsmc_hwmon_read(struct device *dev, enum hwmon_sensor_types type,
 			if (ret)
 				return -EINVAL;
 			*val = flt32;
+			break;
+		case _SMC_KEY("ioft"):
+			ret = apple_smc_read_ioft_scaled(
+				hwmon->smc, hwmon->temp[channel].macsmc_key,
+				&ui64, 1000);
+			if (ret)
+				return -EINVAL;
+			*val = ui64;
 			break;
 		default:
 			return -EOPNOTSUPP;
