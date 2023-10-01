@@ -172,3 +172,6 @@
 &nco_clkref {
 	clock-frequency = <900000000>;
 };
+
+#include "hwmon-t8112.dtsi"
+#include "hwmon-system.dtsi"

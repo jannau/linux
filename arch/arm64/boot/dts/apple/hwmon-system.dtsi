@@ -1,0 +1,32 @@
+// SPDX-License-Identifier: GPL-2.0+ OR MIT
+/*
+ * macsmc-hwmon sensors expected on all systems
+ *
+ * Copyright The Asahi Linux Contributors
+ */
+
+&smc {
+	macsmc-hwmon {
+		apple,pwr-keys {
+			power-PSTR {
+				apple,key-id = "PSTR";
+				apple,key-desc = "Total System Power";
+			};
+			power-PDTR {
+				apple,key-id = "PDTR";
+				apple,key-desc = "AC Input Power";
+			};
+			power-PMVR {
+				apple,key-id = "PMVR";
+				apple,key-desc = "3.8V Power";
+			};
+		};
+
+		apple,temp-keys {
+			temp-TW0P {
+				apple,key-id = "TW0P";
+				apple,key-desc = "WiFi/BT Module Temp";
+			};
+		};
+	};
+};

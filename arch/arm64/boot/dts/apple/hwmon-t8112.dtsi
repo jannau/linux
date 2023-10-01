@@ -1,0 +1,127 @@
+// SPDX-License-Identifier: GPL-2.0+ OR MIT
+/*
+ * t8112 specific macsmc-hwmon sensors
+ *
+ * Copyright The Asahi Linux Contributors
+ */
+
+&smc {
+	macsmc-hwmon {
+		apple,temp-keys {
+			temp-TSCD {
+				apple,key-id = "TSCD";
+				apple,key-desc = "SoC Die Temp";
+			};
+			/* performance core 0 */
+			temp-Tp02 {
+				apple,key-id = "Tp02";
+				apple,key-desc = "CPU4 Core Temp1";
+			};
+			temp-Tp01 {
+				apple,key-id = "Tp01";
+				apple,key-desc = "CPU4 Core Temp2";
+			};
+			temp-Tp05 {
+				apple,key-id = "Tp05";
+				apple,key-desc = "CPU4 Core Temp3";
+			};
+			temp-Tp06 {
+				apple,key-id = "Tp06";
+				apple,key-desc = "CPU4 Core Temp4";
+			};
+			temp-Tp00 {
+				apple,key-id = "Tp00";
+				apple,key-desc = "CPU4 Temp1";
+			};
+			temp-Tp04 {
+				apple,key-id = "Tp04";
+				apple,key-desc = "CPU4 Temp2";
+			};
+			/* performance core 1 */
+			temp-Tp0A {
+				apple,key-id = "Tp0A";
+				apple,key-desc = "CPU5 Core Temp1";
+			};
+			temp-Tp09 {
+				apple,key-id = "Tp09";
+				apple,key-desc = "CPU5 Core Temp2";
+			};
+			temp-Tp0D {
+				apple,key-id = "Tp0D";
+				apple,key-desc = "CPU5 Core Temp3";
+			};
+			temp-Tp0E {
+				apple,key-id = "Tp0E";
+				apple,key-desc = "CPU5 Core Temp4";
+			};
+			temp-Tp08 {
+				apple,key-id = "Tp08";
+				apple,key-desc = "CPU5 Temp1";
+			};
+			temp-Tp0C {
+				apple,key-id = "Tp0C";
+				apple,key-desc = "CPU5 Temp2";
+			};
+			/* performance core 2 */
+			temp-Tp0g {
+				apple,key-id = "Tp0g";
+				apple,key-desc = "CPU6 Core Temp1";
+			};
+			temp-Tp0f {
+				apple,key-id = "Tp0f";
+				apple,key-desc = "CPU6 Core Temp2";
+			};
+			temp-Tp0j {
+				apple,key-id = "Tp0j";
+				apple,key-desc = "CPU6 Core Temp3";
+			};
+			temp-Tp0k {
+				apple,key-id = "Tp0k";
+				apple,key-desc = "CPU6 Core Temp4";
+			};
+			temp-Tp0e {
+				apple,key-id = "Tp0e";
+				apple,key-desc = "CPU6 Temp1";
+			};
+			temp-Tp0i {
+				apple,key-id = "Tp0i";
+				apple,key-desc = "CPU6 Temp2";
+			};
+			/* performance core 3 */
+			temp-Tp0o {
+				apple,key-id = "Tp0o";
+				apple,key-desc = "CPU7 Core Temp1";
+			};
+			temp-Tp0n {
+				apple,key-id = "Tp0n";
+				apple,key-desc = "CPU7 Core Temp2";
+			};
+			temp-Tp0r {
+				apple,key-id = "Tp0r";
+				apple,key-desc = "CPU7 Core Temp3";
+			};
+			temp-Tp0s {
+				apple,key-id = "Tp0s";
+				apple,key-desc = "CPU7 Core Temp4";
+			};
+			temp-Tp0m {
+				apple,key-id = "Tp0m";
+				apple,key-desc = "CPU7 Temp1";
+			};
+			temp-Tp0q {
+				apple,key-id = "Tp0q";
+				apple,key-desc = "CPU7 Temp2";
+			};
+			/* no idea what monitored by this */
+			temp-Tp0a {
+				apple,key-id = "Tp0a";
+			};
+			temp-Tp0b {
+				apple,key-id = "Tp0b";
+			};
+			temp-Tp0c {
+				apple,key-id = "Tp0c";
+			};
+		};
+	};
+};

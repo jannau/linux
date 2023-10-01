@@ -1,0 +1,46 @@
+// SPDX-License-Identifier: GPL-2.0+ OR MIT
+/*
+ * macsmc-hwmon sensors expected on all laptops
+ *
+ * Copyright The Asahi Linux Contributors
+ */
+
+&smc {
+	macsmc-hwmon {
+		apple,pwr-keys {
+			power-PHPC {
+				apple,key-id = "PHPC";
+				apple,key-desc = "Heatpipe Power";
+			};
+		};
+
+		apple,temp-keys {
+			temp-TB0T {
+				apple,key-id = "TB0T";
+				apple,key-desc = "Battery Hotspot";
+			};
+			temp-TCHP {
+				apple,key-id = "TCHP";
+				apple,key-desc = "Charge Regulator Temp";
+			};
+		};
+
+		apple,volt-keys {
+			volt-SBAV {
+				apple,key-id = "SBAV";
+				apple,key-desc = "Battery Voltage";
+			};
+			volt-VD0R {
+				apple,key-id = "VD0R";
+				apple,key-desc = "Charger Input Voltage";
+			};
+		};
+
+		apple,curr-keys {
+			curr-ID0R {
+				apple,key-id = "ID0R";
+				apple,key-desc = "Charger Input Current";
+			};
+		};
+	};
+};
