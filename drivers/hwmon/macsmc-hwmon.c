@@ -397,9 +397,9 @@ static int macsmc_hwmon_probe(struct platform_device *pdev)
 	hwmon->dev = &pdev->dev;
 	hwmon->smc = smc;
 
-	hwmon_node = of_find_node_by_name(NULL, "apple,smc-hwmon");
+	hwmon_node = of_find_node_by_name(NULL, "macsmc-hwmon");
 	if (!hwmon_node) {
-		dev_err(hwmon->dev, "apple,smc-hwmon not found in devicetree!\n");
+		dev_err(hwmon->dev, "macsmc-hwmon not found in devicetree!\n");
 		return -ENODEV;
 	}
 
