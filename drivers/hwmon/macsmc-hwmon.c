@@ -253,11 +253,10 @@ static int macsmc_hwmon_populate_sensors(struct device *dev,
 
 		ret = of_property_read_string(key_node, "apple,key-desc",
 					      &label);
-		if (ret) {
-			dev_err(dev, "Could not find apple,key-desc for node %d\n", i);
-			continue;
-		}
-		strncpy((*sensors)[i].label, label, strlen(label));
+		if (ret)
+			strncpy((*sensors)[i].label, key, strlen(label));
+		else
+			strncpy((*sensors)[i].label, label, strlen(label));
 
 		i += 1;
 	}
