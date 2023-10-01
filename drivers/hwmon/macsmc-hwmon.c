@@ -363,32 +363,15 @@ static void macsmc_hwmon_populate_info(struct macsmc_hwmon *hwmon,
 	info[i] = (struct hwmon_channel_info *)NULL;
 }
 
-static const struct of_device_id macsmc_hwmon_of_match[] = {
-	{ .compatible = "apple,t8103-smc", },
-	{ .compatible = "apple,t6000-smc", },
-	{ .compatible = "apple,t8112-smc", },
-	{ .compatible = "apple,t6020-smc", },
-	{ .compatible = "apple,smc" },
-	{ },
-};
-MODULE_DEVICE_TABLE(of, macsmc_hwmon_of_match);
-
 static int macsmc_hwmon_probe(struct platform_device *pdev)
 {
 	struct apple_smc *smc = dev_get_drvdata(pdev->dev.parent);
 	struct macsmc_hwmon *hwmon;
 	struct device_node *hwmon_node;
 	struct hwmon_channel_info **macsmc_chip_info = NULL;
-	static const struct of_device_id *of_id;
 	int ret = 0;
 	u32 info_sz = 0;
 	u32 n_chans = 0;
-
-	of_id = of_match_device(macsmc_hwmon_of_match, pdev->dev.parent);
-	if (!of_id) {
-		dev_err(&pdev->dev, "No compatible SMC found!\n");
-		return -ENODEV;
-	}
 
 	hwmon = devm_kzalloc(&pdev->dev, sizeof(struct macsmc_hwmon), GFP_KERNEL);
 	if (!hwmon)
@@ -503,9 +486,7 @@ static int macsmc_hwmon_probe(struct platform_device *pdev)
 static struct platform_driver macsmc_hwmon_driver = {
 	.probe = macsmc_hwmon_probe,
 	.driver = {
-		.name = "macsmc_hwmon",
-		.of_match_table = macsmc_hwmon_of_match,
-		.owner = THIS_MODULE,
+		.name = "macsmc-hwmon",
 	},
 };
 module_platform_driver(macsmc_hwmon_driver);
@@ -513,3 +494,4 @@ module_platform_driver(macsmc_hwmon_driver);
 MODULE_DESCRIPTION("Apple Silicon SMC hwmon driver");
 MODULE_AUTHOR("James Calligeros <jcalligeros99@gmail.com");
 MODULE_LICENSE("Dual MIT/GPL");
+MODULE_ALIAS("platform:macsmc-hwmon");
