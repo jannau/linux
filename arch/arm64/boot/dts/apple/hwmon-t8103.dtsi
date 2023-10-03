@@ -1,0 +1,110 @@
+// SPDX-License-Identifier: GPL-2.0+ OR MIT
+/*
+ * t8103 specific macsmc-hwmon sensors
+ *
+ * Copyright The Asahi Linux Contributors
+ */
+
+&smc {
+	macsmc-hwmon {
+		apple,temp-keys {
+			temp-TSCD {
+				apple,key-id = "TSCD";
+				apple,key-desc = "SoC Die Temp";
+			};
+			temp-Tp3z {
+				apple,key-id = "Tp3z";
+				apple,key-desc = "CPU4 Core Temp1";
+			};
+			temp-Tp3b {
+				apple,key-id = "Tp3b";
+				apple,key-desc = "CPU4 Core Temp2";
+			};
+			temp-Tp4z {
+				apple,key-id = "Tp4z";
+				apple,key-desc = "CPU5 Core Temp1";
+			};
+			temp-Tp4b {
+				apple,key-id = "Tp4b";
+				apple,key-desc = "CPU5 Core Temp2";
+			};
+			temp-Tp7z {
+				apple,key-id = "Tp7z";
+				apple,key-desc = "CPU6 Core Temp1";
+			};
+			temp-Tp7b {
+				apple,key-id = "Tp7b";
+				apple,key-desc = "CPU6 Core Temp2";
+			};
+			temp-Tp8z {
+				apple,key-id = "Tp8z";
+				apple,key-desc = "CPU7 Core Temp1";
+			};
+			temp-Tp8b {
+				apple,key-id = "Tp8b";
+				apple,key-desc = "CPU7 Core Temp2";
+			};
+			/* no good idea about these except that close to the CPU */
+			temp-Tp2z {
+				apple,key-id = "Tp2z";
+			};
+			temp-Tp5z {
+				apple,key-id = "Tp5z";
+			};
+			temp-Tp9z {
+				apple,key-id = "Tp9z";
+			};
+			temp-Tp2b {
+				apple,key-id = "Tp2b";
+			};
+			temp-Tp5b {
+				apple,key-id = "Tp5b";
+			};
+			temp-Tp9b {
+				apple,key-id = "Tp9b";
+			};
+			temp-Tp2a {
+				apple,key-id = "Tp2a";
+			};
+			temp-Tp3a {
+				apple,key-id = "Tp3a";
+			};
+			temp-Tp4a {
+				apple,key-id = "Tp4a";
+			};
+			temp-Tp5a {
+				apple,key-id = "Tp5a";
+			};
+			temp-Tp7a {
+				apple,key-id = "Tp7a";
+			};
+			temp-Tp8a {
+				apple,key-id = "Tp8a";
+			};
+			temp-Tp9a {
+				apple,key-id = "Tp9a";
+			};
+			temp-Tp3x {
+				apple,key-id = "Tp3x";
+			};
+			temp-Tp4x {
+				apple,key-id = "Tp4x";
+			};
+			temp-Tp5x {
+				apple,key-id = "Tp5x";
+			};
+			temp-Tp7x {
+				apple,key-id = "Tp7x";
+			};
+			temp-Tp8x {
+				apple,key-id = "Tp8x";
+			};
+			temp-Tp9x {
+				apple,key-id = "Tp9x";
+			};
+			temp-Tp2x {
+				apple,key-id = "Tp2x";
+			};
+		};
+	};
+};

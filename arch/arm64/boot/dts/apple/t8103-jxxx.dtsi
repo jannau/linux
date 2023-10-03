@@ -184,3 +184,6 @@
 &nco_clkref {
 	clock-frequency = <900000000>;
 };
+
+#include "hwmon-t8103.dtsi"
+#include "hwmon-system.dtsi"
