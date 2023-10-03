@@ -26,8 +26,13 @@
 #include <linux/of.h>
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
+#include <linux/types.h>
 
 #define MAX_LABEL_LENGTH 32
+
+static bool allow_fan_control;
+module_param_unsafe(allow_fan_control, bool, 0644);
+MODULE_PARM_DESC(allow_fan_control, "Allow manual fan control, might burn the Mac out");
 
 struct macsmc_hwmon_key {
 	smc_key key;
@@ -44,6 +49,7 @@ struct macsmc_hwmon_fan {
 	struct macsmc_hwmon_key min;
 	struct macsmc_hwmon_key max;
 	struct macsmc_hwmon_key target;
+	struct macsmc_hwmon_key mode;
 	char label[MAX_LABEL_LENGTH];
 	u32 attributes;
 };
@@ -131,6 +137,21 @@ static int macsmc_hwmon_read_key(struct apple_smc *smc, struct macsmc_hwmon_key 
 	}
 }
 
+static int macsmc_hwmon_write_key(struct apple_smc *smc, struct macsmc_hwmon_key *k,
+				  long val, int scale)
+{
+	switch (k->info.type_code) {
+	case _SMC_KEY("flt "): {
+		return apple_smc_write_f32_scaled(smc, k->key, val, scale);
+	}
+	case _SMC_KEY("ui8 "): {
+		return apple_smc_write_u8(smc, k->key, val);
+	}
+	default:
+		return -EOPNOTSUPP;
+	}
+}
+
 static int macsmc_hwmon_read_fan(struct macsmc_hwmon *hwmon, u32 attr, int channel, long *val)
 {
 	if (!(hwmon->fan[channel].attributes & BIT(attr)))
@@ -152,6 +173,37 @@ static int macsmc_hwmon_read_fan(struct macsmc_hwmon *hwmon, u32 attr, int chann
 	default:
 		return -EINVAL;
 	}
+}
+
+static int macsmc_hwmon_write_fan(struct device *dev, u32 attr, int channel, long val)
+{
+	struct macsmc_hwmon *hwmon = dev_get_drvdata(dev);
+	int ret;
+
+	if (!allow_fan_control)
+		return -EOPNOTSUPP;
+
+	if (channel >= hwmon->num_fan)
+		return -EINVAL;
+
+	if (!(hwmon->fan[channel].attributes & BIT(attr)))
+		return -EINVAL;
+
+	if (attr != hwmon_fan_target)
+		return -EINVAL;
+
+	if (hwmon->fan[channel].mode.key == 0)
+		return -EOPNOTSUPP;
+
+	ret = macsmc_hwmon_write_key(hwmon->smc, &hwmon->fan[channel].mode, !!val, 1);
+	if (ret < 0)
+		return ret;
+
+	if (val)
+		return macsmc_hwmon_write_key(
+			hwmon->smc, &hwmon->fan[channel].target, val, 1);
+
+	return 0;
 }
 
 /*
@@ -200,16 +252,40 @@ static int macsmc_hwmon_read(struct device *dev, enum hwmon_sensor_types type,
 static int macsmc_hwmon_write(struct device *dev, enum hwmon_sensor_types type,
 			u32 attr, int channel, long val)
 {
-	return -EOPNOTSUPP;
+	switch (type) {
+	case hwmon_fan:
+		return macsmc_hwmon_write_fan(dev, attr, channel, val);
+	default:
+		return -EOPNOTSUPP;
+	}
 }
 
-static umode_t macsmc_hwmon_is_visible(const void *data,
-				enum hwmon_sensor_types type, u32 attr,
-				int channel)
+static umode_t macsmc_hwmon_fan_is_visible(const void *data, u32 attr, int channel)
 {
+	const struct macsmc_hwmon *hwmon = data;
+
+	if (channel >= hwmon->num_fan)
+		return -EINVAL;
+
+	if (allow_fan_control && attr == hwmon_fan_target &&
+	    hwmon->fan[channel].mode.key != 0)
+		return 0644;
+
 	return 0444;
 }
 
+static umode_t macsmc_hwmon_is_visible(const void *data, enum hwmon_sensor_types type,
+				       u32 attr, int channel)
+{
+	switch (type) {
+	case hwmon_fan:
+		return macsmc_hwmon_fan_is_visible(data, attr, channel);
+	default:
+		break;
+	}
+
+	return 0444;
+}
 
 static const struct hwmon_ops macsmc_hwmon_ops = {
 	.is_visible = macsmc_hwmon_is_visible,
@@ -316,6 +392,9 @@ static int macsmc_hwmon_populate_fans(struct device *dev, struct apple_smc *smc,
 		if (!macsmc_hwmon_parse_key(dev, smc, fan_node,
 					    "apple,fan-target", &fan->target))
 			fan->attributes |= HWMON_F_TARGET;
+
+		macsmc_hwmon_parse_key(dev, smc, fan_node, "apple,fan-mode",
+				       &fan->mode);
 
 		i += 1;
 	}
