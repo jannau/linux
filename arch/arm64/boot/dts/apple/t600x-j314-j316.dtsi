@@ -459,3 +459,9 @@
 		};
 	};
 };
+
+#include "hwmon-fan.dtsi"
+
+&fan1 {
+	status = "okay";
+};

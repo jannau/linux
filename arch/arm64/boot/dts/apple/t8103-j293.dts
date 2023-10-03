@@ -209,3 +209,5 @@
 		};
 	};
 };
+
+#include "hwmon-fan.dtsi"

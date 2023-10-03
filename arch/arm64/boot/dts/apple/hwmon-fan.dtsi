@@ -1,0 +1,30 @@
+// SPDX-License-Identifier: GPL-2.0+ OR MIT
+/*
+ * macsmc-hwmon fan(s) present on some systems
+ *
+ * Copyright The Asahi Linux Contributors
+ */
+
+&smc {
+	macsmc-hwmon {
+		apple,fan-keys {
+			fan0: fan-F0Ac {
+				apple,key-id = "F0Ac";
+				apple,key-desc = "Fan 0";
+				apple,fan-minimum = "F0Mn";
+				apple,fan-maximum = "F0Mx";
+				apple,fan-target = "F0Tg";
+				apple,fan-mode = "F0Md";
+			};
+			fan1: fan-F1Ac {
+				apple,key-id = "F1Ac";
+				apple,key-desc = "Fan 1";
+				apple,fan-minimum = "F1Mn";
+				apple,fan-maximum = "F1Mx";
+				apple,fan-target = "F1Tg";
+				apple,fan-mode = "F1Md";
+				status = "disabled";
+			};
+		};
+	};
+};

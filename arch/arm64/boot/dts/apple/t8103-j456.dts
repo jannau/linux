@@ -131,3 +131,9 @@
 &gpu {
 	apple,perf-base-pstate = <3>;
 };
+
+#include "hwmon-fan.dtsi"
+
+&fan1 {
+	status = "okay";
+};

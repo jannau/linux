@@ -397,3 +397,9 @@
 	apple,ppm-kp = <0.355>;
 };
 #endif
+
+#include "hwmon-fan.dtsi"
+
+&fan1 {
+	status = "okay";
+};
