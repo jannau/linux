@@ -39,14 +39,25 @@ struct macsmc_hwmon_sensor {
 	char label[MAX_LABEL_LENGTH];
 };
 
+struct macsmc_hwmon_fan {
+	struct macsmc_hwmon_key input;
+	struct macsmc_hwmon_key min;
+	struct macsmc_hwmon_key max;
+	struct macsmc_hwmon_key target;
+	char label[MAX_LABEL_LENGTH];
+	u32 attributes;
+};
+
 struct macsmc_hwmon {
 	struct device *dev;
 	struct apple_smc *smc;
 	struct device *hwmon_dev;
+	struct macsmc_hwmon_fan *fan;
 	struct macsmc_hwmon_sensor *pwr;
 	struct macsmc_hwmon_sensor *temp;
 	struct macsmc_hwmon_sensor *volt;
 	struct macsmc_hwmon_sensor *curr;
+	u32 num_fan;
 	u32 num_pwr;
 	u32 num_temp;
 	u32 num_volt;
@@ -61,6 +72,11 @@ static int macsmc_hwmon_read_label(struct device *dev,
 	struct macsmc_hwmon *hwmon = dev_get_drvdata(dev);
 
 	switch (type) {
+	case hwmon_fan:
+		if (channel >= hwmon->num_fan)
+			return -EINVAL;
+		*str = hwmon->fan[channel].label;
+		break;
 	case hwmon_power:
 		if (channel >= hwmon->num_pwr)
 			return -EINVAL;
@@ -115,6 +131,29 @@ static int macsmc_hwmon_read_key(struct apple_smc *smc, struct macsmc_hwmon_key 
 	}
 }
 
+static int macsmc_hwmon_read_fan(struct macsmc_hwmon *hwmon, u32 attr, int channel, long *val)
+{
+	if (!(hwmon->fan[channel].attributes & BIT(attr)))
+		return -EINVAL;
+
+	switch (attr) {
+	case hwmon_fan_input:
+		return macsmc_hwmon_read_key(
+			hwmon->smc, &hwmon->fan[channel].input, val, 1);
+	case hwmon_fan_min:
+		return macsmc_hwmon_read_key(hwmon->smc,
+					     &hwmon->fan[channel].min, val, 1);
+	case hwmon_fan_max:
+		return macsmc_hwmon_read_key(hwmon->smc,
+					     &hwmon->fan[channel].max, val, 1);
+	case hwmon_fan_target:
+		return macsmc_hwmon_read_key(
+			hwmon->smc, &hwmon->fan[channel].target, val, 1);
+	default:
+		return -EINVAL;
+	}
+}
+
 /*
  * The SMC has keys of multiple types, denoted by a FourCC of the same format
  * as the key ID. We must be able to read all of them as we only know which
@@ -129,6 +168,10 @@ static int macsmc_hwmon_read(struct device *dev, enum hwmon_sensor_types type,
 	struct macsmc_hwmon *hwmon = dev_get_drvdata(dev);
 
 	switch (type) {
+	case hwmon_fan:
+		if (channel >= hwmon->num_fan)
+			return -EINVAL;
+		return macsmc_hwmon_read_fan(hwmon, attr, channel, val);
 	case hwmon_power:
 		if (channel >= hwmon->num_pwr)
 			return -EINVAL;
@@ -180,6 +223,117 @@ static struct hwmon_chip_info macsmc_hwmon_info = {
 	.info = NULL, /* Filled at runtime */
 };
 
+static int macsmc_hwmon_parse_key(struct device *dev, struct apple_smc *smc,
+				  struct device_node *node, const char *prop,
+				  struct macsmc_hwmon_key *key_info)
+{
+	const char *key_str;
+	smc_key key;
+	int ret;
+
+	ret = of_property_read_string(node, prop, &key_str);
+	if (ret) {
+		dev_err(dev, "Could not find %s for %s\n", prop,
+			of_node_full_name(node));
+		return ret;
+	}
+	key = _SMC_KEY(key_str);
+
+	ret = apple_smc_get_key_info(smc, key, &key_info->info);
+	if (ret) {
+		dev_err(dev, "Failed to retrieve key info for %s: %d\n",
+			key_str, ret);
+		return ret;
+		;
+	}
+	key_info->key = key;
+
+	return 0;
+}
+
+static int macsmc_hwmon_populate_fans(struct device *dev, struct apple_smc *smc,
+				      struct device_node *hwmon_node,
+				      struct macsmc_hwmon_fan **fans,
+				      u32 *num_keys)
+{
+	struct device_node *fan_list, *fan_node;
+	int ret = 0;
+	int i = 0;
+	pr_err("%s:\n", __func__);
+
+	*num_keys = 0;
+	*fans = NULL;
+
+	fan_list = of_get_child_by_name(hwmon_node, "apple,fan-keys");
+	if (!fan_list) {
+		dev_info(dev, "Sensor node %s not found\n", "apple,fan-keys");
+		return -EOPNOTSUPP;
+	}
+
+	*num_keys = of_get_available_child_count(fan_list);
+	if (!num_keys) {
+		of_node_put(fan_list);
+		dev_err(dev, "No keys found in %s!\n",
+			of_node_full_name(fan_list));
+		return -EOPNOTSUPP;
+	}
+
+	*fans = devm_kzalloc(dev, sizeof(struct macsmc_hwmon_fan) * *num_keys,
+			     GFP_KERNEL);
+	if (!(*fans)) {
+		of_node_put(fan_list);
+		return -ENOMEM;
+	}
+
+	for_each_available_child_of_node(fan_list, fan_node) {
+		struct macsmc_hwmon_fan *fan = (*fans) + i;
+		const char *label;
+
+		ret = macsmc_hwmon_parse_key(dev, smc, fan_node, "apple,key-id", &fan->input);
+		if (ret < 0)
+			continue;
+
+		ret = of_property_read_string(fan_node, "apple,key-desc",  &label);
+		if (ret) {
+			fan->label[0] = (fan->input.key >> 24) & 0xFF;
+			fan->label[1] = (fan->input.key >> 16) & 0xFF;
+			fan->label[2] = (fan->input.key >> 8) & 0xFF;
+			fan->label[3] = fan->input.key & 0xFF;
+			fan->label[4] = '\0';
+		} else
+			strscpy(fan->label, label, sizeof(fan->label));
+
+		fan->attributes = HWMON_F_INPUT | HWMON_F_LABEL;
+
+		if (!macsmc_hwmon_parse_key(dev, smc, fan_node,
+					    "apple,fan-minimum", &fan->min))
+			fan->attributes |= HWMON_F_MIN;
+
+		if (!macsmc_hwmon_parse_key(dev, smc, fan_node,
+					    "apple,fan-maximum", &fan->max))
+			fan->attributes |= HWMON_F_MAX;
+
+		if (!macsmc_hwmon_parse_key(dev, smc, fan_node,
+					    "apple,fan-target", &fan->target))
+			fan->attributes |= HWMON_F_TARGET;
+
+		i += 1;
+	}
+	of_node_put(fan_list);
+
+	/*
+	 * The SMC firmware interface is unstable and we may lose some keys from time to time.
+	 * Handle this gracefully by only considering the number of *parsed* keys
+	 */
+	*num_keys = i;
+	if (!num_keys) {
+		dev_err(dev, "No valid keys found in %s\n",
+			of_node_full_name(fan_list));
+		return -EOPNOTSUPP;
+	}
+
+	return 0;
+}
 
 static int macsmc_hwmon_populate_sensors(struct device *dev,
 					 struct apple_smc *smc,
@@ -259,6 +413,23 @@ static int macsmc_hwmon_populate_sensors(struct device *dev,
 
 /*
  * Create a NULL-terminated array of u32 config flags for
+ * each fan hwmon channel in the hwmon_channel_info struct.
+ */
+static void macsmc_hwmon_populate_fan_configs(u32 *configs,
+					      struct macsmc_hwmon_fan *fans,
+					      u32 num_fans)
+{
+	pr_err("%s: num:%u\n", __func__, num_fans);
+	int idx = 0;
+
+	for (idx = 0; idx < num_fans; idx += 1)
+		configs[idx] = fans[idx].attributes;
+
+	configs[idx + 1] = 0;
+}
+
+/*
+ * Create a NULL-terminated array of u32 config flags for
  * each hwmon channel in the hwmon_channel_info struct.
  */
 static void macsmc_hwmon_populate_configs(u32 *configs,
@@ -295,6 +466,19 @@ static void macsmc_hwmon_populate_info(struct macsmc_hwmon *hwmon,
 	info[i]->config = (u32 *)(info[i] + 1);
 	macsmc_hwmon_populate_configs((u32 *)info[i]->config, 1, HWMON_C_REGISTER_TZ);
 	j = 2; /* number of configs for chip (1 + NULL) */
+
+	if (hwmon->num_fan) {
+		i += 1;
+		/* Pointer to page below the last config array */
+		info[i] = (struct hwmon_channel_info *)(info[i - 1]->config + j);
+		info[i]->type = hwmon_fan;
+		/* Pointer to page below hwmon_channel_info */
+		info[i]->config = (u32 *)(info[i] + 1);
+		/* Fill page at info[i]->config with channel flags */
+		macsmc_hwmon_populate_fan_configs((u32 *)info[i]->config,
+						  hwmon->fan, hwmon->num_fan);
+		j = hwmon->num_pwr + 1;
+	}
 
 	if (hwmon->num_pwr) {
 		i += 1;
@@ -366,6 +550,11 @@ static int macsmc_hwmon_probe(struct platform_device *pdev)
 		return -ENODEV;
 	}
 
+	ret = macsmc_hwmon_populate_fans(hwmon->dev, hwmon->smc, hwmon_node,
+					 &hwmon->fan, &hwmon->num_fan);
+	if (ret)
+		dev_info(hwmon->dev, "Could not populate fans!\n");
+
 	ret = macsmc_hwmon_populate_sensors(hwmon->dev, hwmon->smc, hwmon_node,
 					    &hwmon->pwr, "apple,pwr-keys",
 					    &hwmon->num_pwr);
@@ -408,6 +597,13 @@ static int macsmc_hwmon_probe(struct platform_device *pdev)
 			sizeof(struct hwmon_channel_info) +
 			sizeof(u32) * 2);
 	n_chans += 1;
+
+	if (hwmon->num_fan) {
+		info_sz += (sizeof(struct hwmon_channel_info *) +
+			    sizeof(struct hwmon_channel_info) +
+			    (sizeof(u32) * (hwmon->num_pwr + 1)));
+		n_chans += 1;
+	}
 
 	if (hwmon->num_pwr) {
 		info_sz += (sizeof(struct hwmon_channel_info *) +
@@ -458,8 +654,10 @@ static int macsmc_hwmon_probe(struct platform_device *pdev)
 				     "Probing SMC hwmon device failed!\n");
 
 	dev_info(hwmon->dev, "Registered SMC hwmon device. Sensors:\n");
-	dev_info(hwmon->dev, "Power: %d, Temperature: %d, Voltage: %d, Current: %d",
-		 hwmon->num_pwr, hwmon->num_temp, hwmon->num_volt, hwmon->num_curr);
+	dev_info(hwmon->dev,
+		 "Fans: %d, Power: %d, Temperature: %d, Voltage: %d, Current: %d",
+		 hwmon->num_fan, hwmon->num_pwr, hwmon->num_temp, hwmon->num_volt,
+		 hwmon->num_curr);
 	return 0;
 }
 
