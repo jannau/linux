@@ -29,9 +29,13 @@
 
 #define MAX_LABEL_LENGTH 32
 
+struct macsmc_hwmon_key {
+	smc_key key;
+	struct apple_smc_key_info info;
+};
+
 struct macsmc_hwmon_sensor {
-	struct apple_smc_key_info *macsmc_key_info;
-	smc_key macsmc_key;
+	struct macsmc_hwmon_key input;
 	char label[MAX_LABEL_LENGTH];
 };
 
@@ -84,6 +88,33 @@ static int macsmc_hwmon_read_label(struct device *dev,
 	return 0;
 }
 
+static int macsmc_hwmon_read_key(struct apple_smc *smc, struct macsmc_hwmon_key *k,
+				 long *val, int scale)
+{
+	int ret;
+
+	switch (k->info.type_code) {
+	case _SMC_KEY("flt "): {
+		u32 flt32;
+		ret = apple_smc_read_f32_scaled(smc, k->key, &flt32, scale);
+		if (ret < 0)
+			return ret;
+		*val = flt32;
+		return 0;
+	}
+	case _SMC_KEY("ioft"): {
+		u64 ui64;
+		ret = apple_smc_read_ioft_scaled(smc, k->key, &ui64, scale);
+		if (ret)
+			return ret;
+		*val = ui64;
+		return 0;
+	}
+	default:
+		return -EOPNOTSUPP;
+	}
+}
+
 /*
  * The SMC has keys of multiple types, denoted by a FourCC of the same format
  * as the key ID. We must be able to read all of them as we only know which
@@ -96,85 +127,31 @@ static int macsmc_hwmon_read(struct device *dev, enum hwmon_sensor_types type,
 			u32 attr, int channel, long *val)
 {
 	struct macsmc_hwmon *hwmon = dev_get_drvdata(dev);
-	u64 ui64 = 0;
-	u32 flt32 = 0;
-	// u16 ui16 = 0;
-	// u8 ui8 = 0;
-	// s64 si64 = 0;
-	// s32 si32 = 0;
-	// s16 si16 = 0;
-	// s8 int8 = 0;
-	int ret = 0;
 
 	switch (type) {
 	case hwmon_power:
-		switch (hwmon->pwr[channel].macsmc_key_info->type_code) {
-		case _SMC_KEY("flt "):
-			ret = apple_smc_read_f32_scaled(hwmon->smc,
-					hwmon->pwr[channel].macsmc_key,
-					&flt32, 1000000);
-			if (ret)
-				return -EINVAL;
-			*val = flt32;
-			break;
-		default:
-			return -EOPNOTSUPP;
-		}
-		break;
+		if (channel >= hwmon->num_pwr)
+			return -EINVAL;
+		return macsmc_hwmon_read_key(
+			hwmon->smc, &hwmon->pwr[channel].input, val, 1000000);
 	case hwmon_temp:
-		switch (hwmon->temp[channel].macsmc_key_info->type_code) {
-		case _SMC_KEY("flt "):
-			ret = apple_smc_read_f32_scaled(hwmon->smc,
-						hwmon->temp[channel].macsmc_key,
-						&flt32, 1000);
-			if (ret)
-				return -EINVAL;
-			*val = flt32;
-			break;
-		case _SMC_KEY("ioft"):
-			ret = apple_smc_read_ioft_scaled(
-				hwmon->smc, hwmon->temp[channel].macsmc_key,
-				&ui64, 1000);
-			if (ret)
-				return -EINVAL;
-			*val = ui64;
-			break;
-		default:
-			return -EOPNOTSUPP;
-		}
-		break;
+		if (channel >= hwmon->num_temp)
+			return -EINVAL;
+		return macsmc_hwmon_read_key(
+			hwmon->smc, &hwmon->temp[channel].input, val, 1000);
 	case hwmon_in:
-		switch (hwmon->volt[channel].macsmc_key_info->type_code) {
-		case _SMC_KEY("flt "):
-			ret = apple_smc_read_f32_scaled(hwmon->smc,
-							hwmon->volt[channel].macsmc_key,
-							&flt32, 1000);
-				if (ret)
-					return -EINVAL;
-				*val = flt32;
-				break;
-		default:
-			return -EOPNOTSUPP;
-		}
-		break;
+		if (channel >= hwmon->num_volt)
+			return -EINVAL;
+		return macsmc_hwmon_read_key(
+			hwmon->smc, &hwmon->volt[channel].input, val, 1000);
 	case hwmon_curr:
-		switch (hwmon->curr[channel].macsmc_key_info->type_code) {
-		case _SMC_KEY("flt "):
-			ret = apple_smc_read_f32_scaled(hwmon->smc,
-							hwmon->curr[channel].macsmc_key,
-							&flt32, 1);
-			if (ret)
-				return -EINVAL;
-			*val = flt32;
-			break;
-		default:
-			return -EOPNOTSUPP;
-		}
-		break;
+		if (channel >= hwmon->num_curr)
+			return -EINVAL;
+		return macsmc_hwmon_read_key(
+			hwmon->smc, &hwmon->curr[channel].input, val, 1);
 	default:
 		return -EOPNOTSUPP;
 	}
-	return ret;
 }
 
 static int macsmc_hwmon_write(struct device *dev, enum hwmon_sensor_types type,
@@ -213,7 +190,6 @@ static int macsmc_hwmon_populate_sensors(struct device *dev,
 {
 	struct device_node *sensors_node = NULL;
 	struct device_node *key_node = NULL;
-	struct apple_smc_key_info *key_info = NULL;
 	const char *key, *label;
 	int ret = 0;
 	int i = 0;
@@ -229,6 +205,7 @@ static int macsmc_hwmon_populate_sensors(struct device *dev,
 
 	*num_keys = of_get_child_count(sensors_node);
 	if (!num_keys) {
+		of_node_put(sensors_node);
 		dev_err(dev, "No keys found in %s!\n", sensor_node);
 		return -EOPNOTSUPP;
 	}
@@ -241,34 +218,30 @@ static int macsmc_hwmon_populate_sensors(struct device *dev,
 	}
 
 	for_each_child_of_node(sensors_node, key_node) {
+		struct macsmc_hwmon_sensor *sensor = (*sensors) + i;
+
 		ret = of_property_read_string(key_node, "apple,key-id", &key);
 		if (ret) {
 			dev_err(dev, "Could not find apple,key-id for node %d\n", i);
 			continue;
 		}
-		(*sensors)[i].macsmc_key = _SMC_KEY(key);
 
-		key_info = devm_kzalloc(dev, sizeof(struct apple_smc_key_info), GFP_KERNEL);
-		if (!key_info)
-			continue;
-		(*sensors)[i].macsmc_key_info = key_info;
-
-		ret = apple_smc_get_key_info(smc, _SMC_KEY(key), (*sensors)[i].macsmc_key_info);
+		ret = apple_smc_get_key_info(smc, _SMC_KEY(key), &sensor->input.info);
 		if (ret) {
 			dev_err(dev, "Failed to retrieve key info for %s\n", key);
 			continue;
 		}
+		sensor->input.key = _SMC_KEY(key);
 
 		ret = of_property_read_string(key_node, "apple,key-desc",
 					      &label);
 		if (ret)
-			strncpy((*sensors)[i].label, key, strlen(label));
+			strscpy(sensor->label, key, sizeof(sensor->label));
 		else
-			strncpy((*sensors)[i].label, label, strlen(label));
+			strscpy(sensor->label, label, sizeof(sensor->label));
 
 		i += 1;
 	}
-
 
 	/*
 	 * The SMC firmware interface is unstable and we may lose some keys from time to time.
