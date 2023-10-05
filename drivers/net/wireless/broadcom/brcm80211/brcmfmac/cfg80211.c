@@ -32,6 +32,7 @@
 #include "vendor.h"
 #include "bus.h"
 #include "common.h"
+#include "feature.h"
 
 #define BRCMF_SCAN_IE_LEN_MAX		2048
 
@@ -358,6 +359,22 @@ static u8 nl80211_band_to_fwil(enum nl80211_band band)
 		return WLC_BAND_5G;
 	case NL80211_BAND_6GHZ:
 		return WLC_BAND_6G;
+	default:
+		WARN_ON(1);
+		break;
+	}
+	return 0;
+}
+
+static enum nl80211_band fwil_band_to_nl80211(u8 band)
+{
+	switch (band) {
+	case WLC_BAND_2G:
+		return NL80211_BAND_2GHZ;
+	case WLC_BAND_5G:
+		return NL80211_BAND_5GHZ;
+	case WLC_BAND_6G:
+		return NL80211_BAND_6GHZ;
 	default:
 		WARN_ON(1);
 		break;
@@ -3427,6 +3444,7 @@ static s32 brcmf_inform_single_bss(struct brcmf_cfg80211_info *cfg,
 	struct cfg80211_bss *bss;
 	enum nl80211_band band;
 	struct brcmu_chan ch;
+	u16 chanspec;
 	u16 channel;
 	u32 freq;
 	u16 notify_capability;
@@ -3440,16 +3458,17 @@ static s32 brcmf_inform_single_bss(struct brcmf_cfg80211_info *cfg,
 		return -EINVAL;
 	}
 
+	chanspec = le16_to_cpu(bi->chanspec);
 	if (!bi->ctl_ch) {
-		ch.chspec = le16_to_cpu(bi->chanspec);
+		ch.chspec = chanspec;
 		cfg->d11inf.decchspec(&ch);
 		bi->ctl_ch = ch.control_ch_num;
 	}
 	channel = bi->ctl_ch;
 
-	if (CHSPEC_IS6G(bi->chanspec))
+	if (CHSPEC_IS6G(chanspec))
 		band = NL80211_BAND_6GHZ;
-	else if (CHSPEC_IS5G(bi->chanspec))
+	else if (CHSPEC_IS5G(chanspec))
 		band = NL80211_BAND_5GHZ;
 	else
 		band = NL80211_BAND_2GHZ;
@@ -3943,6 +3962,34 @@ brcmf_get_netinfo_array(struct brcmf_pno_scanresults_le *pfn_v1)
 		pfn_v2 = (struct brcmf_pno_scanresults_v2_le *)pfn_v1;
 		netinfo = (struct brcmf_pno_net_info_le *)(pfn_v2 + 1);
 		break;
+	case cpu_to_le32(3):
+		brcmf_err(
+			"This should use the brcmf_get_netinfo_v3_array function to retrieve the array\n");
+		break;
+	}
+
+	return netinfo;
+}
+
+static struct brcmf_pno_net_info_v3_le *
+brcmf_get_netinfo_v3_array(struct brcmf_pno_scanresults_le *pfn_v1)
+{
+	struct brcmf_pno_scanresults_v2_le *pfn_v2;
+	struct brcmf_pno_net_info_v3_le *netinfo;
+
+	switch (pfn_v1->version) {
+	default:
+		WARN_ON(1);
+		fallthrough;
+	case cpu_to_le32(1):
+	case cpu_to_le32(2):
+		brcmf_err(
+			"This should use the brcmf_get_netinfo_array function to retrieve the array\n");
+		break;
+	case cpu_to_le32(3):
+		pfn_v2 = (struct brcmf_pno_scanresults_v2_le *)pfn_v1;
+		netinfo = (struct brcmf_pno_net_info_v3_le *)(pfn_v2 + 1);
+		break;
 	}
 
 	return netinfo;
@@ -3954,13 +4001,12 @@ brcmf_get_netinfo_array(struct brcmf_pno_scanresults_le *pfn_v1)
  * scan request in the form of cfg80211_scan_request. For timebeing, create
  * cfg80211_scan_request one out of the received PNO event.
  */
-static s32
-brcmf_notify_sched_scan_results(struct brcmf_if *ifp,
-				const struct brcmf_event_msg *e, void *data)
+static s32 brcmf_notify_sched_scan_results(struct brcmf_if *ifp,
+					   const struct brcmf_event_msg *e,
+					   void *data)
 {
 	struct brcmf_pub *drvr = ifp->drvr;
 	struct brcmf_cfg80211_info *cfg = drvr->config;
-	struct brcmf_pno_net_info_le *netinfo, *netinfo_start;
 	struct cfg80211_scan_request *request = NULL;
 	struct wiphy *wiphy = cfg_to_wiphy(cfg);
 	int i, err = 0;
@@ -3969,10 +4015,19 @@ brcmf_notify_sched_scan_results(struct brcmf_if *ifp,
 	u32 result_count;
 	u32 status;
 	u32 datalen;
+	u32 min_data_len;
 
 	brcmf_dbg(SCAN, "Enter\n");
 
-	if (e->datalen < (sizeof(*pfn_result) + sizeof(*netinfo))) {
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_PFN_V3)) {
+		min_data_len = sizeof(*pfn_result) +
+			       sizeof(struct brcmf_pno_net_info_v3_le);
+	} else {
+		min_data_len = sizeof(*pfn_result) +
+			       sizeof(struct brcmf_pno_net_info_le);
+	}
+
+	if (e->datalen < min_data_len) {
 		brcmf_dbg(SCAN, "Event data to small. Ignore\n");
 		return 0;
 	}
@@ -3995,38 +4050,78 @@ brcmf_notify_sched_scan_results(struct brcmf_if *ifp,
 		bphy_err(drvr, "FALSE PNO Event. (pfn_count == 0)\n");
 		goto out_err;
 	}
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_PFN_V3)) {
+		struct brcmf_pno_net_info_v3_le *netinfo_v3, *netinfo_v3_start;
+		netinfo_v3_start = brcmf_get_netinfo_v3_array(pfn_result);
 
-	netinfo_start = brcmf_get_netinfo_array(pfn_result);
-	datalen = e->datalen - ((void *)netinfo_start - (void *)pfn_result);
-	if (datalen < result_count * sizeof(*netinfo)) {
-		bphy_err(drvr, "insufficient event data\n");
-		goto out_err;
-	}
-
-	request = brcmf_alloc_internal_escan_request(wiphy,
-						     result_count);
-	if (!request) {
-		err = -ENOMEM;
-		goto out_err;
-	}
-
-	bucket_map = 0;
-	for (i = 0; i < result_count; i++) {
-		netinfo = &netinfo_start[i];
-
-		if (netinfo->SSID_len > IEEE80211_MAX_SSID_LEN)
-			netinfo->SSID_len = IEEE80211_MAX_SSID_LEN;
-		brcmf_dbg(SCAN, "SSID:%.32s Channel:%d\n",
-			  netinfo->SSID, netinfo->channel);
-		bucket_map |= brcmf_pno_get_bucket_map(cfg->pno, netinfo);
-		err = brcmf_internal_escan_add_info(request,
-						    netinfo->SSID,
-						    netinfo->SSID_len,
-						    netinfo->channel);
-		if (err)
+		datalen = e->datalen -
+			  ((void *)netinfo_v3_start - (void *)pfn_result);
+		if (datalen < result_count * sizeof(*netinfo_v3)) {
+			bphy_err(drvr, "insufficient event data\n");
 			goto out_err;
-	}
+		}
 
+		request =
+			brcmf_alloc_internal_escan_request(wiphy, result_count);
+		if (!request) {
+			err = -ENOMEM;
+			goto out_err;
+		}
+
+		bucket_map = 0;
+		for (i = 0; i < result_count; i++) {
+			netinfo_v3 = &netinfo_v3_start[i];
+
+			if (netinfo_v3->SSID_len > IEEE80211_MAX_SSID_LEN)
+				netinfo_v3->SSID_len = IEEE80211_MAX_SSID_LEN;
+			brcmf_dbg(SCAN, "SSID:%.32s Channel:%d Band:%d\n",
+				  netinfo_v3->SSID,
+				  CHSPEC_CHANNEL(netinfo_v3->chanspec),
+				  CHSPEC_BAND(netinfo_v3->chanspec));
+			bucket_map |= brcmf_pno_get_bucket_map_v3(cfg->pno,
+								  netinfo_v3);
+			err = brcmf_internal_escan_add_info(
+				request, netinfo_v3->SSID, netinfo_v3->SSID_len,
+				CHSPEC_CHANNEL(netinfo_v3->chanspec));
+			if (err)
+				goto out_err;
+		}
+	} else {
+		struct brcmf_pno_net_info_le *netinfo, *netinfo_start;
+
+		netinfo_start = brcmf_get_netinfo_array(pfn_result);
+		datalen = e->datalen -
+			  ((void *)netinfo_start - (void *)pfn_result);
+		if (datalen < result_count * sizeof(*netinfo)) {
+			bphy_err(drvr, "insufficient event data\n");
+			goto out_err;
+		}
+
+		request =
+			brcmf_alloc_internal_escan_request(wiphy, result_count);
+		if (!request) {
+			err = -ENOMEM;
+			goto out_err;
+		}
+
+		bucket_map = 0;
+		for (i = 0; i < result_count; i++) {
+			netinfo = &netinfo_start[i];
+
+			if (netinfo->SSID_len > IEEE80211_MAX_SSID_LEN)
+				netinfo->SSID_len = IEEE80211_MAX_SSID_LEN;
+			brcmf_dbg(SCAN, "SSID:%.32s Channel:%d\n",
+				  netinfo->SSID, netinfo->channel);
+			bucket_map |=
+				brcmf_pno_get_bucket_map(cfg->pno, netinfo);
+			err = brcmf_internal_escan_add_info(request,
+							    netinfo->SSID,
+							    netinfo->SSID_len,
+							    netinfo->channel);
+			if (err)
+				goto out_err;
+		}
+	}
 	if (!bucket_map)
 		goto free_req;
 
@@ -4129,18 +4224,25 @@ static s32 brcmf_config_wowl_pattern(struct brcmf_if *ifp, u8 cmd[4],
 	return ret;
 }
 
-static s32
-brcmf_wowl_nd_results(struct brcmf_if *ifp, const struct brcmf_event_msg *e,
-		      void *data)
+static s32 brcmf_wowl_nd_results(struct brcmf_if *ifp,
+				 const struct brcmf_event_msg *e, void *data)
 {
 	struct brcmf_pub *drvr = ifp->drvr;
 	struct brcmf_cfg80211_info *cfg = drvr->config;
 	struct brcmf_pno_scanresults_le *pfn_result;
-	struct brcmf_pno_net_info_le *netinfo;
+	u32 min_data_len;
 
 	brcmf_dbg(SCAN, "Enter\n");
 
-	if (e->datalen < (sizeof(*pfn_result) + sizeof(*netinfo))) {
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_PFN_V3)) {
+		min_data_len = sizeof(*pfn_result) +
+			       sizeof(struct brcmf_pno_net_info_v3_le);
+	} else {
+		min_data_len = sizeof(*pfn_result) +
+			       sizeof(struct brcmf_pno_net_info_le);
+	}
+
+	if (e->datalen < min_data_len) {
 		brcmf_dbg(SCAN, "Event data to small. Ignore\n");
 		return 0;
 	}
@@ -4158,20 +4260,38 @@ brcmf_wowl_nd_results(struct brcmf_if *ifp, const struct brcmf_event_msg *e,
 		return -EINVAL;
 	}
 
-	netinfo = brcmf_get_netinfo_array(pfn_result);
-	if (netinfo->SSID_len > IEEE80211_MAX_SSID_LEN)
-		netinfo->SSID_len = IEEE80211_MAX_SSID_LEN;
-	memcpy(cfg->wowl.nd->ssid.ssid, netinfo->SSID, netinfo->SSID_len);
-	cfg->wowl.nd->ssid.ssid_len = netinfo->SSID_len;
-	cfg->wowl.nd->n_channels = 1;
-	/* TODO - need to store band so we can handle 6G */
-	cfg->wowl.nd->channels[0] =
-		ieee80211_channel_to_frequency(netinfo->channel,
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_PFN_V3)) {
+		struct brcmf_pno_net_info_v3_le *netinfo_v3;
+		netinfo_v3 = brcmf_get_netinfo_v3_array(pfn_result);
+
+		if (netinfo_v3->SSID_len > IEEE80211_MAX_SSID_LEN)
+			netinfo_v3->SSID_len = IEEE80211_MAX_SSID_LEN;
+		memcpy(cfg->wowl.nd->ssid.ssid, netinfo_v3->SSID,
+		       netinfo_v3->SSID_len);
+		cfg->wowl.nd->ssid.ssid_len = netinfo_v3->SSID_len;
+		cfg->wowl.nd->n_channels = 1;
+		/* TODO - need to store band so we can handle 6G */
+		cfg->wowl.nd->channels[0] = ieee80211_channel_to_frequency(
+			CHSPEC_CHANNEL(netinfo_v3->chanspec),
+			fwil_band_to_nl80211(netinfo_v3->chanspec));
+	} else {
+		struct brcmf_pno_net_info_le *netinfo;
+		netinfo = brcmf_get_netinfo_array(pfn_result);
+		if (netinfo->SSID_len > IEEE80211_MAX_SSID_LEN)
+			netinfo->SSID_len = IEEE80211_MAX_SSID_LEN;
+		memcpy(cfg->wowl.nd->ssid.ssid, netinfo->SSID,
+		       netinfo->SSID_len);
+		cfg->wowl.nd->ssid.ssid_len = netinfo->SSID_len;
+		cfg->wowl.nd->n_channels = 1;
+		/* TODO - need to store band so we can handle 6G */
+		cfg->wowl.nd->channels[0] = ieee80211_channel_to_frequency(
+			netinfo->channel,
 			netinfo->channel <= CH_MAX_2G_CHANNEL ?
-					NL80211_BAND_2GHZ : NL80211_BAND_5GHZ);
+				NL80211_BAND_2GHZ :
+				NL80211_BAND_5GHZ);
+	}
 	cfg->wowl.nd_info->n_matches = 1;
 	cfg->wowl.nd_info->matches[0] = cfg->wowl.nd;
-
 	/* Inform (the resume task) that the net detect information was recvd */
 	cfg->wowl.nd_data_completed = true;
 	wake_up(&cfg->wowl.nd_data_wait);
