@@ -12,6 +12,12 @@
  * Copyright The Asahi Linux Contributors
  */
 
+/ {
+	aliases {
+		isp = &isp;
+	};
+};
+
 &isp_dart0 {
 	status = "okay";
 };
