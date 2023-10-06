@@ -1,3 +1,18 @@
+* Fri Oct 06 2023 Augusto Caringi <acaringi@redhat.com> [6.5.6-0]
+- power: supply: core: Use blocking_notifier_call_chain to avoid RCU complaint (Kai-Heng Feng)
+- Revert "Add linux-next specific files for 20231004" (Justin M. Forbes)
+- redhat/configs: enable missing Kconfig options for Qualcomm RideSX4 (Brian Masney)
+- add a couple of CVEs to BugsFixed (Justin M. Forbes)
+- Add another F39 FE bug to BugsFixed (Justin M. Forbes)
+- Add linux-next specific files for 20231004 (Stephen Rothwell)
+- common: aarch64: enable NXP Flex SPI (Peter Robinson)
+- fedora: Switch TI_SCI_CLK and TI_SCI_PM_DOMAINS symbols to built-in (Javier Martinez Canillas)
+- Add bug for amdgpu to BugsFixed for 6.5.6 (Justin M. Forbes)
+- drm/amdgpu: set completion status as preempted for the resubmission (Jiadong Zhu)
+- Add CVE-2023-42756 to BugsFixed for 6.5.6 (Justin M. Forbes)
+- Linux v6.5.6
+Resolves: 
+
 * Sat Sep 23 2023 Justin M. Forbes <jforbes@fedoraproject.org> [6.5.5-0]
 - iommu/apple-dart: Handle DMA_FQ domains in attach_dev() (Hector Martin)
 - Note fix for atomic locking in BugsFixed (Justin M. Forbes)
