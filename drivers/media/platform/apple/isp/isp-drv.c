@@ -251,6 +251,11 @@ static int apple_isp_probe(struct platform_device *pdev)
 		return err;
 	}
 
+	err = of_property_read_u32(dev->of_node, "apple,temporal-filter",
+				   &isp->temporal_filter);
+	if (err)
+		isp->temporal_filter = 0;
+
 	err = apple_isp_init_presets(isp);
 	if (err) {
 		dev_err(dev, "failed to initialize presets\n");
@@ -391,7 +396,6 @@ static const struct apple_isp_hw apple_isp_hw_t8103 = {
 
 	.scl1 = false,
 	.lpdp = false,
-	.temporal_filter = 0,
 	.meta_size = ISP_META_SIZE_T8103,
 };
 
@@ -420,7 +424,6 @@ static const struct apple_isp_hw apple_isp_hw_t6000 = {
 
 	.scl1 = false,
 	.lpdp = false,
-	.temporal_filter = 0,
 	.meta_size = ISP_META_SIZE_T8103,
 };
 
@@ -443,7 +446,6 @@ static const struct apple_isp_hw apple_isp_hw_t8112 = {
 
 	.scl1 = false,
 	.lpdp = false,
-	.temporal_filter = 1,
 	.meta_size = ISP_META_SIZE_T8112,
 };
 
@@ -466,7 +468,6 @@ static const struct apple_isp_hw apple_isp_hw_t6020 = {
 
 	.scl1 = true,
 	.lpdp = true,
-	.temporal_filter = 0,
 	.meta_size = ISP_META_SIZE_T8112,
 };
 
