@@ -1,3 +1,8 @@
+* Sat Oct 07 2023 Janne Grunau <j@jannau.net> [6.5.6-400.asahi]
+- asahi-6.5-8
+- isp fixes
+Resolves:
+
 * Fri Oct 06 2023 Augusto Caringi <acaringi@redhat.com> [6.5.6-0]
 - power: supply: core: Use blocking_notifier_call_chain to avoid RCU complaint (Kai-Heng Feng)
 - Revert "Add linux-next specific files for 20231004" (Justin M. Forbes)
