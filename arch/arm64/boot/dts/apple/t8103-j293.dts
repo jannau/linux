@@ -210,8 +210,8 @@
 	};
 };
 
+#include "isp-imx248.dtsi"
+
 &isp {
 	apple,platform-id = <1>;
 };
-
-#include "isp-imx248.dtsi"
