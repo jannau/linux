@@ -253,7 +253,8 @@ int ipc_sm_handle(struct apple_isp *isp, struct isp_channel *chan)
 				isp->bt_surf = surf;
 			break;
 		default:
-			goto skip_vmap;
+			// skip vmap
+			return 0;
 		}
 
 		err = isp_surf_vmap(isp, surf);
@@ -261,9 +262,6 @@ int ipc_sm_handle(struct apple_isp *isp, struct isp_channel *chan)
 			isp_err(isp, "failed to vmap iova=0x%llx size=0x%llx\n",
 				surf->iova, surf->size);
 		}
-skip_vmap:
-		/* To the gc it goes... */
-
 	} else {
 		/* This should be the shared surface free request, but
 		 * 1) The fw doesn't request to free all of what it requested
