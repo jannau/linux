@@ -132,7 +132,7 @@
 	apple,perf-base-pstate = <3>;
 };
 
-#include "isp-imx558.dtsi"
+#include "isp-imx364.dtsi"
 
 &isp {
 	apple,platform-id = <2>;
