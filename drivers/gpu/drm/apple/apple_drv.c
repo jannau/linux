@@ -488,7 +488,7 @@ static int apple_drm_init(struct device *dev)
 
 	ret = drmm_mode_config_init(&apple->drm);
 	if (ret)
-		goto err_unload;
+		goto err_unbind;
 
 	/*
 	 * IOMFB::UPPipeDCP_H13P::verify_surfaces produces the error "plane
@@ -512,20 +512,18 @@ static int apple_drm_init(struct device *dev)
 
 	ret = apple_drm_init_dcp(dev);
 	if (ret)
-		goto err_unload;
+		goto err_unbind;
 
 	drm_mode_config_reset(&apple->drm);
 
 	ret = drm_dev_register(&apple->drm, 0);
 	if (ret)
-		goto err_unload;
+		goto err_unbind;
 
 	drm_fbdev_generic_setup(&apple->drm, 32);
 
 	return 0;
 
-err_unload:
-	drm_dev_put(&apple->drm);
 err_unbind:
 	component_unbind_all(dev, NULL);
 	return ret;
