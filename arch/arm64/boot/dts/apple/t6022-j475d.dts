@@ -28,6 +28,11 @@
 	power-domains = <&ps_dispext0_cpu0_die1>, <&ps_dptx_phy_ps_die1>;
 };
 
+&dcpext0_die1 {
+	// J180 misses "function-dp2hdmi_pwr_en"
+	dp2hdmi-pwren-gpios = <&smc_gpio 25 GPIO_ACTIVE_HIGH>;
+};
+
 &typec4 {
 	label = "USB-C Front Right";
 };
