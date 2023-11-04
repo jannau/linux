@@ -264,6 +264,7 @@
 		power-domains = <&ps_isp_sys>;
 
 		apple,dma-range = <0x100 0x0 0x1 0x0>;
+		status = "disabled";
 	};
 
 	isp_dart1: iommu@3860f4000 {
