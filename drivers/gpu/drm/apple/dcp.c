@@ -562,7 +562,7 @@ static int dcp_comp_bind(struct device *dev, struct device *main, void *data)
 
 	ret = apple_rtkit_wake(dcp->rtk);
 	if (ret)
-		return dev_err_probe(dev, PTR_ERR(dcp->rtk),
+		return dev_err_probe(dev, ret,
 				     "Failed to boot RTKit: %d", ret);
 
 	return ret;
