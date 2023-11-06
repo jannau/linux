@@ -328,8 +328,10 @@ static int dcp_create_piodma_iommu_dev(struct apple_dcp *dcp)
 				     "Failed to get piodma child DT node\n");
 
 	dcp->piodma = of_platform_device_create(node, NULL, dcp->dev);
-	if (!dcp->piodma)
-		return dev_err_probe(dcp->dev, -ENODEV, "Failed to create piodma pdev\n");
+	if (!dcp->piodma) {
+		of_node_put(node);
+		return dev_err_probe(dcp->dev, -ENODEV, "Failed to gcreate piodma pdev for %pOF\n", node);
+	}
 
 	ret = dma_set_mask_and_coherent(&dcp->piodma->dev, DMA_BIT_MASK(42));
 	if (ret)
@@ -341,6 +343,7 @@ static int dcp_create_piodma_iommu_dev(struct apple_dcp *dcp)
 			"Failed to configure IOMMU child DMA\n");
 		goto err_destroy_pdev;
 	}
+	of_node_put(node);
 
 	dcp->iommu_dom = iommu_domain_alloc(&platform_bus_type);
 	if (!dcp->iommu_dom) {
@@ -359,6 +362,7 @@ static int dcp_create_piodma_iommu_dev(struct apple_dcp *dcp)
 err_free_domain:
 	iommu_domain_free(dcp->iommu_dom);
 err_destroy_pdev:
+	of_node_put(node);
 	of_platform_device_destroy(&dcp->piodma->dev, NULL);
 	return ret;
 }
