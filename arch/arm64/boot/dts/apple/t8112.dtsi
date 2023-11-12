@@ -677,16 +677,14 @@
 			mbox-names = "mbox";
 			iommus = <&dcp_dart 5>;
 
-			reg-names = "coproc", "disp-0", "disp-1", "disp-2",
-				"disp-3", "disp-4", "disp-5", "doorbell";
+			/* the ADT has 2 additional regs which seems to be unused */
+			reg-names = "coproc", "disp-0", "disp-1", "disp-2", "disp-3";
 			reg = <0x2 0x31c00000 0x0 0x4000>,
 				<0x2 0x30000000 0x0 0x61c000>,
 				<0x2 0x31320000 0x0 0x4000>,
 				<0x2 0x31344000 0x0 0x4000>,
-				<0x2 0x31800000 0x0 0x800000>,
-				<0x2 0x3b3d0000 0x0 0x4000>,
-				<0x2 0x3b730000 0x0 0x1000>,
-				<0x2 0x3bc3c000 0x0 0x1000>;
+				<0x2 0x31800000 0x0 0x800000>;
+			apple,bw-scratch = <&pmgr_dcp 0 4 0x5d8>;
 			power-domains = <&ps_disp0_cpu0>;
 			resets = <&ps_disp0_cpu0>;
 			clocks = <&clk_disp0>;
@@ -933,6 +931,12 @@
 			#size-cells = <1>;
 			reg = <0x2 0x3b700000 0 0x14000>;
 			/* child nodes are added in t8103-pmgr.dtsi */
+		};
+
+		pmgr_dcp: power-management@23b3d0000 {
+			reg = <0x2 0x3b3d0000 0x0 0x4000>;
+			reg-names = "dcp-bw-scratch";
+			#apple,bw-scratch-cells = <3>;
 		};
 
 		pinctrl_ap: pinctrl@23c100000 {
