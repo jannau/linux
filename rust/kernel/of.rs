@@ -162,6 +162,11 @@ impl Node {
 
     /// Returns `true` if the node is the root node.
     pub fn is_root(&self) -> bool {
+        #[cfg(not(CONFIG_OF))]
+        {
+            false
+        }
+        #[cfg(CONFIG_OF)]
         unsafe { bindings::of_node_is_root(self.raw_node) }
     }
 
