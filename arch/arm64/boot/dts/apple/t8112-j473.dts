@@ -19,6 +19,7 @@
 	aliases {
 		bluetooth0 = &bluetooth0;
 		ethernet0 = &ethernet0;
+		sio = &sio;
 		wifi0 = &wifi0;
 	};
 };
@@ -34,6 +35,7 @@
 &dcp {
 	status = "okay";
 	apple,connector-type = "HDMI-A";
+	apple,audio-xmitter = <&dpaudio0>;
 
 	/*  HDMI HPD gpio, used as interrupt*/
 	hdmi-hpd-gpios = <&pinctrl_aop 49 GPIO_ACTIVE_HIGH>;
