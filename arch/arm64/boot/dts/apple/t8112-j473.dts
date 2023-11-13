@@ -9,6 +9,8 @@
 
 /dts-v1/;
 
+// #define TEST_DPAUDIO
+
 #include "t8112.dtsi"
 #include "t8112-jxxx.dtsi"
 
@@ -21,6 +23,9 @@
 		/delete-property/ dcp;
 		dcpext = &dcpext;
 		ethernet0 = &ethernet0;
+#ifdef TEST_DPAUDIO
+		sio = &sio;
+#endif
 		wifi0 = &wifi0;
 	};
 };
@@ -52,6 +57,9 @@
 &dcpext {
 	status = "okay";
 	apple,connector-type = "HDMI-A";
+#ifdef TEST_DPAUDIO
+	apple,audio-xmitter = <&dpaudio1>;
+#endif
 
 	/*  HDMI HPD gpio, used as interrupt*/
 	hdmi-hpd-gpios = <&pinctrl_aop 49 GPIO_ACTIVE_HIGH>;
@@ -63,6 +71,12 @@
 	phy-names = "dp-phy";
 	apple,dptx-phy = <5>;
 };
+
+#ifdef TEST_DPAUDIO
+&dpaudio1 {
+	status = "okay";
+};
+#endif
 
 /*
  * Provide labels for the USB type C ports.
