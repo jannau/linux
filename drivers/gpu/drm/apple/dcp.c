@@ -276,9 +276,6 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
 	dptxport_connect(dcp->dptxport[port].service, 0, dcp->dptx_phy, dcp->dptx_die);
 	dptxport_request_display(dcp->dptxport[port].service);
 	dcp->dptxport[port].connected = true;
-	/* required on t6001 / atc3 */
-	mdelay(50);
-	dptxport_set_hpd(dcp->dptxport[port].service, true);
 
 ret:
 	mutex_unlock(&dcp->hpd_mutex);
@@ -297,8 +294,6 @@ static int dcp_dptx_disconnect(struct apple_dcp *dcp, u32 port)
 	}
 
 	if (dcp->dptxport[port].enabled && dcp->dptxport[port].connected) {
-		/* required on t6001 / atc3 */
-		dptxport_set_hpd(dcp->dptxport[port].service, true);
 		dptxport_release_display(dcp->dptxport[port].service);
 		dcp->dptxport[port].connected = false;
 	}

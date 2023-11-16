@@ -414,7 +414,7 @@ static int dptxport_call_get_supports_hpd(struct apple_epic_service *service,
 		return -EINVAL;
 
 	reply->retcode = cpu_to_le32(0);
-	reply->supported = cpu_to_le32(1);
+	reply->supported = cpu_to_le32(0);
 	return 0;
 }
 
@@ -495,7 +495,7 @@ static int dptxport_call(struct apple_epic_service *service, u32 idx,
 					      reply, reply_size);
 	default:
 		/* just try to ACK and hope for the best... */
-		dev_err(service->ep->dcp->dev, "DPTXPort: unhandled call %d\n",
+		dev_info(service->ep->dcp->dev, "DPTXPort: acking unhandled call %u\n",
 			idx);
 		fallthrough;
 	/* we can silently ignore and just ACK these calls */
