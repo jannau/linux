@@ -27,6 +27,7 @@
 #include <linux/dma-fence.h>
 #include <linux/dma-fence-chain.h>
 #include <linux/dma-mapping.h>
+#include <linux/dma-resv.h>
 #include <linux/err.h>
 #include <linux/errname.h>
 #include <linux/instruction_pointer.h>
@@ -477,6 +478,18 @@ void rust_helper_dma_fence_set_error(struct dma_fence *fence, int error)
 	dma_fence_set_error(fence, error);
 }
 EXPORT_SYMBOL_GPL(rust_helper_dma_fence_set_error);
+
+int rust_helper_dma_resv_lock(struct dma_resv *obj, struct ww_acquire_ctx *ctx)
+{
+	return dma_resv_lock(obj, ctx);
+}
+EXPORT_SYMBOL_GPL(rust_helper_dma_resv_lock);
+
+void rust_helper_dma_resv_unlock(struct dma_resv *obj)
+{
+	dma_resv_unlock(obj);
+}
+EXPORT_SYMBOL_GPL(rust_helper_dma_resv_unlock);
 
 #endif
 
