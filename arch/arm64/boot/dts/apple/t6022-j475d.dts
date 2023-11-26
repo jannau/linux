@@ -21,6 +21,7 @@
 	aliases {
 		atcphy4 = &atcphy0_die1;
 		atcphy5 = &atcphy1_die1;
+		/delete-property/ dcp;
 	};
 };
 
