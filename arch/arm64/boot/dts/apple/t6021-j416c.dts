@@ -17,7 +17,10 @@
 	model = "Apple MacBook Pro (16-inch, M2 Max, 2023)";
 };
 
-/* This machine model (only) has two extra boost CPU P-states */
+/* This machine model (only) has two extra boost CPU P-states *
+ * Disabled: Only the highest CPU bin (38 GPU cores) has this.
+ * Keep this disabled until m1n1 learns how to remove these OPPs
+ * for unsupported machines, otherwise it breaks cpufreq.
 &avalanche_opp {
 	opp18 {
 		opp-hz = /bits/ 64 <3528000000>;
@@ -32,6 +35,7 @@
 		turbo-mode;
 	};
 };
+*/
 
 &wifi0 {
 	brcm,board-type = "apple,amami";
