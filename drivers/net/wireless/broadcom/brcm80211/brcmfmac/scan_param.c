@@ -151,7 +151,7 @@ brcmf_scan_param_get_prepped_struct_v1(struct brcmf_cfg80211_info *cfg,
 		char *ptr;
 
 		offset =
-			offsetof(struct brcmf_scan_params_v2_le, channel_list) +
+			offsetof(struct brcmf_scan_params_le, channel_list) +
 			n_channels * sizeof(u16);
 		offset = roundup(offset, sizeof(u32));
 		length += sizeof(struct brcmf_ssid_le) * n_ssids;
