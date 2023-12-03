@@ -293,8 +293,13 @@ static int dptxport_call_set_active_lane_count(struct apple_epic_service *servic
 		dptx->phy_ops.dp.set_lanes = 0;
 	}
 
+	dptx->lane_count = lane_count;
+
 	reply->retcode = cpu_to_le32(retcode);
 	reply->lane_count = cpu_to_le64(lane_count);
+
+	if (dptx->lane_count > 0)
+		complete(&dptx->linkcfg_completion);
 
 	return ret;
 }
@@ -332,7 +337,8 @@ dptxport_call_did_change_link_config(struct apple_epic_service *service)
 	struct dptx_port *dptx = service->cookie;
 	/* assume the link config did change and wait a little bit */
 	mdelay(10);
-	complete(&dptx->linkcfg_completion);
+
+
 	return 0;
 }
 
