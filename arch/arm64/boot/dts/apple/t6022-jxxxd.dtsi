@@ -11,7 +11,7 @@
 
 / {
 	aliases {
-		dcpext4 = &dcpext0_die1;
+		dcpext5 = &dcpext1_die1;
 		disp0 = &display;
 	};
 };
@@ -21,22 +21,22 @@
 };
 
 &display {
-	iommus = <&dispext0_dart_die1 0>;
+	iommus = <&dispext1_dart_die1 0>;
 };
 
-&dispext0_dart_die1 {
+&dispext1_dart_die1 {
 	status = "okay";
 };
 
-&dcpext0_dart_die1 {
+&dcpext1_dart_die1 {
 	status = "okay";
 };
 
-&dcpext0_mbox_die1 {
+&dcpext1_mbox_die1 {
 	status = "okay";
 };
 
-&dcpext0_die1 {
+&dcpext1_die1 {
 	status = "okay";
 	apple,connector-type = "HDMI-A";
 
