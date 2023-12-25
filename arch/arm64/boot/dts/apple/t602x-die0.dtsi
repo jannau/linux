@@ -198,7 +198,7 @@
 	};
 
 	mtp_mbox: mbox@2a9408000 {
-		compatible = "apple,t8112-asc-mailbox", "apple,asc-mailbox-v4";
+		compatible = "apple,t6020-asc-mailbox", "apple,asc-mailbox-v4";
 		reg = <0x2 0xa9408000 0x0 0x4000>;
 		interrupt-parent = <&aic>;
 		interrupts = <AIC_IRQ 0 693 IRQ_TYPE_LEVEL_HIGH>,
