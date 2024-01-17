@@ -16,7 +16,7 @@
 extern "C" {
 #endif
 
-#define DRM_ASAHI_UNSTABLE_UABI_VERSION		10009
+#define DRM_ASAHI_UNSTABLE_UABI_VERSION		10010
 
 #define DRM_ASAHI_GET_PARAMS			0x00
 #define DRM_ASAHI_VM_CREATE			0x01
@@ -352,6 +352,8 @@ struct drm_asahi_cmd_render {
 
 	__u32 vertex_helper_program;
 	__u32 fragment_helper_program;
+	__u32 vertex_helper_cfg;
+	__u32 fragment_helper_cfg;
 	__u64 vertex_helper_arg;
 	__u64 fragment_helper_arg;
 
@@ -513,7 +515,7 @@ struct drm_asahi_cmd_compute {
 	__u32 pad;
 
 	__u32 helper_program;
-	__u32 helper_unk; /* ? */
+	__u32 helper_cfg;
 	__u64 helper_arg;
 
 	__u32 encoder_id;
