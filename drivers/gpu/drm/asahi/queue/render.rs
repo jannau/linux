@@ -558,9 +558,6 @@ impl super::Queue::ver {
         if unks.flags & uapi::ASAHI_RENDER_UNK_SET_FRG_UNK_3C as u64 == 0 {
             unks.frg_unk_3c = 1;
         }
-        if unks.flags & uapi::ASAHI_RENDER_UNK_SET_FRG_UNK_40 as u64 == 0 {
-            unks.frg_unk_40 = 0;
-        }
         if unks.flags & uapi::ASAHI_RENDER_UNK_SET_RELOAD_ZLSCTRL as u64 == 0 {
             unks.reload_zlsctrl = cmdbuf.zls_ctrl;
         }
