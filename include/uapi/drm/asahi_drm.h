@@ -449,7 +449,7 @@ struct drm_asahi_cmd_render {
 #define ASAHI_RENDER_UNK_SET_LOAD_BGOBJVALS	(1UL << 23)
 #define ASAHI_RENDER_UNK_SET_FRG_UNK_38		(1UL << 24)
 #define ASAHI_RENDER_UNK_SET_FRG_UNK_3C		(1UL << 25)
-#define ASAHI_RENDER_UNK_SET_FRG_UNK_40		(1UL << 26)
+
 #define ASAHI_RENDER_UNK_SET_RELOAD_ZLSCTRL	(1UL << 27)
 #define ASAHI_RENDER_UNK_SET_UNK_BUF_10		(1UL << 28)
 #define ASAHI_RENDER_UNK_SET_FRG_UNK_MASK	(1UL << 29)
@@ -486,7 +486,6 @@ struct drm_asahi_cmd_render_unknowns {
 	__u64 load_bgobjvals;
 	__u64 frg_unk_38;
 	__u64 frg_unk_3c;
-	__u64 frg_unk_40;
 	__u64 reload_zlsctrl;
 	__u64 unk_buf_10;
 	__u64 frg_unk_mask;
