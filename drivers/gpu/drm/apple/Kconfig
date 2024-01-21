@@ -4,12 +4,16 @@ config DRM_APPLE
 	depends on DRM && OF && ARM64
 	depends on ARCH_APPLE || COMPILE_TEST
 	depends on APPLE_RTKIT
-	depends on SND
 	select DRM_KMS_HELPER
 	select DRM_KMS_DMA_HELPER
 	select DRM_GEM_DMA_HELPER
 	select VIDEOMODE_HELPERS
 	select MULTIPLEXER
-	select SND_PCM
 	help
 	  Say Y if you have an Apple Silicon chipset.
+
+config DRM_APPLE_AUDIO
+	tristate "DisplayPort/HDMI Audio support"
+	depends on DRM_APPLE
+	depends on SND
+	select SND_PCM

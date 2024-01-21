@@ -7,7 +7,9 @@
 #include <linux/string.h>
 #include <linux/slab.h>
 
+#if IS_ENABLED(CONFIG_DRM_APPLE_AUDIO)
 #include <sound/pcm.h> // for sound format masks
+#endif
 
 #include "parser.h"
 #include "trace.h"
@@ -680,6 +682,7 @@ int parse_epic_service_init(struct dcp_parse_ctx *handle, const char **name,
 	return ret;
 }
 
+#if IS_ENABLED(CONFIG_DRM_APPLE_AUDIO)
 static int parse_sample_rate_bit(struct dcp_parse_ctx *handle, unsigned int *ratebit)
 {
 	s64 rate;
@@ -983,6 +986,7 @@ int parse_sound_mode(struct dcp_parse_ctx *handle,
 	return 0;
 }
 EXPORT_SYMBOL_GPL(parse_sound_mode);
+#endif
 
 int parse_system_log_mnits(struct dcp_parse_ctx *handle, struct dcp_system_ev_mnits *entry)
 {
