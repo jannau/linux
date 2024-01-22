@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only OR MIT
 /* Copyright 2022 Sven Peter <sven@svenpeter.dev> */
 
+#include <linux/bitfield.h>
 #include <linux/completion.h>
 #include <linux/phy/phy.h>
 #include <linux/delay.h>
