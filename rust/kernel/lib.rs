@@ -21,7 +21,6 @@
 #![feature(duration_constants)]
 #![feature(new_uninit)]
 #![feature(offset_of)]
-#![feature(ptr_metadata)]
 #![feature(receiver_trait)]
 #![feature(type_alias_impl_trait)]
 #![feature(unsize)]
