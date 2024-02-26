@@ -544,7 +544,7 @@ static inline void actlr_thread_switch(struct task_struct *next)
 #ifdef CONFIG_ARM64_MEMORY_MODEL_CONTROL
 int arch_prctl_mem_model_get(struct task_struct *t)
 {
-	if (cpus_have_const_cap(ARM64_HAS_TSO_APPLE) &&
+	if (alternative_has_cap_unlikely(ARM64_HAS_TSO_APPLE) &&
 		t->thread.actlr & ACTLR_APPLE_TSO)
 		return PR_SET_MEM_MODEL_TSO;
 
@@ -553,10 +553,10 @@ int arch_prctl_mem_model_get(struct task_struct *t)
 
 int arch_prctl_mem_model_set(struct task_struct *t, unsigned long val)
 {
-	if (cpus_have_const_cap(ARM64_HAS_TSO_FIXED) && val == PR_SET_MEM_MODEL_TSO)
+	if (alternative_has_cap_unlikely(ARM64_HAS_TSO_FIXED) && val == PR_SET_MEM_MODEL_TSO)
 		return 0;
 
-	if (cpus_have_const_cap(ARM64_HAS_TSO_APPLE)) {
+	if (alternative_has_cap_unlikely(ARM64_HAS_TSO_APPLE)) {
 		WARN_ON(!system_has_actlr_state());
 
 		switch (val) {
