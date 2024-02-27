@@ -2,6 +2,7 @@
 /* Copyright 2022 Sven Peter <sven@svenpeter.dev> */
 
 #include <linux/dma-mapping.h>
+#include <linux/of_platform.h>
 #include <linux/slab.h>
 #include <linux/workqueue.h>
 #include <linux/soc/apple/rtkit.h>
