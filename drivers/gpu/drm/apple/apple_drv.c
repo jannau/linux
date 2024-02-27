@@ -14,6 +14,7 @@
 #include <linux/module.h>
 #include <linux/of_address.h>
 #include <linux/of_device.h>
+#include <linux/of_platform.h>
 
 #include <drm/drm_aperture.h>
 #include <drm/drm_atomic.h>
