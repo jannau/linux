@@ -1172,7 +1172,7 @@ apple_uat_alloc_pgtable(struct io_pgtable_cfg *cfg, void *cookie)
 		return NULL;
 
 	/* UAT needs full 16K aligned pages for the pgd */
-	data->pgd = __arm_lpae_alloc_pages(SZ_16K, GFP_KERNEL, cfg);
+	data->pgd = __arm_lpae_alloc_pages(SZ_16K, GFP_KERNEL, cfg, cookie);
 	if (!data->pgd)
 		goto out_free_data;
 
