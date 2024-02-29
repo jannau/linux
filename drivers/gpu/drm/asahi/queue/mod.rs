@@ -405,7 +405,7 @@ impl Queue::ver {
                 },
             )?)?;
 
-        let sched = sched::Scheduler::new(dev, WQ_SIZE, 0, 100000, c_str!("asahi_sched"))?;
+        let sched = sched::Scheduler::new(dev, 3, WQ_SIZE, 0, 100000, c_str!("asahi_sched"))?;
         // Priorities are handled by the AGX scheduler, there is no meaning within a
         // per-queue scheduler.
         let entity = sched::Entity::new(&sched, sched::Priority::Normal)?;
@@ -585,7 +585,7 @@ impl Queue for Queue::ver {
             )?
             .into();
 
-        let mut job = self.entity.new_job(QueueJob::ver {
+        let mut job = self.entity.new_job(1, QueueJob::ver {
             dev: self.dev.clone(),
             vm_bind,
             op_guard,
