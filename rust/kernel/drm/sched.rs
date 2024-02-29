@@ -262,7 +262,7 @@ impl<T: JobImpl> Entity<T> {
     ///
     /// The entity must outlive the pending job until it transitions into the submitted state,
     /// after which the scheduler owns it.
-    pub fn new_job(&self, inner: T) -> Result<PendingJob<'_, T>> {
+    pub fn new_job(&self, credits: u32, inner: T) -> Result<PendingJob<'_, T>> {
         let mut job: Box<MaybeUninit<Job<T>>> = Box::try_new_zeroed()?;
 
         // SAFETY: We hold a reference to the entity (which is a valid pointer),
@@ -271,6 +271,7 @@ impl<T: JobImpl> Entity<T> {
             bindings::drm_sched_job_init(
                 addr_of_mut!((*job.as_mut_ptr()).job),
                 &self.0.as_ref().get_ref().entity as *const _ as *mut _,
+                credits,
                 core::ptr::null_mut(),
             )
         })?;
@@ -310,12 +311,14 @@ impl<T: JobImpl> Scheduler<T> {
         run_job: Some(run_job_cb::<T>),
         timedout_job: Some(timedout_job_cb::<T>),
         free_job: Some(free_job_cb::<T>),
+        update_job_credits: None,
     };
     /// Creates a new DRM Scheduler object
     // TODO: Shared timeout workqueues & scores
     pub fn new(
         device: &impl device::RawDevice,
-        hw_submission: u32,
+        num_rqs: u32,
+        credit_limit: u32,
         hang_limit: u32,
         timeout_ms: usize,
         name: &'static CStr,
@@ -327,7 +330,9 @@ impl<T: JobImpl> Scheduler<T> {
             bindings::drm_sched_init(
                 addr_of_mut!((*sched.as_mut_ptr()).sched),
                 &Self::OPS,
-                hw_submission,
+                core::ptr::null_mut(),
+                num_rqs,
+                credit_limit,
                 hang_limit,
                 bindings::msecs_to_jiffies(timeout_ms.try_into()?).try_into()?,
                 core::ptr::null_mut(),
