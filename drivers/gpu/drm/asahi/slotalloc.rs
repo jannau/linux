@@ -231,7 +231,7 @@ impl<T: SlotItem> SlotAllocator<T> {
                     );
                 }
                 first = false;
-                if self.0.cond.wait(&mut inner) {
+                if self.0.cond.wait_interruptible(&mut inner) {
                     return Err(ERESTARTSYS);
                 }
             } else {
