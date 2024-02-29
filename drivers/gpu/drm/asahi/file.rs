@@ -13,6 +13,7 @@ use crate::{alloc, buffer, driver, gem, mmu, queue};
 use core::mem::MaybeUninit;
 use kernel::dma_fence::RawDmaFence;
 use kernel::drm::gem::BaseObject;
+use kernel::error::code::*;
 use kernel::io_buffer::{IoBufferReader, IoBufferWriter};
 use kernel::prelude::*;
 use kernel::sync::{Arc, Mutex};
