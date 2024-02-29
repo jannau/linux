@@ -124,6 +124,8 @@ pub trait IoPageTable: crate::private::Sealed {
             coherent_walk: config.coherent_walk,
             tlb: &Self::FLUSH_OPS,
             iommu_dev: dev.raw_device(),
+            alloc: None,
+            free: None,
             __bindgen_anon_1: unsafe { mem::zeroed() },
         };
 
