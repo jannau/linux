@@ -149,6 +149,7 @@ impl<T: DriverObject> Object<T> {
         vunmap: Some(bindings::drm_gem_shmem_object_vunmap),
         mmap: Some(bindings::drm_gem_shmem_object_mmap),
         status: None,
+        rss: None,
         vm_ops: &SHMEM_VM_OPS,
         evict: None,
     };
