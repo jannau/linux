@@ -55,13 +55,6 @@ pub const MASTER: u32 = bindings::drm_ioctl_flags_DRM_MASTER;
 /// This is equivalent to callers with the SYSADMIN capability.
 pub const ROOT_ONLY: u32 = bindings::drm_ioctl_flags_DRM_ROOT_ONLY;
 
-/// Whether drm_ioctl_desc.func should be called with the DRM BKL held or not. Enforced as the
-/// default for all modern drivers, hence there should never be a need to set this flag.
-///
-/// Do not use anywhere else than for the VBLANK_WAIT IOCTL, which is the only legacy IOCTL which
-/// needs this.
-pub const UNLOCKED: u32 = bindings::drm_ioctl_flags_DRM_UNLOCKED;
-
 /// This is used for all ioctl needed for rendering only, for drivers which support render nodes.
 /// This should be all new render drivers, and hence it should be always set for any ioctl with
 /// `AUTH` set. Note though that read-only query ioctl might have this set, but have not set
