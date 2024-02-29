@@ -325,6 +325,12 @@ impl<T: JobImpl> Scheduler<T> {
     ) -> Result<Scheduler<T>> {
         let mut sched: UniqueArc<MaybeUninit<SchedulerInner<T>>> = UniqueArc::try_new_uninit()?;
 
+        // SAFETY: zero sched->sched_rq as drm_sched_init() uses it to exit early withoput initialisation
+        // TODO: allocate sched zzeroed instead
+        unsafe {
+            (*sched.as_mut_ptr()).sched.sched_rq = core::ptr::null_mut();
+        };
+
         // SAFETY: The drm_sched pointer is valid and pinned as it was just allocated above.
         to_result(unsafe {
             bindings::drm_sched_init(
