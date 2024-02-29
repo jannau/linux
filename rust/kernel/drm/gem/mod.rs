@@ -238,6 +238,7 @@ impl<T: DriverObject> Object<T> {
         vunmap: None,
         mmap: None,
         status: None,
+        rss: None,
         vm_ops: core::ptr::null_mut(),
         evict: None,
     };
