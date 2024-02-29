@@ -136,7 +136,7 @@ macro_rules! declare_drm_ioctls {
 
                             match $func(dev, data, &file) {
                                 Err(e) => e.to_errno(),
-                                Ok(i) => i.try_into().unwrap_or(ERANGE.to_errno()),
+                                Ok(i) => i.try_into().unwrap_or(code::ERANGE.to_errno()),
                             }
                         }
                         Some($cmd)
