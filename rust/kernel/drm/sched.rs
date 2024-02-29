@@ -30,7 +30,7 @@ pub enum Status {
 #[repr(u32)]
 pub enum Priority {
     /// Low userspace priority
-    Min = bindings::drm_sched_priority_DRM_SCHED_PRIORITY_MIN,
+    Low = bindings::drm_sched_priority_DRM_SCHED_PRIORITY_LOW,
     /// Normal userspace priority
     Normal = bindings::drm_sched_priority_DRM_SCHED_PRIORITY_NORMAL,
     /// High userspace priority
