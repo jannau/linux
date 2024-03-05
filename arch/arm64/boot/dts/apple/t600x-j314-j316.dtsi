@@ -40,6 +40,7 @@
 			/* Format properties will be added by loader */
 			status = "disabled";
 			power-domains = <&ps_disp0_cpu0>;
+			panel = &panel;
 		};
 	};
 
