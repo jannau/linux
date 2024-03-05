@@ -46,6 +46,10 @@
 	};
 };
 
+&framebuffer0 {
+	panel = &panel;
+};
+
 &display_dfr {
 	status = "okay";
 	#address-cells = <1>;
