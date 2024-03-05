@@ -39,6 +39,10 @@
 	};
 };
 
+&framebuffer0 {
+	panel = &panel;
+};
+
 &bluetooth0 {
 	brcm,board-type = "apple,shikoku";
 };
