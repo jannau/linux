@@ -1468,7 +1468,7 @@ S:	Odd fixes
 F:	drivers/input/mouse/bcm5974.c
 
 APPLE DRM DISPLAY DRIVER
-M:	Alyssa Rosenzweig <alyssa@rosenzweig.io>
+M:	Janne Grunau <j@jannau.net>
 L:	dri-devel@lists.freedesktop.org
 S:	Maintained
 T:	git git://anongit.freedesktop.org/drm/drm-misc
