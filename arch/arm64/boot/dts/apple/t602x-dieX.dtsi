@@ -258,7 +258,7 @@
 		reg = <0x3 0x9c000000 0x0 0x4000>,
 			<0x3 0x9c040000 0x0 0xc000>;
 		reg-names = "core", "dptx";
-		power-domain = <&DIE_NODE(ps_dptx_phy_ps)>;
+		power-domains = <&DIE_NODE(ps_dptx_phy_ps)>;
 		#phy-cells = <0>;
 		#reset-cells = <0>;
 		status = "disabled"; /* only exposed on desktop devices */
