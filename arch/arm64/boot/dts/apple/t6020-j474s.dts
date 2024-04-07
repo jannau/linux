@@ -9,6 +9,8 @@
 
 /dts-v1/;
 
+// #define TEST_DPAUDIO
+
 #include "t6020.dtsi"
 
 #define NO_PCIE_SDHC
@@ -79,8 +81,14 @@
 	status = "okay";
 };
 &dcpext0 {
+#ifdef TEST_DPAUDIO
+	apple,audio-xmitter = <&dpaudio1>;
+#endif
 #else
 &dcp {
+#ifdef TEST_DPAUDIO
+	apple,audio-xmitter = <&dpaudio0>;
+#endif
 #endif
 	status = "okay";
 	apple,connector-type = "HDMI-A";
@@ -95,6 +103,16 @@
 	phy-names = "dp-phy";
 	apple,dptx-phy = <4>;
 };
+
+#ifdef TEST_DPAUDIO
+#if USE_DCPEXT0
+&dpaudio1 {
+#else
+&dpaudio0 {
+#endif
+	status = "okay";
+};
+#endif
 
 &gpu {
 	/* Apple does not do this, but they probably should */
