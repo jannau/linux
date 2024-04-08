@@ -902,6 +902,12 @@ static inline unsigned int get_vmid_bits(u64 mmfr1)
 	return 8;
 }
 
+static __always_inline bool system_has_actlr_state(void)
+{
+	return IS_ENABLED(CONFIG_ARM64_ACTLR_STATE) &&
+		alternative_has_cap_unlikely(ARM64_HAS_TSO_APPLE);
+}
+
 s64 arm64_ftr_safe_value(const struct arm64_ftr_bits *ftrp, s64 new, s64 cur);
 struct arm64_ftr_reg *get_arm64_ftr_reg(u32 sys_id);
 
@@ -917,6 +923,8 @@ extern struct arm64_ftr_override arm64_sw_feature_override;
 
 u32 get_kvm_ipa_limit(void);
 void dump_cpu_features(void);
+
+void __init init_cpucap_indirect_list_from_array(const struct arm64_cpu_capabilities *caps);
 
 #endif /* __ASSEMBLY__ */
 
