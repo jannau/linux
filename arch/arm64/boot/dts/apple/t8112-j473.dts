@@ -9,7 +9,7 @@
 
 /dts-v1/;
 
-// #define TEST_DPAUDIO
+#define TEST_DPAUDIO
 
 #include "t8112.dtsi"
 #include "t8112-jxxx.dtsi"
