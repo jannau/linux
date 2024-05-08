@@ -8,9 +8,11 @@
 
 #include <drm/drm_device.h>
 #include <drm/drm_drv.h>
+#include <drm/drm_exec.h>
 #include <drm/drm_file.h>
 #include <drm/drm_gem.h>
 #include <drm/drm_gem_shmem_helper.h>
+#include <drm/drm_gpuvm.h>
 #include <drm/drm_ioctl.h>
 #include <drm/drm_syncobj.h>
 #include <drm/gpu_scheduler.h>
@@ -77,3 +79,5 @@ const xa_mark_t BINDINGS_XA_MARK_2 = XA_MARK_2;
 const xa_mark_t BINDINGS_XA_PRESENT = XA_PRESENT;
 const xa_mark_t BINDINGS_XA_MARK_MAX = XA_MARK_MAX;
 const xa_mark_t BINDINGS_XA_FREE_MARK = XA_FREE_MARK;
+
+const uint32_t BINDINGS_DRM_EXEC_INTERRUPTIBLE_WAIT = DRM_EXEC_INTERRUPTIBLE_WAIT;
