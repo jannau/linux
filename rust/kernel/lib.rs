@@ -26,6 +26,7 @@
 #![feature(const_mut_refs)]
 #![feature(const_ptr_write)]
 #![feature(const_maybe_uninit_as_mut_ptr)]
+#![warn(clippy::undocumented_unsafe_blocks)]
 
 // Ensure conditional compilation based on the kernel configuration works;
 // otherwise we may silently break things like initcall handling.
