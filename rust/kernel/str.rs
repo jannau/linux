@@ -48,7 +48,7 @@ impl fmt::Display for BStr {
     /// let s = CString::try_from_fmt(fmt!("{}", ascii)).unwrap();
     /// assert_eq!(s.as_bytes(), "Hello, BStr!".as_bytes());
     ///
-    /// let non_ascii = b_str!("🦀");
+    /// let non_ascii = b_str!("�");
     /// let s = CString::try_from_fmt(fmt!("{}", non_ascii)).unwrap();
     /// assert_eq!(s.as_bytes(), "\\xf0\\x9f\\xa6\\x80".as_bytes());
     /// ```
@@ -79,7 +79,7 @@ impl fmt::Debug for BStr {
     /// let s = CString::try_from_fmt(fmt!("{:?}", ascii)).unwrap();
     /// assert_eq!(s.as_bytes(), "\"Hello, \\\"BStr\\\"!\"".as_bytes());
     ///
-    /// let non_ascii = b_str!("😺");
+    /// let non_ascii = b_str!("�");
     /// let s = CString::try_from_fmt(fmt!("{:?}", non_ascii)).unwrap();
     /// assert_eq!(s.as_bytes(), "\"\\xf0\\x9f\\x98\\xba\"".as_bytes());
     /// ```
@@ -306,7 +306,7 @@ impl CStr {
     /// ```
     #[inline]
     pub unsafe fn as_str_unchecked(&self) -> &str {
-        // SAFETY: TODO.
+        // SAFETY: Depends on the above safety contract
         unsafe { core::str::from_utf8_unchecked(self.as_bytes()) }
     }
 
@@ -389,7 +389,7 @@ impl fmt::Display for CStr {
     /// # use kernel::fmt;
     /// # use kernel::str::CStr;
     /// # use kernel::str::CString;
-    /// let penguin = c_str!("🐧");
+    /// let penguin = c_str!("�");
     /// let s = CString::try_from_fmt(fmt!("{}", penguin)).unwrap();
     /// assert_eq!(s.as_bytes_with_nul(), "\\xf0\\x9f\\x90\\xa7\0".as_bytes());
     ///
@@ -418,7 +418,7 @@ impl fmt::Debug for CStr {
     /// # use kernel::fmt;
     /// # use kernel::str::CStr;
     /// # use kernel::str::CString;
-    /// let penguin = c_str!("🐧");
+    /// let penguin = c_str!("�");
     /// let s = CString::try_from_fmt(fmt!("{:?}", penguin)).unwrap();
     /// assert_eq!(s.as_bytes_with_nul(), "\"\\xf0\\x9f\\x90\\xa7\"\0".as_bytes());
     ///
@@ -572,7 +572,7 @@ mod tests {
         let good_bytes = b"\xf0\x9f\xa6\x80\0";
         let checked_cstr = CStr::from_bytes_with_nul(good_bytes).unwrap();
         let checked_str = checked_cstr.to_str().unwrap();
-        assert_eq!(checked_str, "🦀");
+        assert_eq!(checked_str, "�");
     }
 
     #[test]
@@ -588,7 +588,7 @@ mod tests {
         let good_bytes = b"\xf0\x9f\x90\xA7\0";
         let checked_cstr = CStr::from_bytes_with_nul(good_bytes).unwrap();
         let unchecked_str = unsafe { checked_cstr.as_str_unchecked() };
-        assert_eq!(unchecked_str, "🐧");
+        assert_eq!(unchecked_str, "�");
     }
 
     #[test]
