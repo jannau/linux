@@ -54,6 +54,8 @@ impl LockClassKey {
 // SAFETY: `bindings::lock_class_key` just represents an opaque memory location, and is never
 // actually dereferenced.
 unsafe impl Send for LockClassKey {}
+// SAFETY: `bindings::lock_class_key` just represents an opaque memory location, and is never
+// actually dereferenced.
 unsafe impl Sync for LockClassKey {}
 
 // Location is 'static but not really, since module unloads will

@@ -444,7 +444,7 @@ pub(crate) struct SimpleAllocation {
     ptr: Option<NonNull<u8>>,
     gpu_ptr: u64,
     size: usize,
-    vm: mmu::Vm,
+    _mapping: mmu::KernelMapping,
     obj: crate::gem::ObjectRef,
 }
 
@@ -464,7 +464,6 @@ impl Drop for SimpleAllocation {
                 vmap.as_mut_slice().fill(0x42);
             }
         }
-        self.obj.drop_vm_mappings(self.vm.id());
     }
 }
 
@@ -566,7 +565,7 @@ impl Allocator for SimpleAllocator {
         if debug_enabled(DebugFlags::FillAllocations) {
             obj.vmap()?.as_mut_slice().fill(0xde);
         }
-        let iova = obj.map_into_range(
+        let mapping = obj.map_into_range(
             &self.vm,
             self.start,
             self.end,
@@ -574,6 +573,8 @@ impl Allocator for SimpleAllocator {
             self.prot,
             true,
         )?;
+
+        let iova = mapping.iova();
 
         let ptr = unsafe { p.add(offset) };
         let gpu_ptr = (iova + offset) as u64;
@@ -592,7 +593,7 @@ impl Allocator for SimpleAllocator {
             ptr: NonNull::new(ptr),
             gpu_ptr,
             size,
-            vm: self.vm.clone(),
+            _mapping: mapping,
             obj,
         })
     }
@@ -696,11 +697,10 @@ impl RawAllocation for HeapAllocation {
 struct HeapAllocatorInner {
     dev: AsahiDevRef,
     allocated: usize,
-    backing_objects: Vec<(crate::gem::ObjectRef, u64)>,
+    backing_objects: Vec<(crate::gem::ObjectRef, mmu::KernelMapping, u64)>,
     garbage: Option<Vec<mm::Node<HeapAllocatorInner, HeapAllocationInner>>>,
     total_garbage: usize,
     name: CString,
-    vm_id: u64,
 }
 
 /// A heap allocator which uses the DRM MM range allocator to manage its objects.
@@ -754,7 +754,6 @@ impl HeapAllocator {
             backing_objects: KVec::new(),
             // TODO: This clearly needs a try_clone() or similar
             name: CString::try_from_fmt(fmt!("{}", &*name))?,
-            vm_id: vm.id(),
             garbage: if keep_garbage { Some(Vec::new()) } else { None },
             total_garbage: 0,
         };
@@ -817,16 +816,18 @@ impl HeapAllocator {
         }
 
         let gpu_ptr = self.top;
-        if let Err(e) = obj.map_at(&self.vm, gpu_ptr, self.prot, self.cpu_maps) {
-            dev_err!(
-                &self.dev,
-                "HeapAllocator[{}]::add_block: Failed to map at {:#x} ({:?})\n",
-                &*self.name,
-                gpu_ptr,
-                e
-            );
-            return Err(e);
-        }
+        let mapping = obj
+            .map_at(&self.vm, gpu_ptr, self.prot, self.cpu_maps)
+            .map_err(|err| {
+                dev_err!(
+                    &self.dev,
+                    "HeapAllocator[{}]::add_block: Failed to map at {:#x} ({:?})\n",
+                    &*self.name,
+                    gpu_ptr,
+                    err
+                );
+                err
+            })?;
 
         self.mm
             .with_inner(|inner| inner.backing_objects.reserve(1, GFP_KERNEL))?;
@@ -874,8 +875,11 @@ impl HeapAllocator {
             new_top
         );
 
-        self.mm
-            .with_inner(|inner| inner.backing_objects.try_push((obj, gpu_ptr)))?;
+        self.mm.with_inner(|inner| {
+            inner
+                .backing_objects
+                .push((obj, mapping, gpu_ptr), GFP_KERNEL)
+        })?;
 
         self.top = new_top;
 
@@ -896,8 +900,8 @@ impl HeapAllocator {
             inner
                 .backing_objects
                 .binary_search_by(|obj| {
-                    let start = obj.1;
-                    let end = obj.1 + obj.0.size() as u64;
+                    let start = obj.2;
+                    let end = obj.2 + obj.0.size() as u64;
                     if start > addr {
                         Ordering::Greater
                     } else if end <= addr {
@@ -1013,7 +1017,7 @@ impl Allocator for HeapAllocator {
                 let idx = idx.unwrap_or(inner.backing_objects.len() - 1);
                 let obj = &mut inner.backing_objects[idx];
                 let p = obj.0.vmap()?.as_mut_ptr() as *mut u8;
-                Ok((obj.1, obj.0.size(), p))
+                Ok((obj.2, obj.0.size(), p))
             })?;
             assert!(obj_start <= start);
             assert!(obj_start + obj_size as u64 >= end);
@@ -1091,10 +1095,6 @@ impl Drop for HeapAllocatorInner {
                 &*self.name,
                 self.allocated
             );
-        } else {
-            for mut obj in self.backing_objects.drain(..) {
-                obj.0.drop_vm_mappings(self.vm_id);
-            }
         }
     }
 }
