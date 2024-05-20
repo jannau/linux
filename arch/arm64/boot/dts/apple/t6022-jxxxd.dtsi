@@ -1,34 +1,78 @@
 // SPDX-License-Identifier: GPL-2.0+ OR MIT
 /*
- * Mac Studio (M1 Ultra, 2022)
+ * Mac Pro (M2 Ultra, 2023) and Mac Studio (M2 Ultra, 2023)
  *
- * target-type: J375d
+ * This file contains the parts common to J180 and J475 devices with t6022.
+ *
+ * target-type: J180d / J475d
  *
  * Copyright The Asahi Linux Contributors
  */
 
-/dts-v1/;
-
-#include "t6002.dtsi"
-#include "t600x-j375.dtsi"
-
 / {
-	compatible = "apple,j375d", "apple,t6002", "apple,arm-platform";
-	model = "Apple Mac Studio (M1 Ultra, 2022)";
 	aliases {
-		atcphy4 = &atcphy0_die1;
-		atcphy5 = &atcphy1_die1;
+		dcpext4 = &dcpext0_die1;
+		disp0 = &display;
+		sio1 = &sio_die1;
 	};
 };
 
-&dpaudio0 {
+&lpdptxphy_die1 {
 	status = "okay";
 };
 
-&sound {
-	compatible = "apple,j375-macaudio", "apple,macaudio";
-	model = "Mac Studio J375";
+&display {
+	iommus = <&dispext0_dart_die1 0>;
 };
+
+&dispext0_dart_die1 {
+	status = "okay";
+};
+
+&dcpext0_dart_die1 {
+	status = "okay";
+};
+
+&dcpext0_mbox_die1 {
+	status = "okay";
+};
+
+&dcpext0_die1 {
+	status = "okay";
+	apple,connector-type = "HDMI-A";
+
+	/*  HDMI HPD gpio, used as interrupt*/
+	hdmi-hpd-gpios = <&pinctrl_aop 41 GPIO_ACTIVE_HIGH>;
+
+	hdmi-pwren-gpios = <&smc_gpio 23 GPIO_ACTIVE_HIGH>;
+	// J180 misses "function-dp2hdmi_pwr_en"
+	// dp2hdmi-pwren-gpios = <&smc_gpio 25 GPIO_ACTIVE_HIGH>;
+
+	phys = <&lpdptxphy_die1>;
+	phy-names = "dp-phy";
+	apple,dptx-phy = <4>;
+	apple,dptx-die = <1>;
+};
+
+&dpaudio1_die1 {
+	status = "okay";
+};
+
+/* delete missing dcp0/disp0 */
+
+/delete-node/ &disp0_dart;
+/delete-node/ &dcp_dart;
+/delete-node/ &dcp_mbox;
+/delete-node/ &dcp;
+/delete-node/ &dpaudio0;
+
+/* delete unused always-on power-domains */
+/delete-node/ &ps_disp0_cpu0;
+/delete-node/ &ps_disp0_fe;
+
+/delete-node/ &ps_disp0_cpu0_die1;
+/delete-node/ &ps_disp0_fe_die1;
+
 
 /* USB Type C */
 &i2c0 {
@@ -37,12 +81,11 @@
 		compatible = "apple,cd321x";
 		reg = <0x39>;
 		interrupt-parent = <&pinctrl_ap>;
-		interrupts = <174 IRQ_TYPE_LEVEL_LOW>;
+		interrupts = <44 IRQ_TYPE_LEVEL_LOW>;
 		interrupt-names = "irq";
 
 		typec4: connector {
 			compatible = "usb-c-connector";
-			label = "USB-C Front Right";
 			power-role = "dual";
 			data-role = "dual";
 
@@ -70,12 +113,11 @@
 		compatible = "apple,cd321x";
 		reg = <0x3a>;
 		interrupt-parent = <&pinctrl_ap>;
-		interrupts = <174 IRQ_TYPE_LEVEL_LOW>;
+		interrupts = <44 IRQ_TYPE_LEVEL_LOW>;
 		interrupt-names = "irq";
 
 		typec5: connector {
 			compatible = "usb-c-connector";
-			label = "USB-C Front Left";
 			power-role = "dual";
 			data-role = "dual";
 
@@ -132,29 +174,3 @@
 		};
 	};
 };
-
-/* delete unused USB nodes on die 1 */
-
-/delete-node/ &dwc3_2_dart_0_die1;
-/delete-node/ &dwc3_2_dart_1_die1;
-/delete-node/ &dwc3_2_die1;
-/delete-node/ &atcphy2_die1;
-/delete-node/ &atcphy2_xbar_die1;
-
-/delete-node/ &dwc3_3_dart_0_die1;
-/delete-node/ &dwc3_3_dart_1_die1;
-/delete-node/ &dwc3_3_die1;
-/delete-node/ &atcphy3_die1;
-/delete-node/ &atcphy3_xbar_die1;
-
-
-/* delete unused always-on power-domains on die 1 */
-
-/delete-node/ &ps_atc2_usb_aon_die1;
-/delete-node/ &ps_atc2_usb_die1;
-
-/delete-node/ &ps_atc3_usb_aon_die1;
-/delete-node/ &ps_atc3_usb_die1;
-
-/delete-node/ &ps_disp0_cpu0_die1;
-/delete-node/ &ps_disp0_fe_die1;
