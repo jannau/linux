@@ -57,6 +57,7 @@
 //! [`Cell`]: core::cell
 //! [`Rc`]: rc
 //! [`RefCell`]: core::cell
+#![feature(doc_cfg_hide)]
 
 // To run alloc tests without x.py without ending up with two copies of alloc, Miri needs to be
 // able to "empty" this crate. See <https://github.com/rust-lang/miri-test-libstd/issues/4>.
@@ -105,14 +106,15 @@
 #![feature(allocator_api)]
 #![feature(array_chunks)]
 #![feature(array_into_iter_constructors)]
-#![feature(array_methods)]
+#![cfg_attr(not(version("1.77")), feature(array_methods))]
 #![feature(array_windows)]
 #![feature(ascii_char)]
 #![feature(assert_matches)]
 #![feature(async_iterator)]
+#![feature(cfg_version)]
 #![feature(coerce_unsized)]
 #![feature(const_align_of_val)]
-#![feature(const_box)]
+#![cfg_attr(not(version("1.73")), feature(const_box))]
 #![cfg_attr(not(no_borrow), feature(const_cow_is_borrowed))]
 #![feature(const_eval_select)]
 #![feature(const_maybe_uninit_as_mut_ptr)]
@@ -122,7 +124,7 @@
 #![feature(const_size_of_val)]
 #![feature(const_waker)]
 #![feature(core_intrinsics)]
-#![feature(core_panic)]
+#![cfg_attr(not(version("1.77")), feature(core_panic))]
 #![feature(deprecated_suggestion)]
 #![feature(dispatch_from_dyn)]
 #![feature(error_generic_member_access)]
@@ -149,7 +151,7 @@
 #![feature(set_ptr_value)]
 #![feature(sized_type_properties)]
 #![feature(slice_from_ptr_range)]
-#![feature(slice_group_by)]
+#![cfg_attr(not(version("1.77")), feature(slice_group_by))]
 #![feature(slice_ptr_get)]
 #![feature(slice_ptr_len)]
 #![feature(slice_range)]
@@ -204,7 +206,6 @@
 //
 // Rustdoc features:
 #![feature(doc_cfg)]
-#![feature(doc_cfg_hide)]
 // Technically, this is a bug in rustdoc: rustdoc sees the documentation on `#[lang = slice_alloc]`
 // blocks is for `&[T]`, which also has documentation using this feature in `core`, and gets mad
 // that the feature-gate isn't enabled. Ideally, it wouldn't check for the feature gate for docs

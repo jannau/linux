@@ -52,6 +52,7 @@ extern "Rust" {
 #[unstable(feature = "allocator_api", issue = "32838")]
 #[derive(Copy, Clone, Default, Debug)]
 #[cfg(not(test))]
+#[cfg_attr(version("1.78"), lang = "global_alloc_ty")]
 pub struct Global;
 
 #[cfg(test)]
@@ -335,6 +336,7 @@ unsafe fn exchange_malloc(size: usize, align: usize) -> *mut u8 {
     }
 }
 
+#[cfg(not(version("1.72")))]
 // # Allocation error handler
 
 #[cfg(not(no_global_oom_handling))]
