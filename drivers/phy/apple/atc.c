@@ -2113,6 +2113,8 @@ static int atcphy_mux_set(struct typec_mux_dev *mux,
 			  struct typec_mux_state *state)
 {
 	struct apple_atcphy *atcphy = typec_mux_get_drvdata(mux);
+	bool switch_mode = false;
+	bool is_dp = false;
 
 	// TODO: 
 	flush_work(&atcphy->mux_set_work);
@@ -2129,9 +2131,11 @@ static int atcphy_mux_set(struct typec_mux_dev *mux,
 		case TYPEC_DP_STATE_C:
 		case TYPEC_DP_STATE_E:
 			atcphy->target_mode = APPLE_ATCPHY_MODE_DP;
+			is_dp = true;
 			break;
 		case TYPEC_DP_STATE_D:
 			atcphy->target_mode = APPLE_ATCPHY_MODE_USB3_DP;
+			is_dp = true;
 			break;
 		default:
 			dev_err(atcphy->dev,
@@ -2151,10 +2155,25 @@ static int atcphy_mux_set(struct typec_mux_dev *mux,
 		atcphy->target_mode = APPLE_ATCPHY_MODE_OFF;
 	}
 
-	if (atcphy->mode != atcphy->target_mode)
+	if (atcphy->mode != atcphy->target_mode) {
+		switch_mode = true;
 		WARN_ON(!schedule_work(&atcphy->mux_set_work));
+	}
 
 	mutex_unlock(&atcphy->lock);
+
+	if (switch_mode && is_dp)
+	{
+		const char *target = (atcphy->target_mode == APPLE_ATCPHY_MODE_DP) ? "DP" : "DP/USB3";
+		int ret = wait_for_completion_timeout(&atcphy->atcphy_online_event,
+						      msecs_to_jiffies(2500));
+		if (ret > 0)
+			dev_info(atcphy->dev, "%s() mode: %s finished after %d ms\n",
+				 __func__, target, jiffies_to_msecs(ret));
+		else if (ret < 0)
+			dev_warn(atcphy->dev, "%s() mode: %s failed :%d\n",
+				 __func__, target, ret);
+	}
 
 	return 0;
 }
