@@ -21,6 +21,9 @@
 		disp0 = &display;
 		disp0_piodma = &disp0_piodma;
 		#endif
+#ifdef ENABLE_DCPEXT_TYPEC
+		dcpext1 = &dcpext1;
+#endif
 		ethernet0 = &ethernet0;
 		nvram = &nvram;
 		serial0 = &serial0;
@@ -117,6 +120,11 @@
 			power-role = "dual";
 			data-role = "dual";
 
+#ifdef ENABLE_DCPEXT_TYPEC
+			/* hacks */
+			displayport = <&dcpext1>;
+#endif
+
 			ports {
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -132,6 +140,14 @@
 						remote-endpoint = <&typec1_usb_ss>;
 					};
 				};
+#ifdef ENABLE_DCPEXT_TYPEC
+				port@2 {
+					reg = <2>;
+					typec1_con_dp: endpoint {
+						remote-endpoint = <&typec1_dp>;
+					};
+				};
+#endif
 			};
 		};
 	};
@@ -200,6 +216,51 @@
 		};
 	};
 };
+
+#ifdef ENABLE_DCPEXT_TYPEC
+&display {
+	iommus = <&disp0_dart 0>, <&dispext1_dart 0>;
+
+	port {
+		typec1_dp: endpoint {
+			remote-endpoint = <&typec1_con_dp>;
+		};
+	};
+};
+
+&dispext1_dart {
+	status = "okay";
+};
+
+&dcpext1_dart {
+	status = "okay";
+};
+
+&dcpext1_mbox {
+	status = "okay";
+};
+
+&dcpext1 {
+	status = "okay";
+	apple,connector-type = "DP";
+
+	/* hacks */
+	apple,dptx-phy = <1>;
+	phys = <&atcphy1 PHY_TYPE_DP>;
+	phy-names = "dp-phy";
+	mux-controls = <&atcphy1_xbar 0>;
+	mux-control-names = "dp-xbar";
+	mux-index = <2>;
+};
+
+&dpaudio2 {
+	status = "okay";
+};
+
+&atcphy1_xbar {
+        status = "okay";
+};
+#endif
 
 /* USB controllers */
 &dwc3_0 {
