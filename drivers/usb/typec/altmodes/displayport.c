@@ -766,6 +766,8 @@ int dp_altmode_probe(struct typec_altmode *alt)
 		dp->connector_fwnode = fwnode_handle_get(fwnode); /* embedded DP */
 	if (IS_ERR(dp->connector_fwnode))
 		dp->connector_fwnode = NULL;
+	dev_err(&alt->dev, "%s: dp fwnode: %s\n", __func__,
+		dp->connector_fwnode ? fwnode_get_name(dp->connector_fwnode) : "none");
 
 	typec_altmode_set_drvdata(alt, dp);
 	if (plug)

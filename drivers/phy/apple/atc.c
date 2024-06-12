@@ -2081,9 +2081,11 @@ static void atcphy_mux_set_work(struct work_struct *work)
 	if (atcphy->dwc3_online && atcphy->target_mode == APPLE_ATCPHY_MODE_OFF) {
 		reinit_completion(&atcphy->dwc3_shutdown_event);
 		mutex_unlock(&atcphy->lock);
-		wait_for_completion_timeout(&atcphy->dwc3_shutdown_event,
+		int wait = wait_for_completion_timeout(&atcphy->dwc3_shutdown_event,
 					    msecs_to_jiffies(1000));
 		mutex_lock(&atcphy->lock);
+		dev_warn(atcphy->dev, "%s: wait_for_completion: %d, %d ms\n",
+			 __func__, wait, wait > 0 ? jiffies_to_msecs(wait) : 0);
 		WARN_ON(atcphy->dwc3_online);
 	}
 
