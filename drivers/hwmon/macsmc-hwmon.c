@@ -135,7 +135,7 @@ static int macsmc_hwmon_read_key(struct apple_smc *smc,
 
 		ret = apple_smc_read_ioft_scaled(smc, sensor->macsmc_key, &ioft,
 						scale);
-		*val = ioft;
+		*val = (long)ioft;
 		break;
 	}
 	default:
