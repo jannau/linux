@@ -6,22 +6,14 @@
  * Copyright The Asahi Linux Contributors
  */
 
+#include "hwmon-fan.dtsi"
+
 &smc {
 	hwmon {
 		apple,temp-keys {
 			temp-TW0P {
 				apple,key-id = "TW0P";
 				label = "WiFi/BT Module Temp";
-			};
-		};
-		apple,fan-keys {
-			fan-F0Ac {
-				apple,key-id = "F0Ac";
-				label = "Fan";
-				apple,fan-minimum = "F0Mn";
-				apple,fan-maximum = "F0Mx";
-				apple,fan-target = "F0Tg";
-				apple,fan-mode = "F0Md";
 			};
 		};
 	};

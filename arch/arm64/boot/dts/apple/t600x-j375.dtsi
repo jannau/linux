@@ -403,26 +403,3 @@
 #endif
 
 #include "spi1-nvram.dtsi"
-
-&smc {
-	hwmon {
-		apple,fan-keys {
-			fan-F0Ac {
-				apple,key-id = "F0Ac";
-				label = "Fan 0";
-				apple,fan-minimum = "F0Mn";
-				apple,fan-maximum = "F0Mx";
-				apple,fan-target = "F0Tg";
-				apple,fan-mode = "F0Md";
-			};
-			fan-F1Ac {
-				apple,key-id = "F1Ac";
-				label = "Fan 1";
-				apple,fan-minimum = "F1Mn";
-				apple,fan-maximum = "F1Mx";
-				apple,fan-target = "F1Tg";
-				apple,fan-mode = "F1Md";
-			};
-		};
-	};
-};
