@@ -354,12 +354,15 @@ impl File {
             dummy_obj.map_at(&vm, mmu::IOVA_UNK_PAGE, mmu::PROT_GPU_SHARED_RW, true)?;
 
         mod_dev_dbg!(device, "[File {} VM {}]: VM created\n", file_id, id);
-        resv.store(Box::new(Vm {
-            ualloc,
-            ualloc_priv,
-            vm,
-            _dummy_mapping: dummy_mapping,
-        }, GFP_KERNEL,)?)?;
+        resv.store(Box::new(
+            Vm {
+                ualloc,
+                ualloc_priv,
+                vm,
+                _dummy_mapping: dummy_mapping,
+            },
+            GFP_KERNEL,
+        )?)?;
 
         data.vm_id = id;
 
