@@ -58,6 +58,11 @@ void tps6598x_displayport_update_dp_sid(struct tps6598x *tps)
 
 	mutex_lock(&tps->dp_lock);
 	tps->dp_status = status;
+	dp = le32_to_cpu(status.dp_status_rx);
+	dev_err(tps->dev, "%s: dp_status_rx: %s %s %s (0x%02x)\n", __func__,
+		dp & DP_STATUS_SWITCH_TO_USB ? "SW_USB" : "",
+		dp & DP_STATUS_EXIT_DP_MODE ? "EXIT_DP" : "",
+		dp & DP_STATUS_HPD_STATE ? "HPD" : "", dp);
 	mutex_unlock(&tps->dp_lock);
 
 	/*
@@ -79,11 +84,6 @@ void tps6598x_displayport_update_dp_sid(struct tps6598x *tps)
 			return;
 		}
 	}
-	dp = le32_to_cpu(status.dp_status_rx);
-	dev_err(tps->dev, "%s: dp_status_rx: %s %s %s (0x%02x)\n", __func__,
-		dp & DP_STATUS_SWITCH_TO_USB ? "SW_USB" : "",
-		dp & DP_STATUS_EXIT_DP_MODE ? "EXIT_DP" : "",
-		dp & DP_STATUS_HPD_STATE ? "HPD" : "", dp);
 
 	if (!tps->dp_configured)
 		return;
@@ -177,6 +177,9 @@ static int tps6598x_displayport_vdm(struct typec_altmode *alt, u32 header,
 	}
 
 	if (PD_VDO_SVDM_VER(header) < svdm_version) {
+		dev_warn(&partner->dev, "%s: SVDM version mismatch 0x%02x vs. 0x%02x\n",
+			 __func__, PD_VDO_SVDM_VER(header), svdm_version);
+
 		typec_partner_set_svdm_version(tps->partner,
 					       PD_VDO_SVDM_VER(header));
 		svdm_version = PD_VDO_SVDM_VER(header);
