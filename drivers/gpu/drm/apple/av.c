@@ -319,7 +319,6 @@ int avep_init(struct apple_dcp *dcp)
 	struct platform_device *audio_pdev;
 	struct device *dev = dcp->dev;
 	struct device_node *endpoint, *audio_node = NULL;
-	struct device_link *dev_link;
 
 	audiosrv_data = devm_kzalloc(dcp->dev, sizeof(*audiosrv_data), GFP_KERNEL);
 	if (!audiosrv_data)
@@ -361,8 +360,8 @@ int avep_init(struct apple_dcp *dcp)
 	}
 	dcp->audiosrv->audio_dev = audio_pdev;
 
-	dev_link = device_link_add(&audio_pdev->dev, dev,
-				   DL_FLAG_STATELESS | DL_FLAG_PM_RUNTIME);
+	device_link_add(&audio_pdev->dev, dev,
+			DL_FLAG_STATELESS | DL_FLAG_PM_RUNTIME);
 
 	dcp->avep = afk_init(dcp, AV_ENDPOINT, avep_ops);
 	if (IS_ERR(dcp->avep))
