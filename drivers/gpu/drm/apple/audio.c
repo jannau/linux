@@ -449,6 +449,8 @@ static int dcpaud_create_chmap_ctl(struct dcp_audio *dcpaud)
 
 	ret = snd_pcm_add_chmap_ctls(pcm, SNDRV_PCM_STREAM_PLAYBACK, NULL,
 				     dcp_pcm_hw.channels_max, 0, &chmap_info);
+	if (ret < 0)
+		return ret;
 
 	chmap_info->kctl->get = dcpaud_chmap_ctl_get;
 	chmap_info->chmap = hdmi_codec_8ch_chmaps;
