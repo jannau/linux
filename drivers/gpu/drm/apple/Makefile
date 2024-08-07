@@ -20,6 +20,7 @@ obj-$(CONFIG_DRM_APPLE) += apple_dcp.o
 
 # exclude some broken headers from the test coverage
 no-header-test := \
+	hdmi-codec-chmap.h
 
 always-y += \
 	$(patsubst %.h,%.hdrtest, $(filter-out $(no-header-test), \
