@@ -320,7 +320,6 @@ int avep_init(struct apple_dcp *dcp)
 	struct device *dev = dcp->dev;
 	struct device_node *endpoint, *audio_node = NULL;
 	struct device_link *dev_link;
-	int ret;
 
 	audiosrv_data = devm_kzalloc(dcp->dev, sizeof(*audiosrv_data), GFP_KERNEL);
 	if (!audiosrv_data)
@@ -369,9 +368,5 @@ int avep_init(struct apple_dcp *dcp)
 	if (IS_ERR(dcp->avep))
 		return PTR_ERR(dcp->avep);
 	dcp->avep->debugfs_entry = dcp->ep_debugfs[AV_ENDPOINT - 0x20];
-	ret = afk_start(dcp->avep);
-	if (ret)
-		return ret;
-
-	return 0;
+	return afk_start(dcp->avep);
 }
