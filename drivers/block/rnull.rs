@@ -20,6 +20,7 @@ use kernel::{
     error::Result,
     new_mutex, pr_info,
     prelude::*,
+    str::CStr,
     sync::{Arc, Mutex},
     types::ARef,
 };
