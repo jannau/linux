@@ -353,10 +353,10 @@ impl EventChannel::ver {
                         },
                         EventMsg::Timeout {
                             counter,
+                            unk_8,
                             event_slot,
-                            ..
                         } => match self.gpu.as_ref() {
-                            Some(gpu) => gpu.handle_timeout(counter, event_slot),
+                            Some(gpu) => gpu.handle_timeout(counter, event_slot, unk_8),
                             None => {
                                 dev_crit!(self.dev.as_ref(), "EventChannel: No GPU manager available!\n")
                             }
@@ -374,7 +374,6 @@ impl EventChannel::ver {
                             vm_slot,
                             buffer_slot,
                             counter,
-                            ..
                         } => match self.gpu.as_ref() {
                             Some(gpu) => {
                                 self.buf_mgr.grow(buffer_slot);

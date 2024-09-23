@@ -252,7 +252,7 @@ pub(crate) trait GpuManager: Send + Sync {
     /// TODO: Does this actually work?
     fn flush_fw_cache(&self) -> Result;
     /// Handle a GPU work timeout event.
-    fn handle_timeout(&self, counter: u32, event_slot: i32);
+    fn handle_timeout(&self, counter: u32, event_slot: i32, unk: u32);
     /// Handle a GPU fault event.
     fn handle_fault(&self);
     /// Acknowledge a Buffer grow op.
@@ -1293,7 +1293,7 @@ impl GpuManager for GpuManager::ver {
         &self.ids
     }
 
-    fn handle_timeout(&self, counter: u32, event_slot: i32) {
+    fn handle_timeout(&self, counter: u32, event_slot: i32, unk: u32) {
         dev_err!(self.dev, " (\\________/) \n");
         dev_err!(self.dev, "  |        |  \n");
         dev_err!(self.dev, "'.| \\  , / |.'\n");
@@ -1303,6 +1303,7 @@ impl GpuManager for GpuManager::ver {
         dev_err!(self.dev, "** GPU timeout nya~!!!!! **\n");
         dev_err!(self.dev, "  Event slot: {}\n", event_slot);
         dev_err!(self.dev, "  Timeout count: {}\n", counter);
+        dev_err!(self.dev, "  Unk: {}\n", unk);
 
         // If we have fault info, consider it a fault.
         let error = match self.get_fault_info() {
