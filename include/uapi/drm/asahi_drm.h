@@ -481,6 +481,7 @@ enum drm_asahi_status {
 	DRM_ASAHI_STATUS_FAULT,
 	DRM_ASAHI_STATUS_KILLED,
 	DRM_ASAHI_STATUS_NO_DEVICE,
+	DRM_ASAHI_STATUS_CHANNEL_ERROR,
 };
 
 enum drm_asahi_fault {
