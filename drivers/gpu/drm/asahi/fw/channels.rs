@@ -173,13 +173,16 @@ pub(crate) enum DeviceControlMsg {
     Unk0a(Array<DEVICECONTROL_SZ::ver, u8>),
     Unk0b(Array<DEVICECONTROL_SZ::ver, u8>),
     Unk0c(Array<DEVICECONTROL_SZ::ver, u8>),
+    #[ver(V >= V13_3)]
+    Unk0d(Array<DEVICECONTROL_SZ::ver, u8>),
     GrowTVBAck {
         unk_4: u32,
         buffer_slot: u32,
         vm_slot: u32,
         counter: u32,
         subpipe: u32,
-        __pad: Pad<{ DEVICECONTROL_SZ::ver - 0x14 }>,
+        halt_count: U64,
+        __pad: Pad<{ DEVICECONTROL_SZ::ver - 0x1c }>,
     },
     Unk0e(Array<DEVICECONTROL_SZ::ver, u8>),
     Unk0f(Array<DEVICECONTROL_SZ::ver, u8>),
@@ -190,8 +193,6 @@ pub(crate) enum DeviceControlMsg {
     Unk14(Array<DEVICECONTROL_SZ::ver, u8>), // Init?
     Unk15(Array<DEVICECONTROL_SZ::ver, u8>), // Enable something
     Unk16(Array<DEVICECONTROL_SZ::ver, u8>), // Disable something
-    #[ver(V >= V13_3)]
-    Unk17(Array<DEVICECONTROL_SZ::ver, u8>),
     DestroyContext {
         unk_4: u32,
         ctx_23: u8,

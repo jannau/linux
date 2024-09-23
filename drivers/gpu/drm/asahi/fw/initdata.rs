@@ -30,8 +30,8 @@ pub(crate) mod raw {
     #[derive(Debug, Default)]
     #[repr(C)]
     pub(crate) struct FwStatusFlags {
-        pub(crate) halt_count: AtomicU32,
-        __pad0: Pad<0xc>,
+        pub(crate) halt_count: AtomicU64,
+        __pad0: Pad<0x8>,
         pub(crate) halted: AtomicU32,
         __pad1: Pad<0xc>,
         pub(crate) resume: AtomicU32,
@@ -1159,9 +1159,9 @@ pub(crate) mod raw {
         pub(crate) unk_10e88: Array<0x188, u8>,
         pub(crate) idle_ts: U64,
         pub(crate) idle_unk: U64,
-        pub(crate) unk_11020: u32,
-        pub(crate) unk_11024: u32,
-        pub(crate) unk_11028: u32,
+        pub(crate) progress_check_interval_3d: u32,
+        pub(crate) progress_check_interval_ta: u32,
+        pub(crate) progress_check_interval_cl: u32,
 
         #[ver(V >= V13_0B4)]
         pub(crate) unk_1102c_0: u32,
@@ -1202,10 +1202,10 @@ pub(crate) mod raw {
         #[ver(V >= V13_3)]
         pub(crate) unk_118e0_9c_x: Array<0x8, u8>,
 
-        pub(crate) unk_118e0: u32,
+        pub(crate) cl_context_switch_timeout_ms: u32,
 
         #[ver(V >= V13_0B4)]
-        pub(crate) unk_118e4_0: u32,
+        pub(crate) cl_kill_timeout_ms: u32,
 
         pub(crate) cdm_context_store_latency_threshold: u32,
         pub(crate) unk_118e8: u32,

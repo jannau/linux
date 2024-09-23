@@ -703,9 +703,9 @@ impl<'a> InitDataBuilder::ver<'a> {
                 unk_903c: 0,
                 fault_control: *crate::fault_control.read(),
                 do_init: 1,
-                unk_11020: 40,
-                unk_11024: 10,
-                unk_11028: 250,
+                progress_check_interval_3d: 40,
+                progress_check_interval_ta: 10,
+                progress_check_interval_cl: 250,
                 #[ver(V >= V13_0B4)]
                 unk_1102c_0: 1,
                 #[ver(V >= V13_0B4)]
@@ -717,9 +717,9 @@ impl<'a> InitDataBuilder::ver<'a> {
                 idle_off_delay_ms: AtomicU32::new(pwr.idle_off_delay_ms),
                 fender_idle_off_delay_ms: pwr.fender_idle_off_delay_ms,
                 fw_early_wake_timeout_ms: pwr.fw_early_wake_timeout_ms,
-                unk_118e0: 40,
+                cl_context_switch_timeout_ms: 40,
                 #[ver(V >= V13_0B4)]
-                unk_118e4_0: 50,
+                cl_kill_timeout_ms: 50,
                 #[ver(V >= V13_0B4)]
                 unk_11edc: 0,
                 #[ver(V >= V13_0B4)]

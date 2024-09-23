@@ -1331,12 +1331,18 @@ impl GpuManager for GpuManager::ver {
     }
 
     fn ack_grow(&self, buffer_slot: u32, vm_slot: u32, counter: u32) {
+        let halt_count = self
+            .initdata
+            .fw_status
+            .with(|raw, _inner| raw.flags.halt_count.load(Ordering::Relaxed));
+
         let dc = fw::channels::DeviceControlMsg::ver::GrowTVBAck {
             unk_4: 1,
             buffer_slot,
             vm_slot,
             counter,
             subpipe: 0, // TODO
+            halt_count: U64(halt_count),
             __pad: Default::default(),
         };
 

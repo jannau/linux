@@ -132,6 +132,8 @@ pub(crate) mod raw {
         pub(crate) unk_58: U64,
         pub(crate) busy: AtomicU32,
         pub(crate) __pad: Pad<0x20>,
+        #[ver(V >= V13_2 && G < G14X)]
+        pub(crate) unk_84_0: u32,
         pub(crate) unk_84_state: AtomicU32,
         pub(crate) unk_88: u32,
         pub(crate) unk_8c: u32,
@@ -139,8 +141,6 @@ pub(crate) mod raw {
         pub(crate) unk_94: u32,
         pub(crate) pending: AtomicU32,
         pub(crate) unk_9c: u32,
-        #[ver(V >= V13_2 && G < G14X)]
-        pub(crate) unk_a0_0: u32,
         pub(crate) gpu_context: GpuPointer<'a, super::GpuContextData>,
         pub(crate) unk_a8: U64,
         #[ver(V >= V13_2 && G < G14X)]
