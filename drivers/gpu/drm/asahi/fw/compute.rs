@@ -85,9 +85,11 @@ pub(crate) mod raw {
         pub(crate) unk_2d4: u32,
         pub(crate) unk_2d8: u8,
         #[ver(V >= V13_0B4)]
-        pub(crate) unk_ts: U64,
+        pub(crate) context_store_req: U64,
         #[ver(V >= V13_0B4)]
-        pub(crate) unk_2e1: Array<0x1c, u8>,
+        pub(crate) context_store_compl: U64,
+        #[ver(V >= V13_0B4)]
+        pub(crate) unk_2e9: Array<0x14, u8>,
         #[ver(V >= V13_0B4)]
         pub(crate) unk_flag: U32,
         #[ver(V >= V13_0B4)]

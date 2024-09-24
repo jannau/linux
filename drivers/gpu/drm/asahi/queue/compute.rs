@@ -191,7 +191,7 @@ impl super::QueueInner::ver {
                                 work_queue: ev_comp.info_ptr,
                                 unk_24: U64(0),
                                 #[ver(V >= V13_0B4)]
-                                unk_ts: inner_weak_ptr!(ptr, unk_ts),
+                                unk_ts: inner_weak_ptr!(ptr, context_store_req),
                                 uuid,
                                 unk_30_padding: 0,
                             })?;
@@ -215,7 +215,7 @@ impl super::QueueInner::ver {
                                 work_queue: ev_comp.info_ptr,
                                 unk_24: U64(0),
                                 #[ver(V >= V13_0B4)]
-                                unk_ts: inner_weak_ptr!(ptr, unk_ts),
+                                unk_ts: inner_weak_ptr!(ptr, context_store_req),
                                 uuid,
                                 unk_30_padding: 0,
                             })?;
@@ -378,9 +378,11 @@ impl super::QueueInner::ver {
                     unk_2d4: 0,
                     unk_2d8: 0,
                     #[ver(V >= V13_0B4)]
-                    unk_ts: U64(0),
+                    context_store_req: U64(0),
                     #[ver(V >= V13_0B4)]
-                    unk_2e1: Default::default(),
+                    context_store_compl: U64(0),
+                    #[ver(V >= V13_0B4)]
+                    unk_2e9: Default::default(),
                     #[ver(V >= V13_0B4)]
                     unk_flag: U32(0),
                     #[ver(V >= V13_0B4)]
