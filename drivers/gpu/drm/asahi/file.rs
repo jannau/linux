@@ -924,6 +924,39 @@ impl File {
             Ok(_) => Ok(0),
         }
     }
+
+    /// IOCTL: get_time: Get the current GPU timer value.
+    pub(crate) fn get_time(
+        device: &AsahiDevice,
+        data: &mut uapi::drm_asahi_get_time,
+        file: &DrmFile,
+    ) -> Result<u32> {
+
+        if data.extensions != 0 || data.flags != 0 {
+            cls_pr_debug!(Errors, "get_time: Unexpected extensions or flags\n");
+            return Err(EINVAL);
+        }
+
+        let mut tp: kernel::bindings::timespec64 = Default::default();
+        let mut gputime: u64 = 0;
+
+        // TODO: bindings
+        // SAFETY: These functions are safe to call as long as the argument pointer is valid
+        unsafe {
+            core::arch::asm!(
+                "mrs {x}, CNTPCT_EL0",
+                x = out(reg) gputime
+            );
+            kernel::bindings::ktime_get_raw_ts64(&mut tp);
+            kernel::bindings::timens_add_monotonic(&mut tp);
+        }
+
+        data.gpu_timestamp = gputime;
+        data.tv_sec = tp.tv_sec;
+        data.tv_nsec = tp.tv_nsec;
+
+        Ok(0)
+    }
 }
 
 impl Drop for File {
