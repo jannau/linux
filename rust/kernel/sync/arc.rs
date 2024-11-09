@@ -223,7 +223,6 @@ impl<T> Arc<T> {
         // `Arc` object.
         Ok(unsafe { Self::from_inner(KBox::leak(inner).into()) })
     }
-    #[track_caller]
 }
 
 impl<T: ?Sized> Arc<T> {
@@ -448,29 +447,10 @@ impl<T: ?Sized> Drop for Arc<T> {
             // SAFETY: The pointer was initialised from the result of `Box::leak`, and
             // a ManuallyDrop<T> is compatible. We already dropped the contents above.
             unsafe {
-                drop(Box::from_raw(
+                drop(KBox::from_raw(
                     self.ptr.as_ptr() as *mut ManuallyDrop<ArcInner<T>>
                 ))
             };
-        #[track_caller]
-        #[cfg(CONFIG_RUST_EXTRA_LOCKDEP)]
-        let inner = {
-            let map = LockdepMap::new();
-            Box::try_init::<AllocError>(
-                try_init!(ArcInner {
-                // SAFETY: There are no safety requirements for this FFI call.
-                refcount: Opaque::new(unsafe { bindings::REFCOUNT_INIT(1) }),
-                lockdep_map: map,
-                data <- init::uninit::<T, AllocError>(),
-            }? AllocError),
-                flags,
-            )?
-        };
-        // FIXME: try_init!() does not work with cfg attributes.
-        #[cfg(not(CONFIG_RUST_EXTRA_LOCKDEP))]
-            //
-            // SAFETY: The pointer was initialised from the result of `KBox::leak`.
-            unsafe { drop(KBox::from_raw(self.ptr.as_ptr())) };
         }
     }
 }
@@ -702,6 +682,7 @@ pub struct UniqueArc<T: ?Sized> {
 
 impl<T> UniqueArc<T> {
     /// Tries to allocate a new [`UniqueArc`] instance.
+    #[track_caller]
     pub fn new(value: T, flags: Flags) -> Result<Self, AllocError> {
         Ok(Self {
             // INVARIANT: The newly-created object has a refcount of 1.
@@ -710,8 +691,24 @@ impl<T> UniqueArc<T> {
     }
 
     /// Tries to allocate a new [`UniqueArc`] instance whose contents are not initialised yet.
+    #[track_caller]
     pub fn new_uninit(flags: Flags) -> Result<UniqueArc<MaybeUninit<T>>, AllocError> {
         // INVARIANT: The refcount is initialised to a non-zero value.
+        #[cfg(CONFIG_RUST_EXTRA_LOCKDEP)]
+        let inner = {
+            let map = LockdepMap::new();
+            KBox::try_init::<AllocError>(
+                try_init!(ArcInner {
+                // SAFETY: There are no safety requirements for this FFI call.
+                refcount: Opaque::new(unsafe { bindings::REFCOUNT_INIT(1) }),
+                lockdep_map: map,
+                data <- init::uninit::<T, AllocError>(),
+            }? AllocError),
+                flags,
+            )?
+        };
+        // FIXME: try_init!() does not work with cfg attributes.
+        #[cfg(not(CONFIG_RUST_EXTRA_LOCKDEP))]
         let inner = KBox::try_init::<AllocError>(
             try_init!(ArcInner {
                 // SAFETY: There are no safety requirements for this FFI call.
