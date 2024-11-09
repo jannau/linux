@@ -5,14 +5,12 @@
 //! C header: [`include/drm/gpu_scheduler.h`](../../../../include/drm/gpu_scheduler.h)
 
 use crate::{
-    alloc::{box_ext::BoxExt, flags::*},
     bindings, device,
     dma_fence::*,
     error::{to_result, Result},
     prelude::*,
     sync::{Arc, UniqueArc},
 };
-use alloc::boxed::Box;
 use core::marker::PhantomData;
 use core::mem::MaybeUninit;
 use core::ops::{Deref, DerefMut};
@@ -103,7 +101,7 @@ unsafe extern "C" fn free_job_cb<T: JobImpl>(sched_job: *mut bindings::drm_sched
 
     // Convert the job back to a Box and drop it
     // SAFETY: All of our Job<T>s are created inside a box.
-    unsafe { drop(Box::from_raw(p)) };
+    unsafe { drop(KBox::from_raw(p)) };
 }
 
 /// A DRM scheduler job.
@@ -135,7 +133,7 @@ impl<T: JobImpl> Drop for Job<T> {
 }
 
 /// A pending DRM scheduler job (not yet armed)
-pub struct PendingJob<'a, T: JobImpl>(Box<Job<T>>, PhantomData<&'a T>);
+pub struct PendingJob<'a, T: JobImpl>(KBox<Job<T>>, PhantomData<&'a T>);
 
 impl<'a, T: JobImpl> PendingJob<'a, T> {
     /// Add a fence as a dependency to the job
@@ -169,7 +167,7 @@ impl<'a, T: JobImpl> DerefMut for PendingJob<'a, T> {
 }
 
 /// An armed DRM scheduler job (not yet submitted)
-pub struct ArmedJob<'a, T: JobImpl>(Box<Job<T>>, PhantomData<&'a T>);
+pub struct ArmedJob<'a, T: JobImpl>(KBox<Job<T>>, PhantomData<&'a T>);
 
 impl<'a, T: JobImpl> ArmedJob<'a, T> {
     /// Returns the job fences
@@ -182,7 +180,7 @@ impl<'a, T: JobImpl> ArmedJob<'a, T> {
     pub fn push(self) {
         // After this point, the job is submitted and owned by the scheduler
         let ptr = match self {
-            ArmedJob(job, _) => Box::<Job<T>>::into_raw(job),
+            ArmedJob(job, _) => KBox::<Job<T>>::into_raw(job),
         };
 
         // SAFETY: We are passing in ownership of a valid Box raw pointer.
@@ -241,13 +239,13 @@ unsafe impl<T: JobImpl> Sync for EntityInner<T> {}
 unsafe impl<T: JobImpl> Send for EntityInner<T> {}
 
 /// A DRM scheduler entity.
-pub struct Entity<T: JobImpl>(Pin<Box<EntityInner<T>>>);
+pub struct Entity<T: JobImpl>(Pin<KBox<EntityInner<T>>>);
 
 impl<T: JobImpl> Entity<T> {
     /// Create a new scheduler entity.
     pub fn new(sched: &Scheduler<T>, priority: Priority) -> Result<Self> {
-        let mut entity: Box<MaybeUninit<EntityInner<T>>> =
-            Box::new_uninit(GFP_KERNEL | __GFP_ZERO)?;
+        let mut entity: KBox<MaybeUninit<EntityInner<T>>> =
+            KBox::new_uninit(GFP_KERNEL | __GFP_ZERO)?;
 
         let mut sched_ptr = &sched.0.sched as *const _ as *mut _;
 
@@ -276,7 +274,7 @@ impl<T: JobImpl> Entity<T> {
     /// this requires a mutable reference to the entity, ensuring that only one new job can be
     /// in flight at once.
     pub fn new_job(&mut self, credits: u32, inner: T) -> Result<PendingJob<'_, T>> {
-        let mut job: Box<MaybeUninit<Job<T>>> = Box::new_uninit(GFP_KERNEL | __GFP_ZERO)?;
+        let mut job: KBox<MaybeUninit<Job<T>>> = Box::new_uninit(GFP_KERNEL | __GFP_ZERO)?;
 
         // SAFETY: We hold a reference to the entity (which is a valid pointer),
         // and the job object was just allocated above.
@@ -330,7 +328,7 @@ impl<T: JobImpl> Scheduler<T> {
     /// Creates a new DRM Scheduler object
     // TODO: Shared timeout workqueues & scores
     pub fn new(
-        device: &impl device::RawDevice,
+        device: &device::Device,
         num_rqs: u32,
         credit_limit: u32,
         hang_limit: u32,
@@ -347,6 +345,7 @@ impl<T: JobImpl> Scheduler<T> {
         };
 
         // SAFETY: The drm_sched pointer is valid and pinned as it was just allocated above.
+        //         `device` is valid by its type invarants
         to_result(unsafe {
             bindings::drm_sched_init(
                 addr_of_mut!((*sched.as_mut_ptr()).sched),
@@ -359,7 +358,7 @@ impl<T: JobImpl> Scheduler<T> {
                 core::ptr::null_mut(),
                 core::ptr::null_mut(),
                 name.as_char_ptr(),
-                device.raw_device(),
+                device.as_raw(),
             )
         })?;
 
