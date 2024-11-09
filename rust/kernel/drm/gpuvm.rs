@@ -7,7 +7,6 @@
 #![allow(missing_docs)]
 
 use crate::{
-    alloc::flags::*,
     bindings,
     drm::{device, drv},
     error::{
@@ -91,28 +90,24 @@ impl<T: DriverGpuVm> OpMap<T> {
         self.0.gem.offset
     }
     pub fn object(&self) -> &<T::Driver as drv::Driver>::Object {
-        // SAFETY: The GEM object is only ever passed as a Driver object below, so
-        // the type must be correct.
-        let p = unsafe {
-            <<T::Driver as drv::Driver>::Object as IntoGEMObject>::from_gem_obj(self.0.gem.obj)
-        };
+        let p = <<T::Driver as drv::Driver>::Object as IntoGEMObject>::from_gem_obj(self.0.gem.obj);
         // SAFETY: The GEM object has an active reference for the lifetime of this op
         unsafe { &*p }
     }
     pub fn map_and_link_va(
         &mut self,
         gpuvm: &mut UpdatingGpuVm<'_, T>,
-        gpuva: Pin<Box<GpuVa<T>>>,
+        gpuva: Pin<KBox<GpuVa<T>>>,
         gpuvmbo: &ARef<GpuVmBo<T>>,
-    ) -> Result<(), Pin<Box<GpuVa<T>>>> {
+    ) -> Result<(), Pin<KBox<GpuVa<T>>>> {
         // SAFETY: We are handing off the GpuVa ownership and it will not be moved.
-        let p = Box::leak(unsafe { Pin::into_inner_unchecked(gpuva) });
+        let p = KBox::leak(unsafe { Pin::into_inner_unchecked(gpuva) });
         // SAFETY: These C functions are called with the correct invariants
         unsafe {
             bindings::drm_gpuva_init_from_op(&mut p.gpuva, &mut self.0);
             if bindings::drm_gpuva_insert(gpuvm.0.gpuvm() as *mut _, &mut p.gpuva) != 0 {
                 // EEXIST, return the GpuVa to the caller as an error
-                return Err(Pin::new_unchecked(Box::from_raw(p)));
+                return Err(Pin::new_unchecked(KBox::from_raw(p)));
             };
             // SAFETY: This takes a new reference to the gpuvmbo.
             bindings::drm_gpuva_link(&mut p.gpuva, &gpuvmbo.bo as *const _ as *mut _);
@@ -131,7 +126,7 @@ impl<T: DriverGpuVm> OpUnMap<T> {
         // SAFETY: The GpuVa object reference is valid per the op_unmap contract
         Some(unsafe { &*p })
     }
-    pub fn unmap_and_unlink_va(&mut self) -> Option<Pin<Box<GpuVa<T>>>> {
+    pub fn unmap_and_unlink_va(&mut self) -> Option<Pin<KBox<GpuVa<T>>>> {
         if self.0.va.is_null() {
             return None;
         }
@@ -148,7 +143,7 @@ impl<T: DriverGpuVm> OpUnMap<T> {
         // so clear the pointer
         self.0.va = core::ptr::null_mut();
         // SAFETY: The GpuVa object reference is valid per the op_unmap contract
-        Some(unsafe { Pin::new_unchecked(Box::from_raw(p)) })
+        Some(unsafe { Pin::new_unchecked(KBox::from_raw(p)) })
     }
 }
 
@@ -183,11 +178,11 @@ pub struct GpuVa<T: DriverGpuVm> {
 unsafe impl init::Zeroable for bindings::drm_gpuva {}
 
 impl<T: DriverGpuVm> GpuVa<T> {
-    pub fn new<E>(inner: impl PinInit<T::GpuVa, E>) -> Result<Pin<Box<GpuVa<T>>>>
+    pub fn new<E>(inner: impl PinInit<T::GpuVa, E>) -> Result<Pin<KBox<GpuVa<T>>>>
     where
         Error: From<E>,
     {
-        Box::try_pin_init(
+        KBox::try_pin_init(
             try_pin_init!(Self {
                 gpuva <- init::zeroed(),
                 inner <- inner,
@@ -284,12 +279,12 @@ pub(super) unsafe extern "C" fn vm_free_callback<T: DriverGpuVm>(
     };
 
     // SAFETY: p is guaranteed to be valid for drm_gpuvm objects using this callback.
-    unsafe { drop(Box::from_raw(p)) };
+    unsafe { drop(KBox::from_raw(p)) };
 }
 
 pub(super) unsafe extern "C" fn vm_bo_alloc_callback<T: DriverGpuVm>() -> *mut bindings::drm_gpuvm_bo
 {
-    let obj: Result<Pin<Box<GpuVmBo<T>>>> = Box::try_pin_init(
+    let obj: Result<Pin<KBox<GpuVmBo<T>>>> = KBox::try_pin_init(
         try_pin_init!(GpuVmBo::<T> {
             bo <- init::default(),
             inner <- T::GpuVmBo::new(),
@@ -302,7 +297,7 @@ pub(super) unsafe extern "C" fn vm_bo_alloc_callback<T: DriverGpuVm>() -> *mut b
         Ok(obj) =>
         // SAFETY: The DRM core will keep this object pinned
         unsafe {
-            let p = Box::leak(Pin::into_inner_unchecked(obj));
+            let p = KBox::leak(Pin::into_inner_unchecked(obj));
             &mut p.bo
         },
         Err(_) => core::ptr::null_mut(),
@@ -316,7 +311,7 @@ pub(super) unsafe extern "C" fn vm_bo_free_callback<T: DriverGpuVm>(
     let p = unsafe { crate::container_of!(raw_vm_bo, GpuVmBo<T>, bo) as *mut GpuVmBo<T> };
 
     // SAFETY: p is guaranteed to be valid for drm_gpuvm_bo objects using this callback.
-    unsafe { drop(Box::from_raw(p)) };
+    unsafe { drop(KBox::from_raw(p)) };
 }
 
 pub(super) unsafe extern "C" fn step_map_callback<T: DriverGpuVm>(
@@ -402,7 +397,7 @@ impl<T: DriverGpuVm> GpuVm<T> {
     where
         Error: From<E>,
     {
-        let obj: Pin<Box<Self>> = Box::try_pin_init(
+        let obj: Pin<KBox<Self>> = KBox::try_pin_init(
             try_pin_init!(Self {
                 // SAFETY: drm_gpuvm_init cannot fail and always initializes the member
                 gpuvm <- unsafe {
@@ -413,7 +408,7 @@ impl<T: DriverGpuVm> GpuVm<T> {
                             Opaque::raw_get(slot),
                             name.as_char_ptr(),
                             0,
-                            dev.raw_mut(),
+                            dev.as_raw(),
                             r_obj.gem_obj() as *const _ as *mut _,
                             range.start,
                             range.end - range.start,
@@ -437,7 +432,7 @@ impl<T: DriverGpuVm> GpuVm<T> {
 
         // SAFETY: We never move out of the object
         let vm_ref = unsafe {
-            ARef::from_raw(NonNull::new_unchecked(Box::leak(
+            ARef::from_raw(NonNull::new_unchecked(KBox::leak(
                 Pin::into_inner_unchecked(obj),
             )))
         };
@@ -455,7 +450,7 @@ impl<T: DriverGpuVm> GpuVm<T> {
         let mut guard = ManuallyDrop::new(LockedGpuVm {
             gpuvm: self,
             // vm_exec needs to be pinned, so stick it in a Box.
-            vm_exec: Box::init(
+            vm_exec: KBox::init(
                 init!(bindings::drm_gpuvm_exec {
                     vm: self.gpuvm() as *mut _,
                     flags: bindings::BINDINGS_DRM_EXEC_INTERRUPTIBLE_WAIT,
@@ -505,7 +500,7 @@ unsafe impl<T: DriverGpuVm> AlwaysRefCounted for GpuVm<T> {
 
 pub struct LockedGpuVm<'a, 'b, T: DriverGpuVm> {
     gpuvm: &'a GpuVm<T>,
-    vm_exec: Box<bindings::drm_gpuvm_exec>,
+    vm_exec: KBox<bindings::drm_gpuvm_exec>,
     obj: Option<&'b <T::Driver as drv::Driver>::Object>,
 }
 
@@ -651,8 +646,6 @@ impl<T: DriverGpuVm> DerefMut for UpdatingGpuVm<'_, T> {
         unsafe { &mut *self.0.inner.get() }
     }
 }
-
-impl<T: DriverGpuVm> core::ops::Receiver for UpdatingGpuVm<'_, T> {}
 
 // SAFETY: All our trait methods take locks
 unsafe impl<T: DriverGpuVm> Sync for GpuVm<T> {}
