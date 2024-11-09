@@ -5,14 +5,14 @@
 //! C header: [`include/linux/soc/apple/rtkit.h`](../../../../include/linux/gpio/driver.h)
 
 use crate::{
-    alloc::{box_ext::BoxExt, flags::*},
+    alloc::flags::*,
     bindings, device,
     error::{code::*, from_err_ptr, from_result, to_result, Result},
+    prelude::KBox,
     str::CStr,
     types::{ForeignOwnable, ScopeGuard},
 };
 
-use alloc::boxed::Box;
 use core::marker::PhantomData;
 use core::ptr;
 use macros::vtable;
@@ -149,8 +149,8 @@ unsafe extern "C" fn shmem_setup_callback<T: Operations>(
 
         // Now box the returned buffer type and stash it in the private pointer of the
         // `apple_rtkit_shmem` struct for safekeeping.
-        let boxed = Box::new(buf, GFP_KERNEL)?;
-        bfr_mut.private = Box::into_raw(boxed) as *mut _;
+        let boxed = KBox::new(buf, GFP_KERNEL)?;
+        bfr_mut.private = KBox::into_raw(boxed) as *mut _;
         Ok(0)
     })
 }
@@ -164,7 +164,7 @@ unsafe extern "C" fn shmem_destroy_callback<T: Operations>(
     if !bfr_mut.private.is_null() {
         // SAFETY: Per shmem_setup_callback, this has to be a pointer to a Buffer if it is set.
         unsafe {
-            core::mem::drop(Box::from_raw(bfr_mut.private as *mut T::Buffer));
+            core::mem::drop(KBox::from_raw(bfr_mut.private as *mut T::Buffer));
         }
         bfr_mut.private = core::ptr::null_mut();
     }
@@ -189,7 +189,7 @@ impl<T: Operations> RtKit<T> {
 
     /// Creates a new RTKit client for a given device and optional mailbox name or index.
     pub fn new(
-        dev: &dyn device::RawDevice,
+        dev: &device::Device,
         mbox_name: Option<&'static CStr>,
         mbox_idx: usize,
         data: T::Data,
@@ -199,10 +199,11 @@ impl<T: Operations> RtKit<T> {
             // SAFETY: `ptr` came from a previous call to `into_foreign`.
             unsafe { T::Data::from_foreign(ptr) };
         });
-        // SAFETY: This just calls the C init function.
+        // SAFETY: `dev` is valid by its type invarants and otherwise his just
+        //          calls the C init function.
         let rtk = unsafe {
             from_err_ptr(bindings::apple_rtkit_init(
-                dev.raw_device(),
+                dev.as_raw(),
                 ptr,
                 match mbox_name {
                     Some(s) => s.as_char_ptr(),
