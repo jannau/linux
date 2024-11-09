@@ -205,7 +205,7 @@ pub(crate) struct GpuManager {
     crashed: AtomicBool,
     #[pin]
     alloc: Mutex<KernelAllocators>,
-    io_mappings: Vec<mmu::KernelMapping>,
+    io_mappings: KVec<mmu::KernelMapping>,
     next_mmio_iova: u64,
     #[pin]
     rtkit: Mutex<Option<rtkit::RtKit<GpuManager::ver>>>,
@@ -579,7 +579,7 @@ impl GpuManager::ver {
     }
 
     /// Return a mutable reference to the io_mappings member
-    fn io_mappings_mut(self: Pin<&mut Self>) -> &mut Vec<mmu::KernelMapping> {
+    fn io_mappings_mut(self: Pin<&mut Self>) -> &mut KVec<mmu::KernelMapping> {
         // SAFETY: io_mappings does not require structural pinning.
         unsafe { &mut self.get_unchecked_mut().io_mappings }
     }

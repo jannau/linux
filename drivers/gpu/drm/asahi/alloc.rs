@@ -697,8 +697,8 @@ impl RawAllocation for HeapAllocation {
 struct HeapAllocatorInner {
     dev: AsahiDevRef,
     allocated: usize,
-    backing_objects: Vec<(crate::gem::ObjectRef, mmu::KernelMapping, u64)>,
-    garbage: Option<Vec<mm::Node<HeapAllocatorInner, HeapAllocationInner>>>,
+    backing_objects: KVec<(crate::gem::ObjectRef, mmu::KernelMapping, u64)>,
+    garbage: Option<KVec<mm::Node<HeapAllocatorInner, HeapAllocationInner>>>,
     total_garbage: usize,
     name: CString,
 }
@@ -754,7 +754,7 @@ impl HeapAllocator {
             backing_objects: KVec::new(),
             // TODO: This clearly needs a try_clone() or similar
             name: CString::try_from_fmt(fmt!("{}", &*name))?,
-            garbage: if keep_garbage { Some(Vec::new()) } else { None },
+            garbage: if keep_garbage { Some(KVec::new()) } else { None },
             total_garbage: 0,
         };
 
@@ -820,7 +820,7 @@ impl HeapAllocator {
             .map_at(&self.vm, gpu_ptr, self.prot, self.cpu_maps)
             .map_err(|err| {
                 dev_err!(
-                    &self.dev,
+                    self.dev.as_ref(),
                     "HeapAllocator[{}]::add_block: Failed to map at {:#x} ({:?})\n",
                     &*self.name,
                     gpu_ptr,
@@ -1090,7 +1090,7 @@ impl Drop for HeapAllocatorInner {
         if self.allocated > 0 {
             // This should never happen
             dev_crit!(
-                self.dev,
+                self.dev.as_ref(),
                 "HeapAllocator[{}]: dropping with {} bytes allocated\n",
                 &*self.name,
                 self.allocated

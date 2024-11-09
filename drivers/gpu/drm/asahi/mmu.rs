@@ -212,9 +212,9 @@ impl gpuvm::DriverGpuVmBo for VmBo {
 
 #[derive(Default)]
 struct StepContext {
-    new_va: Option<Pin<Box<gpuvm::GpuVa<VmInner>>>>,
-    prev_va: Option<Pin<Box<gpuvm::GpuVa<VmInner>>>>,
-    next_va: Option<Pin<Box<gpuvm::GpuVa<VmInner>>>>,
+    new_va: Option<Pin<KBox<gpuvm::GpuVa<VmInner>>>>,
+    prev_va: Option<Pin<KBox<gpuvm::GpuVa<VmInner>>>>,
+    next_va: Option<Pin<KBox<gpuvm::GpuVa<VmInner>>>>,
     vm_bo: Option<ARef<gpuvm::GpuVmBo<VmInner>>>,
     prot: u32,
 }
@@ -284,7 +284,7 @@ impl gpuvm::DriverGpuVm for VmInner {
             .is_err()
         {
             dev_err!(
-                self.dev,
+                self.dev.as_ref(),
                 "map_and_link_va failed: {:#x} [{:#x}] -> {:#x}\n",
                 op.offset(),
                 op.range(),
@@ -322,7 +322,7 @@ impl gpuvm::DriverGpuVm for VmInner {
         }
 
         if op.unmap_and_unlink_va().is_none() {
-            dev_err!(self.dev, "step_unmap: could not unlink gpuva");
+            dev_err!(self.dev.as_ref(), "step_unmap: could not unlink gpuva");
         }
         Ok(())
     }
@@ -369,19 +369,19 @@ impl gpuvm::DriverGpuVm for VmInner {
         )?;
 
         if op.unmap().unmap_and_unlink_va().is_none() {
-            dev_err!(self.dev, "step_unmap: could not unlink gpuva");
+            dev_err!(self.dev.as_ref(), "step_unmap: could not unlink gpuva");
         }
 
         if let Some(prev_op) = op.prev_map() {
             if prev_op.map_and_link_va(self, prev_gpuva, &vm_bo).is_err() {
-                dev_err!(self.dev, "step_remap: could not relink prev gpuva");
+                dev_err!(self.dev.as_ref(), "step_remap: could not relink prev gpuva");
                 return Err(EINVAL);
             }
         }
 
         if let Some(next_op) = op.next_map() {
             if next_op.map_and_link_va(self, next_gpuva, &vm_bo).is_err() {
-                dev_err!(self.dev, "step_remap: could not relink next gpuva");
+                dev_err!(self.dev.as_ref(), "step_remap: could not relink next gpuva");
                 return Err(EINVAL);
             }
         }
@@ -489,7 +489,7 @@ impl VmInner {
 
             if (addr | len | iova) & UAT_PGMSK != 0 {
                 dev_err!(
-                    self.dev,
+                    self.dev.as_ref(),
                     "MMU: KernelMapping {:#x}:{:#x} -> {:#x} is not page-aligned\n",
                     addr,
                     len,
@@ -1186,7 +1186,7 @@ impl Vm {
 
         if (addr | size | offset) as usize & UAT_PGMSK != 0 {
             dev_err!(
-                inner.dev,
+                inner.dev.as_ref(),
                 "MMU: Map step {:#x} [{:#x}] -> {:#x} is not page-aligned\n",
                 offset,
                 size,

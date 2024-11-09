@@ -596,7 +596,7 @@ impl File {
             let item = file
                 .inner()
                 .vms()
-                .find(index, xarray::XArray::<Box<Vm>>::MAX);
+                .find(index, xarray::XArray::<KBox<Vm>>::MAX);
             match item {
                 Some((idx, file_vm)) => {
                     // Clone since we can't hold the xarray spinlock while
@@ -604,7 +604,7 @@ impl File {
                     let vm = file_vm.borrow().vm.clone();
                     core::mem::drop(file_vm);
                     vm.drop_mappings(bo)?;
-                    if idx == xarray::XArray::<Box<Vm>>::MAX {
+                    if idx == xarray::XArray::<KBox<Vm>>::MAX {
                         break;
                     }
                     index = idx + 1;

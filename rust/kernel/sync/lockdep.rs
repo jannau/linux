@@ -6,7 +6,7 @@
 //! modules, including lock classes.
 
 use crate::{
-    alloc::{box_ext::BoxExt, flags::*, vec_ext::VecExt},
+    alloc::flags::*,
     c_str, fmt,
     init::InPlaceInit,
     new_mutex,
