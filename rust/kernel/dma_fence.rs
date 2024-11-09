@@ -5,7 +5,6 @@
 //! C header: [`include/linux/dma_fence.h`](../../include/linux/dma_fence.h)
 
 use crate::{
-    alloc::{flags::*, vec_ext::VecExt},
     bindings,
     error::{to_result, Result},
     prelude::*,
@@ -274,9 +273,6 @@ unsafe extern "C" fn timeline_value_str_cb<T: FenceOps>(
     unsafe { *string.add(size - 1) = 0 };
 }
 
-// Allow FenceObject<Self> to be used as a self argument, for ergonomics
-impl<T: FenceOps> core::ops::Receiver for FenceObject<T> {}
-
 /// A driver-specific DMA Fence Object
 ///
 /// # Invariants
@@ -436,7 +432,7 @@ unsafe impl<T: FenceOps> Send for UserFence<T> {}
 pub struct FenceContexts {
     start: u64,
     count: u32,
-    seqnos: Vec<AtomicU64>,
+    seqnos: KVec<AtomicU64>,
     lock_name: &'static CStr,
     lock_key: LockClassKey,
 }
@@ -444,7 +440,7 @@ pub struct FenceContexts {
 impl FenceContexts {
     /// Create a new set of fence contexts.
     pub fn new(count: u32, name: &'static CStr, key: LockClassKey) -> Result<FenceContexts> {
-        let mut seqnos: Vec<AtomicU64> = Vec::new();
+        let mut seqnos: KVec<AtomicU64> = KVec::new();
 
         seqnos.reserve(count as usize, GFP_KERNEL)?;
 
