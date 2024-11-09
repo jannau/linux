@@ -10,15 +10,8 @@ use crate::{bindings, device_id::RawDeviceId, prelude::*};
 // here for now. In the future, once bindgen can auto-generate static inline
 // helpers, this can go away if desired.
 
-//use core::marker::PhantomData;
-//use core::num::NonZeroU32;
-
-//use crate::{
-//    alloc::flags::*,
-//    bindings, driver,
-//    prelude::*,
-//    str::{BStr, CStr},
-//};
+use core::marker::PhantomData;
+use core::num::NonZeroU32;
 
 /// An open firmware device id.
 #[derive(Clone, Copy)]
@@ -339,10 +332,10 @@ pub trait PropertyUnit: Sized {
 //     }
 // }
 
-impl<'a, T: PropertyUnit> TryFrom<Property<'a>> for Vec<T> {
+impl<'a, T: PropertyUnit> TryFrom<Property<'a>> for KVec<T> {
     type Error = Error;
 
-    fn try_from(p: Property<'_>) -> core::result::Result<Vec<T>, Self::Error> {
+    fn try_from(p: Property<'_>) -> core::result::Result<KVec<T>, Self::Error> {
         if p.len() % T::UNIT_SIZE != 0 {
             return Err(EINVAL);
         }
@@ -507,6 +500,7 @@ impl Drop for Node {
         unsafe {
             bindings::of_node_put(self.raw_node)
         };
+    }
 }
 
 /// Create an OF `IdTable` with an "alias" for modpost.

@@ -6,6 +6,7 @@
 
 use crate::{
     bindings,
+    of,
     types::{ARef, Opaque},
 };
 use core::{fmt, ptr};
@@ -75,6 +76,13 @@ impl Device {
     pub unsafe fn as_ref<'a>(ptr: *mut bindings::device) -> &'a Self {
         // SAFETY: Guaranteed by the safety requirements of the function.
         unsafe { &*ptr.cast() }
+    }
+
+    /// Gets the OpenFirmware node attached to this device
+    pub fn of_node(&self) -> Option<of::Node> {
+        let ptr = self.0.get();
+        // SAFETY: This is safe as long as of_node is NULL or valid.
+        unsafe { of::Node::get_from_raw((*ptr).of_node) }
     }
 
     /// Prints an emergency-level message (level 0) prefixed with device information.
