@@ -9,8 +9,8 @@ use crate::{
     error::code::*,
     error::Result,
     io_buffer::{IoBufferReader, IoBufferWriter},
+    prelude::KVec,
 };
-use alloc::vec::Vec;
 
 /// A reference to an area in userspace memory, which can be either
 /// read-only or read-write.
@@ -59,7 +59,7 @@ impl UserSlicePtr {
     ///
     /// Returns `EFAULT` if the address does not currently point to
     /// mapped, readable memory.
-    pub fn read_all(self) -> Result<Vec<u8>> {
+    pub fn read_all(self) -> Result<KVec<u8>> {
         self.reader().read_all()
     }
 
