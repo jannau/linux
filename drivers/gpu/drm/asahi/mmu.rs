@@ -399,7 +399,7 @@ impl Mapping {
             .is_err()
         {
             dev_err!(
-                owner.dev,
+                owner.dev.as_ref(),
                 "MMU: unmap for remap {:#x}:{:#x} failed\n",
                 self.iova(),
                 self.size()
@@ -409,7 +409,7 @@ impl Mapping {
         let prot = self.0.prot | prot::CACHE;
         if owner.map_node(&self.0, prot).is_err() {
             dev_err!(
-                owner.dev,
+                owner.dev.as_ref(),
                 "MMU: remap {:#x}:{:#x} failed\n",
                 self.iova(),
                 self.size()
@@ -479,7 +479,7 @@ impl Mapping {
         let pages = self.size() >> UAT_PGBIT;
         flush.begin_flush(self.iova() as u64, self.size() as u64);
         if pages >= 0x10000 {
-            dev_err!(owner.dev, "MMU: Flush too big ({:#x} pages))\n", pages);
+            dev_err!(owner.dev.as_ref(), "MMU: Flush too big ({:#x} pages))\n", pages);
         }
 
         let cmd = fw::channels::FwCtlMsg {
@@ -493,7 +493,7 @@ impl Mapping {
         // Tell the firmware to do a cache flush
         if let Err(e) = owner.dev.data().gpu.fwctl(cmd) {
             dev_err!(
-                owner.dev,
+                owner.dev.as_ref(),
                 "MMU: ASC cache flush {:#x}:{:#x} failed (err: {:?})\n",
                 self.iova(),
                 self.size(),
@@ -548,7 +548,7 @@ impl Drop for Mapping {
             .is_err()
         {
             dev_err!(
-                owner.dev,
+                owner.dev.as_ref(),
                 "MMU: unmap {:#x}:{:#x} failed\n",
                 self.iova(),
                 self.size()
@@ -773,7 +773,7 @@ impl Vm {
         file_id: u64,
     ) -> Result<Vm> {
         let page_table = AppleUAT::new(
-            dev,
+            dev.as_ref(),
             io_pgtable::Config {
                 pgsize_bitmap: UAT_PGSZ,
                 ias: if is_kernel { UAT_IAS_KERN } else { UAT_IAS },
@@ -913,7 +913,7 @@ impl Vm {
 
         if (phys | size | iova) & UAT_PGMSK != 0 {
             dev_err!(
-                inner.dev,
+                inner.dev.as_ref(),
                 "MMU: Mapping {:#x}:{:#x} -> {:#x} is not page-aligned\n",
                 phys,
                 size,
@@ -923,7 +923,7 @@ impl Vm {
         }
 
         dev_info!(
-            inner.dev,
+            inner.dev.as_ref(),
             "MMU: IO map: {:#x}:{:#x} -> {:#x}\n",
             phys,
             size,
@@ -997,7 +997,7 @@ impl Drop for VmInner {
 impl Uat {
     /// Map a bootloader-preallocated memory region
     fn map_region(
-        dev: &dyn device::RawDevice,
+        dev: &device::Device,
         name: &CStr,
         size: usize,
         cached: bool,
@@ -1149,12 +1149,12 @@ impl Uat {
     /// Creates the reference-counted inner data for a new `Uat` instance.
     #[inline(never)]
     fn make_inner(dev: &driver::AsahiDevice) -> Result<Arc<UatInner>> {
-        let handoff_rgn = Self::map_region(dev, c_str!("handoff"), HANDOFF_SIZE, false)?;
-        let ttbs_rgn = Self::map_region(dev, c_str!("ttbs"), SLOTS_SIZE, false)?;
+        let handoff_rgn = Self::map_region(dev.as_ref(), c_str!("handoff"), HANDOFF_SIZE, false)?;
+        let ttbs_rgn = Self::map_region(dev.as_ref(), c_str!("ttbs"), SLOTS_SIZE, false)?;
 
         let handoff = unsafe { &(handoff_rgn.map.as_ptr() as *mut Handoff).as_ref().unwrap() };
 
-        dev_info!(dev, "MMU: Initializing kernel page table\n");
+        dev_info!(dev.as_ref(), "MMU: Initializing kernel page table\n");
 
         Arc::pin_init(
             try_pin_init!(UatInner {
@@ -1182,17 +1182,17 @@ impl Uat {
         cfg: &'static hw::HwConfig,
         map_kernel_to_user: bool,
     ) -> Result<Self> {
-        dev_info!(dev, "MMU: Initializing...\n");
+        dev_info!(dev.as_ref(), "MMU: Initializing...\n");
 
         let inner = Self::make_inner(dev)?;
 
-        let pagetables_rgn = Self::map_region(dev, c_str!("pagetables"), PAGETABLES_SIZE, true)?;
+        let pagetables_rgn = Self::map_region(dev.as_ref(), c_str!("pagetables"), PAGETABLES_SIZE, true)?;
 
         dev_info!(dev, "MMU: Creating kernel page tables\n");
         let kernel_lower_vm = Vm::new(dev, inner.clone(), cfg, false, 1, 0)?;
         let kernel_vm = Vm::new(dev, inner.clone(), cfg, true, 0, 0)?;
 
-        dev_info!(dev, "MMU: Kernel page tables created\n");
+        dev_info!(dev.as_ref(), "MMU: Kernel page tables created\n");
 
         let ttb0 = kernel_lower_vm.ttb();
         let ttb1 = kernel_vm.ttb();
@@ -1221,7 +1221,7 @@ impl Uat {
 
         inner.handoff().init()?;
 
-        dev_info!(dev, "MMU: Initializing TTBs\n");
+        dev_info!(dev.as_ref(), "MMU: Initializing TTBs\n");
 
         inner.handoff().lock();
 
@@ -1243,7 +1243,7 @@ impl Uat {
 
         uat.kpt0()[2].store(ttb1 | PTE_TABLE, Ordering::Relaxed);
 
-        dev_info!(dev, "MMU: initialized\n");
+        dev_info!(dev.as_ref(), "MMU: initialized\n");
 
         Ok(uat)
     }

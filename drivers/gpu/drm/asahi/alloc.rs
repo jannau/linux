@@ -212,7 +212,7 @@ pub(crate) trait Allocator {
     #[inline(never)]
     fn new_boxed<T: GpuStruct>(
         &mut self,
-        inner: Box<T>,
+        inner: KBox<T>,
         callback: impl for<'a> FnOnce(
             &'a T,
             &'a mut MaybeUninit<T::Raw<'a>>,
@@ -600,7 +600,7 @@ impl Drop for HeapAllocation {
             if let Some(garbage) = a.garbage.as_mut() {
                 if garbage.push(node, GFP_KERNEL).is_err() {
                     dev_err!(
-                        &a.dev,
+                        &a.dev.as_ref(),
                         "HeapAllocation[{}]::drop: Failed to keep garbage\n",
                         &*a.name,
                     );
@@ -687,7 +687,7 @@ pub(crate) struct HeapAllocator {
     min_align: usize,
     block_size: usize,
     cpu_maps: bool,
-    guard_nodes: Vec<mm::Node<HeapAllocatorInner, HeapAllocationInner>>,
+    guard_nodes: KVec<mm::Node<HeapAllocatorInner, HeapAllocationInner>>,
     mm: mm::Allocator<HeapAllocatorInner, HeapAllocationInner>,
     name: CString,
 }
@@ -720,7 +720,7 @@ impl HeapAllocator {
         let inner = HeapAllocatorInner {
             dev: dev.into(),
             allocated: 0,
-            backing_objects: Vec::new(),
+            backing_objects: KVec::new(),
             // TODO: This clearly needs a try_clone() or similar
             name: CString::try_from_fmt(fmt!("{}", &*name))?,
             vm_id: vm.id(),
@@ -740,7 +740,7 @@ impl HeapAllocator {
             min_align,
             block_size: block_size.max(min_align),
             cpu_maps,
-            guard_nodes: Vec::new(),
+            guard_nodes: KVec::new(),
             mm,
             name,
         })
@@ -765,7 +765,7 @@ impl HeapAllocator {
 
         if self.top.saturating_add(size_aligned as u64) >= self.end {
             dev_err!(
-                &self.dev,
+                self.dev.as_ref(),
                 "HeapAllocator[{}]::add_block: Exhausted VA space\n",
                 &*self.name,
             );
@@ -795,7 +795,7 @@ impl HeapAllocator {
         if self.cpu_maps {
             let guard = self.min_align.max(mmu::UAT_PGSZ);
             mod_dev_dbg!(
-                &self.dev,
+                self.dev,
                 "HeapAllocator[{}]::add_block: Adding guard node {:#x}:{:#x}\n",
                 &*self.name,
                 new_top,
@@ -812,7 +812,7 @@ impl HeapAllocator {
                 Ok(a) => a,
                 Err(a) => {
                     dev_err!(
-                        &self.dev,
+                        self.dev.as_ref(),
                         "HeapAllocator[{}]::add_block: Failed to reserve guard node {:#x}:{:#x}: {:?}\n",
                         &*self.name,
                         guard,
@@ -917,7 +917,7 @@ impl Allocator for HeapAllocator {
             Ok(a) => a,
             Err(a) => {
                 dev_err!(
-                    &self.dev,
+                    &self.dev.as_ref(),
                     "HeapAllocator[{}]::new: Failed to insert node of size {:#x} / align {:#x}: {:?}\n",
                     &*self.name, size_aligned, align, a
                 );
@@ -933,7 +933,7 @@ impl Allocator for HeapAllocator {
         if end > self.top {
             if start > self.top {
                 dev_warn!(
-                    self.dev,
+                    self.dev.as_ref(),
                     "HeapAllocator[{}]::alloc: top={:#x}, start={:#x}\n",
                     &*self.name,
                     self.top,
@@ -960,7 +960,7 @@ impl Allocator for HeapAllocator {
                     Ok(a) => a,
                     Err(_) => {
                         dev_warn!(
-                            self.dev,
+                            self.dev.as_ref(),
                             "HeapAllocator[{}]::alloc: Failed to find object at {:#x}\n",
                             &*self.name,
                             start

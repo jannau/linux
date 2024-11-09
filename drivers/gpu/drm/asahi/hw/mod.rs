@@ -6,9 +6,7 @@
 
 use crate::driver::AsahiDevice;
 use crate::fw::types::*;
-use alloc::vec::Vec;
 use kernel::c_str;
-use kernel::device::RawDevice;
 use kernel::prelude::*;
 
 const MAX_POWERZONES: usize = 5;
@@ -108,7 +106,7 @@ pub(crate) mod feat {
 #[derive(Debug)]
 pub(crate) struct PState {
     /// Voltage in millivolts, per GPU cluster.
-    pub(crate) volt_mv: Vec<u32>,
+    pub(crate) volt_mv: KVec<u32>,
     /// Frequency in hertz.
     pub(crate) freq_hz: u32,
     /// Maximum power consumption of the GPU at this pstate, in milliwatts.
@@ -340,23 +338,23 @@ pub(crate) struct GpuIdConfig {
     /// Total number of active cores for the whole GPU.
     pub(crate) total_active_cores: u32,
     /// Mask of active cores per cluster.
-    pub(crate) core_masks: Vec<u32>,
+    pub(crate) core_masks: KVec<u32>,
     /// Packed mask of all active cores.
-    pub(crate) core_masks_packed: Vec<u32>,
+    pub(crate) core_masks_packed: KVec<u32>,
 }
 
 /// Configurable CS/AFR GPU power settings from the device tree.
 #[derive(Debug)]
 pub(crate) struct CsAfrPwrConfig {
     /// GPU CS performance state list.
-    pub(crate) perf_states_cs: Vec<PState>,
+    pub(crate) perf_states_cs: KVec<PState>,
     /// GPU AFR performance state list.
-    pub(crate) perf_states_afr: Vec<PState>,
+    pub(crate) perf_states_afr: KVec<PState>,
 
     /// CS leakage coefficient per die.
-    pub(crate) leak_coef_cs: Vec<F32>,
+    pub(crate) leak_coef_cs: KVec<F32>,
     /// AFR leakage coefficient per die.
-    pub(crate) leak_coef_afr: Vec<F32>,
+    pub(crate) leak_coef_afr: KVec<F32>,
 
     /// Minimum voltage for the CS/AFR SRAM power domain in microvolts.
     pub(crate) min_sram_microvolt: u32,
@@ -366,14 +364,14 @@ pub(crate) struct CsAfrPwrConfig {
 #[derive(Debug)]
 pub(crate) struct PwrConfig {
     /// GPU performance state list.
-    pub(crate) perf_states: Vec<PState>,
+    pub(crate) perf_states: KVec<PState>,
     /// GPU power zone list.
-    pub(crate) power_zones: Vec<PowerZone>,
+    pub(crate) power_zones: KVec<PowerZone>,
 
     /// Core leakage coefficient per cluster.
-    pub(crate) core_leak_coef: Vec<F32>,
+    pub(crate) core_leak_coef: KVec<F32>,
     /// SRAM leakage coefficient per cluster.
-    pub(crate) sram_leak_coef: Vec<F32>,
+    pub(crate) sram_leak_coef: KVec<F32>,
 
     pub(crate) csafr: Option<CsAfrPwrConfig>,
 
@@ -469,15 +467,15 @@ impl PwrConfig {
         name: &CStr,
         cfg: &HwConfig,
         is_main: bool,
-    ) -> Result<Vec<PState>> {
-        let mut perf_states = Vec::new();
+    ) -> Result<KVec<PState>> {
+        let mut perf_states = KVec::new();
 
-        let node = dev.of_node().ok_or(EIO)?;
+        let node = dev.as_ref().of_node().ok_or(EIO)?;
         let opps = node.parse_phandle(name, 0).ok_or(EIO)?;
 
         for opp in opps.children() {
             let freq_hz: u64 = opp.get_property(c_str!("opp-hz"))?;
-            let mut volt_uv: Vec<u32> = opp.get_property(c_str!("opp-microvolt"))?;
+            let mut volt_uv: KVec<u32> = opp.get_property(c_str!("opp-microvolt"))?;
             let pwr_uw: u32 = if is_main {
                 opp.get_property(c_str!("opp-microwatt"))?
             } else {
@@ -492,7 +490,7 @@ impl PwrConfig {
 
             if volt_uv.len() != voltage_count as usize {
                 dev_err!(
-                    dev,
+                    dev.as_ref(),
                     "Invalid opp-microvolt length (expected {}, got {})\n",
                     voltage_count,
                     volt_uv.len()
@@ -525,34 +523,34 @@ impl PwrConfig {
     /// Load the GPU power configuration from the device tree.
     pub(crate) fn load(dev: &AsahiDevice, cfg: &HwConfig) -> Result<PwrConfig> {
         let perf_states = Self::load_opp(dev, c_str!("operating-points-v2"), cfg, true)?;
-        let node = dev.of_node().ok_or(EIO)?;
+        let node = dev.as_ref().of_node().ok_or(EIO)?;
 
         macro_rules! prop {
             ($prop:expr, $default:expr) => {{
                 node.get_opt_property(c_str!($prop))
                     .map_err(|e| {
-                        dev_err!(dev, "Error reading property {}: {:?}\n", $prop, e);
+                        dev_err!(dev.as_ref(), "Error reading property {}: {:?}\n", $prop, e);
                         e
                     })?
                     .unwrap_or($default)
             }};
             ($prop:expr) => {{
                 node.get_property(c_str!($prop)).map_err(|e| {
-                    dev_err!(dev, "Error reading property {}: {:?}\n", $prop, e);
+                    dev_err!(dev.as_ref(), "Error reading property {}: {:?}\n", $prop, e);
                     e
                 })?
             }};
         }
 
-        let pz_data = prop!("apple,power-zones", Vec::new());
+        let pz_data = prop!("apple,power-zones", KVec::new());
 
         if pz_data.len() > 3 * MAX_POWERZONES || pz_data.len() % 3 != 0 {
-            dev_err!(dev, "Invalid apple,power-zones value\n");
+            dev_err!(dev.as_ref(), "Invalid apple,power-zones value\n");
             return Err(EINVAL);
         }
 
         let pz_count = pz_data.len() / 3;
-        let mut power_zones = Vec::new();
+        let mut power_zones = KVec::new();
         for i in (0..pz_count).step_by(3) {
             power_zones.push(
                 PowerZone {
@@ -564,15 +562,15 @@ impl PwrConfig {
             )?;
         }
 
-        let core_leak_coef: Vec<F32> = prop!("apple,core-leak-coef");
-        let sram_leak_coef: Vec<F32> = prop!("apple,sram-leak-coef");
+        let core_leak_coef: KVec<F32> = prop!("apple,core-leak-coef");
+        let sram_leak_coef: KVec<F32> = prop!("apple,sram-leak-coef");
 
         if core_leak_coef.len() != cfg.max_num_clusters as usize {
-            dev_err!(dev, "Invalid apple,core-leak-coef\n");
+            dev_err!(dev.as_ref(), "Invalid apple,core-leak-coef\n");
             return Err(EINVAL);
         }
         if sram_leak_coef.len() != cfg.max_num_clusters as usize {
-            dev_err!(dev, "Invalid apple,sram_leak_coef\n");
+            dev_err!(dev.as_ref(), "Invalid apple,sram_leak_coef\n");
             return Err(EINVAL);
         }
 

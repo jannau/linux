@@ -17,7 +17,6 @@
 
 use core::ops::{Deref, DerefMut};
 use kernel::{
-    alloc::{flags::*, vec_ext::VecExt},
     error::{code::*, Result},
     prelude::*,
     str::CStr,
@@ -105,7 +104,7 @@ struct Entry<T: SlotItem> {
 /// Inner data for the `SlotAllocator`, protected by a `Mutex`.
 struct SlotAllocatorInner<T: SlotItem> {
     data: T::Data,
-    slots: Vec<Option<Entry<T>>>,
+    slots: KVec<Option<Entry<T>>>,
     get_count: u64,
     drop_count: u64,
 }
@@ -136,7 +135,7 @@ impl<T: SlotItem> SlotAllocator<T> {
         lock_key1: LockClassKey,
         lock_key2: LockClassKey,
     ) -> Result<SlotAllocator<T>> {
-        let mut slots = Vec::with_capacity(num_slots as usize, GFP_KERNEL)?;
+        let mut slots = KVec::with_capacity(num_slots as usize, GFP_KERNEL)?;
 
         for i in 0..num_slots {
             slots

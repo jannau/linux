@@ -15,11 +15,10 @@ use crate::f32;
 use crate::fw::initdata::*;
 use crate::fw::types::*;
 use crate::{driver::AsahiDevice, gem, gpu, hw, mmu};
-use alloc::vec::Vec;
-use kernel::alloc::{box_ext::BoxExt, flags::*, vec_ext::VecExt};
 use kernel::error::{Error, Result};
 use kernel::macros::versions;
 use kernel::{init, init::Init, try_init};
+use kernel::prelude::*;
 
 /// Builder helper for the global GPU InitData.
 #[versions(AGX)]
@@ -69,7 +68,7 @@ impl<'a> InitDataBuilder::ver<'a> {
         unk_4: u32,
         t1: &[u16],
         t2: &[i16],
-        t3: &[Vec<i32>],
+        t3: &[KVec<i32>],
     ) {
         curve.unk_0 = unk_0;
         curve.unk_4 = unk_4;
@@ -851,7 +850,7 @@ impl<'a> InitDataBuilder::ver<'a> {
 
     /// Build the top-level InitData object.
     #[inline(never)]
-    pub(crate) fn build(&mut self) -> Result<Box<GpuObject<InitData::ver>>> {
+    pub(crate) fn build(&mut self) -> Result<KBox<GpuObject<InitData::ver>>> {
         let runtime_pointers = self.runtime_pointers()?;
         let globals = self.globals()?;
         let fw_status = self.fw_status()?;
@@ -896,6 +895,6 @@ impl<'a> InitDataBuilder::ver<'a> {
                 })
             },
         )?;
-        Ok(Box::new(obj, GFP_KERNEL)?)
+        Ok(KBox::new(obj, GFP_KERNEL)?)
     }
 }

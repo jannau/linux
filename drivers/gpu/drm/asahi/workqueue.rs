@@ -24,7 +24,6 @@ use crate::{channel, driver, event, fw, gpu, object, regs};
 use core::num::NonZeroU64;
 use core::sync::atomic::Ordering;
 use kernel::{
-    alloc::{box_ext::BoxExt, flags::*, vec_ext::VecExt},
     c_str, dma_fence,
     error::code::*,
     prelude::*,
@@ -104,7 +103,7 @@ impl From<WorkError> for kernel::error::Error {
 /// A GPU context tracking structure, which must be explicitly invalidated when dropped.
 pub(crate) struct GpuContext {
     dev: driver::AsahiDevRef,
-    data: Option<Box<GpuObject<fw::workqueue::GpuContextData>>>,
+    data: Option<KBox<GpuObject<fw::workqueue::GpuContextData>>>,
 }
 no_debug!(GpuContext);
 
@@ -117,7 +116,7 @@ impl GpuContext {
     ) -> Result<GpuContext> {
         Ok(GpuContext {
             dev: dev.into(),
-            data: Some(Box::new(
+            data: Some(KBox::new(
                 alloc.shared.new_object(
                     fw::workqueue::GpuContextData { _buffer: buffer },
                     |_inner| Default::default(),
@@ -644,7 +643,7 @@ impl WorkQueue::ver {
             pipe_type,
             size,
             wptr: 0,
-            pending: Vec::new(),
+            pending: KVec::new(),
             last_token: None,
             event: None,
             priority,
@@ -720,7 +719,7 @@ impl WorkQueue::ver {
                 info_ptr: self.info_pointer,
             },
             start_value: ev.1,
-            pending: Vec::new(),
+            pending: KVec::new(),
             event_count: 0,
             committed: false,
             submitted: false,
@@ -887,7 +886,7 @@ impl WorkQueue for WorkQueue::ver {
             error
         );
 
-        let mut cmds = Vec::new();
+        let mut cmds = KVec::new();
 
         core::mem::swap(&mut inner.pending, &mut cmds);
 

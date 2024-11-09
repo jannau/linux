@@ -45,7 +45,7 @@ impl super::Queue::ver {
         let gpu = match dev.gpu.as_any().downcast_ref::<gpu::GpuManager::ver>() {
             Some(gpu) => gpu,
             None => {
-                dev_crit!(self.dev, "GpuManager mismatched with Queue!\n");
+                dev_crit!(self.dev.as_ref(), "GpuManager mismatched with Queue!\n");
                 return Err(EIO);
             }
         };

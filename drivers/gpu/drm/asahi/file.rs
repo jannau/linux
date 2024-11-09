@@ -99,8 +99,8 @@ impl SyncItem {
         }
     }
 
-    fn parse_array(file: &DrmFile, ptr: u64, count: u32, out: bool) -> Result<Vec<SyncItem>> {
-        let mut vec = Vec::with_capacity(count as usize, GFP_KERNEL)?;
+    fn parse_array(file: &DrmFile, ptr: u64, count: u32, out: bool) -> Result<KVec<SyncItem>> {
+        let mut vec = KVec::with_capacity(count as usize, GFP_KERNEL)?;
 
         const STRIDE: usize = core::mem::size_of::<uapi::drm_asahi_sync>();
         let size = STRIDE * count as usize;
@@ -127,8 +127,8 @@ impl SyncItem {
 /// State associated with a client.
 pub(crate) struct File {
     id: u64,
-    vms: xarray::XArray<Box<Vm>>,
-    queues: xarray::XArray<Arc<Mutex<Box<dyn queue::Queue>>>>,
+    vms: xarray::XArray<KBox<Vm>>,
+    queues: xarray::XArray<Arc<Mutex<KBox<dyn queue::Queue>>>>,
 }
 
 /// Convenience type alias for our DRM `File` type.
@@ -158,33 +158,32 @@ impl drm::file::DriverFile for File {
     type Driver = driver::AsahiDriver;
 
     /// Create a new `File` instance for a fresh client.
-    fn open(device: &AsahiDevice) -> Result<Pin<Box<Self>>> {
+    fn open(device: &AsahiDevice) -> Result<Pin<KBox<Self>>> {
         debug::update_debug_flags();
 
         let gpu = &device.data().gpu;
         let id = gpu.ids().file.next();
 
         mod_dev_dbg!(device, "[File {}]: DRM device opened\n", id);
-        Ok(Box::into_pin(Box::new(
-            Self {
+        Ok(KBox::pin(Self {
                 id,
                 vms: xarray::XArray::new(xarray::flags::ALLOC1),
                 queues: xarray::XArray::new(xarray::flags::ALLOC1),
             },
             GFP_KERNEL,
-        )?))
+        )?)
     }
 }
 
 impl File {
-    fn vms(self: Pin<&Self>) -> Pin<&xarray::XArray<Box<Vm>>> {
+    fn vms(self: Pin<&Self>) -> Pin<&xarray::XArray<KBox<Vm>>> {
         // SAFETY: Structural pinned projection for vms.
         // We never move out of this field.
         unsafe { self.map_unchecked(|s| &s.vms) }
     }
 
     #[allow(clippy::type_complexity)]
-    fn queues(self: Pin<&Self>) -> Pin<&xarray::XArray<Arc<Mutex<Box<dyn queue::Queue>>>>> {
+    fn queues(self: Pin<&Self>) -> Pin<&xarray::XArray<Arc<Mutex<KBox<dyn queue::Queue>>>>> {
         // SAFETY: Structural pinned projection for queues.
         // We never move out of this field.
         unsafe { self.map_unchecked(|s| &s.queues) }
@@ -655,7 +654,7 @@ impl File {
         gpu.update_globals();
 
         // Upgrade to Arc<T> to drop the XArray lock early
-        let queue: Arc<Mutex<Box<dyn queue::Queue>>> = file
+        let queue: Arc<Mutex<KBox<dyn queue::Queue>>> = file
             .inner()
             .queues()
             .get(data.queue_id.try_into()?)
@@ -710,7 +709,7 @@ impl File {
             data.queue_id,
             id
         );
-        let mut commands = Vec::with_capacity(data.command_count as usize, GFP_KERNEL)?;
+        let mut commands = KVec::with_capacity(data.command_count as usize, GFP_KERNEL)?;
 
         const STRIDE: usize = core::mem::size_of::<uapi::drm_asahi_command>();
         let size = STRIDE * data.command_count as usize;
@@ -737,7 +736,7 @@ impl File {
             Err(ERESTARTSYS) => Err(ERESTARTSYS),
             Err(e) => {
                 dev_info!(
-                    device,
+                    device.as_ref(),
                     "[File {} Queue {}]: IOCTL: submit failed! (submission ID: {} err: {:?})\n",
                     file.inner().id,
                     data.queue_id,

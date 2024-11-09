@@ -9,7 +9,6 @@ use kernel::{
 
 use crate::{debug, file, gem, gpu, hw, regs};
 
-use kernel::device::RawDevice;
 use kernel::macros::vtable;
 use kernel::types::ARef;
 
@@ -143,7 +142,7 @@ impl platform::Driver for AsahiDriver {
             }
             _ => {
                 dev_info!(
-                    dev,
+                    pdev.as_ref(),
                     "Unsupported GPU/firmware combination ({:?}, {:?}, {:?})\n",
                     cfg.gpu_gen,
                     cfg.gpu_variant,

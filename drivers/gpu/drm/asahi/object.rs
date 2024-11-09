@@ -45,7 +45,6 @@
 
 use kernel::{error::code::*, prelude::*};
 
-use alloc::boxed::Box;
 use core::fmt;
 use core::fmt::Debug;
 use core::fmt::Formatter;
@@ -225,7 +224,7 @@ pub(crate) struct GpuObject<T: GpuStruct, U: Allocation<T>> {
     raw: *mut T::Raw<'static>,
     alloc: U,
     gpu_ptr: GpuWeakPointer<T>,
-    inner: Box<T>,
+    inner: KBox<T>,
 }
 
 impl<T: GpuStruct, U: Allocation<T>> GpuObject<T, U> {
@@ -242,7 +241,7 @@ impl<T: GpuStruct, U: Allocation<T>> GpuObject<T, U> {
         let size = mem::size_of::<T::Raw<'static>>();
         if size > 0x1000 {
             dev_crit!(
-                alloc.device(),
+                alloc.device().as_ref(),
                 "Allocating {} of size {:#x}, with new, please use new_boxed!\n",
                 core::any::type_name::<T>(),
                 size
@@ -269,7 +268,7 @@ impl<T: GpuStruct, U: Allocation<T>> GpuObject<T, U> {
             raw: p,
             gpu_ptr,
             alloc,
-            inner: Box::new(inner, GFP_KERNEL)?,
+            inner: KBox::new(inner, GFP_KERNEL)?,
         })
     }
 
@@ -281,7 +280,7 @@ impl<T: GpuStruct, U: Allocation<T>> GpuObject<T, U> {
     /// macro to avoid constructing the whole `T::Raw` object on the stack.
     pub(crate) fn new_boxed(
         alloc: U,
-        inner: Box<T>,
+        inner: KBox<T>,
         callback: impl for<'a> FnOnce(
             &'a T,
             &'a mut MaybeUninit<T::Raw<'a>>,
@@ -303,7 +302,7 @@ impl<T: GpuStruct, U: Allocation<T>> GpuObject<T, U> {
         let raw = callback(&inner, unsafe { &mut *p })?;
         if p as *mut T::Raw<'_> != raw as *mut _ {
             dev_err!(
-                alloc.device(),
+                alloc.device().as_ref(),
                 "Allocation callback returned a mismatched reference ({})\n",
                 core::any::type_name::<T>(),
             );
@@ -331,7 +330,7 @@ impl<T: GpuStruct, U: Allocation<T>> GpuObject<T, U> {
             &'a mut MaybeUninit<T::Raw<'a>>,
         ) -> Result<&'a mut T::Raw<'a>>,
     ) -> Result<Self> {
-        GpuObject::<T, U>::new_boxed(alloc, Box::new(inner, GFP_KERNEL)?, callback)
+        GpuObject::<T, U>::new_boxed(alloc, KBox::new(inner, GFP_KERNEL)?, callback)
     }
 
     /// Create a new GpuObject given an allocator and the boxed inner data (a type implementing
@@ -366,7 +365,7 @@ impl<T: GpuStruct, U: Allocation<T>> GpuObject<T, U> {
             raw: p as *mut u8 as *mut T::Raw<'static>,
             gpu_ptr,
             alloc,
-            inner: Box::init(inner, GFP_KERNEL)?,
+            inner: KBox::init(inner, GFP_KERNEL)?,
         };
         let q = &*ret.inner as *const T;
         // SAFETY: `p` is guaranteed to be valid per the Allocation invariant.

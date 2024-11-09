@@ -128,9 +128,9 @@ struct RxChannels {
 /// GPU work submission pipe channels (driver->GPU).
 #[versions(AGX)]
 struct PipeChannels {
-    pub(crate) vtx: Vec<Pin<Box<Mutex<channel::PipeChannel::ver>>>>,
-    pub(crate) frag: Vec<Pin<Box<Mutex<channel::PipeChannel::ver>>>>,
-    pub(crate) comp: Vec<Pin<Box<Mutex<channel::PipeChannel::ver>>>>,
+    pub(crate) vtx: KVec<Pin<KBox<Mutex<channel::PipeChannel::ver>>>>,
+    pub(crate) frag: KVec<Pin<KBox<Mutex<channel::PipeChannel::ver>>>>,
+    pub(crate) comp: KVec<Pin<KBox<Mutex<channel::PipeChannel::ver>>>>,
 }
 
 /// Misc command transmit (driver->GPU) channels.
@@ -218,7 +218,7 @@ pub(crate) struct GpuManager {
     garbage_work: Mutex<Vec<Box<dyn workqueue::GenSubmittedWork>>>,
     #[allow(clippy::vec_box)]
     #[pin]
-    garbage_contexts: Mutex<Vec<Box<fw::types::GpuObject<fw::workqueue::GpuContextData>>>>,
+    garbage_contexts: Mutex<KVec<KBox<fw::types::GpuObject<fw::workqueue::GpuContextData>>>>,
 }
 
 /// Trait used to abstract the firmware/GPU-dependent variants of the GpuManager.
@@ -247,7 +247,7 @@ pub(crate) trait GpuManager: Send + Sync {
         ualloc_priv: Arc<Mutex<alloc::DefaultAllocator>>,
         priority: u32,
         caps: u32,
-    ) -> Result<Box<dyn queue::Queue>>;
+    ) -> Result<KBox<dyn queue::Queue>>;
     /// Return a reference to the global `SequenceIDs` instance.
     fn ids(&self) -> &SequenceIDs;
     /// Kick the firmware (wake it up if asleep).
@@ -295,10 +295,10 @@ impl rtkit::Operations for GpuManager::ver {
 
     fn recv_message(data: <Self::Data as ForeignOwnable>::Borrowed<'_>, ep: u8, msg: u64) {
         let dev = &data.dev;
-        //dev_info!(dev, "RtKit message: {:#x}:{:#x}\n", ep, msg);
+        //dev_info!(dev.as_ref(), "RtKit message: {:#x}:{:#x}\n", ep, msg);
 
         if ep != EP_FIRMWARE || msg != MSG_RX_DOORBELL {
-            dev_err!(dev, "Unknown message: {:#x}:{:#x}\n", ep, msg);
+            dev_err!(dev.as_ref(), "Unknown message: {:#x}:{:#x}\n", ep, msg);
             return;
         }
 
@@ -318,7 +318,7 @@ impl rtkit::Operations for GpuManager::ver {
         if debug_enabled(DebugFlags::OopsOnGpuCrash) {
             panic!("GPU firmware crashed");
         } else {
-            dev_err!(dev, "GPU firmware crashed, failing all jobs\n");
+            dev_err!(dev.as_ref(), "GPU firmware crashed, failing all jobs\n");
             data.event_manager.fail_all(workqueue::WorkError::NoDevice);
         }
     }
@@ -477,7 +477,7 @@ impl GpuManager::ver {
                 });
         }
 
-        let mut p_pipes: Vec<fw::initdata::raw::PipeChannels::ver> = Vec::new();
+        let mut p_pipes: KVec<fw::initdata::raw::PipeChannels::ver> = KVec::new();
 
         for ((v, f), c) in mgr
             .pipes
@@ -535,7 +535,7 @@ impl GpuManager::ver {
 
         let mgr = Arc::from(mgr);
 
-        let rtkit = rtkit::RtKit::<GpuManager::ver>::new(dev, None, 0, mgr.clone())?;
+        let rtkit = rtkit::RtKit::<GpuManager::ver>::new(dev.as_ref(), None, 0, mgr.clone())?;
 
         *mgr.rtkit.lock() = Some(rtkit);
 
@@ -567,7 +567,7 @@ impl GpuManager::ver {
         cfg: &'static hw::HwConfig,
         dyncfg: &hw::DynConfig,
         alloc: &mut KernelAllocators,
-    ) -> Result<Box<fw::types::GpuObject<fw::initdata::InitData::ver>>> {
+    ) -> Result<KBox<fw::types::GpuObject<fw::initdata::InitData::ver>>> {
         let mut builder = initdata::InitDataBuilder::ver::new(dev, alloc, cfg, dyncfg);
         builder.build()
     }
@@ -576,7 +576,7 @@ impl GpuManager::ver {
     ///
     /// Force disable inlining to avoid blowing up the stack.
     #[inline(never)]
-    fn make_uat(dev: &AsahiDevice, cfg: &'static hw::HwConfig) -> Result<Box<mmu::Uat>> {
+    fn make_uat(dev: &AsahiDevice, cfg: &'static hw::HwConfig) -> Result<KBox<mmu::Uat>> {
         // G14X has a new thing in the Scene structure that unfortunately requires
         // write access from user contexts. Hopefully it's not security-sensitive.
         #[ver(G >= G14X)]
@@ -584,7 +584,7 @@ impl GpuManager::ver {
         #[ver(G < G14X)]
         let map_kernel_to_user = false;
 
-        Ok(Box::new(
+        Ok(KBox::new(
             mmu::Uat::new(dev, cfg, map_kernel_to_user)?,
             GFP_KERNEL,
         )?)
@@ -597,21 +597,21 @@ impl GpuManager::ver {
     fn make_mgr(
         dev: &AsahiDevice,
         cfg: &'static hw::HwConfig,
-        dyncfg: Box<hw::DynConfig>,
-        uat: Box<mmu::Uat>,
+        dyncfg: KBox<hw::DynConfig>,
+        uat: KBox<mmu::Uat>,
         mut alloc: KernelAllocators,
         event_manager: Arc<event::EventManager>,
-        initdata: Box<fw::types::GpuObject<fw::initdata::InitData::ver>>,
+        initdata: KBox<fw::types::GpuObject<fw::initdata::InitData::ver>>,
     ) -> Result<Pin<UniqueArc<GpuManager::ver>>> {
         let mut pipes = PipeChannels::ver {
-            vtx: Vec::new(),
-            frag: Vec::new(),
-            comp: Vec::new(),
+            vtx: KVec::new(),
+            frag: KVec::new(),
+            comp: KVec::new(),
         };
 
         for _i in 0..=NUM_PIPES - 1 {
             pipes.vtx.push(
-                Box::pin_init(
+                KBox::pin_init(
                     Mutex::new_named(
                         channel::PipeChannel::ver::new(dev, &mut alloc)?,
                         c_str!("pipe_vtx"),
@@ -621,7 +621,7 @@ impl GpuManager::ver {
                 GFP_KERNEL,
             )?;
             pipes.frag.push(
-                Box::pin_init(
+                KBox::pin_init(
                     Mutex::new_named(
                         channel::PipeChannel::ver::new(dev, &mut alloc)?,
                         c_str!("pipe_frag"),
@@ -631,7 +631,7 @@ impl GpuManager::ver {
                 GFP_KERNEL,
             )?;
             pipes.comp.push(
-                Box::pin_init(
+                KBox::pin_init(
                     Mutex::new_named(
                         channel::PipeChannel::ver::new(dev, &mut alloc)?,
                         c_str!("pipe_comp"),
@@ -648,7 +648,7 @@ impl GpuManager::ver {
         let event_manager_clone = event_manager.clone();
         let buffer_mgr_clone = buffer_mgr.clone();
         let alloc_ref = &mut alloc;
-        let rx_channels = Box::init(
+        let rx_channels = KBox::init(
             try_init!(RxChannels::ver {
                 event: channel::EventChannel::ver::new(
                     dev,
@@ -704,12 +704,12 @@ impl GpuManager::ver {
         res: &regs::Resources,
         cfg: &'static hw::HwConfig,
         uat: &mmu::Uat,
-    ) -> Result<Box<hw::DynConfig>> {
+    ) -> Result<KBox<hw::DynConfig>> {
         let gpu_id = res.get_gpu_id()?;
 
-        dev_info!(dev, "GPU Information:\n");
+        dev_info!(dev.as_ref(), "GPU Information:\n");
         dev_info!(
-            dev,
+            dev.as_ref(),
             "  Type: {:?}{:?}\n",
             gpu_id.gpu_gen,
             gpu_id.gpu_variant
@@ -717,33 +717,33 @@ impl GpuManager::ver {
         dev_info!(dev, "  Max dies: {}\n", gpu_id.max_dies);
         dev_info!(dev, "  Clusters: {}\n", gpu_id.num_clusters);
         dev_info!(
-            dev,
+            dev.as_ref(),
             "  Cores: {} ({})\n",
             gpu_id.num_cores,
             gpu_id.num_cores * gpu_id.num_clusters
         );
         dev_info!(
-            dev,
+            dev.as_ref(),
             "  Frags: {} ({})\n",
             gpu_id.num_frags,
             gpu_id.num_frags * gpu_id.num_clusters
         );
         dev_info!(
-            dev,
+            dev.as_ref(),
             "  GPs: {} ({})\n",
             gpu_id.num_gps,
             gpu_id.num_gps * gpu_id.num_clusters
         );
-        dev_info!(dev, "  Core masks: {:#x?}\n", gpu_id.core_masks);
-        dev_info!(dev, "  Active cores: {}\n", gpu_id.total_active_cores);
+        dev_info!(dev.as_ref(), "  Core masks: {:#x?}\n", gpu_id.core_masks);
+        dev_info!(dev.as_ref(), "  Active cores: {}\n", gpu_id.total_active_cores);
 
-        dev_info!(dev, "Getting configuration from device tree...\n");
+        dev_info!(dev.as_ref(), "Getting configuration from device tree...\n");
         let pwr_cfg = hw::PwrConfig::load(dev, cfg)?;
-        dev_info!(dev, "Dynamic configuration fetched\n");
+        dev_info!(dev.as_ref(), "Dynamic configuration fetched\n");
 
         if gpu_id.gpu_gen != cfg.gpu_gen || gpu_id.gpu_variant != cfg.gpu_variant {
             dev_err!(
-                dev,
+                dev.as_ref(),
                 "GPU type mismatch (expected {:?}{:?}, found {:?}{:?})\n",
                 cfg.gpu_gen,
                 cfg.gpu_variant,
@@ -754,7 +754,7 @@ impl GpuManager::ver {
         }
         if gpu_id.num_clusters > cfg.max_num_clusters {
             dev_err!(
-                dev,
+                dev.as_ref(),
                 "Too many clusters ({} > {})\n",
                 gpu_id.num_clusters,
                 cfg.max_num_clusters
@@ -763,7 +763,7 @@ impl GpuManager::ver {
         }
         if gpu_id.num_cores > cfg.max_num_cores {
             dev_err!(
-                dev,
+                dev.as_ref(),
                 "Too many cores ({} > {})\n",
                 gpu_id.num_cores,
                 cfg.max_num_cores
@@ -772,7 +772,7 @@ impl GpuManager::ver {
         }
         if gpu_id.num_frags > cfg.max_num_frags {
             dev_err!(
-                dev,
+                dev.as_ref(),
                 "Too many frags ({} > {})\n",
                 gpu_id.num_frags,
                 cfg.max_num_frags
@@ -781,7 +781,7 @@ impl GpuManager::ver {
         }
         if gpu_id.num_gps > cfg.max_num_gps {
             dev_err!(
-                dev,
+                dev.as_ref(),
                 "Too many GPs ({} > {})\n",
                 gpu_id.num_gps,
                 cfg.max_num_gps
@@ -842,7 +842,7 @@ impl GpuManager::ver {
     /// Mark work associated with currently in-progress event slots as failed, after a fault or
     /// timeout.
     fn mark_pending_events(&self, culprit_slot: Option<u32>, error: workqueue::WorkError) {
-        dev_err!(self.dev, "  Pending events:\n");
+        dev_err!(self.dev.as_ref(), "  Pending events:\n");
 
         self.initdata.globals.with(|raw, _inner| {
             for (index, i) in raw.pending_stamps.iter().enumerate() {
@@ -859,7 +859,7 @@ impl GpuManager::ver {
                     #[ver(V < V13_5)]
                     let flags = info & 0x7;
                     dev_err!(
-                        self.dev,
+                        self.dev.as_ref(),
                         "    [{}:{}] flags={} value={:#x}\n",
                         index,
                         slot,
@@ -893,7 +893,7 @@ impl GpuManager::ver {
 
         let info = res.get_fault_info(self.cfg);
         if info.is_some() {
-            dev_err!(self.dev, "  Fault info: {:#x?}\n", info.as_ref().unwrap());
+            dev_err!(self.dev.as_ref(), "  Fault info: {:#x?}\n", info.as_ref().unwrap());
         }
         info
     }
@@ -903,8 +903,8 @@ impl GpuManager::ver {
         self.initdata.fw_status.with(|raw, _inner| {
             let halt_count = raw.flags.halt_count.load(Ordering::Relaxed);
             let mut halted = raw.flags.halted.load(Ordering::Relaxed);
-            dev_err!(self.dev, "  Halt count: {}\n", halt_count);
-            dev_err!(self.dev, "  Halted: {}\n", halted);
+            dev_err!(self.dev.as_ref(), "  Halt count: {}\n", halt_count);
+            dev_err!(self.dev.as_ref(), "  Halted: {}\n", halted);
 
             if halted == 0 {
                 let start = clock::KernelTime::now();
@@ -919,13 +919,13 @@ impl GpuManager::ver {
             }
 
             if debug_enabled(DebugFlags::NoGpuRecovery) {
-                dev_crit!(self.dev, "  GPU recovery is disabled, wedging forever!\n");
+                dev_crit!(self.dev.as_ref(), "  GPU recovery is disabled, wedging forever!\n");
             } else if halted != 0 {
-                dev_err!(self.dev, "  Attempting recovery...\n");
+                dev_err!(self.dev.as_ref(), "  Attempting recovery...\n");
                 raw.flags.halted.store(0, Ordering::SeqCst);
                 raw.flags.resume.store(1, Ordering::SeqCst);
             } else {
-                dev_err!(self.dev, "  Cannot recover.\n");
+                dev_err!(self.dev.as_ref(), "  Cannot recover.\n");
             }
         });
     }
@@ -1100,12 +1100,12 @@ impl GpuManager for GpuManager::ver {
         self.garbage_work.lock().clear();
 
         /* Clean up idle contexts */
-        let mut garbage_ctx = Vec::new();
+        let mut garbage_ctx = KVec::new();
         core::mem::swap(&mut *self.garbage_contexts.lock(), &mut garbage_ctx);
 
         for ctx in garbage_ctx {
             if self.invalidate_context(&ctx).is_err() {
-                dev_err!(self.dev, "GpuContext: Failed to invalidate GPU context!\n");
+                dev_err!(self.dev.as_ref(), "GpuContext: Failed to invalidate GPU context!\n");
                 if debug_enabled(DebugFlags::OopsOnGpuCrash) {
                     panic!("GPU firmware timed out");
                 }
@@ -1122,7 +1122,7 @@ impl GpuManager for GpuManager::ver {
                 garbage_bytes
             );
             if self.flush_fw_cache().is_err() {
-                dev_err!(self.dev, "Failed to flush FW cache\n");
+                dev_err!(self.dev.as_ref(), "Failed to flush FW cache\n");
             } else {
                 guard.private.collect_garbage(garbage_count);
             }
@@ -1137,7 +1137,7 @@ impl GpuManager for GpuManager::ver {
                 garbage_bytes
             );
             if self.flush_fw_cache().is_err() {
-                dev_err!(self.dev, "Failed to flush FW cache\n");
+                dev_err!(self.dev.as_ref(), "Failed to flush FW cache\n");
             } else {
                 guard.gpu_ro.collect_garbage(garbage_count);
             }
@@ -1161,10 +1161,10 @@ impl GpuManager for GpuManager::ver {
         ualloc_priv: Arc<Mutex<alloc::DefaultAllocator>>,
         priority: u32,
         caps: u32,
-    ) -> Result<Box<dyn queue::Queue>> {
+    ) -> Result<KBox<dyn queue::Queue>> {
         let mut kalloc = self.alloc();
         let id = self.ids.queue.next();
-        Ok(Box::new(
+        Ok(KBox::new(
             queue::Queue::ver::new(
                 &self.dev,
                 vm,
@@ -1261,13 +1261,13 @@ impl GpuManager for GpuManager::ver {
     }
 
     fn handle_fault(&self) {
-        dev_err!(self.dev, " (\\________/) \n");
-        dev_err!(self.dev, "  |        |  \n");
-        dev_err!(self.dev, "'.| \\  , / |.'\n");
-        dev_err!(self.dev, "--| / (( \\ |--\n");
-        dev_err!(self.dev, ".'|  _-_-  |'.\n");
-        dev_err!(self.dev, "  |________|  \n");
-        dev_err!(self.dev, "GPU fault nya~!!!!!\n");
+        dev_err!(self.dev.as_ref(), " (\\________/) \n");
+        dev_err!(self.dev.as_ref(), "  |        |  \n");
+        dev_err!(self.dev.as_ref(), "'.| \\  , / |.'\n");
+        dev_err!(self.dev.as_ref(), "--| / (( \\ |--\n");
+        dev_err!(self.dev.as_ref(), ".'|  _-_-  |'.\n");
+        dev_err!(self.dev.as_ref(), "  |________|  \n");
+        dev_err!(self.dev.as_ref(), "GPU fault nya~!!!!!\n");
         let error = match self.get_fault_info() {
             Some(info) => workqueue::WorkError::Fault(info),
             None => workqueue::WorkError::Unknown,
@@ -1297,7 +1297,7 @@ impl GpuManager for GpuManager::ver {
                 .send_message(EP_DOORBELL, MSG_TX_DOORBELL | DOORBELL_DEVCTRL)
                 .is_err()
             {
-                dev_err!(self.dev, "Failed to send TVB Grow Ack command\n");
+                dev_err!(self.dev.as_ref(), "Failed to send TVB Grow Ack command\n");
             }
         }
     }
@@ -1356,12 +1356,12 @@ impl GpuManager for GpuManager::ver {
         }
     }
 
-    fn free_context(&self, ctx: Box<fw::types::GpuObject<fw::workqueue::GpuContextData>>) {
+    fn free_context(&self, ctx: KBox<fw::types::GpuObject<fw::workqueue::GpuContextData>>) {
         let mut garbage = self.garbage_contexts.lock();
 
         if garbage.push(ctx, GFP_KERNEL).is_err() {
             dev_err!(
-                self.dev,
+                self.dev.as_ref(),
                 "Failed to reserve space for freed context, deadlock possible.\n"
             );
         }

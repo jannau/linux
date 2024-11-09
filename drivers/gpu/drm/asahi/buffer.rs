@@ -275,7 +275,7 @@ struct BufferInner {
     info: GpuObject<buffer::Info::ver>,
     ualloc: Arc<Mutex<alloc::DefaultAllocator>>,
     ualloc_priv: Arc<Mutex<alloc::DefaultAllocator>>,
-    blocks: Vec<GpuOnlyArray<u8>>,
+    blocks: KVec<GpuOnlyArray<u8>>,
     max_blocks: usize,
     max_blocks_nomemless: usize,
     mgr: BufferManager::ver,
@@ -394,7 +394,7 @@ impl Buffer::ver {
                     info,
                     ualloc,
                     ualloc_priv,
-                    blocks: Vec::new(),
+                    blocks: KVec::new(),
                     max_blocks,
                     max_blocks_nomemless,
                     mgr: mgr.clone(),
@@ -476,7 +476,7 @@ impl Buffer::ver {
         let add_blocks = min_blocks - cur_count;
         let new_count = min_blocks;
 
-        let mut new_blocks: Vec<GpuOnlyArray<u8>> = Vec::new();
+        let mut new_blocks: KVec<GpuOnlyArray<u8>> = KVec::new();
 
         // Allocate the new blocks first, so if it fails they will be dropped
         let mut ualloc = inner.ualloc.lock();
@@ -720,7 +720,7 @@ impl slotalloc::SlotItem for BufferSlotInner::ver {
 /// Inner data for the event manager, to be protected by the SlotAllocator lock.
 #[versions(AGX)]
 pub(crate) struct BufferManagerInner {
-    owners: Vec<Option<Buffer::ver>>,
+    owners: KVec<Option<Buffer::ver>>,
 }
 
 /// The GPU-global buffer manager, used to allocate and release buffer slots from the pool.
@@ -730,7 +730,7 @@ pub(crate) struct BufferManager(slotalloc::SlotAllocator<BufferSlotInner::ver>);
 #[versions(AGX)]
 impl BufferManager::ver {
     pub(crate) fn new() -> Result<BufferManager::ver> {
-        let mut owners = Vec::new();
+        let mut owners = KVec::new();
         for _i in 0..(NUM_BUFFERS as usize) {
             owners.push(None, GFP_KERNEL)?;
         }

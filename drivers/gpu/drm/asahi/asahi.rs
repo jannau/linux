@@ -26,9 +26,7 @@ mod slotalloc;
 mod util;
 mod workqueue;
 
-use kernel::module_platform_driver;
-
-module_platform_driver! {
+kernel::module_platform_driver! {
     type: driver::AsahiDriver,
     name: "asahi",
     license: "Dual MIT/GPL",

@@ -8,7 +8,6 @@
 use kernel::dma_fence::*;
 use kernel::prelude::*;
 use kernel::{
-    alloc::vec_ext::VecExt,
     c_str, dma_fence,
     drm::gem::shmem::VMap,
     drm::sched,
@@ -40,10 +39,10 @@ pub(crate) trait Queue: Send + Sync {
     fn submit(
         &mut self,
         id: u64,
-        in_syncs: Vec<file::SyncItem>,
-        out_syncs: Vec<file::SyncItem>,
+        in_syncs: KVec<file::SyncItem>,
+        out_syncs: KVec<file::SyncItem>,
         result_buf: Option<gem::ObjectRef>,
-        commands: Vec<uapi::drm_asahi_command>,
+        commands: KVec<uapi::drm_asahi_command>,
     ) -> Result;
 }
 
@@ -243,7 +242,7 @@ impl sched::JobImpl for QueueJob::ver {
         {
             Ok(gpu) => gpu,
             Err(_) => {
-                dev_crit!(job.dev, "GpuManager mismatched with QueueJob!\n");
+                dev_crit!(job.dev.as_ref(), "GpuManager mismatched with QueueJob!\n");
                 return Err(EIO);
             }
         };
@@ -309,7 +308,7 @@ impl sched::JobImpl for QueueJob::ver {
     fn timed_out(job: &mut sched::Job<Self>) -> sched::Status {
         // FIXME: Handle timeouts properly
         dev_err!(
-            job.dev,
+            job.dev.as_ref(),
             "QueueJob {}: Job timed out on the DRM scheduler, things will probably break (ran: {})\n",
             job.id, job.did_run
         );
@@ -389,7 +388,7 @@ impl Queue::ver {
             GFP_KERNEL,
         )?;
 
-        let sched = sched::Scheduler::new(dev, 3, WQ_SIZE, 0, 100000, c_str!("asahi_sched"))?;
+        let sched = sched::Scheduler::new(dev.as_ref(), 3, WQ_SIZE, 0, 100000, c_str!("asahi_sched"))?;
         // Priorities are handled by the AGX scheduler, there is no meaning within a
         // per-queue scheduler.
         let entity = sched::Entity::new(&sched, sched::Priority::Normal)?;
@@ -505,10 +504,10 @@ impl Queue for Queue::ver {
     fn submit(
         &mut self,
         id: u64,
-        in_syncs: Vec<file::SyncItem>,
-        out_syncs: Vec<file::SyncItem>,
+        in_syncs: KVec<file::SyncItem>,
+        out_syncs: KVec<file::SyncItem>,
         result_buf: Option<gem::ObjectRef>,
-        commands: Vec<uapi::drm_asahi_command>,
+        commands: KVec<uapi::drm_asahi_command>,
     ) -> Result {
         let dev = self.dev.data();
         let gpu = match dev
@@ -519,7 +518,7 @@ impl Queue for Queue::ver {
         {
             Ok(gpu) => gpu,
             Err(_) => {
-                dev_crit!(self.dev, "GpuManager mismatched with JobImpl!\n");
+                dev_crit!(self.dev.as_ref(), "GpuManager mismatched with JobImpl!\n");
                 return Err(EIO);
             }
         };
@@ -528,7 +527,7 @@ impl Queue for Queue::ver {
 
         if gpu.is_crashed() {
             dev_err!(
-                self.dev,
+                self.dev.as_ref(),
                 "[Submission {}] GPU is crashed, cannot submit\n",
                 id
             );
@@ -546,7 +545,7 @@ impl Queue for Queue::ver {
             None
         };
 
-        let mut events: [Vec<Option<workqueue::QueueEventInfo::ver>>; SQ_COUNT] =
+        let mut events: [KVec<Option<workqueue::QueueEventInfo::ver>>; SQ_COUNT] =
             Default::default();
 
         events[SQ_RENDER].push(

@@ -128,7 +128,7 @@ pub(crate) struct EventManagerInner {
     stamps: GpuArray<Stamp>,
     fw_stamps: GpuArray<FwStamp>,
     // Note: Use dyn to avoid having to version this entire module.
-    owners: Vec<Option<Arc<dyn workqueue::WorkQueue + Send + Sync>>>,
+    owners: KVec<Option<Arc<dyn workqueue::WorkQueue + Send + Sync>>>,
 }
 
 /// Top-level EventManager object.
@@ -140,7 +140,7 @@ impl EventManager {
     /// Create a new EventManager.
     #[inline(never)]
     pub(crate) fn new(alloc: &mut gpu::KernelAllocators) -> Result<EventManager> {
-        let mut owners = Vec::new();
+        let mut owners = KVec::new();
         for _i in 0..(NUM_EVENTS as usize) {
             owners.push(None, GFP_KERNEL)?;
         }
@@ -216,7 +216,7 @@ impl EventManager {
 
     /// Fail all commands, used when the GPU crashes.
     pub(crate) fn fail_all(&self, error: workqueue::WorkError) {
-        let mut owners: Vec<Arc<dyn workqueue::WorkQueue + Send + Sync>> = Vec::new();
+        let mut owners: KVec<Arc<dyn workqueue::WorkQueue + Send + Sync>> = KVec::new();
 
         self.alloc.with_inner(|inner| {
             for wq in inner.owners.iter().filter_map(|o| o.as_ref()).cloned() {

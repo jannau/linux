@@ -348,7 +348,7 @@ impl EventChannel::ver {
                         EventMsg::Fault => match self.gpu.as_ref() {
                             Some(gpu) => gpu.handle_fault(),
                             None => {
-                                dev_crit!(self.dev, "EventChannel: No GPU manager available!\n")
+                                dev_crit!(self.dev.as_ref(), "EventChannel: No GPU manager available!\n")
                             }
                         },
                         EventMsg::Timeout {
@@ -358,7 +358,7 @@ impl EventChannel::ver {
                         } => match self.gpu.as_ref() {
                             Some(gpu) => gpu.handle_timeout(counter, event_slot),
                             None => {
-                                dev_crit!(self.dev, "EventChannel: No GPU manager available!\n")
+                                dev_crit!(self.dev.as_ref(), "EventChannel: No GPU manager available!\n")
                             }
                         },
                         EventMsg::Flag { firing, .. } => {
@@ -381,16 +381,16 @@ impl EventChannel::ver {
                                 gpu.ack_grow(buffer_slot, vm_slot, counter);
                             }
                             None => {
-                                dev_crit!(self.dev, "EventChannel: No GPU manager available!\n")
+                                dev_crit!(self.dev.as_ref(), "EventChannel: No GPU manager available!\n")
                             }
                         },
                         msg => {
-                            dev_crit!(self.dev, "Unknown event message: {:?}\n", msg);
+                            dev_crit!(self.dev.as_ref(), "Unknown event message: {:?}\n", msg);
                         }
                     }
                 }
                 _ => {
-                    dev_warn!(self.dev, "Unknown event message: {:?}\n", unsafe {
+                    dev_warn!(self.dev.as_ref(), "Unknown event message: {:?}\n", unsafe {
                         msg.raw
                     });
                 }
@@ -442,13 +442,13 @@ impl FwLogChannel {
             while let Some(msg) = self.ch.peek(i) {
                 cls_dev_dbg!(FwLogCh, self.dev, "FwLog{}: {:?}\n", i, msg);
                 if msg.msg_type != 2 {
-                    dev_warn!(self.dev, "Unknown FWLog{} message: {:?}\n", i, msg);
+                    dev_warn!(self.dev.as_ref(), "Unknown FWLog{} message: {:?}\n", i, msg);
                     self.ch.get(i);
                     continue;
                 }
                 if msg.msg_index.0 as usize >= Self::BUF_SIZE {
                     dev_warn!(
-                        self.dev,
+                        self.dev.as_ref(),
                         "FWLog{} message index out of bounds: {:?}\n",
                         i,
                         msg
@@ -459,7 +459,7 @@ impl FwLogChannel {
                 let index = Self::BUF_SIZE * i + msg.msg_index.0 as usize;
                 let payload = &self.payload_buf.as_slice()[index];
                 if payload.msg_type != 3 {
-                    dev_warn!(self.dev, "Unknown FWLog{} payload: {:?}\n", i, payload);
+                    dev_warn!(self.dev.as_ref(), "Unknown FWLog{} payload: {:?}\n", i, payload);
                     self.ch.get(i);
                     continue;
                 }
@@ -468,7 +468,7 @@ impl FwLogChannel {
                         .unwrap_or(c_str!("cstr_err"))
                 } else {
                     dev_warn!(
-                        self.dev,
+                        self.dev.as_ref(),
                         "FWLog{} payload not NUL-terminated: {:?}\n",
                         i,
                         payload
@@ -477,12 +477,12 @@ impl FwLogChannel {
                     continue;
                 };
                 match i {
-                    0 => dev_dbg!(self.dev, "FWLog: {}\n", msg),
-                    1 => dev_info!(self.dev, "FWLog: {}\n", msg),
-                    2 => dev_notice!(self.dev, "FWLog: {}\n", msg),
-                    3 => dev_warn!(self.dev, "FWLog: {}\n", msg),
-                    4 => dev_err!(self.dev, "FWLog: {}\n", msg),
-                    5 => dev_crit!(self.dev, "FWLog: {}\n", msg),
+                    0 => dev_dbg!(self.dev.as_ref(), "FWLog: {}\n", msg),
+                    1 => dev_info!(self.dev.as_ref(), "FWLog: {}\n", msg),
+                    2 => dev_notice!(self.dev.as_ref(), "FWLog: {}\n", msg),
+                    3 => dev_warn!(self.dev.as_ref(), "FWLog: {}\n", msg),
+                    4 => dev_err!(self.dev.as_ref(), "FWLog: {}\n", msg),
+                    5 => dev_crit!(self.dev.as_ref(), "FWLog: {}\n", msg),
                     _ => (),
                 };
                 self.ch.get(i);

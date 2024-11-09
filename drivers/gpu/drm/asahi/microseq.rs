@@ -25,13 +25,13 @@ pub(crate) type MicroSequence = GpuArray<u8>;
 
 /// MicroSequence builder.
 pub(crate) struct Builder {
-    ops: Vec<u8>,
+    ops: KVec<u8>,
 }
 
 impl Builder {
     /// Create a new Builder object
     pub(crate) fn new() -> Builder {
-        Builder { ops: Vec::new() }
+        Builder { ops: KVec::new() }
     }
 
     /// Get the relative offset from the current pointer to a given target offset.

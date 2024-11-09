@@ -9,7 +9,6 @@
 
 use crate::hw;
 use kernel::{
-    alloc::{flags::*, vec_ext::VecExt},
     device,
     io_mem::IoMem,
     platform,
@@ -229,7 +228,7 @@ impl Resources {
 
         let gpu_gen = (id_version >> 24) & 0xff;
 
-        let mut core_mask_regs = Vec::new();
+        let mut core_mask_regs = KVec::new();
 
         let num_clusters = match gpu_gen {
             4 | 5 => {
@@ -251,7 +250,7 @@ impl Resources {
             }
         };
 
-        let mut core_masks_packed = Vec::new();
+        let mut core_masks_packed = KVec::new();
         core_masks_packed.extend_from_slice(&core_mask_regs, GFP_KERNEL)?;
 
         dev_info!(self.dev, "Core masks: {:#x?}\n", core_masks_packed);
@@ -278,7 +277,7 @@ impl Resources {
             return Err(ENODEV);
         }
 
-        let mut core_masks = Vec::new();
+        let mut core_masks = KVec::new();
         let mut total_active_cores: u32 = 0;
 
         let max_core_mask = ((1u64 << num_cores) - 1) as u32;
