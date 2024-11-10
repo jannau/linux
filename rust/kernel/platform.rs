@@ -200,7 +200,10 @@ impl Device {
     /// `dev` must be an `Aref<device::Device>` whose underlying `bindings::device` is a member of a
     /// `bindings::platform_device`.
     unsafe fn from_dev(dev: ARef<device::Device>) -> Self {
-        Self(dev, 0)
+        Self {
+            dev,
+            used_resource: 0
+        }
     }
 
     fn as_dev(&self) -> &device::Device {
@@ -216,7 +219,7 @@ impl Device {
     /// Gets a system resources of a platform device.
     pub fn get_resource(&mut self, rtype: IoResource, num: usize) -> Result<Resource> {
         // SAFETY: `self.ptr` is valid by the type invariant.
-        let res = unsafe { bindings::platform_get_resource(self.ptr, rtype as _, num as _) };
+        let res = unsafe { bindings::platform_get_resource(self.as_raw(), rtype as _, num as _) };
         if res.is_null() {
             return Err(EINVAL);
         }
@@ -226,7 +229,7 @@ impl Device {
         //   - `self.ptr` is valid by the type invariant.
         //   - `res` is a displaced pointer to one of the array's elements,
         //     and `resource` is its base pointer.
-        let index = unsafe { res.offset_from((*self.ptr).resource) } as usize;
+        let index = unsafe { res.offset_from((*self.as_raw()).resource) } as usize;
 
         // Make sure that the index does not exceed the 64-bit mask.
         assert!(index < 64);
