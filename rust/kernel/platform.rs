@@ -216,6 +216,10 @@ impl Device {
         unsafe { container_of!(self.dev.as_raw(), bindings::platform_device, dev) }.cast_mut()
     }
 
+    pub fn get_device(&self) -> ARef<device::Device> {
+        self.dev.clone()
+    }
+
     /// Sets the DMA masks (normal and coherent) for a platform device.
     pub fn set_dma_masks(&mut self, mask: u64) -> Result {
         // SAFETY: `self.ptr` is valid by the type invariant.
