@@ -104,11 +104,11 @@ impl<'a> InitDataBuilder::ver<'a> {
                 Some(a) => a,
             };
 
-            let mut t1 = Vec::new();
-            let mut t3 = Vec::new();
+            let mut t1 = KVec::new();
+            let mut t3 = KVec::new();
 
             for _ in 0..curve_cfg.t3_scales.len() {
-                t3.push(Vec::new(), GFP_KERNEL)?;
+                t3.push(KVec::new(), GFP_KERNEL)?;
             }
 
             for (i, ps) in dyncfg.pwr.perf_states.iter().enumerate() {
