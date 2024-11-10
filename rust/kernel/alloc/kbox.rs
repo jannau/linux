@@ -7,10 +7,10 @@ use super::allocator::{KVmalloc, Kmalloc, Vmalloc};
 use super::{AllocError, Allocator, Flags};
 use core::alloc::Layout;
 use core::fmt;
-use core::marker::PhantomData;
+use core::marker::{PhantomData, Unsize};
 use core::mem::ManuallyDrop;
 use core::mem::MaybeUninit;
-use core::ops::{Deref, DerefMut};
+use core::ops::{CoerceUnsized,Deref, DerefMut};
 use core::pin::Pin;
 use core::ptr::NonNull;
 use core::result::Result;
@@ -454,3 +454,6 @@ where
         unsafe { A::free(self.0.cast(), layout) };
     }
 }
+
+//#[unstable(feature = "coerce_unsized", issue = "18598")]
+impl<T: ?Sized + Unsize<U>, U: ?Sized, A: Allocator> CoerceUnsized<Box<U, A>> for Box<T, A> {}
