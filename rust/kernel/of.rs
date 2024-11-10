@@ -100,6 +100,12 @@ impl Node {
         unsafe { &*self.raw_node }
     }
 
+    /// Returns a reference to the underlying C `device_node` structure.
+    pub fn as_raw(&self) -> *mut bindings::device_node {
+        // SAFETY: `raw_node` is valid per the type invariant.
+        unsafe { self.raw_node }
+    }
+
     /// Returns the name of the node.
     pub fn name(&self) -> &CStr {
         // SAFETY: The lifetime of the `CStr` is the same as the lifetime of this `Node`.
