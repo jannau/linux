@@ -107,7 +107,7 @@ pub trait IoPageTable: crate::private::Sealed {
 
     #[doc(hidden)]
     fn new_fmt<T: FlushOps>(
-        dev: &dyn device::RawDevice,
+        dev: &device::Device,
         format: u32,
         config: Config,
         data: T::Data,
@@ -125,7 +125,7 @@ pub trait IoPageTable: crate::private::Sealed {
             oas: config.oas.try_into()?,
             coherent_walk: config.coherent_walk,
             tlb: &Self::FLUSH_OPS,
-            iommu_dev: dev.raw_device(),
+            iommu_dev: dev.as_raw(),
             alloc: None,
             free: None,
             __bindgen_anon_1: unsafe { mem::zeroed() },
@@ -268,7 +268,7 @@ macro_rules! iopt_type {
 
         impl<T: FlushOps> $type<T> {
             /// Creates a new IOPagetable implementation of this type.
-            pub fn new(dev: &dyn device::RawDevice, config: Config, data: T::Data) -> Result<Self> {
+            pub fn new(dev: &device::Device, config: Config, data: T::Data) -> Result<Self> {
                 Ok(Self(
                     <Self as IoPageTable>::new_fmt::<T>(dev, bindings::$fmt, config, data)?,
                     PhantomData,
@@ -338,6 +338,11 @@ iopt_cfg!(
     AppleDARTCfg,
     apple_dart_cfg,
     io_pgtable_cfg__bindgen_ty_1__bindgen_ty_5
+);
+iopt_cfg!(
+    AmdCfg,
+    amd,
+    io_pgtable_cfg__bindgen_ty_1__bindgen_ty_6
 );
 
 iopt_type!(ARM32LPAES1, ARMLPAES1Cfg, io_pgtable_fmt_ARM_32_LPAE_S1);
