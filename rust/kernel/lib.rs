@@ -20,6 +20,7 @@
 #![feature(duration_constants)]
 #![feature(inline_const)]
 #![feature(lint_reasons)]
+#![feature(slice_range)]
 #![feature(type_alias_impl_trait)]
 #![feature(unsize)]
 #![allow(stable_features)]
