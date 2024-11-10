@@ -683,7 +683,7 @@ impl GpuManager::ver {
         )?;
 
         let alloc_ref = &mut alloc;
-        let tx_channels = Box::init(
+        let tx_channels = KBox::init(
             try_init!(TxChannels::ver {
                 device_control: channel::DeviceControlChannel::ver::new(dev, alloc_ref)?,
             }),
@@ -697,7 +697,7 @@ impl GpuManager::ver {
                 dyncfg: *dyncfg,
                 initdata: *initdata,
                 uat: *uat,
-                io_mappings: Vec::new(),
+                io_mappings: KVec::new(),
                 next_mmio_iova: IOVA_KERN_MMIO_RANGE.start,
                 rtkit <- Mutex::new_named(None, c_str!("rtkit")),
                 crashed: AtomicBool::new(false),
@@ -710,7 +710,7 @@ impl GpuManager::ver {
                 buffer_mgr,
                 ids: Default::default(),
                 garbage_work <- Mutex::new_named(Vec::new(), c_str!("garbage_work")),
-                garbage_contexts <- Mutex::new_named(Vec::new(), c_str!("garbage_contexts")),
+                garbage_contexts <- Mutex::new_named(KVec::new(), c_str!("garbage_contexts")),
             }),
             GFP_KERNEL,
         )?;
