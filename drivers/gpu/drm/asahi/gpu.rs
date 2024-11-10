@@ -18,7 +18,6 @@ use core::time::Duration;
 use kernel::{
     c_str,
     delay::coarse_sleep,
-    device::RawDevice,
     error::code::*,
     macros::versions,
     prelude::*,
@@ -811,9 +810,9 @@ impl GpuManager::ver {
             return Err(EIO);
         }
 
-        let node = dev.of_node().ok_or(EIO)?;
+        let node = dev.as_ref().of_node().ok_or(EIO)?;
 
-        Ok(Box::new(
+        Ok(KBox::new(
             hw::DynConfig {
                 pwr: pwr_cfg,
                 uat_ttb_base: uat.ttb_base(),

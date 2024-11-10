@@ -320,7 +320,7 @@ pub(crate) struct DynConfig {
     /// Power calibration configuration for this specific chip/device.
     pub(crate) pwr: PwrConfig,
     /// Firmware version.
-    pub(crate) firmware_version: Vec<u32>,
+    pub(crate) firmware_version: KVec<u32>,
 }
 
 /// Specific GPU ID configuration fetched from SGX MMIO registers.
