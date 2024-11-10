@@ -107,6 +107,25 @@ impl<T: drm::drv::Driver> Device<T> {
         Ok(drm)
     }
 
+    /// Create a new `drm::device::Device` for a `drm::drv::Driver`.
+    pub fn new_no_data(dev: &device::Device) -> Result<ARef<Self>> {
+        // SAFETY: `dev` is valid by its type invarants; `VTABLE`, as a `const` is pinned to the
+        // read-only section of the compilation.
+        let raw_drm = unsafe { bindings::drm_dev_alloc(&Self::VTABLE, dev.as_raw()) };
+        let raw_drm = NonNull::new(from_err_ptr(raw_drm)? as *mut _).ok_or(ENOMEM)?;
+
+        // SAFETY: The reference count is one, and now we take ownership of that reference as a
+        // drm::device::Device.
+        let drm = unsafe { ARef::<Self>::from_raw(raw_drm) };
+
+        Ok(drm)
+    }
+
+    pub unsafe fn init_data(&self, data: T::Data) {
+        let data_ptr = <T::Data as ForeignOwnable>::into_foreign(data);
+        unsafe { self.set_raw_data(data_ptr) };
+    }
+
     pub(crate) fn as_raw(&self) -> *mut bindings::drm_device {
         self.0.get()
     }
