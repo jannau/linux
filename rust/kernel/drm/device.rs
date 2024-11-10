@@ -126,6 +126,10 @@ impl<T: drm::drv::Driver> Device<T> {
         unsafe { self.set_raw_data(data_ptr) };
     }
 
+    pub fn device(&self) -> &Self {
+        &self
+    }
+
     pub(crate) fn as_raw(&self) -> *mut bindings::drm_device {
         self.0.get()
     }
