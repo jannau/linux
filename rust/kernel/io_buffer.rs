@@ -2,9 +2,10 @@
 
 //! Buffers used in IO.
 
-use crate::alloc::{flags::*, vec_ext::VecExt};
-use crate::error::Result;
-use alloc::vec::Vec;
+use crate::{
+    error::Result,
+    prelude::{GFP_KERNEL, KVec},
+};
 use core::mem::{size_of, MaybeUninit};
 
 /// Represents a buffer to be read from during IO.
@@ -29,8 +30,8 @@ pub trait IoBufferReader {
     /// Reads all data remaining in the io buffer.
     ///
     /// Returns `EFAULT` if the address does not currently point to mapped, readable memory.
-    fn read_all(&mut self) -> Result<Vec<u8>> {
-        let mut data = Vec::<u8>::with_capacity(self.len(), GFP_KERNEL)?;
+    fn read_all(&mut self) -> Result<KVec<u8>> {
+        let mut data = KVec::<u8>::with_capacity(self.len(), GFP_KERNEL)?;
         // FIXME? data.resize(self.len(), 0);
         for _ in 0..self.len() {
             data.push(0, GFP_KERNEL)?
