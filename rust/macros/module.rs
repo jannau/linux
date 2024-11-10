@@ -560,9 +560,9 @@ pub(crate) fn module(ts: TokenStream) -> TokenStream {
             }};
 
             // Double nested modules, since then nobody can access the public items inside.
-            mod __module_init {{
-                mod __module_init {{
-                    use super::super::{type_};
+            //mod __module_init {{
+            //    mod __module_init {{
+            //        use {type_};
                     use kernel::init::PinInit;
 
                     /// The \"Rust loadable module\" mark.
@@ -666,7 +666,7 @@ pub(crate) fn module(ts: TokenStream) -> TokenStream {
                     unsafe fn __init() -> core::ffi::c_int {{
                         let initer = <{type_} as kernel::InPlaceModule>::init(
                             kernel::c_str!(\"{name}\"),
-                            &super::super::THIS_MODULE
+                            &THIS_MODULE
                         );
                         // SAFETY: No data race, since `__MOD` can only be accessed by this module
                         // and there only `__init` and `__exit` access it. These functions are only
@@ -694,8 +694,8 @@ pub(crate) fn module(ts: TokenStream) -> TokenStream {
 
                     {modinfo}
                     {generated_array_types}
-                }}
-            }}
+            //    }}
+            //}}
         ",
         type_ = info.type_,
         name = info.name,
