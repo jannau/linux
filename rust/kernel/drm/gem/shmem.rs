@@ -250,8 +250,7 @@ impl<T: DriverObject> gem::IntoGEMObject for Object<T> {
         &self.obj.base
     }
 
-    // Safety: the passed GEM object must be owned by this driver (and be a shmem object).
-    unsafe fn from_gem_obj(obj: *mut bindings::drm_gem_object) -> *mut Object<T> {
+    fn from_gem_obj(obj: *mut bindings::drm_gem_object) -> *mut Object<T> {
         // SAFETY: The invariant guarantees this is correct.
         unsafe {
             let shmem = crate::container_of!(obj, bindings::drm_gem_shmem_object, base)
