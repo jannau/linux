@@ -177,7 +177,7 @@ pub(crate) trait GenSubmittedWork: Send + Sync {
 struct SubmittedWorkContainer {
     #[pin]
     work: Work<Self>,
-    inner: Box<dyn GenSubmittedWork>,
+    inner: KBox<dyn GenSubmittedWork>,
 }
 
 impl_has_work! {
@@ -185,15 +185,15 @@ impl_has_work! {
 }
 
 impl WorkItem for SubmittedWorkContainer {
-    type Pointer = Pin<Box<SubmittedWorkContainer>>;
+    type Pointer = Pin<KBox<SubmittedWorkContainer>>;
 
-    fn run(this: Pin<Box<SubmittedWorkContainer>>) {
+    fn run(this: Pin<KBox<SubmittedWorkContainer>>) {
         mod_pr_debug!("WorkQueue: Freeing command @ {:?}\n", this.inner.gpu_va());
     }
 }
 
 impl SubmittedWorkContainer {
-    fn inner_mut(self: Pin<&mut Self>) -> &mut Box<dyn GenSubmittedWork> {
+    fn inner_mut(self: Pin<&mut Self>) -> &mut KBox<dyn GenSubmittedWork> {
         // SAFETY: inner does not require structural pinning.
         unsafe { &mut self.get_unchecked_mut().inner }
     }
@@ -247,7 +247,7 @@ struct WorkQueueInner {
     pipe_type: PipeType,
     size: u32,
     wptr: u32,
-    pending: Vec<Pin<Box<SubmittedWorkContainer>>>,
+    pending: KVec<Pin<KBox<SubmittedWorkContainer>>>,
     last_token: Option<event::Token>,
     pending_jobs: usize,
     last_submitted: Option<event::EventValue>,
@@ -296,7 +296,7 @@ pub(crate) struct Job {
     wq: Arc<WorkQueue::ver>,
     event_info: QueueEventInfo::ver,
     start_value: EventValue,
-    pending: Vec<Pin<Box<SubmittedWorkContainer>>>,
+    pending: KVec<Pin<KBox<SubmittedWorkContainer>>>,
     committed: bool,
     submitted: bool,
     event_count: usize,
@@ -349,10 +349,10 @@ impl Job::ver {
         let value = self.event_info.value.next();
 
         self.pending.push(
-            Box::try_pin_init(
+            KBox::try_pin_init(
                 try_pin_init!(SubmittedWorkContainer {
                     work <- new_work!("SubmittedWorkWrapper::work"),
-                    inner: Box::new(SubmittedWork::<_, _> {
+                    inner: KBox::new(SubmittedWork::<_, _> {
                         object: command,
                         value,
                         error: None,

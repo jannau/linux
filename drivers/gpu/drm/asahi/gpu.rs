@@ -272,7 +272,7 @@ pub(crate) trait GpuManager: Send + Sync {
     /// Get the dynamic GPU configuration for this SoC.
     fn get_dyncfg(&self) -> &hw::DynConfig;
     /// Register an unused context as garbage
-    fn free_context(&self, data: Box<fw::types::GpuObject<fw::workqueue::GpuContextData>>);
+    fn free_context(&self, data: KBox<fw::types::GpuObject<fw::workqueue::GpuContextData>>);
     /// Check whether the GPU is crashed
     fn is_crashed(&self) -> bool;
 }
