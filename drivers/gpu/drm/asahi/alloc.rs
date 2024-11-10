@@ -720,7 +720,7 @@ pub(crate) struct HeapAllocator {
     guard_nodes: KVec<mm::Node<HeapAllocatorInner, HeapAllocationInner>>,
     mm: mm::Allocator<HeapAllocatorInner, HeapAllocationInner>,
     name: CString,
-    garbage: Option<Vec<mm::Node<HeapAllocatorInner, HeapAllocationInner>>>,
+    garbage: Option<KVec<mm::Node<HeapAllocatorInner, HeapAllocationInner>>>,
 }
 
 impl HeapAllocator {
@@ -776,7 +776,7 @@ impl HeapAllocator {
             name,
             garbage: if keep_garbage {
                 Some({
-                    let mut v = Vec::new();
+                    let mut v = KVec::new();
                     v.reserve(128, GFP_KERNEL)?;
                     v
                 })
