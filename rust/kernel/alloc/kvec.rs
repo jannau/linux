@@ -452,6 +452,16 @@ where
 
         Ok(())
     }
+
+    pub fn clear(&mut self) {
+        self.len = 0;
+    }
+
+    pub fn truncate(&mut self, len: usize) {
+        if len < self.len {
+            self.len = len;
+        }
+    }
 }
 
 impl<T: Clone, A: Allocator> Vec<T, A> {
