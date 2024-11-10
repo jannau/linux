@@ -230,7 +230,9 @@ impl<A: AllocInner<T>, T> Allocator<A, T> {
                 inner: node,
                 mm: self.mm.clone(),
                 _pin: PhantomPinned,
-            })?;
+            },
+            GFP_KERNEL
+        )?;
 
         let guard = self.mm.lock();
         // SAFETY: We hold the lock and all pointers are valid.
@@ -270,7 +272,8 @@ impl<A: AllocInner<T>, T> Allocator<A, T> {
                 inner: node,
                 mm: self.mm.clone(),
                 _pin: PhantomPinned,
-            }
+            },
+            GFP_KERNEL
         )?;
 
         mm_node.node.start = start;
