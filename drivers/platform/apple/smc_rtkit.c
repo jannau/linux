@@ -4,7 +4,6 @@
  * Copyright The Asahi Linux Contributors
  */
 
-#include <asm/unaligned.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>
 #include <linux/device.h>
@@ -14,6 +13,7 @@
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
 #include <linux/soc/apple/rtkit.h>
+#include <linux/unaligned.h>
 #include "smc.h"
 
 #define SMC_ENDPOINT			0x20
