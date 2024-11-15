@@ -5,7 +5,6 @@
  *
  * Copyright The Asahi Linux Contributors
  */
-#include <asm/unaligned.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>
 #include <linux/device.h>
@@ -17,6 +16,7 @@
 #include <linux/slab.h>
 #include <linux/soc/apple/dockchannel.h>
 #include <linux/string.h>
+#include <linux/unaligned.h>
 #include <linux/of.h>
 #include "../hid-ids.h"
 
