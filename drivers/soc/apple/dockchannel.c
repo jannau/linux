@@ -4,7 +4,6 @@
  * Copyright The Asahi Linux Contributors
  */
 
-#include <asm/unaligned.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
@@ -14,6 +13,7 @@
 #include <linux/irqdomain.h>
 #include <linux/platform_device.h>
 #include <linux/soc/apple/dockchannel.h>
+#include <linux/unaligned.h>
 #include <linux/of.h>
 #include <linux/of_platform.h>
 
