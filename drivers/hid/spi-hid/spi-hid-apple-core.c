@@ -16,7 +16,6 @@
 
 //#define DEBUG 2
 
-#include <asm/unaligned.h>
 #include <linux/crc16.h>
 #include <linux/delay.h>
 #include <linux/device/driver.h>
@@ -27,6 +26,7 @@
 #include <linux/printk.h>
 #include <linux/platform_device.h>
 #include <linux/spi/spi.h>
+#include <linux/unaligned.h>
 #include <linux/wait.h>
 
 #include "spi-hid-apple.h"
