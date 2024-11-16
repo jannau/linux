@@ -1345,17 +1345,17 @@ impl GpuManager for GpuManager::ver {
         event_slot: u32,
         event_value: u32,
     ) {
-        dev_err!(self.dev, " (\\________/) \n");
-        dev_err!(self.dev, "  |        |  \n");
-        dev_err!(self.dev, "'.| \\  , / |.'\n");
-        dev_err!(self.dev, "--| / (( \\ |--\n");
-        dev_err!(self.dev, ".'|  _-_-  |'.\n");
-        dev_err!(self.dev, "  |________|  \n");
-        dev_err!(self.dev, "GPU channel error nya~!!!!!\n");
-        dev_err!(self.dev, "  Error type: {:?}\n", error_type);
-        dev_err!(self.dev, "  Pipe type: {}\n", pipe_type);
-        dev_err!(self.dev, "  Event slot: {}\n", event_slot);
-        dev_err!(self.dev, "  Event value: {:#x?}\n", event_value);
+        dev_err!(self.dev.as_ref(), " (\\________/) \n");
+        dev_err!(self.dev.as_ref(), "  |        |  \n");
+        dev_err!(self.dev.as_ref(), "'.| \\  , / |.'\n");
+        dev_err!(self.dev.as_ref(), "--| / (( \\ |--\n");
+        dev_err!(self.dev.as_ref(), ".'|  _-_-  |'.\n");
+        dev_err!(self.dev.as_ref(), "  |________|  \n");
+        dev_err!(self.dev.as_ref(), "GPU channel error nya~!!!!!\n");
+        dev_err!(self.dev.as_ref(), "  Error type: {:?}\n", error_type);
+        dev_err!(self.dev.as_ref(), "  Pipe type: {}\n", pipe_type);
+        dev_err!(self.dev.as_ref(), "  Event slot: {}\n", event_slot);
+        dev_err!(self.dev.as_ref(), "  Event value: {:#x?}\n", event_value);
 
         self.event_manager.mark_error(
             event_slot,
@@ -1366,7 +1366,7 @@ impl GpuManager for GpuManager::ver {
         let wq = match self.event_manager.get_owner(event_slot) {
             Some(wq) => wq,
             None => {
-                dev_err!(self.dev, "Workqueue not found for this event slot!\n");
+                dev_err!(self.dev.as_ref(), "Workqueue not found for this event slot!\n");
                 return;
             }
         };
@@ -1374,7 +1374,7 @@ impl GpuManager for GpuManager::ver {
         let wq = match wq.as_any().downcast_ref::<workqueue::WorkQueue::ver>() {
             Some(wq) => wq,
             None => {
-                dev_crit!(self.dev, "GpuManager mismatched with WorkQueue!\n");
+                dev_crit!(self.dev.as_ref(), "GpuManager mismatched with WorkQueue!\n");
                 return;
             }
         };
@@ -1401,12 +1401,12 @@ impl GpuManager for GpuManager::ver {
                 .send_message(EP_DOORBELL, MSG_TX_DOORBELL | DOORBELL_DEVCTRL)
                 .is_err()
             {
-                dev_err!(self.dev, "Failed to send Recover Channel command\n");
+                dev_err!(self.dev.as_ref(), "Failed to send Recover Channel command\n");
             }
         }
 
         if txch.device_control.wait_for(token).is_err() {
-            dev_err!(self.dev, "Timed out waiting for Recover Channel command\n");
+            dev_err!(self.dev.as_ref(), "Timed out waiting for Recover Channel command\n");
         }
 
         if debug_enabled(DebugFlags::VerboseFaults) {
