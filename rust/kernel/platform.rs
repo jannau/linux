@@ -54,7 +54,7 @@ impl<T: Driver + 'static> Adapter<T> {
 
     extern "C" fn probe_callback(pdev: *mut bindings::platform_device) -> core::ffi::c_int {
         // SAFETY: The platform bus only ever calls the probe callback with a valid `pdev`.
-        let dev = unsafe { device::Device::from_raw(&mut (*pdev).dev) };
+        let dev = unsafe { device::Device::get_device(&mut (*pdev).dev) };
         // SAFETY: `dev` is guaranteed to be embedded in a valid `struct platform_device` by the
         // call above.
         let mut pdev = unsafe { Device::from_dev(dev) };
