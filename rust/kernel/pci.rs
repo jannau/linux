@@ -54,7 +54,7 @@ impl<T: Driver + 'static> Adapter<T> {
     ) -> core::ffi::c_int {
         // SAFETY: The PCI bus only ever calls the probe callback with a valid pointer to a
         // `struct pci_dev`.
-        let dev = unsafe { device::Device::from_raw(&mut (*pdev).dev) };
+        let dev = unsafe { device::Device::get_device(&mut (*pdev).dev) };
         // SAFETY: `dev` is guaranteed to be embedded in a valid `struct pci_dev` by the call
         // above.
         let mut pdev = unsafe { Device::from_dev(dev) };
