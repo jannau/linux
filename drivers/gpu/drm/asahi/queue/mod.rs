@@ -802,7 +802,7 @@ impl Queue for Queue::ver {
         job.commit()?;
 
         mod_dev_dbg!(self.dev, "Queue {}: Arming job {}\n", self.inner.id, job.id);
-        let job = job.arm();
+        let mut job = job.arm();
         let out_fence = job.fences().finished();
         mod_dev_dbg!(
             self.dev,
