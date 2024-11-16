@@ -168,7 +168,7 @@ impl<T: DriverObject> Object<T> {
         // SAFETY: This function can be called as long as the ALLOC_OPS are set properly
         // for this driver, and the gem_create_object is called.
         let p = unsafe {
-            let p = bindings::drm_gem_shmem_create(dev.raw_mut(), size);
+            let p = bindings::drm_gem_shmem_create(dev.as_raw(), size);
             crate::container_of!(p, Object<T>, obj) as *mut _
         };
 
