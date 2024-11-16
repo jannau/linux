@@ -1556,7 +1556,7 @@ impl Uat {
 
         let pagetables_rgn = Self::map_region(dev.as_ref(), c_str!("pagetables"), PAGETABLES_SIZE, true)?;
 
-        dev_info!(dev, "MMU: Creating kernel page tables\n");
+        dev_info!(dev.as_ref(), "MMU: Creating kernel page tables\n");
         let kernel_lower_vm = Vm::new(dev, inner.clone(), IOVA_USER_RANGE, cfg, false, 1)?;
         let kernel_vm = Vm::new(dev, inner.clone(), IOVA_KERN_RANGE, cfg, true, 0)?;
 
