@@ -659,6 +659,10 @@ put_runtime_pm:
 EXPORT_SYMBOL_NS_GPL(xhci_pci_common_probe, xhci);
 
 static const struct pci_device_id pci_ids_reject[] = {
+#if IS_ENABLED(CONFIG_USB_XHCI_PCI_ASMEDIA)
+	/* handled by xhci-pci-asmedia */
+	{ PCI_DEVICE(0x1b21, 0x2142) },
+#endif
 	/* handled by xhci-pci-renesas */
 	{ PCI_DEVICE(PCI_VENDOR_ID_RENESAS, 0x0014) },
 	{ PCI_DEVICE(PCI_VENDOR_ID_RENESAS, 0x0015) },
