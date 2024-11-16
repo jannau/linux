@@ -6,6 +6,7 @@ use super::{
     allocator::{KVmalloc, Kmalloc, Vmalloc},
     layout::ArrayLayout,
     AllocError, Allocator, Box, Flags,
+    drain::Drain,
 };
 use core::{
     fmt,
@@ -464,6 +465,36 @@ where
         }
     }
 
+    /// Removes the specified range from the vector in bulk, returning all
+    /// removed elements as an iterator. If the iterator is dropped before
+    /// being fully consumed, it drops the remaining removed elements.
+    ///
+    /// The returned iterator keeps a mutable borrow on the vector to optimize
+    /// its implementation.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the starting point is greater than the end point or if
+    /// the end point is greater than the length of the vector.
+    ///
+    /// # Leaking
+    ///
+    /// If the returned iterator goes out of scope without being dropped (due to
+    /// [`mem::forget`], for example), the vector may have lost and leaked
+    /// elements arbitrarily, including elements outside the range.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut v = vec![1, 2, 3];
+    /// let u: Vec<_> = v.drain(1..).collect();
+    /// assert_eq!(v, &[1]);
+    /// assert_eq!(u, &[2, 3]);
+    ///
+    /// // A full range clears the vector, like `clear()` does
+    /// v.drain(..);
+    /// assert_eq!(v, &[]);
+    /// ```
     pub fn drain<R>(&mut self, range: R) -> Drain<'_, T, A>
     where
         R: RangeBounds<usize>,
@@ -548,85 +579,6 @@ impl<T: Clone, A: Allocator> Vec<T, A> {
         v.extend_with(n, value, flags)?;
 
         Ok(v)
-    }
-}
-
-/// A draining iterator for `Vec<T>`.
-///
-/// This `struct` is created by [`Vec::drain`].
-/// See its documentation for more.
-///
-/// # Example
-///
-/// ```
-/// let mut v = vec![0, 1, 2];
-/// let iter: std::vec::Drain<'_, _> = v.drain(..);
-/// ```
-// #[stable(feature = "drain", since = "1.6.0")]
-pub struct Drain<
-    'a,
-    T: 'a,
-    A: Allocator,
-    // #[unstable(feature = "allocator_api", issue = "32838")] A: Allocator + 'a = Global,
-> {
-    /// Index of tail to preserve
-    pub(super) tail_start: usize,
-    /// Length of tail
-    pub(super) tail_len: usize,
-    /// Current remaining range to remove
-    pub(super) iter: slice::Iter<'a, T>,
-    pub(super) vec: NonNull<Vec<T, A>>,
-}
-
-// #[stable(feature = "collection_debug", since = "1.17.0")]
-// impl<T: fmt::Debug, A: Allocator> fmt::Debug for Drain<'_, T, A> {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         f.debug_tuple("Drain").field(&self.iter.as_slice()).finish()
-//     }
-// }
-
-impl<'a, T, A: Allocator> Drain<'a, T, A> {
-    /// Returns the remaining items of this iterator as a slice.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let mut vec = vec!['a', 'b', 'c'];
-    /// let mut drain = vec.drain(..);
-    /// assert_eq!(drain.as_slice(), &['a', 'b', 'c']);
-    /// let _ = drain.next().unwrap();
-    /// assert_eq!(drain.as_slice(), &['b', 'c']);
-    /// ```
-    #[must_use]
-    // #[stable(feature = "vec_drain_as_slice", since = "1.46.0")]
-    pub fn as_slice(&self) -> &[T] {
-        self.iter.as_slice()
-    }
-}
-
-// #[stable(feature = "vec_drain_as_slice", since = "1.46.0")]
-impl<'a, T, A: Allocator> AsRef<[T]> for Drain<'a, T, A> {
-    fn as_ref(&self) -> &[T] {
-        self.as_slice()
-    }
-}
-
-// #[stable(feature = "drain", since = "1.6.0")]
-unsafe impl<T: Sync, A: Sync + Allocator> Sync for Drain<'_, T, A> {}
-// #[stable(feature = "drain", since = "1.6.0")]
-unsafe impl<T: Send, A: Send + Allocator> Send for Drain<'_, T, A> {}
-
-// #[stable(feature = "drain", since = "1.6.0")]
-impl<T, A: Allocator> Iterator for Drain<'_, T, A> {
-    type Item = T;
-
-    #[inline]
-    fn next(&mut self) -> Option<T> {
-        self.iter.next().map(|elt| unsafe { ptr::read(elt as *const _) })
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.iter.size_hint()
     }
 }
 
