@@ -10,7 +10,7 @@ use crate::{
     c_str, fmt,
     init::InPlaceInit,
     new_mutex,
-    prelude::{Box, Result, Vec},
+    prelude::{KBox, Result, KVec},
     str::{CStr, CString},
     sync::Mutex,
     types::Opaque,
@@ -109,11 +109,11 @@ const LOCK_CLASS_BUCKETS: usize = 1024;
 fn caller_lock_class_inner() -> Result<&'static DynLockClassKey> {
     // This is just a hack to make the below static array initialization work.
     #[allow(clippy::declare_interior_mutable_const)]
-    const ATOMIC_PTR: AtomicPtr<Mutex<Vec<&'static DynLockClassKey>>> =
+    const ATOMIC_PTR: AtomicPtr<Mutex<KVec<&'static DynLockClassKey>>> =
         AtomicPtr::new(core::ptr::null_mut());
 
     #[allow(clippy::complexity)]
-    static LOCK_CLASSES: [AtomicPtr<Mutex<Vec<&'static DynLockClassKey>>>; LOCK_CLASS_BUCKETS] =
+    static LOCK_CLASSES: [AtomicPtr<Mutex<KVec<&'static DynLockClassKey>>>; LOCK_CLASS_BUCKETS] =
         [ATOMIC_PTR; LOCK_CLASS_BUCKETS];
 
     let loc = core::panic::Location::caller();
@@ -124,10 +124,10 @@ fn caller_lock_class_inner() -> Result<&'static DynLockClassKey> {
 
     let mut ptr = slot.load(Ordering::Relaxed);
     if ptr.is_null() {
-        let new_element = Box::pin_init(new_mutex!(Vec::new()), GFP_KERNEL)?;
+        let new_element = KBox::pin_init(new_mutex!(KVec::new()), GFP_KERNEL)?;
 
         // SAFETY: We never move out of this Box
-        let raw = Box::into_raw(unsafe { Pin::into_inner_unchecked(new_element) });
+        let raw = KBox::into_raw(unsafe { Pin::into_inner_unchecked(new_element) });
 
         if slot
             .compare_exchange(
@@ -139,7 +139,7 @@ fn caller_lock_class_inner() -> Result<&'static DynLockClassKey> {
             .is_err()
         {
             // SAFETY: We just got this pointer from `into_raw()`
-            unsafe { drop(Box::from_raw(raw)) };
+            unsafe { drop(KBox::from_raw(raw)) };
         }
 
         ptr = slot.load(Ordering::Relaxed);
@@ -157,7 +157,7 @@ fn caller_lock_class_inner() -> Result<&'static DynLockClassKey> {
     }
 
     // We immediately leak the class, so it becomes 'static
-    let new_class = Box::leak(Box::new(
+    let new_class = KBox::leak(KBox::new(
         DynLockClassKey {
             key: Opaque::zeroed(),
             loc: loc_key,
