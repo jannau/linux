@@ -548,18 +548,6 @@ static int xhci_pci_setup(struct usb_hcd *hcd)
 	struct pci_dev		*pdev = to_pci_dev(hcd->self.controller);
 	int			retval;
 	u8			sbrn;
-	struct xhci_driver_data	*driver_data;
-	const struct pci_device_id *id;
-
-	id = pci_match_id(to_pci_driver(pdev->dev.driver)->id_table, pdev);
-	if (id && id->driver_data && usb_hcd_is_primary_hcd(hcd)) {
-		driver_data = (struct xhci_driver_data *)id->driver_data;
-		if (driver_data->quirks & XHCI_ASMEDIA_FW_QUIRK) {
-			retval = asmedia_xhci_check_request_fw(pdev, id);
-			if (retval < 0)
-				return retval;
-		}
-	}
 
 	xhci = hcd_to_xhci(hcd);
 
@@ -671,6 +659,10 @@ put_runtime_pm:
 EXPORT_SYMBOL_NS_GPL(xhci_pci_common_probe, xhci);
 
 static const struct pci_device_id pci_ids_reject[] = {
+#if IS_ENABLED(CONFIG_USB_XHCI_PCI_ASMEDIA)
+	/* handled by xhci-pci-asmedia */
+	{ PCI_DEVICE(0x1b21, 0x2142) },
+#endif
 	/* handled by xhci-pci-renesas */
 	{ PCI_DEVICE(PCI_VENDOR_ID_RENESAS, 0x0014) },
 	{ PCI_DEVICE(PCI_VENDOR_ID_RENESAS, 0x0015) },
@@ -918,26 +910,14 @@ static void xhci_pci_shutdown(struct usb_hcd *hcd)
 
 /*-------------------------------------------------------------------------*/
 
-static const struct xhci_driver_data asmedia_data = {
-	.quirks  = XHCI_ASMEDIA_FW_QUIRK,
-	.firmware = "asmedia/asm2214a-apple.bin",
-};
-
 /* PCI driver selection metadata; PCI hotplugging uses this */
 static const struct pci_device_id pci_ids[] = {
-	{ PCI_DEVICE(0x1b21, 0x2142),
-		.driver_data =  (unsigned long)&asmedia_data,
-	},
 	/* handle any USB 3.0 xHCI controller */
 	{ PCI_DEVICE_CLASS(PCI_CLASS_SERIAL_USB_XHCI, ~0),
 	},
 	{ /* end: all zeroes */ }
 };
 MODULE_DEVICE_TABLE(pci, pci_ids);
-
-#if IS_ENABLED(CONFIG_USB_XHCI_PCI_ASMEDIA)
-MODULE_FIRMWARE("asmedia/asm2214a-apple.bin");
-#endif
 
 /* pci driver glue; this is a "new style" PCI driver module */
 static struct pci_driver xhci_pci_driver = {

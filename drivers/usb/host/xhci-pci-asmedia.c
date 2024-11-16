@@ -9,7 +9,7 @@
 #include <linux/pci.h>
 #include <linux/iopoll.h>
 #include <linux/slab.h>
-#include <asm/unaligned.h>
+#include <linux/unaligned.h>
 
 #include "xhci.h"
 #include "xhci-trace.h"
@@ -62,6 +62,8 @@
 
 #define TIMEOUT_USEC			10000
 #define RESET_TIMEOUT_USEC		500000
+
+#define ASMEDIA_APPLE_FW_NAME	"asmedia/asm2214a-apple.bin"
 
 static int asmedia_mbox_tx(struct pci_dev *pdev, u64 data)
 {
@@ -347,12 +349,10 @@ static int asmedia_load_fw(struct pci_dev *pdev, const struct firmware *fw)
 	return 0;
 }
 
-int asmedia_xhci_check_request_fw(struct pci_dev *pdev,
-				  const struct pci_device_id *id)
+static int asmedia_xhci_check_request_fw(struct pci_dev *pdev,
+					 const struct pci_device_id *id)
 {
-	struct xhci_driver_data *driver_data =
-			(struct xhci_driver_data *)id->driver_data;
-	const char *fw_name = driver_data->firmware;
+	const char fw_name[] = ASMEDIA_APPLE_FW_NAME;
 	const struct firmware *fw;
 	int ret;
 
@@ -392,3 +392,41 @@ err:
 	release_firmware(fw);
 	return ret;
 }
+
+
+static int
+xhci_pci_asmediafw_probe(struct pci_dev *dev, const struct pci_device_id *id)
+{
+	int retval;
+
+	retval = asmedia_xhci_check_request_fw(dev, id);
+	if (retval)
+		return retval;
+
+	return xhci_pci_common_probe(dev, id);
+}
+
+static const struct pci_device_id pci_ids[] = {
+	{ PCI_DEVICE(0x1b21, 0x2142) },
+	{ /* end: all zeroes */ }
+};
+MODULE_DEVICE_TABLE(pci, pci_ids);
+
+static struct pci_driver xhci_asmediafw_pci_driver = {
+	.name =		"xhci-pci-asmediafw",
+	.id_table =	pci_ids,
+
+	.probe =	xhci_pci_asmediafw_probe,
+	.remove =	xhci_pci_remove,
+
+	.shutdown = 	usb_hcd_pci_shutdown,
+	.driver = {
+		.pm = pm_ptr(&usb_hcd_pci_pm_ops),
+	},
+};
+module_pci_driver(xhci_asmediafw_pci_driver);
+
+MODULE_DESCRIPTION("Asmedia host supplied FW xHCI PCI Host Controller Driver");
+MODULE_FIRMWARE(ASMEDIA_APPLE_FW_NAME);
+MODULE_IMPORT_NS(xhci);
+MODULE_LICENSE("GPL v2");
