@@ -165,7 +165,7 @@ impl<T, U: RawAllocation> Drop for GenericAlloc<T, U> {
                 }
                 if let Some(start) = first_err {
                     dev_warn!(
-                        self.device(),
+                        self.device().as_ref(),
                         "Allocator: Corruption after object of type {}/{:#x} at {:#x}:{:#x} + {:#x}..={:#x}\n",
                         core::any::type_name::<T>(),
                         self.tag,
