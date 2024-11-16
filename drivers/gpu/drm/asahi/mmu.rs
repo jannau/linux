@@ -258,7 +258,7 @@ impl VmInner {
             let mut unmapped = self.page_table.unmap_pages(mapped_iova, pgsize, left);
             if unmapped == 0 {
                 dev_err!(
-                    self.dev,
+                    self.dev.as_ref(),
                     "unmap_pages {:#x}:{:#x} returned 0\n",
                     mapped_iova,
                     left
