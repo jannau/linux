@@ -1975,6 +1975,11 @@ config RUSTC_VERSION_TEXT
 	help
 	  See `CC_VERSION_TEXT`.
 
+config RUSTC_LLVM_VERSION_TEXT
+	string
+	depends on RUST
+        default $(shell,command -v $(RUSTC) >/dev/null 2>&1 && $(RUSTC) -v --version | grep '^LLVM version' | sed -e 's/^.*: *//' || echo n)
+
 config BINDGEN_VERSION_TEXT
 	string
 	depends on RUST

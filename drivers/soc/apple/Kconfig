@@ -26,6 +26,11 @@ config APPLE_MAILBOX
 
 	  Say Y here if you have an Apple SoC.
 
+config RUST_APPLE_RTKIT
+	bool
+	depends on RUST
+	select APPLE_RTKIT
+
 config APPLE_RTKIT
 	tristate "Apple RTKit co-processor IPC protocol"
 	depends on APPLE_MAILBOX
