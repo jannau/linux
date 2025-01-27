@@ -46,6 +46,11 @@ use kernel::{
     },
     types::ForeignOwnable, //
 };
+#[cfg(CONFIG_DEV_COREDUMP)]
+use kernel::{
+    devcoredump,
+    time::msecs_to_jiffies, //
+};
 
 use crate::alloc::Allocator;
 use crate::debug::*;
@@ -372,8 +377,9 @@ impl rtkit::Operations for GpuManager::ver {
 
         data.crashed.store(true, Ordering::Relaxed);
 
+        #[cfg(CONFIG_DEV_COREDUMP)]
         if let Err(e) = data.generate_crashdump(crashlog) {
-            dev_err!(dev.as_ref(), "Could not dump kernel VM pages: {:?}\n", e);
+            dev_err!(dev.as_ref(), "Could not generate crashdump: {:?}\n", e);
         }
         #[cfg(not(CONFIG_DEV_COREDUMP))]
         let _ = crashlog;
@@ -1199,19 +1205,28 @@ impl GpuManager::ver {
         Ok(())
     }
 
+    #[cfg(CONFIG_DEV_COREDUMP)]
     fn generate_crashdump(&self, crashlog: Option<&[u8]>) -> Result {
         // Lock the allocators, to block kernel/FW memory mutations (mostly)
         let kalloc = self.alloc();
         let pages = self.uat.dump_kernel_pages()?;
         core::mem::drop(kalloc);
 
-        let mut crashdump = crashdump::CrashDumpBuilder::new(pages)?;
+        let mut crashdump = crate::crashdump::CrashDumpBuilder::new(pages)?;
         let initdata_addr = self.initdata.gpu_va().get();
         crashdump.add_agx_info(self.cfg, &self.dyncfg, initdata_addr)?;
         if let Some(crashlog) = crashlog {
             crashdump.add_crashlog(crashlog)?;
         }
-        let crashdump = crashdump.finalize();
+        let crashdump = KBox::new(crashdump.finalize()?, GFP_KERNEL)?;
+
+        devcoredump::dev_coredump(
+            self.dev.as_ref(),
+            &crate::THIS_MODULE,
+            crashdump,
+            GFP_KERNEL,
+            msecs_to_jiffies(60 * 60 * 1000),
+        );
 
         Ok(())
     }
