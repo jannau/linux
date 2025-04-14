@@ -1,0 +1,62 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/reserved-memory/apple,asc-mem.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: Apple ASC coprocessor firmware
+
+description: |
+  ASC co-processors on Apple silicon SoCs are initialized by Apple's bootloader
+  and use carveout system memory. Each co-processor has its own IOMMU and
+  requires the IOMMU mappings to be maintained while they are out of sleep.
+  "apple,asc-mem" compatible reserved memory nodes describe these mappings for
+  each device and allow the operation system to setup the IOMMU before it starts
+  using the co-processor.
+  The memory is not expected to be accessed by the OS or device drivers and
+  therefor carries the "no-map" property.
+  As these mappings depend on the amount of system memory and possibly the
+  externally controlled bootloader and firmware version the devicetree contains
+  disabled nodes with invalid reg and iommu-addresses properties.
+
+maintainers:
+  - Janne Grunau <j@jannau.net>
+
+allOf:
+  - $ref: reserved-memory.yaml
+
+properties:
+  compatible:
+    const: apple,asc-mem
+
+required:
+  - reg
+  - iommu-addresses
+  - no-map
+
+unevaluatedProperties: false
+
+examples:
+  - |
+    reserved-memory {
+        #address-cells = <2>;
+        #size-cells = <2>;
+
+        dcp_data: asc-firmware@10fd3050000 {
+            compatible = "apple,asc-mem";
+            reg = <0x100 0xd3050000 0x0 0x1000000>;
+            iommu-addresses = <&dcp 0x100 0x904000 0x0 0x1000000>;
+            no-map;
+        };
+    };
+
+    dcp: dcp@289c00000 {
+        reg = <0x02 0x89c00000 0x00 0x4000>;
+        memory-region = <&dcp_data 0x184 0x185 0x186>;
+        iommus = <&dcp_dart 0>;
+    };
+
+    dcp_dart: iommu@28c30c000 {
+        reg = <0x02 0x8c30c000 0x00 0x4000>;
+        #iommu-cells = <0x01>;
+    };
