@@ -10,6 +10,7 @@
 /dts-v1/;
 
 #include "t6022.dtsi"
+#include "t6022-pcie-ge.dtsi"
 #include "t6022-jxxxd.dtsi"
 
 / {
