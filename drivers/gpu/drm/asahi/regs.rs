@@ -316,13 +316,13 @@ impl Resources {
             return Err(EIO);
         }
 
-        let (gpu_rev, gpu_rev_id) = match (id_version >> 8) & 0xff {
-            0x00 => (hw::GpuRevision::A0, hw::GpuRevisionID::A0),
-            0x01 => (hw::GpuRevision::A1, hw::GpuRevisionID::A1),
-            0x10 => (hw::GpuRevision::B0, hw::GpuRevisionID::B0),
-            0x11 => (hw::GpuRevision::B1, hw::GpuRevisionID::B1),
-            0x20 => (hw::GpuRevision::C0, hw::GpuRevisionID::C0),
-            0x21 => (hw::GpuRevision::C1, hw::GpuRevisionID::C1),
+        let gpu_rev = match (id_version >> 8) & 0xff {
+            0x00 => hw::GpuRevision::A0,
+            0x01 => hw::GpuRevision::A1,
+            0x10 => hw::GpuRevision::B0,
+            0x11 => hw::GpuRevision::B1,
+            0x20 => hw::GpuRevision::C0,
+            0x21 => hw::GpuRevision::C1,
             a => {
                 dev_err!(self.dev.as_ref(), "Unknown GPU revision {}\n", a);
                 return Err(ENODEV);
@@ -356,7 +356,6 @@ impl Resources {
                 }
             },
             gpu_rev,
-            gpu_rev_id,
             num_clusters,
             num_cores,
             num_frags: num_cores, // Used to be id_counts_1[15:8] but does not work for G14X

@@ -639,8 +639,8 @@ impl super::QueueInner::ver {
                     tiles_per_mtile_x: tile_info.tiles_per_mtile_x as u16,
                     unk_50: U64(0),
                     unk_58: U64(0),
-                    isp_merge_upper_x: F32::from_bits(cmdbuf.isp_merge_upper_x),
-                    isp_merge_upper_y: F32::from_bits(cmdbuf.isp_merge_upper_y),
+                    isp_merge_upper_x: cmdbuf.isp_merge_upper_x,
+                    isp_merge_upper_y: cmdbuf.isp_merge_upper_y,
                     unk_68: U64(0),
                     tile_count: U64(tile_info.tiles as u64),
                     #[ver(G < G14X)]
@@ -704,8 +704,8 @@ impl super::QueueInner::ver {
                         eot_usc: cmdbuf.eot.usc,
                         unk_8: 0x0,
                         unk_c: 0x0,
-                        isp_merge_upper_x: F32::from_bits(cmdbuf.isp_merge_upper_x),
-                        isp_merge_upper_y: F32::from_bits(cmdbuf.isp_merge_upper_y),
+                        isp_merge_upper_x: cmdbuf.isp_merge_upper_x,
+                        isp_merge_upper_y: cmdbuf.isp_merge_upper_y,
                         unk_18: U64(0x0),
                         utiles_per_mtile_y: tile_info.utiles_per_mtile_y as u16,
                         utiles_per_mtile_x: tile_info.utiles_per_mtile_x as u16,
@@ -1134,8 +1134,8 @@ impl super::QueueInner::ver {
                     #[ver(G < G14X)]
                     job_params1 <- try_init!(fw::vertex::raw::JobParameters1::ver {
                         unk_0: U64(if unk1 { 0 } else { 0x200 }), // sometimes 0
-                        unk_8: f32!(1e-20),                       // fixed
-                        unk_c: f32!(1e-20),                       // fixed
+                        unk_8: 0x1e3ce508, // f32!(1e-20),        // fixed
+                        unk_c: 0x1e3ce508, // f32!(1e-20),        // fixed
                         tvb_tilemap: inner.scene.tvb_tilemap_pointer(),
                         #[ver(G < G14)]
                         tvb_cluster_tilemaps: inner.scene.cluster_tilemaps_pointer(),

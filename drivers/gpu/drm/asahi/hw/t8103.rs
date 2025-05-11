@@ -2,8 +2,6 @@
 
 //! Hardware configuration for t8103 platforms (M1).
 
-use crate::f32;
-
 use super::*;
 
 pub(crate) const HWCONFIG: super::HwConfig = HwConfig {
@@ -31,40 +29,6 @@ pub(crate) const HWCONFIG: super::HwConfig = HwConfig {
         tiling_control: 0xa041,
     },
 
-    da: HwConfigA {
-        unk_87c: -220,
-        unk_8cc: 9880,
-        unk_e24: 112,
-    },
-    db: HwConfigB {
-        unk_454: 1,
-        unk_4e0: 0,
-        unk_534: 0,
-        unk_ab8: 0x48,
-        unk_abc: 0x8,
-        unk_b30: 0,
-    },
-    shared1_tab: &[
-        -1, 0x7282, 0x50ea, 0x370a, 0x25be, 0x1c1f, 0x16fb, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    ],
-    shared1_a4: 0xffff,
-    shared2_tab: &[0x800, 0x1555, -1, -1, -1, -1, -1, -1, 0, 0],
-    shared2_unk_508: 0xc00007,
-    shared2_curves: None,
-    shared3_unk: 0,
-    shared3_tab: &[],
-    idle_off_standby_timer_default: 0,
-    unk_hws2_4: None,
-    unk_hws2_24: 0,
-    global_unk_54: 0xffff,
-    sram_k: f32!(1.02),
-    unk_coef_a: &[],
-    unk_coef_b: &[],
-    global_tab: None,
-    has_csafr: false,
-    fast_sensor_mask: [0x12, 0],
-    fast_sensor_mask_alt: [0x12, 0],
-    fast_die0_sensor_present: 0x01,
     io_mappings: &[
         Some(IOMapping::new(0x204d00000, false, 1, 0x1c000, 0, true)), // Fender
         Some(IOMapping::new(0x20e100000, false, 1, 0x4000, 0, false)), // AICTimer

@@ -127,22 +127,22 @@ pub(crate) mod raw {
         pub(crate) unk_54: u32,
         pub(crate) unk_58: u32,
         pub(crate) unk_5c: u32,
-        pub(crate) gpu_se_filter_a_neg: F32,
-        pub(crate) gpu_se_filter_1_a_neg: F32,
-        pub(crate) gpu_se_filter_a: F32,
-        pub(crate) gpu_se_filter_1_a: F32,
-        pub(crate) gpu_se_ki_dt: F32,
-        pub(crate) gpu_se_ki_1_dt: F32,
-        pub(crate) unk_78: F32,
-        pub(crate) unk_7c: F32,
-        pub(crate) gpu_se_kp: F32,
-        pub(crate) gpu_se_kp_1: F32,
+        pub(crate) gpu_se_filter_a_neg: u32,
+        pub(crate) gpu_se_filter_1_a_neg: u32,
+        pub(crate) gpu_se_filter_a: u32,
+        pub(crate) gpu_se_filter_1_a: u32,
+        pub(crate) gpu_se_ki_dt: u32,
+        pub(crate) gpu_se_ki_1_dt: u32,
+        pub(crate) unk_78: u32,
+        pub(crate) unk_7c: u32,
+        pub(crate) gpu_se_kp: u32,
+        pub(crate) gpu_se_kp_1: u32,
         pub(crate) unk_88: u32,
         pub(crate) unk_8c: u32,
         pub(crate) max_pstate_scaled_1: u32,
         pub(crate) unk_94: u32,
         pub(crate) unk_98: u32,
-        pub(crate) unk_9c: F32,
+        pub(crate) unk_9c: u32,
         pub(crate) unk_a0: u32,
         pub(crate) unk_a4: u32,
         pub(crate) gpu_se_filter_time_constant_ms: u32,
@@ -150,9 +150,9 @@ pub(crate) mod raw {
         pub(crate) gpu_se_filter_time_constant_clks: U64,
         pub(crate) gpu_se_filter_time_constant_1_clks: U64,
         pub(crate) unk_c0: u32,
-        pub(crate) unk_c4: F32,
+        pub(crate) unk_c4: u32,
         pub(crate) unk_c8: Array<0x4c, u8>,
-        pub(crate) unk_114: F32,
+        pub(crate) unk_114: u32,
         pub(crate) unk_118: u32,
         pub(crate) unk_11c: u32,
         pub(crate) unk_120: u32,
@@ -168,429 +168,21 @@ pub(crate) mod raw {
         pub(crate) unk_d90: u32,
         pub(crate) unk_d94: u32,
         pub(crate) unk_d98: u32,
-        pub(crate) unk_d9c: F32,
+        pub(crate) unk_d9c: u32,
         pub(crate) unk_da0: u32,
-        pub(crate) unk_da4: F32,
+        pub(crate) unk_da4: u32,
         pub(crate) unk_da8: u32,
-        pub(crate) unk_dac: F32,
+        pub(crate) unk_dac: u32,
         pub(crate) unk_db0: u32,
         pub(crate) unk_db4: u32,
-        pub(crate) unk_db8: F32,
-        pub(crate) unk_dbc: F32,
+        pub(crate) unk_db8: u32,
+        pub(crate) unk_dbc: u32,
         pub(crate) unk_dc0: u32,
         pub(crate) unk_dc4: u32,
         pub(crate) unk_dc8: u32,
         pub(crate) max_pstate_scaled: u32,
     }
     default_zeroed!(T81xxData);
-
-    #[versions(AGX)]
-    #[derive(Default, Copy, Clone)]
-    #[repr(C)]
-    pub(crate) struct PowerZone {
-        pub(crate) val: F32,
-        pub(crate) target: u32,
-        pub(crate) target_off: u32,
-        pub(crate) filter_tc_x4: u32,
-        pub(crate) filter_tc_xperiod: u32,
-        #[ver(V >= V13_0B4)]
-        pub(crate) unk_10: u32,
-        #[ver(V >= V13_0B4)]
-        pub(crate) unk_14: u32,
-        pub(crate) filter_a_neg: F32,
-        pub(crate) filter_a: F32,
-        pub(crate) pad: u32,
-    }
-
-    #[versions(AGX)]
-    const MAX_CORES_PER_CLUSTER: usize = {
-        #[ver(G >= G14X)]
-        {
-            16
-        }
-        #[ver(G < G14X)]
-        {
-            8
-        }
-    };
-
-    #[derive(Debug, Default)]
-    #[repr(C)]
-    pub(crate) struct AuxLeakCoef {
-        pub(crate) afr_1: Array<2, F32>,
-        pub(crate) cs_1: Array<2, F32>,
-        pub(crate) afr_2: Array<2, F32>,
-        pub(crate) cs_2: Array<2, F32>,
-    }
-
-    #[versions(AGX)]
-    #[repr(C)]
-    pub(crate) struct HwDataA {
-        pub(crate) unk_0: u32,
-        pub(crate) clocks_per_period: u32,
-
-        #[ver(V >= V13_0B4)]
-        pub(crate) clocks_per_period_2: u32,
-
-        pub(crate) unk_8: u32,
-        pub(crate) pwr_status: AtomicU32,
-        pub(crate) unk_10: F32,
-        pub(crate) unk_14: u32,
-        pub(crate) unk_18: u32,
-        pub(crate) unk_1c: u32,
-        pub(crate) unk_20: u32,
-        pub(crate) unk_24: u32,
-        pub(crate) actual_pstate: u32,
-        pub(crate) tgt_pstate: u32,
-        pub(crate) unk_30: u32,
-        pub(crate) cur_pstate: u32,
-        pub(crate) unk_38: u32,
-
-        #[ver(V >= V13_0B4)]
-        pub(crate) unk_3c_0: u32,
-
-        pub(crate) base_pstate_scaled: u32,
-        pub(crate) unk_40: u32,
-        pub(crate) max_pstate_scaled: u32,
-        pub(crate) unk_48: u32,
-        pub(crate) min_pstate_scaled: u32,
-        pub(crate) freq_mhz: F32,
-        pub(crate) unk_54: Array<0x20, u8>,
-
-        #[ver(V >= V13_0B4)]
-        pub(crate) unk_74_0: u32,
-
-        pub(crate) sram_k: Array<0x10, F32>,
-        pub(crate) unk_b4: Array<0x100, u8>,
-        pub(crate) unk_1b4: u32,
-        pub(crate) temp_c: u32,
-        pub(crate) avg_power_mw: u32,
-        pub(crate) update_ts: U64,
-        pub(crate) unk_1c8: u32,
-        pub(crate) unk_1cc: Array<0x478, u8>,
-        pub(crate) pad_644: Pad<0x8>,
-        pub(crate) unk_64c: u32,
-        pub(crate) unk_650: u32,
-        pub(crate) pad_654: u32,
-        pub(crate) pwr_filter_a_neg: F32,
-        pub(crate) pad_65c: u32,
-        pub(crate) pwr_filter_a: F32,
-        pub(crate) pad_664: u32,
-        pub(crate) pwr_integral_gain: F32,
-        pub(crate) pad_66c: u32,
-        pub(crate) pwr_integral_min_clamp: F32,
-        pub(crate) max_power_1: F32,
-        pub(crate) pwr_proportional_gain: F32,
-        pub(crate) pad_67c: u32,
-        pub(crate) pwr_pstate_related_k: F32,
-        pub(crate) pwr_pstate_max_dc_offset: i32,
-        pub(crate) unk_688: u32,
-        pub(crate) max_pstate_scaled_2: u32,
-        pub(crate) pad_690: u32,
-        pub(crate) unk_694: u32,
-        pub(crate) max_power_2: u32,
-        pub(crate) pad_69c: Pad<0x18>,
-        pub(crate) unk_6b4: u32,
-
-        #[ver(V >= V13_0B4)]
-        pub(crate) unk_6b8_0: Array<0x10, u8>,
-
-        pub(crate) max_pstate_scaled_3: u32,
-        pub(crate) unk_6bc: u32,
-        pub(crate) pad_6c0: Pad<0x14>,
-        pub(crate) ppm_filter_tc_periods_x4: u32,
-        pub(crate) unk_6d8: u32,
-        pub(crate) pad_6dc: u32,
-        pub(crate) ppm_filter_a_neg: F32,
-        pub(crate) pad_6e4: u32,
-        pub(crate) ppm_filter_a: F32,
-        pub(crate) pad_6ec: u32,
-        pub(crate) ppm_ki_dt: F32,
-        pub(crate) pad_6f4: u32,
-        pub(crate) pwr_integral_min_clamp_2: u32,
-        pub(crate) unk_6fc: F32,
-        pub(crate) ppm_kp: F32,
-        pub(crate) pad_704: u32,
-        pub(crate) unk_708: u32,
-        pub(crate) pwr_min_duty_cycle: u32,
-        pub(crate) max_pstate_scaled_4: u32,
-        pub(crate) unk_714: u32,
-        pub(crate) pad_718: u32,
-        pub(crate) unk_71c: F32,
-        pub(crate) max_power_3: u32,
-        pub(crate) cur_power_mw_2: u32,
-        pub(crate) ppm_filter_tc_ms: u32,
-        pub(crate) unk_72c: u32,
-
-        #[ver(V >= V13_0B4)]
-        pub(crate) ppm_filter_tc_clks: u32,
-
-        #[ver(V >= V13_0B4)]
-        pub(crate) unk_730_4: u32,
-
-        #[ver(V >= V13_0B4)]
-        pub(crate) unk_730_8: u32,
-
-        #[ver(V >= V13_0B4)]
-        pub(crate) unk_730_c: u32,
-
-        pub(crate) unk_730: F32,
-        pub(crate) unk_734: u32,
-        pub(crate) unk_738: u32,
-        pub(crate) unk_73c: u32,
-        pub(crate) unk_740: u32,
-        pub(crate) unk_744: u32,
-        pub(crate) unk_748: Array<0x4, F32>,
-        pub(crate) unk_758: u32,
-        pub(crate) perf_tgt_utilization: u32,
-        pub(crate) pad_760: u32,
-        pub(crate) perf_boost_min_util: u32,
-        pub(crate) perf_boost_ce_step: u32,
-        pub(crate) perf_reset_iters: u32,
-        pub(crate) pad_770: u32,
-        pub(crate) unk_774: u32,
-        pub(crate) unk_778: u32,
-        pub(crate) perf_filter_drop_threshold: u32,
-        pub(crate) perf_filter_a_neg: F32,
-        pub(crate) perf_filter_a2_neg: F32,
-        pub(crate) perf_filter_a: F32,
-        pub(crate) perf_filter_a2: F32,
-        pub(crate) perf_ki: F32,
-        pub(crate) perf_ki2: F32,
-        pub(crate) perf_integral_min_clamp: F32,
-        pub(crate) unk_79c: F32,
-        pub(crate) perf_kp: F32,
-        pub(crate) perf_kp2: F32,
-        pub(crate) boost_state_unk_k: F32,
-        pub(crate) base_pstate_scaled_2: u32,
-        pub(crate) max_pstate_scaled_5: u32,
-        pub(crate) base_pstate_scaled_3: u32,
-        pub(crate) pad_7b8: u32,
-        pub(crate) perf_cur_utilization: F32,
-        pub(crate) perf_tgt_utilization_2: u32,
-        pub(crate) pad_7c4: Pad<0x18>,
-        pub(crate) unk_7dc: u32,
-
-        #[ver(V >= V13_0B4)]
-        pub(crate) unk_7e0_0: Array<0x10, u8>,
-
-        pub(crate) base_pstate_scaled_4: u32,
-        pub(crate) pad_7e4: u32,
-        pub(crate) unk_7e8: Array<0x14, u8>,
-        pub(crate) unk_7fc: F32,
-        pub(crate) pwr_min_duty_cycle_2: F32,
-        pub(crate) max_pstate_scaled_6: F32,
-        pub(crate) max_freq_mhz: u32,
-        pub(crate) pad_80c: u32,
-        pub(crate) unk_810: u32,
-        pub(crate) pad_814: u32,
-        pub(crate) pwr_min_duty_cycle_3: u32,
-        pub(crate) unk_81c: u32,
-        pub(crate) pad_820: u32,
-        pub(crate) min_pstate_scaled_4: F32,
-        pub(crate) max_pstate_scaled_7: u32,
-        pub(crate) unk_82c: u32,
-        pub(crate) unk_alpha_neg: F32,
-        pub(crate) unk_alpha: F32,
-        pub(crate) unk_838: u32,
-        pub(crate) unk_83c: u32,
-        pub(crate) pad_840: Pad<0x2c>,
-        pub(crate) unk_86c: u32,
-        pub(crate) fast_die0_sensor_mask: U64,
-        #[ver(G >= G14X)]
-        pub(crate) fast_die1_sensor_mask: U64,
-        pub(crate) fast_die0_release_temp_cc: u32,
-        pub(crate) unk_87c: i32,
-        pub(crate) unk_880: u32,
-        pub(crate) unk_884: u32,
-        pub(crate) pad_888: u32,
-        pub(crate) unk_88c: u32,
-        pub(crate) pad_890: u32,
-        pub(crate) unk_894: F32,
-        pub(crate) pad_898: u32,
-        pub(crate) fast_die0_ki_dt: F32,
-        pub(crate) pad_8a0: u32,
-        pub(crate) unk_8a4: u32,
-        pub(crate) unk_8a8: F32,
-        pub(crate) fast_die0_kp: F32,
-        pub(crate) pad_8b0: u32,
-        pub(crate) unk_8b4: u32,
-        pub(crate) pwr_min_duty_cycle_4: u32,
-        pub(crate) max_pstate_scaled_8: u32,
-        pub(crate) max_pstate_scaled_9: u32,
-        pub(crate) fast_die0_prop_tgt_delta: u32,
-        pub(crate) unk_8c8: u32,
-        pub(crate) unk_8cc: u32,
-        pub(crate) pad_8d0: Pad<0x14>,
-
-        #[ver(V >= V13_0B4)]
-        pub(crate) unk_8e4_0: Array<0x10, u8>,
-
-        pub(crate) unk_8e4: u32,
-        pub(crate) unk_8e8: u32,
-        pub(crate) max_pstate_scaled_10: u32,
-        pub(crate) unk_8f0: u32,
-        pub(crate) unk_8f4: u32,
-        pub(crate) pad_8f8: u32,
-        pub(crate) pad_8fc: u32,
-        pub(crate) unk_900: Array<0x24, u8>,
-
-        pub(crate) unk_coef_a1: Array<8, Array<MAX_CORES_PER_CLUSTER::ver, F32>>,
-        pub(crate) unk_coef_a2: Array<8, Array<MAX_CORES_PER_CLUSTER::ver, F32>>,
-
-        pub(crate) pad_b24: Pad<0x70>,
-        pub(crate) max_pstate_scaled_11: u32,
-        pub(crate) freq_with_off: u32,
-        pub(crate) unk_b9c: u32,
-        pub(crate) unk_ba0: U64,
-        pub(crate) unk_ba8: U64,
-        pub(crate) unk_bb0: u32,
-        pub(crate) unk_bb4: u32,
-
-        #[ver(V >= V13_3)]
-        pub(crate) pad_bb8_0: Pad<0x200>,
-        #[ver(V >= V13_5)]
-        pub(crate) pad_bb8_200: Pad<0x8>,
-
-        pub(crate) pad_bb8: Pad<0x74>,
-        pub(crate) unk_c2c: u32,
-        pub(crate) power_zone_count: u32,
-        pub(crate) max_power_4: u32,
-        pub(crate) max_power_5: u32,
-        pub(crate) max_power_6: u32,
-        pub(crate) unk_c40: u32,
-        pub(crate) unk_c44: F32,
-        pub(crate) avg_power_target_filter_a_neg: F32,
-        pub(crate) avg_power_target_filter_a: F32,
-        pub(crate) avg_power_target_filter_tc_x4: u32,
-        pub(crate) avg_power_target_filter_tc_xperiod: u32,
-
-        #[ver(V >= V13_0B4)]
-        pub(crate) avg_power_target_filter_tc_clks: u32,
-
-        #[ver(V >= V13_0B4)]
-        pub(crate) unk_c58_4: u32,
-
-        pub(crate) power_zones: Array<5, PowerZone::ver>,
-        pub(crate) avg_power_filter_tc_periods_x4: u32,
-        pub(crate) unk_cfc: u32,
-        pub(crate) unk_d00: u32,
-        pub(crate) avg_power_filter_a_neg: F32,
-        pub(crate) unk_d08: u32,
-        pub(crate) avg_power_filter_a: F32,
-        pub(crate) unk_d10: u32,
-        pub(crate) avg_power_ki_dt: F32,
-        pub(crate) unk_d18: u32,
-        pub(crate) unk_d1c: u32,
-        pub(crate) unk_d20: F32,
-        pub(crate) avg_power_kp: F32,
-        pub(crate) unk_d28: u32,
-        pub(crate) unk_d2c: u32,
-        pub(crate) avg_power_min_duty_cycle: u32,
-        pub(crate) max_pstate_scaled_12: u32,
-        pub(crate) max_pstate_scaled_13: u32,
-        pub(crate) unk_d3c: u32,
-        pub(crate) max_power_7: F32,
-        pub(crate) max_power_8: u32,
-        pub(crate) unk_d48: u32,
-        pub(crate) avg_power_filter_tc_ms: u32,
-        pub(crate) unk_d50: u32,
-
-        #[ver(V >= V13_0B4)]
-        pub(crate) avg_power_filter_tc_clks: u32,
-
-        #[ver(V >= V13_0B4)]
-        pub(crate) unk_d54_4: Array<0xc, u8>,
-
-        pub(crate) unk_d54: Array<0x10, u8>,
-        pub(crate) max_pstate_scaled_14: u32,
-        pub(crate) unk_d68: Array<0x24, u8>,
-
-        pub(crate) t81xx_data: T81xxData,
-
-        pub(crate) unk_dd0: Array<0x40, u8>,
-
-        #[ver(V >= V13_2)]
-        pub(crate) unk_e10_pad: Array<0x10, u8>,
-
-        #[ver(V >= V13_0B4)]
-        pub(crate) unk_e10_0: HwDataA130Extra,
-
-        pub(crate) unk_e10: Array<0xc, u8>,
-
-        pub(crate) fast_die0_sensor_mask_2: U64,
-        #[ver(G >= G14X)]
-        pub(crate) fast_die1_sensor_mask_2: U64,
-
-        pub(crate) unk_e24: u32,
-        pub(crate) unk_e28: u32,
-        pub(crate) unk_e2c: Pad<0x1c>,
-        pub(crate) unk_coef_b1: Array<8, Array<MAX_CORES_PER_CLUSTER::ver, F32>>,
-        pub(crate) unk_coef_b2: Array<8, Array<MAX_CORES_PER_CLUSTER::ver, F32>>,
-
-        #[ver(G >= G14X)]
-        pub(crate) pad_1048_0: Pad<0x600>,
-
-        pub(crate) pad_1048: Pad<0x5e4>,
-
-        pub(crate) fast_die0_sensor_mask_alt: U64,
-        #[ver(G >= G14X)]
-        pub(crate) fast_die1_sensor_mask_alt: U64,
-        #[ver(V < V13_0B4)]
-        pub(crate) fast_die0_sensor_present: U64,
-
-        pub(crate) unk_163c: u32,
-
-        pub(crate) unk_1640: Array<0x2000, u8>,
-
-        #[ver(G >= G14X)]
-        pub(crate) unk_3640_0: Array<0x2000, u8>,
-
-        pub(crate) unk_3640: u32,
-        pub(crate) unk_3644: u32,
-        pub(crate) hws1: HwDataShared1,
-
-        #[ver(V >= V13_0B4)]
-        pub(crate) unk_hws2: Array<16, u16>,
-
-        pub(crate) hws2: HwDataShared2,
-        pub(crate) unk_3c00: u32,
-        pub(crate) unk_3c04: u32,
-        pub(crate) hws3: HwDataShared3,
-        pub(crate) unk_3c58: Array<0x3c, u8>,
-        pub(crate) unk_3c94: u32,
-        pub(crate) unk_3c98: U64,
-        pub(crate) unk_3ca0: U64,
-        pub(crate) unk_3ca8: U64,
-        pub(crate) unk_3cb0: U64,
-        pub(crate) ts_last_idle: U64,
-        pub(crate) ts_last_poweron: U64,
-        pub(crate) ts_last_poweroff: U64,
-        pub(crate) unk_3cd0: U64,
-        pub(crate) unk_3cd8: U64,
-
-        #[ver(V >= V13_0B4)]
-        pub(crate) unk_3ce0_0: u32,
-
-        pub(crate) unk_3ce0: u32,
-        pub(crate) unk_3ce4: u32,
-        pub(crate) unk_3ce8: u32,
-        pub(crate) unk_3cec: u32,
-        pub(crate) unk_3cf0: u32,
-        pub(crate) core_leak_coef: Array<8, F32>,
-        pub(crate) sram_leak_coef: Array<8, F32>,
-
-        #[ver(V >= V13_0B4)]
-        pub(crate) aux_leak_coef: AuxLeakCoef,
-        #[ver(V >= V13_0B4)]
-        pub(crate) unk_3d34_0: Array<0x18, u8>,
-
-        pub(crate) unk_3d34: Array<0x38, u8>,
-    }
-    #[versions(AGX)]
-    default_zeroed!(HwDataA::ver);
-    #[versions(AGX)]
-    no_debug!(HwDataA::ver);
 
     #[derive(Debug, Default, Clone, Copy)]
     #[repr(C)]
@@ -757,7 +349,7 @@ pub(crate) mod raw {
         #[ver(V >= V13_3)]
         pub(crate) unk_9f4_0: Pad<64>,
 
-        pub(crate) sram_k: Array<0x10, F32>,
+        pub(crate) sram_k: Array<0x10, u32>,
         pub(crate) unk_9f4: Array<0x10, u32>,
         pub(crate) rel_max_powers: Array<0x10, u32>,
         pub(crate) rel_boost_freqs: Array<0x10, u32>,
@@ -963,7 +555,7 @@ pub(crate) mod raw {
         pub(crate) stats_vtx: GpuPointer<'a, super::GpuGlobalStatsVtx>,
         pub(crate) stats_frag: GpuPointer<'a, super::GpuGlobalStatsFrag::ver>,
         pub(crate) stats_comp: GpuPointer<'a, super::GpuStatsComp>,
-        pub(crate) hwdata_a: GpuPointer<'a, super::HwDataA::ver>,
+        pub(crate) hwdata_a: GpuPointer<'a, &'a [u8]>,
         pub(crate) unkptr_190: GpuPointer<'a, &'a [u8]>,
         pub(crate) unkptr_198: GpuPointer<'a, &'a [u8]>,
         pub(crate) hwdata_b: GpuPointer<'a, super::HwDataB::ver>,
@@ -1080,8 +672,8 @@ pub(crate) mod raw {
         pub(crate) unk_8920: u32,
         pub(crate) power_zone_count: u32,
         pub(crate) avg_power_filter_tc_periods: u32,
-        pub(crate) avg_power_ki_dt: F32,
-        pub(crate) avg_power_kp: F32,
+        pub(crate) avg_power_ki_dt: u32,
+        pub(crate) avg_power_kp: u32,
         pub(crate) avg_power_min_duty_cycle: u32,
         pub(crate) avg_power_target_filter_tc: u32,
         pub(crate) power_zones: Array<5, PowerZoneGlobal>,
@@ -1094,13 +686,13 @@ pub(crate) mod raw {
         pub(crate) fast_die0_release_temp: u32,
         pub(crate) unk_89c4: i32,
         pub(crate) fast_die0_prop_tgt_delta: u32,
-        pub(crate) fast_die0_kp: F32,
-        pub(crate) fast_die0_ki_dt: F32,
+        pub(crate) fast_die0_kp: u32,
+        pub(crate) fast_die0_ki_dt: u32,
         pub(crate) unk_89d4: Array<0xc, u8>,
         pub(crate) unk_89e0: u32,
         pub(crate) max_power_2: u32,
-        pub(crate) ppm_kp: F32,
-        pub(crate) ppm_ki_dt: F32,
+        pub(crate) ppm_kp: u32,
+        pub(crate) ppm_ki_dt: u32,
         pub(crate) unk_89f0: u32,
 
         #[ver(V >= V13_0B4)]
@@ -1123,7 +715,7 @@ pub(crate) mod raw {
         pub(crate) idle_off_standby_timer: u32,
 
         #[ver(V >= V13_0B4)]
-        pub(crate) unk_hws2_4: Array<0x8, F32>,
+        pub(crate) unk_hws2_4: Array<0x8, u32>,
 
         #[ver(V >= V13_0B4)]
         pub(crate) unk_hws2_24: u32,
@@ -1296,8 +888,6 @@ trivial_gpustruct!(GpuGlobalStatsVtx);
 trivial_gpustruct!(GpuGlobalStatsFrag::ver);
 trivial_gpustruct!(GpuStatsComp);
 
-#[versions(AGX)]
-trivial_gpustruct!(HwDataA::ver);
 
 #[versions(AGX)]
 trivial_gpustruct!(HwDataB::ver);
@@ -1315,7 +905,7 @@ pub(crate) struct Stats {
 pub(crate) struct RuntimePointers {
     pub(crate) stats: Stats::ver,
 
-    pub(crate) hwdata_a: GpuObject<HwDataA::ver>,
+    pub(crate) hwdata_a: GpuArray<u8>,
     pub(crate) unkptr_190: GpuArray<u8>,
     pub(crate) unkptr_198: GpuArray<u8>,
     pub(crate) hwdata_b: GpuObject<HwDataB::ver>,

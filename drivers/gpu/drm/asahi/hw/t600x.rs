@@ -2,8 +2,6 @@
 
 //! Hardware configuration for t600x (M1 Pro/Max/Ultra) platforms.
 
-use crate::f32;
-
 use super::*;
 
 const fn iomaps(mcc_count: usize, has_die1: bool) -> [Option<IOMapping>; 20] {
@@ -73,61 +71,6 @@ pub(crate) const HWCONFIG_T6002: super::HwConfig = HwConfig {
         tiling_control: 0xa540,
     },
 
-    da: HwConfigA {
-        unk_87c: 900,
-        unk_8cc: 11000,
-        unk_e24: 125,
-    },
-    db: HwConfigB {
-        unk_454: 1,
-        unk_4e0: 4,
-        unk_534: 1,
-        unk_ab8: 0x2084,
-        unk_abc: 0x80,
-        unk_b30: 0,
-    },
-    shared1_tab: &[
-        0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff,
-        0xffff, 0xffff, 0xffff, 0xffff, 0xffff,
-    ],
-    shared1_a4: 0xffff,
-    shared2_tab: &[-1, -1, -1, -1, 0x2aa, 0xaaa, -1, -1, 0, 0],
-    shared2_unk_508: 0xcc00001,
-    shared2_curves: None,
-    shared3_unk: 0,
-    shared3_tab: &[],
-    idle_off_standby_timer_default: 0,
-    unk_hws2_4: None,
-    unk_hws2_24: 0,
-    global_unk_54: 0xffff,
-    sram_k: f32!(1.02),
-    unk_coef_a: &[
-        &f32!([9.838]),
-        &f32!([9.819]),
-        &f32!([9.826]),
-        &f32!([9.799]),
-        &f32!([9.799]),
-        &f32!([9.826]),
-        &f32!([9.819]),
-        &f32!([9.838]),
-    ],
-    unk_coef_b: &[
-        &f32!([13.0]),
-        &f32!([13.0]),
-        &f32!([13.0]),
-        &f32!([13.0]),
-        &f32!([13.0]),
-        &f32!([13.0]),
-        &f32!([13.0]),
-        &f32!([13.0]),
-    ],
-    global_tab: Some(&[
-        0, 1, 2, 1, 1, 90, 75, 1, 1, 1, 2, 90, 75, 1, 1, 1, 1, 90, 75, 1, 1,
-    ]),
-    has_csafr: false,
-    fast_sensor_mask: [0x8080808080808080, 0],
-    fast_sensor_mask_alt: [0x9090909090909090, 0],
-    fast_die0_sensor_present: 0xff,
     io_mappings: &iomaps(8, true),
     sram_base: None,
     sram_size: None,
@@ -140,9 +83,6 @@ pub(crate) const HWCONFIG_T6001: super::HwConfig = HwConfig {
 
     num_dies: 1,
     max_num_clusters: 4,
-    fast_sensor_mask: [0x80808080, 0],
-    fast_sensor_mask_alt: [0x90909090, 0],
-    fast_die0_sensor_present: 0x0f,
     io_mappings: &iomaps(8, false),
     ..HWCONFIG_T6002
 };
@@ -153,9 +93,6 @@ pub(crate) const HWCONFIG_T6000: super::HwConfig = HwConfig {
     gpu_core: GpuCore::G13S,
 
     max_num_clusters: 2,
-    fast_sensor_mask: [0x8080, 0],
-    fast_sensor_mask_alt: [0x9090, 0],
-    fast_die0_sensor_present: 0x03,
     io_mappings: &iomaps(4, false),
     ..HWCONFIG_T6001
 };

@@ -319,7 +319,7 @@ impl File {
 
             max_commands_per_submission: MAX_COMMANDS_PER_SUBMISSION,
             max_attachments: crate::microseq::MAX_ATTACHMENTS as u32,
-            max_frequency_khz: gpu.get_dyncfg().pwr.max_frequency_khz(),
+            max_frequency_khz: 1_000_000, // macOS also hardcodes 1Ghz
 
             command_timestamp_frequency_hz: 1_000_000_000, // User timestamps always in nanoseconds
         };

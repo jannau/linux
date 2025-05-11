@@ -14,11 +14,7 @@
 use core::any::Any;
 use core::ops::Range;
 use core::slice;
-use core::sync::atomic::{
-    AtomicBool,
-    AtomicU64,
-    Ordering, //
-};
+
 
 use kernel::{
     c_str,
@@ -423,7 +419,7 @@ impl GpuManager::ver {
         cfg: &'static hw::HwConfig,
     ) -> Result<Arc<GpuManager::ver>> {
         let uat = Self::make_uat(dev, cfg)?;
-        let dyncfg = Self::make_dyncfg(dev, res, cfg, &uat)?;
+        let dyncfg = Self::make_dyncfg(dev, res, cfg)?;
 
         let mut alloc = KernelAllocators {
             private: alloc::DefaultAllocator::new(
@@ -778,21 +774,12 @@ impl GpuManager::ver {
 
     fn load_hwdata_blob(dev: &AsahiDevice, name: &CStr, size_name: &CStr) -> Result<KVVec<u8>> {
         let of_node = dev.as_ref().of_node().ok_or(EINVAL)?;
-        let size: usize = dev
-            .as_ref()
-            .fwnode()
-            .ok_or(ENOENT)?
-            .property_read::<u32>(size_name)
-            .or(0)
-            .try_into()?;
         let res = of_node.reserved_mem_region_to_resource_byname(name)?;
         // SAFETY: No dma here, just loading init data.
         let mem = unsafe { Mem::try_new(res, MemFlags::WB)? };
-        if size > mem.size() {
-            return Err(ENOENT);
-        }
         // SAFETY: trusting the bootloader to fill it out correctly
         let blob_sl = unsafe { slice::from_raw_parts(mem.ptr(), size) };
+
         let mut blob = KVVec::new();
         blob.extend_from_slice(blob_sl, GFP_KERNEL)?;
         Ok(blob)
@@ -806,7 +793,6 @@ impl GpuManager::ver {
         dev: &AsahiDevice,
         res: &regs::Resources,
         cfg: &'static hw::HwConfig,
-        uat: &mmu::Uat,
     ) -> Result<KBox<hw::DynConfig>> {
         let gpu_id = res.get_gpu_id()?;
 
@@ -842,10 +828,6 @@ impl GpuManager::ver {
             "  Active cores: {}\n",
             gpu_id.total_active_cores
         );
-
-        dev_info!(dev.as_ref(), "Getting configuration from device tree...\n");
-        let pwr_cfg = hw::PwrConfig::load(dev, cfg)?;
-        dev_info!(dev.as_ref(), "Dynamic configuration fetched\n");
 
         if gpu_id.gpu_gen != cfg.gpu_gen || gpu_id.gpu_variant != cfg.gpu_variant {
             dev_err!(
@@ -899,31 +881,14 @@ impl GpuManager::ver {
 
         Ok(KBox::new(
             hw::DynConfig {
-                pwr: pwr_cfg,
-                uat_ttb_base: uat.ttb_base(),
                 id: gpu_id,
                 firmware_version: fwnode
                     .property_read_array_vec(c_str!("apple,firmware-version"), 3)?
                     .or(kernel::kvec![0; 3]?),
 
-                hw_data_a: Self::load_hwdata_blob(
-                    dev,
-                    c_str!("hw-cal-a"),
-                    c_str!("debug,hw-cal-a-size"),
-                )
-                .unwrap_or(KVVec::new()),
-                hw_data_b: Self::load_hwdata_blob(
-                    dev,
-                    c_str!("hw-cal-b"),
-                    c_str!("debug,hw-cal-b-size"),
-                )
-                .unwrap_or(KVVec::new()),
-                hw_globals: Self::load_hwdata_blob(
-                    dev,
-                    c_str!("globals"),
-                    c_str!("debug,globals-size"),
-                )
-                .unwrap_or(KVVec::new()),
+                hw_data_a: Self::load_hwdata_blob(dev, c_str!("hw-cal-a"))?,
+                hw_data_b: Self::load_hwdata_blob(dev, c_str!("hw-cal-b"))?,
+                hw_globals: Self::load_hwdata_blob(dev, c_str!("globals"))?,
             },
             GFP_KERNEL,
         )?)

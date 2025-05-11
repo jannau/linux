@@ -12,7 +12,6 @@ mod debug;
 mod driver;
 mod event;
 mod file;
-mod float;
 mod fw;
 mod gem;
 mod gpu;

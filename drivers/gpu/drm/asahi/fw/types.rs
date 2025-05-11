@@ -11,10 +11,6 @@ pub(crate) use crate::object::{
     GpuStruct,
     GpuWeakPointer, //
 };
-pub(crate) use crate::{
-    f32,
-    float::F32, //
-};
 
 pub(crate) use core::marker::PhantomData;
 pub(crate) use core::sync::atomic::{

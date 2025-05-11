@@ -112,35 +112,35 @@ kernel::of_device_table!(
     <AsahiDriver as platform::Driver>::IdInfo,
     [
         (
-            of::DeviceId::new(c_str!("apple,agx-t8103")),
+            of::DeviceId::new(c_str!("apple,agx-g13g")),
             &hw::t8103::HWCONFIG
         ),
         (
-            of::DeviceId::new(c_str!("apple,agx-t8112")),
+            of::DeviceId::new(c_str!("apple,agx-g14g")),
             &hw::t8112::HWCONFIG
         ),
         (
-            of::DeviceId::new(c_str!("apple,agx-t6000")),
+            of::DeviceId::new(c_str!("apple,agx-g13s")),
             &hw::t600x::HWCONFIG_T6000
         ),
         (
-            of::DeviceId::new(c_str!("apple,agx-t6001")),
+            of::DeviceId::new(c_str!("apple,agx-g13c")),
             &hw::t600x::HWCONFIG_T6001
         ),
         (
-            of::DeviceId::new(c_str!("apple,agx-t6002")),
+            of::DeviceId::new(c_str!("apple,agx-g13d")),
             &hw::t600x::HWCONFIG_T6002
         ),
         (
-            of::DeviceId::new(c_str!("apple,agx-t6020")),
+            of::DeviceId::new(c_str!("apple,agx-g14s")),
             &hw::t602x::HWCONFIG_T6020
         ),
         (
-            of::DeviceId::new(c_str!("apple,agx-t6021")),
+            of::DeviceId::new(c_str!("apple,agx-g14c")),
             &hw::t602x::HWCONFIG_T6021
         ),
         (
-            of::DeviceId::new(c_str!("apple,agx-t6022")),
+            of::DeviceId::new(c_str!("apple,agx-g14d")),
             &hw::t602x::HWCONFIG_T6022
         ),
     ]
@@ -174,8 +174,9 @@ impl platform::Driver for AsahiDriver {
 
         let fwnode = pdev.as_ref().fwnode().ok_or(EIO)?;
         let compat: KVec<u32> = fwnode
-            .property_read_array_vec(c_str!("apple,firmware-compat"), 3)?
+            .property_read_array_vec(c_str!("apple,firmware-abi"), 3)?
             .required_by(pdev.as_ref())?;
+
 
         // TODO: This is very temporary
         // SAFETY: This should be safe as data is not touched by the driver

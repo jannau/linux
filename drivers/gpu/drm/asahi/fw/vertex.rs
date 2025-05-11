@@ -43,8 +43,8 @@ pub(crate) mod raw {
     #[repr(C)]
     pub(crate) struct JobParameters1<'a> {
         pub(crate) unk_0: U64,
-        pub(crate) unk_8: F32,
-        pub(crate) unk_c: F32,
+        pub(crate) unk_8: u32,
+        pub(crate) unk_c: u32,
         pub(crate) tvb_tilemap: GpuPointer<'a, &'a [u8]>,
         #[ver(G < G14)]
         pub(crate) tvb_cluster_tilemaps: Option<GpuPointer<'a, &'a [u8]>>,
