@@ -579,7 +579,7 @@
 		apple,perf-tgt-utilization = <85>;
 		apple,power-sample-period = <8>;
 		apple,ppm-filter-time-constant-ms = <100>;
-		apple,ppm-ki = <30>;
+		apple,ppm-ki = <30.0>;
 		apple,ppm-kp = <1.5>;
 		apple,pwr-filter-time-constant = <313>;
 		apple,pwr-integral-gain = <0.0202129>;
