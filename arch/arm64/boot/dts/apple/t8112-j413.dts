@@ -47,7 +47,7 @@
 };
 
 &framebuffer0 {
-	panel = &panel;
+	panel-dimensions = <&panel>;
 };
 
 /*
