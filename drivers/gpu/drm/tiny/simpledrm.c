@@ -843,6 +843,8 @@ static struct simpledrm_device *simpledrm_device_create(struct drm_driver *drv,
 		if (IS_ERR(mem))
 			return ERR_CAST(mem);
 		panel_node = of_parse_phandle(of_node, "panel", 0);
+		if (!panel_node)
+			panel_node = of_parse_phandle(of_node, "panel-dimensions", 0);
 		if (panel_node) {
 			simplefb_read_u32_of(dev, panel_node, "width-mm", &width_mm);
 			simplefb_read_u32_of(dev, panel_node, "height-mm", &height_mm);
