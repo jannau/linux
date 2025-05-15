@@ -106,4 +106,12 @@
 	apple,dptx-phy = <4>;
 };
 
+&gpu {
+	apple,idleoff-standby-timer = <3000>;
+	apple,perf-base-pstate = <5>;
+	apple,perf-boost-ce-step = <100>;
+	apple,perf-boost-min-util = <75>;
+	apple,perf-tgt-utilization = <70>;
+};
+
 #include "hwmon-fan-dual.dtsi"

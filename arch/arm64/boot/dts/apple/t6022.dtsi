@@ -365,6 +365,11 @@
 	apple,avg-power-kp = <0.15>;
 	apple,fast-die0-integral-gain = <9.6>;
 	apple,fast-die0-proportional-gain = <24.0>;
+	apple,idleoff-standby-timer = <3000>;
+	apple,perf-base-pstate = <5>;
+	apple,perf-boost-ce-step = <100>;
+	apple,perf-boost-min-util = <75>;
+	apple,perf-tgt-utilization = <70>;
 	apple,ppm-ki = <11.0>;
 	apple,ppm-kp = <0.15>;
 };

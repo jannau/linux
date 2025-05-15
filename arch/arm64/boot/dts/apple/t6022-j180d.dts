@@ -737,12 +737,4 @@
 /delete-node/ &pcie0;
 /delete-node/ &pcie0_dart_0;
 
-&gpu {
-	apple,idleoff-standby-timer = <3000>;
-	apple,perf-base-pstate = <5>;
-	apple,perf-boost-ce-step = <100>;
-	apple,perf-boost-min-util = <75>;
-	apple,perf-tgt-utilization = <70>;
-};
-
 #include "spi1-nvram.dtsi"
