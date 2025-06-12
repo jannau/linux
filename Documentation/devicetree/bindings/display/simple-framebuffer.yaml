@@ -26,7 +26,8 @@ description: |+
   over control to a driver for the real hardware. The bindings for the
   hw nodes must specify which node is considered the primary node.
 
-  If a panel node is given, then the driver uses this to configure the
+  If a panel or panel-dimensions node is given, then the driver uses
+  this to configure the
   physical width and height of the display. If no panel node is given,
   then the driver uses the width and height properties of the simplefb
   node to estimate it.
@@ -125,6 +126,10 @@ properties:
   panel:
     $ref: /schemas/types.yaml#/definitions/phandle
     description: Display panel node
+
+  panel-dimensions:
+    $ref: /schemas/types.yaml#/definitions/phandle
+    description: Display panel node (without enforcing probe order)
 
   allwinner,pipeline:
     description: Pipeline used by the framebuffer on Allwinner SoCs
