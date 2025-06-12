@@ -31,90 +31,69 @@
 		#apple,bw-scratch-cells = <3>;
 	};
 
+	nub_spmi0: spmi@29e114000 {
+		compatible = "apple,t6020-spmi", "apple,spmi";
+		reg = <0x2 0x9e114000 0x0 0x100>;
+		#address-cells = <2>;
+		#size-cells = <0>;
+
+		pmic1: pmic@f {
+			compatible = "apple,maverick-pmic", "apple,spmi-nvmem";
+			reg = <0xb SPMI_USID>;
+
+			nvmem-layout {
+				compatible = "fixed-layout";
+				#address-cells = <1>;
+				#size-cells = <1>;
+
+				pm_setting: pm-setting@1405 {
+					reg = <0x1405 0x1>;
+				};
+
+				rtc_offset: rtc-offset@1411 {
+					reg = <0x1411 0x6>;
+				};
+
+				boot_stage: boot-stage@6001 {
+					reg = <0x6001 0x1>;
+				};
+
+				boot_error_count: boot-error-count@6002 {
+					reg = <0x6002 0x1>;
+					bits = <0 4>;
+				};
+
+				panic_count: panic-count@6002 {
+					reg = <0x6002 0x1>;
+					bits = <4 4>;
+				};
+
+				boot_error_stage: boot-error-stage@6003 {
+					reg = <0x6003 0x1>;
+				};
+
+				shutdown_flag: shutdown-flag@600f {
+					reg = <0x600f 0x1>;
+					bits = <3 1>;
+				};
+
+				fault_shadow: fault-shadow@867b {
+					reg = <0x867b 0x10>;
+				};
+
+				socd: socd@8b00 {
+					reg = <0x8b00 0x400>;
+				};
+			};
+		};
+	};
+
 	wdt: watchdog@29e2c4000 {
 		compatible = "apple,t6020-wdt", "apple,wdt";
 		reg = <0x2 0x9e2c4000 0x0 0x4000>;
 		clocks = <&clkref>;
 		interrupt-parent = <&aic>;
 		interrupts = <AIC_IRQ 0 719 IRQ_TYPE_LEVEL_HIGH>;
-	};
-
-	nub_spmi0: spmi@29e114000 {
-		compatible = "apple,t6020-spmi", "apple,spmi";
-		reg = <0x2 0x9e114000 0x0 0x100>;
-		#address-cells = <2>;
-		#size-cells = <0>;
-		interrupt-parent = <&aic>;
-		interrupts = <AIC_IRQ 0 256 IRQ_TYPE_LEVEL_HIGH>,
-			<AIC_IRQ 0 724 IRQ_TYPE_LEVEL_HIGH>;
-
-		pmu1: pmu@f {
-			compatible = "apple,maverick-pmu", "apple,spmi-pmu";
-			reg = <0xb SPMI_USID>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			rtc_nvmem@1400 {
-				compatible = "apple,spmi-pmu-nvmem";
-				reg = <0x1400 0x20>;
-				#address-cells = <1>;
-				#size-cells = <1>;
-
-				pm_setting: pm-setting@5 {
-					reg = <0x5 0x1>;
-				};
-
-				rtc_offset: rtc-offset@11 {
-					reg = <0x11 0x6>;
-				};
-			};
-
-			legacy_nvmem@6000 {
-				compatible = "apple,spmi-pmu-nvmem";
-				reg = <0x6000 0x20>;
-				#address-cells = <1>;
-				#size-cells = <1>;
-
-				boot_stage: boot-stage@1 {
-					reg = <0x1 0x1>;
-				};
-
-				boot_error_count: boot-error-count@2 {
-					reg = <0x2 0x1>;
-					bits = <0 4>;
-				};
-
-				panic_count: panic-count@2 {
-					reg = <0x2 0x1>;
-					bits = <4 4>;
-				};
-
-				boot_error_stage: boot-error-stage@3 {
-					reg = <0x3 0x1>;
-				};
-
-				shutdown_flag: shutdown-flag@f {
-					reg = <0xf 0x1>;
-					bits = <3 1>;
-				};
-			};
-
-			scrpad_nvmem@8000 {
-				compatible = "apple,spmi-pmu-nvmem";
-				reg = <0x8000 0x1000>;
-				#address-cells = <1>;
-				#size-cells = <1>;
-
-				fault_shadow: fault-shadow@67b {
-					reg = <0x67b 0x10>;
-				};
-
-				socd: socd@b00 {
-					reg = <0xb00 0x400>;
-				};
-			};
-
-		};
 	};
 
 	smc_mbox: mbox@2a2408000 {
