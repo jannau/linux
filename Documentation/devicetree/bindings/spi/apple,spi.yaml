@@ -19,6 +19,7 @@ properties:
           - apple,t8103-spi
           - apple,t8112-spi
           - apple,t6000-spi
+          - apple,t6020-spi
       - const: apple,spi
 
   reg:
