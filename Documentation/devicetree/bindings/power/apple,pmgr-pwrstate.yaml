@@ -39,6 +39,7 @@ properties:
           - apple,t8103-pmgr-pwrstate
           - apple,t8112-pmgr-pwrstate
           - apple,t6000-pmgr-pwrstate
+          - apple,t6020-pmgr-pwrstate
       - const: apple,pmgr-pwrstate
 
   reg:
