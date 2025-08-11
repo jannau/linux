@@ -22,6 +22,7 @@ properties:
     items:
       - enum:
           - apple,t6000-mca
+          - apple,t6020-mca
           - apple,t8103-mca
           - apple,t8112-mca
       - const: apple,mca
