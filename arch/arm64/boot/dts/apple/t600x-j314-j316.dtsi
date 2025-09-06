@@ -316,6 +316,16 @@
 	status = "disabled";
 };
 
+/*
+ * The ps_atcN_usb_aon power-domains are always-on to avoid resetting dwc3
+ * which reverts initialisation done by firmware.
+ * atc3 is used exclusively for the DP-to-HDMI converter so this is not
+ * necessary.
+ */
+&ps_atc3_usb_aon {
+	/delete-property/ apple,always-on;
+};
+
 &nco_clkref {
 	clock-frequency = <1068000000>;
 };
