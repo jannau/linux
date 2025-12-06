@@ -1355,8 +1355,8 @@ macro_rules! __init_internal {
         // - the field is not structurally pinned, since the line above must compile,
         // - the field has been initialized,
         // - the reference is only valid until the end of the initializer.
-        #[allow(unused_variables)]
-        let $field = unsafe { &mut (*$slot).$field };
+        // #[allow(unused_variables)]
+        // let $field = unsafe { &mut (*$slot).$field };
 
         // Create the drop guard:
         //
@@ -1397,7 +1397,7 @@ macro_rules! __init_internal {
         //   initializer,
         // - the field has been initialized,
         // - the reference is only valid until the end of the initializer.
-        let $field = unsafe { &mut (*$slot).$field };
+        // let $field = unsafe { &mut (*$slot).$field };
 
         // Create the drop guard:
         //
