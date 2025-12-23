@@ -255,9 +255,10 @@ static void dcp_rtk_crashed(void *cookie, const void *crashlog, size_t crashlog_
 	dcp->crashed = true;
 	dev_err(dcp->dev, "DCP has crashed\n");
 	if (dcp->connector) {
-		dcp->connector->connected = 0;
-		drm_edid_free(dcp->connector->drm_edid);
+		const struct drm_edid *edid = dcp->connector->drm_edid;
 		dcp->connector->drm_edid = NULL;
+		drm_edid_free(edid);
+		dcp->connector->connected = 0;
 		schedule_work(&dcp->connector->hotplug_wq);
 	}
 	complete(&dcp->start_done);
@@ -427,6 +428,9 @@ out_unlock:
 static void disconnected_hpd_event(struct apple_connector *con)
 {
 	if (con) {
+		const struct drm_edid *edid = con->drm_edid;
+		con->drm_edid = NULL;
+		drm_edid_free(edid);
 		con->connected = 0;
 		drm_kms_helper_connector_hotplug_event(&con->base);
 	}
