@@ -28,6 +28,7 @@
 #include <drm/drm_fbdev_dma.h>
 #include <drm/drm_fourcc.h>
 #include <drm/drm_fb_dma_helper.h>
+#include <drm/drm_framebuffer.h>
 #include <drm/drm_gem_dma_helper.h>
 #include <drm/drm_gem_framebuffer_helper.h>
 #include <drm/drm_simple_kms_helper.h>
@@ -40,6 +41,8 @@
 #include <drm/drm_fixed.h>
 
 #include "dcp.h"
+#include "iomfb_internal.h"
+#include "plane.h"
 
 #define DRIVER_NAME     "apple"
 #define DRIVER_DESC     "Apple display controller DRM driver"
@@ -144,10 +147,44 @@ static int apple_plane_atomic_check(struct drm_plane *plane,
 	return 0;
 }
 
-static void apple_plane_atomic_update(struct drm_plane *plane,
+static void apple_plane_atomic_update(struct drm_plane *base,
 				      struct drm_atomic_state *state)
 {
-	/* Handled in atomic_flush */
+	struct apple_plane *plane = to_apple_plane(base);
+	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state, base);
+	bool is_premultiplied = false;
+
+	if (!new_state)
+		return;
+
+	struct drm_framebuffer *fb = new_state->fb;
+	/*
+	 * DCP doesn't support XBGR8 / XRGB8 natively. Blending as
+	 * pre-multiplied alpha with a black background can be used as
+	 * workaround for the bottommost plane.
+	 */
+	if (fb->format->format == DRM_FORMAT_XRGB8888 ||
+	    fb->format->format == DRM_FORMAT_XBGR8888)
+		is_premultiplied = true;
+
+	plane->surf = (struct dcp_surface){
+		.is_premultiplied = is_premultiplied,
+		.format = drm_format_to_dcp(fb->format->format),
+		.xfer_func = DCP_XFER_FUNC_SDR,
+		.colorspace = DCP_COLORSPACE_NATIVE,
+		.stride = fb->pitches[0],
+		.width = fb->width,
+		.height = fb->height,
+		.buf_size = fb->height * fb->pitches[0],
+		// .surface_id = req->swap.surf_ids[l],
+
+		/* Only used for compressed or multiplanar surfaces */
+		.pix_size = 1,
+		.pel_w = 1,
+		.pel_h = 1,
+		.has_comp = 1,
+		.has_planes = 1,
+	};
 }
 
 static const struct drm_plane_helper_funcs apple_primary_plane_helper_funcs = {
@@ -161,16 +198,9 @@ static const struct drm_plane_helper_funcs apple_plane_helper_funcs = {
 	.atomic_update	= apple_plane_atomic_update,
 };
 
-static void apple_plane_cleanup(struct drm_plane *plane)
-{
-	drm_plane_cleanup(plane);
-	kfree(plane);
-}
-
 static const struct drm_plane_funcs apple_plane_funcs = {
 	.update_plane		= drm_atomic_helper_update_plane,
 	.disable_plane		= drm_atomic_helper_disable_plane,
-	.destroy		= apple_plane_cleanup,
 	.reset			= drm_atomic_helper_plane_reset,
 	.atomic_duplicate_state = drm_atomic_helper_plane_duplicate_state,
 	.atomic_destroy_state	= drm_atomic_helper_plane_destroy_state,
@@ -209,38 +239,35 @@ static struct drm_plane *apple_plane_init(struct drm_device *dev,
 					  unsigned long possible_crtcs,
 					  enum drm_plane_type type)
 {
-	int ret;
-	struct drm_plane *plane;
-
-	plane = kzalloc(sizeof(*plane), GFP_KERNEL);
+	struct apple_plane *plane;
 
 	switch (type) {
 	case DRM_PLANE_TYPE_PRIMARY:
-		ret = drm_universal_plane_init(dev, plane, possible_crtcs,
+		plane = drmm_universal_plane_alloc(dev, struct apple_plane, base, possible_crtcs,
 				       &apple_plane_funcs,
 				       dcp_primary_formats, ARRAY_SIZE(dcp_primary_formats),
 				       apple_format_modifiers, type, NULL);
 		break;
 	case DRM_PLANE_TYPE_OVERLAY:
 	case DRM_PLANE_TYPE_CURSOR:
-		ret = drm_universal_plane_init(dev, plane, possible_crtcs,
+		plane = drmm_universal_plane_alloc(dev, struct apple_plane, base, possible_crtcs,
 				       &apple_plane_funcs,
 				       dcp_overlay_formats, ARRAY_SIZE(dcp_overlay_formats),
 				       apple_format_modifiers, type, NULL);
 		break;
 	default:
-		return NULL;
+		return ERR_PTR(-EINVAL);
 	}
 
-	if (ret)
-		return ERR_PTR(ret);
+	if (IS_ERR(plane))
+		return ERR_PTR(PTR_ERR(plane));
 
 	if (type == DRM_PLANE_TYPE_PRIMARY)
-		drm_plane_helper_add(plane, &apple_primary_plane_helper_funcs);
+		drm_plane_helper_add(&plane->base, &apple_primary_plane_helper_funcs);
 	else
-		drm_plane_helper_add(plane, &apple_plane_helper_funcs);
+		drm_plane_helper_add(&plane->base, &apple_plane_helper_funcs);
 
-	return plane;
+	return &plane->base;
 }
 
 static enum drm_connector_status
