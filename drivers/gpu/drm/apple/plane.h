@@ -61,14 +61,18 @@ struct dcp_surface {
 	u64 has_compr_info;
 	u32 unk_num;
 	u32 unk_denom;
-	u8 padding[7];
 } __packed;
 
-struct apple_plane {
-	struct drm_plane base;
+
+struct apple_plane_state {
+	struct drm_plane_state base;
 	struct dcp_surface surf;
 };
 
-#define to_apple_plane(x) container_of(x, struct apple_plane, base)
+#define to_apple_plane_state(x) container_of(x, struct apple_plane_state, base)
+
+struct drm_plane *apple_plane_init(struct drm_device *dev,
+				   unsigned long possible_crtcs,
+				   enum drm_plane_type type);
 
 #endif /* __APPLE_PLANE_H__ */

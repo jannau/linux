@@ -1300,7 +1300,7 @@ void DCP_FW_NAME(iomfb_flush)(struct apple_dcp *dcp, struct drm_crtc *crtc, stru
 	}
 
 	for_each_oldnew_plane_in_state(state, plane, old_state, new_state, plane_idx) {
-		struct apple_plane *apple_plane = to_apple_plane(plane);
+		struct apple_plane_state *apple_state = to_apple_plane_state(new_state);
 		struct drm_framebuffer *fb = new_state->fb;
 		struct drm_gem_dma_object *obj;
 		struct drm_rect src_rect;
@@ -1368,7 +1368,7 @@ void DCP_FW_NAME(iomfb_flush)(struct apple_dcp *dcp, struct drm_crtc *crtc, stru
 		if (obj)
 			req->surf_iova[l] = obj->dma_addr + fb->offsets[0];
 
-		req->surf[l].base = apple_plane->surf;
+		req->surf[l].base = apple_state->surf;
 
 	}
 
