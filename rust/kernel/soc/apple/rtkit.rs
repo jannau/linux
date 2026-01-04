@@ -245,25 +245,25 @@ impl<T: Operations> RtKit<T> {
     }
 
     /// Boots (wakes up) the RTKit coprocessor.
-    pub fn wake(&mut self) -> Result {
+    pub fn wake(self: Pin<&mut Self>) -> Result {
         // SAFETY: `rtk` is valid per the type invariant.
         to_result(unsafe { bindings::apple_rtkit_wake(self.rtk) })
     }
 
     /// Waits for the RTKit coprocessor to finish booting.
-    pub fn boot(&mut self) -> Result {
+    pub fn boot(self: Pin<&mut Self>) -> Result {
         // SAFETY: `rtk` is valid per the type invariant.
         to_result(unsafe { bindings::apple_rtkit_boot(self.rtk) })
     }
 
     /// Starts a non-system endpoint.
-    pub fn start_endpoint(&mut self, endpoint: u8) -> Result {
+    pub fn start_endpoint(self: Pin<&mut Self>, endpoint: u8) -> Result {
         // SAFETY: `rtk` is valid per the type invariant.
         to_result(unsafe { bindings::apple_rtkit_start_ep(self.rtk, endpoint) })
     }
 
     /// Sends a message to a given endpoint.
-    pub fn send_message(&mut self, endpoint: u8, message: u64) -> Result {
+    pub fn send_message(self: Pin<&mut Self>, endpoint: u8, message: u64) -> Result {
         // SAFETY: `rtk` is valid per the type invariant.
         to_result(unsafe {
             bindings::apple_rtkit_send_message(self.rtk, endpoint, message, ptr::null_mut(), false)
