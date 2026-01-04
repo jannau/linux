@@ -5,13 +5,23 @@
 //! C header: [`include/linux/soc/apple/rtkit.h`](../../../../include/linux/gpio/driver.h)
 
 use crate::{
-    alloc::flags::*,
-    bindings, device,
-    error::{code::*, from_err_ptr, from_result, to_result, Result},
+    bindings,
+    device,
+    error::{
+        from_err_ptr,
+        from_result,
+        to_result, //
+    },
     iosys_map::IoSysMapRef,
-    prelude::KBox,
-    str::CStr,
-    types::{ForeignOwnable, ScopeGuard},
+    prelude::*,
+    str::{
+        CStr,
+        CStrExt, //
+    },
+    types::{
+        ForeignOwnable,
+        ScopeGuard, //
+    },
 };
 
 use core::marker::PhantomData;
