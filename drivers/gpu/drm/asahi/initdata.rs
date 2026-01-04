@@ -21,10 +21,6 @@ use crate::{
     hw,
     mmu, //
 };
-use kernel::error::{
-    Error,
-    Result, //
-};
 use kernel::macros::versions;
 use kernel::prelude::*;
 use kernel::try_init;
@@ -70,16 +66,16 @@ impl<'a> InitDataBuilder::ver<'a> {
 
     /// Create the HwDataB structure. This mostly contains GPU-related configuration.
     fn hwdata_b(&mut self) -> Result<GpuObject<HwDataB::ver>> {
-        self.alloc.private.new_init(pin_init::zeroed(), |_inner, _ptr| {
+        self.alloc.private.new_init(pin_init::zeroed::<HwDataB::ver>(), |_inner, _ptr| {
             init!(raw::HwDataB::ver {
-                ..Zeroable::zeroed()
+                ..Zeroable::init_zeroed()
             })
             .chain(|raw| {
                 // SAFETY: Bootloader is supposed to put a correctly formed HwDataB there
                 unsafe {
                     let ptr = raw as *mut raw::HwDataB::ver as *mut u8;
-                    let size = mem::size_of::<raw::HwDataB::ver>();
-                    slice::from_raw_parts_mut(ptr, size)
+                    let size = core::mem::size_of::<raw::HwDataB::ver>();
+                    core::slice::from_raw_parts_mut(ptr, size)
                         .copy_from_slice(&self.dyncfg.hw_data_b[..size]);
                 }
                 Ok(())
@@ -90,19 +86,19 @@ impl<'a> InitDataBuilder::ver<'a> {
     /// Create the Globals structure, which contains global firmware config including more power
     /// configuration data and globals used to exchange state between the firmware and driver.
     fn globals(&mut self) -> Result<GpuObject<Globals::ver>> {
-        self.alloc.private.new_init(pin_init::zeroed(), |_inner, _ptr| {
+        self.alloc.private.new_init(pin_init::zeroed::<Globals::ver>(), |_inner, _ptr| {
             init!(raw::Globals::ver {
-                ..Zeroable::zeroed()
+                ..Zeroable::init_zeroed()
             })
             .chain(|raw| {
                 // SAFETY: Bootloader is supposed to put a correctly formed Globals there
                 unsafe {
                     let ptr = raw as *mut raw::Globals::ver as *mut u8;
-                    let size = mem::size_of::<raw::Globals::ver>();
-                    slice::from_raw_parts_mut(ptr, size)
+                    let size = core::mem::size_of::<raw::Globals::ver>();
+                    core::slice::from_raw_parts_mut(ptr, size)
                         .copy_from_slice(&self.dyncfg.hw_globals[..size]);
                 }
-                raw.fault_control = *module_parameters::fault_control.get();
+                raw.fault_control = *module_parameters::fault_control.value();
                 // Paranoia
                 raw.pending_submissions = AtomicU32::new(0);
                 Ok(())

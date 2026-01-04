@@ -14,7 +14,11 @@
 use core::any::Any;
 use core::ops::Range;
 use core::slice;
-
+use core::sync::atomic::{
+    AtomicBool,
+    AtomicU64,
+    Ordering, //
+};
 
 use kernel::{
     c_str,
@@ -772,13 +776,13 @@ impl GpuManager::ver {
         Ok(x)
     }
 
-    fn load_hwdata_blob(dev: &AsahiDevice, name: &CStr, size_name: &CStr) -> Result<KVVec<u8>> {
+    fn load_hwdata_blob(dev: &AsahiDevice, name: &CStr) -> Result<KVVec<u8>> {
         let of_node = dev.as_ref().of_node().ok_or(EINVAL)?;
         let res = of_node.reserved_mem_region_to_resource_byname(name)?;
         // SAFETY: No dma here, just loading init data.
         let mem = unsafe { Mem::try_new(res, MemFlags::WB)? };
         // SAFETY: trusting the bootloader to fill it out correctly
-        let blob_sl = unsafe { slice::from_raw_parts(mem.ptr(), size) };
+        let blob_sl = unsafe { slice::from_raw_parts(mem.ptr(), mem.size()) };
 
         let mut blob = KVVec::new();
         blob.extend_from_slice(blob_sl, GFP_KERNEL)?;
@@ -886,9 +890,9 @@ impl GpuManager::ver {
                     .property_read_array_vec(c_str!("apple,firmware-version"), 3)?
                     .or(kernel::kvec![0; 3]?),
 
-                hw_data_a: Self::load_hwdata_blob(dev, c_str!("hw-cal-a"))?,
-                hw_data_b: Self::load_hwdata_blob(dev, c_str!("hw-cal-b"))?,
-                hw_globals: Self::load_hwdata_blob(dev, c_str!("globals"))?,
+                hw_data_a: Self::load_hwdata_blob(dev, c"hw-cal-a")?,
+                hw_data_b: Self::load_hwdata_blob(dev, c"hw-cal-b")?,
+                hw_globals: Self::load_hwdata_blob(dev, c"globals")?,
             },
             GFP_KERNEL,
         )?)
