@@ -3,7 +3,6 @@
 //! Common types for firmware structure definitions
 
 use crate::{alloc, object};
-use core::fmt;
 use core::ops::{Deref, DerefMut, Index, IndexMut};
 
 pub(crate) use crate::event::EventValue;
@@ -17,12 +16,15 @@ pub(crate) use crate::{
     float::F32, //
 };
 
-pub(crate) use core::fmt::Debug;
 pub(crate) use core::marker::PhantomData;
 pub(crate) use core::sync::atomic::{
     AtomicI32,
     AtomicU32,
     AtomicU64, //
+};
+pub(crate) use kernel::fmt::{
+    self,
+    Debug, //
 };
 pub(crate) use kernel::macros::versions;
 pub(crate) use kernel::prelude::Zeroable;
@@ -97,8 +99,8 @@ impl fmt::Debug for U32 {
 #[macro_export]
 macro_rules! no_debug {
     ($type:ty) => {
-        impl ::core::fmt::Debug for $type {
-            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        impl ::kernel::fmt::Debug for $type {
+            fn fmt(&self, f: &mut kernel::fmt::Formatter<'_>) -> kernel::fmt::Result {
                 write!(f, "...")
             }
         }

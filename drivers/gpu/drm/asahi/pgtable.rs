@@ -6,7 +6,6 @@
 //! format. This module manages the actual page tables by allocating raw memory pages from
 //! the kernel page allocator.
 
-use core::fmt::Debug;
 use core::mem::size_of;
 use core::ops::Range;
 use core::sync::atomic::{
@@ -16,6 +15,7 @@ use core::sync::atomic::{
 
 use kernel::{
     addr::PhysicalAddr,
+    fmt::Debug,
     error::Result,
     page::Page,
     prelude::*, //

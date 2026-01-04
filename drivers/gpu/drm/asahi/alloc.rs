@@ -15,6 +15,11 @@
 use kernel::{
     drm::mm,
     error::Result,
+    fmt::{
+        self,
+        Debug,
+        Formatter,
+    },
     prelude::*,
     str::CString, //
 };
@@ -36,11 +41,6 @@ use crate::object::{
 use crate::util::RangeExt;
 
 use core::cmp::Ordering;
-use core::fmt;
-use core::fmt::{
-    Debug,
-    Formatter, //
-};
 use core::marker::PhantomData;
 use core::mem;
 use core::ops::Range;

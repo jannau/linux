@@ -45,13 +45,15 @@
 
 use kernel::{
     error::code::*,
+    fmt::{
+        self,
+        Debug,
+        Formatter, //
+    },
     prelude::*,
     sync::Arc, //
 };
 
-use core::fmt;
-use core::fmt::Debug;
-use core::fmt::Formatter;
 use core::marker::PhantomData;
 use core::mem::MaybeUninit;
 use core::num::NonZeroU64;

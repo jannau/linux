@@ -62,7 +62,7 @@ pub(crate) trait RangeExt<T> {
 impl<T: PartialOrd<T> + Default + Copy + Sub<Output = T>> RangeExt<T> for core::ops::Range<T>
 where
     usize: core::convert::TryFrom<T>,
-    <usize as core::convert::TryFrom<T>>::Error: core::fmt::Debug,
+    <usize as core::convert::TryFrom<T>>::Error: kernel::fmt::Debug,
 {
     fn overlaps(&self, other: Self) -> bool {
         !(self.is_empty() || other.is_empty() || self.end <= other.start || other.end <= self.start)

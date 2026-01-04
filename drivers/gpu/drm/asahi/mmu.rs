@@ -10,7 +10,6 @@
 //!
 //! The actual page table management is in the `pt` module.
 
-use core::fmt::Debug;
 use core::mem::size_of;
 use core::num::NonZeroUsize;
 use core::ops::Range;
