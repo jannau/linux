@@ -61,7 +61,3 @@
 &i2c2 {
 	status = "okay";
 };
-
-&gpu {
-	apple,perf-base-pstate = <3>;
-};
