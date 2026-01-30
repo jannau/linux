@@ -112,3 +112,5 @@ void dcp_ack(struct apple_dcp *dcp, enum dcp_context_id context);
 /* The user may own drm_display_mode, so we need to search for our copy */
 struct dcp_display_mode *lookup_mode(struct apple_dcp *dcp,
 					    const struct drm_display_mode *mode);
+struct dcp_color_mode *lookup_color_mode(struct apple_dcp *dcp,
+					 struct dcp_display_mode *mode);

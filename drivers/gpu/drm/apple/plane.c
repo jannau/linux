@@ -5,6 +5,7 @@
 
 #include "plane.h"
 
+#include "dcp.h"
 #include "iomfb_internal.h"
 
 #include <drm/drm_atomic.h>
@@ -212,6 +213,8 @@ static void apple_plane_atomic_update(struct drm_plane *plane,
 	struct apple_plane_state *new_state;
 	struct drm_gem_dma_object *obj;
 	bool is_premultiplied = false;
+	enum dcp_colorspace colorspace;
+	enum dcp_xfer_func xfer_func;
 
 	if (!base)
 		return;
@@ -235,6 +238,34 @@ static void apple_plane_atomic_update(struct drm_plane *plane,
 	    fmt->format == DRM_FORMAT_XBGR2101010)
 		is_premultiplied = true;
 
+	colorspace = get_colorspace(fmt->is_yuv, base->color_encoding);
+	xfer_func = get_xfer_func(fmt->is_yuv, base->color_encoding);
+	if (base->crtc) {
+		struct apple_crtc *crtc = to_apple_crtc(base->crtc);
+		if (crtc->colorspace != DRM_MODE_COLORIMETRY_DEFAULT) {
+			switch (crtc->colorspace) {
+			case DRM_MODE_COLORIMETRY_BT2020_RGB:
+			case DRM_MODE_COLORIMETRY_BT2020_YCC:
+				colorspace = DCP_COLORSPACE_BG_BT2020;
+				break;
+			case DRM_MODE_COLORIMETRY_DCI_P3_RGB_D65:
+				colorspace = DCP_COLORSPACE_NATIVE;
+				break;
+			default:
+				colorspace = DCP_COLORSPACE_NATIVE;
+				break;
+			}
+			if (crtc->eotf == 2)
+				// xfer_func = DCP_XFER_FUNC_BT1886;
+				xfer_func = DCP_XFER_FUNC_HDR;
+			else
+				xfer_func = DCP_XFER_FUNC_HDR;
+		} else {
+			colorspace = DCP_COLORSPACE_NATIVE;
+			xfer_func = DCP_XFER_FUNC_SDR;
+		}
+	}
+
 	new_state->src_rect = drm_to_dcp_rect_fp(&base->src);
 	new_state->dst_rect = drm_to_dcp_rect(&base->dst);
 
@@ -243,8 +274,8 @@ static void apple_plane_atomic_update(struct drm_plane *plane,
 		.plane_cnt = fb->format->num_planes,
 		.plane_cnt2 = fb->format->num_planes,
 		.format = drm_format_to_dcp(fmt->format, base->color_range),
-		.xfer_func = get_xfer_func(fmt->is_yuv, base->color_encoding),
-		.colorspace = get_colorspace(fmt->is_yuv, base->color_encoding),
+		.xfer_func = xfer_func,
+		.colorspace = colorspace,
 		.stride = fb->pitches[0],
 		.width = fb->width,
 		.height = fb->height,

@@ -17,6 +17,10 @@ struct apple_crtc {
 	struct drm_pending_vblank_event *event;
 	bool vsync_disabled;
 
+	/* colorspace data */
+	u8 eotf;
+	enum drm_colorspace colorspace;
+
 	/* Reference to the DCP device owning this CRTC */
 	struct platform_device *dcp;
 };

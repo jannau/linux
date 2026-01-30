@@ -397,6 +397,45 @@ struct dcp_display_mode *lookup_mode(struct apple_dcp *dcp,
 	return NULL;
 }
 
+struct dcp_color_mode *lookup_color_mode(struct apple_dcp *dcp,
+					 struct dcp_display_mode *mode)
+{
+	dev_info(dcp->dev, "colorspace: %d eotf:%d hdr modes: %d, %d, %d, %d, %d, %d\n",
+		 dcp->crtc->colorspace, dcp->crtc->eotf,
+		 mode->bt2020_rgb_hdr_valid   ? mode->hdr[0][0].id : -1,
+		 mode->bt2020_ycbcr_hdr_valid ? mode->hdr[1][0].id : -1,
+		 mode->bt2020_rgb_pq_valid    ? mode->hdr[0][1].id : -1,
+		 mode->bt2020_ycbcr_pq_valid  ? mode->hdr[1][1].id : -1,
+		 mode->bt2020_rgb_hlg_valid   ? mode->hdr[0][2].id : -1,
+		 mode->bt2020_ycbcr_hlg_valid ? mode->hdr[1][2].id : -1);
+
+	switch (dcp->crtc->colorspace) {
+	case DRM_MODE_COLORIMETRY_BT2020_RGB:
+		if (mode->bt2020_rgb_pq_valid)
+			return &mode->hdr[0][1];
+		else if (mode->bt2020_ycbcr_pq_valid)
+			return &mode->hdr[1][1];
+		break;
+	case DRM_MODE_COLORIMETRY_BT2020_YCC:
+		if (mode->bt2020_ycbcr_pq_valid)
+			return &mode->hdr[1][1];
+		break;
+	default:
+		break;
+	}
+
+	if (mode->color_mode_id == mode->sdr_rgb.id)
+		return &mode->sdr_rgb;
+	else if (mode->color_mode_id == mode->sdr_444.id)
+		return &mode->sdr_444;
+	else if (mode->color_mode_id == mode->sdr.id)
+		return &mode->sdr;
+	else if (mode->color_mode_id == mode->best.id)
+		return &mode->best;
+
+	return NULL;
+}
+
 enum drm_mode_status dcp_mode_valid(struct drm_connector *connector,
 				    const struct drm_display_mode *mode)
 {

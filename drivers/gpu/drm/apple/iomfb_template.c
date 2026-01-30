@@ -1198,28 +1198,26 @@ int DCP_FW_NAME(iomfb_modeset)(struct apple_dcp *dcp,
 			DRM_MODE_ARG(&crtc_state->mode));
 		return -EIO;
 	}
+	cmode = lookup_color_mode(dcp, mode);
+	if (!cmode) {
+		dev_err(dcp->dev, "no color mode match for " DRM_MODE_FMT "\n",
+			DRM_MODE_ARG(&crtc_state->mode));
+		return -EIO;
+	}
 
 	dev_info(dcp->dev,
 		 "set_digital_out_mode(color:%d timing:%d) " DRM_MODE_FMT "\n",
-		 mode->color_mode_id, mode->timing_mode_id,
+		 cmode->id, mode->timing_mode_id,
 		 DRM_MODE_ARG(&crtc_state->mode));
-	if (mode->color_mode_id == mode->sdr_rgb.id)
-		cmode = &mode->sdr_rgb;
-	else if (mode->color_mode_id == mode->sdr_444.id)
-		cmode = &mode->sdr_444;
-	else if (mode->color_mode_id == mode->sdr.id)
-		cmode = &mode->sdr;
-	else if (mode->color_mode_id == mode->best.id)
-		cmode = &mode->best;
-	if (cmode)
-		dev_info(dcp->dev,
+
+	dev_info(dcp->dev,
 			"set_digital_out_mode() color mode depth:%hhu format:%u "
 			"colorimetry:%u eotf:%u range:%u vrr:%u\n", cmode->depth,
 			cmode->format, cmode->colorimetry, cmode->eotf,
 			cmode->range, mode->vrr);
 
 	dcp->mode = (struct dcp_set_digital_out_mode_req){
-		.color_mode_id = mode->color_mode_id,
+		.color_mode_id = cmode->id,
 		.timing_mode_id = mode->timing_mode_id
 	};
 
