@@ -334,6 +334,15 @@ static int apple_probe_per_dcp(struct device *dev,
 	if (ret)
 		return ret;
 
+	u32 colorspaces = BIT(DRM_MODE_COLORIMETRY_DCI_P3_RGB_D65) |
+			  BIT(DRM_MODE_COLORIMETRY_BT2020_RGB) |
+			  BIT(DRM_MODE_COLORIMETRY_BT2020_YCC);
+
+	if (!drm_mode_create_dp_colorspace_property(&connector->base, colorspaces))
+		drm_connector_attach_colorspace_property(&connector->base);
+
+	drm_connector_attach_hdr_output_metadata_property(&connector->base);
+
 	connector->base.polled = DRM_CONNECTOR_POLL_HPD;
 	connector->connected = false;
 	connector->dcp = dcp;

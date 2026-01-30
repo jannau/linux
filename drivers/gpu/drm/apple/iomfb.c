@@ -452,6 +452,7 @@ int dcp_crtc_atomic_modeset(struct drm_crtc *crtc,
 	struct apple_crtc *apple_crtc = to_apple_crtc(crtc);
 	struct apple_dcp *dcp = platform_get_drvdata(apple_crtc->dcp);
 	struct drm_crtc_state *crtc_state;
+	struct drm_connector_state *conn_state;
 	int ret = -EIO;
 	bool modeset;
 
@@ -467,6 +468,22 @@ int dcp_crtc_atomic_modeset(struct drm_crtc *crtc,
 	/* ignore no mode, poweroff is handled elsewhere */
 	if (crtc_state->mode.hdisplay == 0 && crtc_state->mode.vdisplay == 0)
 		return 0;
+
+	conn_state = drm_atomic_get_new_connector_state(state, &dcp->connector->base);
+	if (conn_state) {
+		dev_info(dcp->dev, "old: colorspace: %u, eotf: %u\n",
+			 apple_crtc->colorspace, apple_crtc->eotf);
+		if (conn_state->hdr_output_metadata) {
+			struct hdr_output_metadata *hdr_metadata;
+			hdr_metadata = conn_state->hdr_output_metadata->data;
+			apple_crtc->eotf = hdr_metadata->hdmi_metadata_type1.eotf;
+		} else {
+			apple_crtc->eotf = 0;
+		}
+		apple_crtc->colorspace = conn_state->colorspace;
+		dev_info(dcp->dev, "new: colorspace: %u, eotf: %u\n",
+			 apple_crtc->colorspace, apple_crtc->eotf);
+	}
 
 	switch (dcp->fw_compat) {
 	case DCP_FIRMWARE_V_12_3:
