@@ -29,6 +29,9 @@ struct apple_encoder {
 
 #define to_apple_encoder(x) container_of(x, struct apple_encoder, base)
 
+int dcp_connector_atomic_check(struct drm_connector *conn,
+			       struct drm_atomic_state *state);
+
 void dcp_poweroff(struct platform_device *pdev);
 void dcp_poweron(struct platform_device *pdev);
 int dcp_set_crc(struct drm_crtc *crtc, bool enabled);

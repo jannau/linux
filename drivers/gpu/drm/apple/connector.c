@@ -14,7 +14,58 @@
 
 #include <drm/drm_managed.h>
 
+#include "dcp.h"
 #include "dcp-internal.h"
+
+int dcp_connector_atomic_check(struct drm_connector *conn,
+			       struct drm_atomic_state *state)
+{
+	struct drm_connector_state *new_conn_state =
+                drm_atomic_get_new_connector_state(state, conn);
+        struct drm_connector_state *old_conn_state =
+                drm_atomic_get_old_connector_state(state, conn);
+        struct drm_crtc *crtc = new_conn_state->crtc;
+        struct drm_crtc_state *new_crtc_state;
+
+
+        if (WARN_ON(unlikely(!old_conn_state || !new_conn_state)))
+                return -EINVAL;
+
+
+        if (!crtc)
+                return 0;
+        if (new_conn_state->colorspace != old_conn_state->colorspace) {
+                new_crtc_state = drm_atomic_get_crtc_state(state, crtc);
+                if (IS_ERR(new_crtc_state))
+                        return PTR_ERR(new_crtc_state);
+
+                new_crtc_state->mode_changed = true;
+        }
+
+        if (!drm_connector_atomic_hdr_metadata_equal(old_conn_state, new_conn_state)) {
+                new_crtc_state = drm_atomic_get_crtc_state(state, crtc);
+                if (IS_ERR(new_crtc_state))
+                        return PTR_ERR(new_crtc_state);
+		bool mode_changed = false;
+
+
+		if (old_conn_state->hdr_output_metadata &&
+		    new_conn_state->hdr_output_metadata) {
+			struct hdr_output_metadata *old_hdr_metadata, *new_hdr_metadata;
+			old_hdr_metadata = old_conn_state->hdr_output_metadata->data;
+			new_hdr_metadata = new_conn_state->hdr_output_metadata->data;
+
+			if (new_hdr_metadata->metadata_type != 1)
+				return -EINVAL;
+			mode_changed = old_hdr_metadata->hdmi_metadata_type1.eotf != new_hdr_metadata->hdmi_metadata_type1.eotf;
+		} else {
+			mode_changed = true;
+		}
+                new_crtc_state->mode_changed |= mode_changed;
+        }
+
+        return 0;
+}
 
 enum dcp_chunk_type {
 	DCP_CHUNK_COLOR_ELEMENTS,
