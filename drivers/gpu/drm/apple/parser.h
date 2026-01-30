@@ -90,8 +90,15 @@ struct dcp_display_mode {
 	struct dcp_color_mode sdr_rgb;
 	struct dcp_color_mode sdr_444;
 	struct dcp_color_mode sdr;
+	struct dcp_color_mode hdr[2][3]; // BT.2020 RGB / YCbCr, HDR gamma / PQ / HLG
 	struct dcp_color_mode best;
 	bool vrr;
+	bool bt2020_rgb_hdr_valid;
+	bool bt2020_rgb_pq_valid;
+	bool bt2020_rgb_hlg_valid;
+	bool bt2020_ycbcr_hdr_valid;
+	bool bt2020_ycbcr_pq_valid;
+	bool bt2020_ycbcr_hlg_valid;
 };
 
 struct dimension {

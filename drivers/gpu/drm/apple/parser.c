@@ -410,6 +410,36 @@ static int parse_color_modes(struct dcp_parse_ctx *handle,
 				cmode.depth <= 10)
 				fill_color_mode(&out->sdr_444, &cmode);
 			fill_color_mode(&out->sdr, &cmode);
+		} else if (cmode.eotf == DCP_EOTF_HDR_GAMMA) {
+			if (cmode.pixel_encoding == DCP_COLOR_FORMAT_RGB &&
+				cmode.depth <= 12) {
+				fill_color_mode(&out->hdr[0][0], &cmode);
+				out->bt2020_rgb_hdr_valid = true;
+			} else if (cmode.pixel_encoding == DCP_COLOR_FORMAT_YCBCR444 &&
+				cmode.depth <= 12) {
+				fill_color_mode(&out->hdr[1][0], &cmode);
+				out->bt2020_ycbcr_hdr_valid = true;
+			}
+		} else if (cmode.eotf == DCP_EOTF_ST_2084) {
+			if (cmode.pixel_encoding == DCP_COLOR_FORMAT_RGB &&
+				cmode.depth <= 12) {
+				fill_color_mode(&out->hdr[0][1], &cmode);
+				out->bt2020_rgb_pq_valid = true;
+			} else if (cmode.pixel_encoding == DCP_COLOR_FORMAT_YCBCR444 &&
+				cmode.depth <= 12) {
+				fill_color_mode(&out->hdr[1][1], &cmode);
+				out->bt2020_ycbcr_pq_valid = true;
+			}
+		} else if (cmode.eotf == DCP_EOTF_BT_2100) {
+			if (cmode.pixel_encoding == DCP_COLOR_FORMAT_RGB &&
+				cmode.depth <= 12) {
+				fill_color_mode(&out->hdr[0][2], &cmode);
+				out->bt2020_rgb_hlg_valid = true;
+			} else if (cmode.pixel_encoding == DCP_COLOR_FORMAT_YCBCR444 &&
+				cmode.depth <= 12) {
+				fill_color_mode(&out->hdr[1][2], &cmode);
+				out->bt2020_ycbcr_hlg_valid = true;
+			}
 		}
 		fill_color_mode(&out->best, &cmode);
 	}
