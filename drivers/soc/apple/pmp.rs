@@ -432,5 +432,6 @@ impl platform::Driver for PmpDriver {
 module_platform_driver! {
     type: PmpDriver,
     name: "apple_pmp",
+    description: "Apple Power Management Processor",
     license: "Dual MIT/GPL",
 }
