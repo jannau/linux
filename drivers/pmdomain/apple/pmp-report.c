@@ -233,3 +233,4 @@ module_init(apple_pmp_report_init);
 module_exit(apple_pmp_report_exit);
 
 MODULE_DESCRIPTION("PMP power state reporting driver for Apple SoCs");
+MODULE_LICENSE("Dual MIT/GPL");
