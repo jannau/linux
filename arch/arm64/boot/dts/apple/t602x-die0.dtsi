@@ -220,9 +220,10 @@
 		mbox-names = "mbox";
 		iommus = <&pmp_dart 0>;
 		power-domains = <&ps_pmp>;
+		status = "disabled";
+
 		tunables {
 		};
-		status = "disabled";
 	};
 
 	pmp_mbox: mbox@28ec08000 {

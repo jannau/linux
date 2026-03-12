@@ -1194,9 +1194,10 @@
 			mbox-names = "mbox";
 			iommus = <&pmp_dart 0>;
 			power-domains = <&ps_pmp>;
+			status = "disabled";
+
 			tunables {
 			};
-			status = "disabled";
 		};
 
 		pmgr: power-management@23b700000 {
