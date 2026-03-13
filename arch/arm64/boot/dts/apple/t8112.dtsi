@@ -22,7 +22,7 @@
 
 	aliases {
 		gpu = &gpu;
-		pmp = &pmp;
+		// pmp = &pmp;
 	};
 
 	cpus {
