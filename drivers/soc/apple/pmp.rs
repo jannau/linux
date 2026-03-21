@@ -37,7 +37,7 @@ use kernel::{
     }, //
 };
 
-const PMP_MMIO_SIZE: usize = 0x100000;
+const PMP_MMIO_SIZE: usize = 0x80000;
 const ASC_MMIO_SIZE: usize = 0x4000;
 const BOOTARGS_OFFSET: usize = 0x22c;
 const BOOTARGS_SIZE: usize = 0x230;
