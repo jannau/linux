@@ -20,6 +20,7 @@ use kernel::{
     dma::CoherentAllocation,
     io::mem::IoMem,
     iosys_map::IoSysMapRef,
+    kvec,
     module_platform_driver,
     new_mutex,
     of,
@@ -150,10 +151,7 @@ impl PmpData {
     fn patch_bootargs(&self, patches: &[(u32, u32)]) -> Result<()> {
         let offset = self.pmp_read32(BOOTARGS_OFFSET) as usize;
         let size = self.pmp_read32(BOOTARGS_SIZE) as usize;
-        let mut arg_bytes = KVec::with_capacity(size, GFP_KERNEL)?;
-        for _ in 0..size {
-            arg_bytes.push(0, GFP_KERNEL).unwrap();
-        }
+        let mut arg_bytes = kvec![0u8; size]?;
         {
             let pmp_mmio = self.pmp_mmio.try_access().ok_or(ENXIO)?;
             pmp_mmio.try_memcpy_fromio(&mut arg_bytes, offset)?;
