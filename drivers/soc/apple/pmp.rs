@@ -408,17 +408,17 @@ impl platform::Driver for PmpDriver {
         let dvid = node
             .property_read(c"apple,dram-vendor-id")
             .required_by(&dev)?;
-        let dcap = node
-            .property_read(c"apple,dram-capacity")
-            .required_by(&dev)?;
-        let bdid = node
-            .property_read(c"apple,board-id")
-            .required_by(&dev)?;
-        data.patch_bootargs(&[
-            (from_fourcc(b"BDID"), bdid),
-            (from_fourcc(b"DCAP"), dcap),
-            (from_fourcc(b"DVID"), dvid),
-        ])?;
+        let bdid = node.property_read(c"apple,board-id").required_by(&dev)?;
+        let dcap = node.property_read(c"apple,dram-capacity").optional();
+        let patches = match dcap {
+            Some(dcap) => [
+                (from_fourcc(b"BDID"), bdid),
+                (from_fourcc(b"DCAP"), dcap),
+                (from_fourcc(b"DVID"), dvid),
+            ],
+            None => [(from_fourcc(b"BDID"), bdid), (from_fourcc(b"DVID"), dvid)],
+        };
+        data.patch_bootargs(&patches)?;
         let rtkit = rtkit::RtKit::<PmpData>::new(&dev, None, 0, data.clone())?;
         *data.rtkit.lock() = Some(rtkit);
         data.start_cpu()?;
