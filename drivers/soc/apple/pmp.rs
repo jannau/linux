@@ -27,6 +27,7 @@ use kernel::{
     platform,
     prelude::*,
     soc::apple::rtkit,
+    str::CString,
     sync::{
         Arc,
         Mutex, //
@@ -294,8 +295,8 @@ impl PmpData {
                 .unwrap();
             name_vec.push(0, GFP_KERNEL).unwrap();
             let name_str = CStr::from_bytes_until_nul(&name_vec).unwrap();
+            let name_str = CString::try_from_fmt(fmt!("apple,tunable-{name_str}"))?;
             let node = self.dev.fwnode().ok_or(EIO)?;
-            let tunables = node.get_child_by_name(c"tunables").ok_or(EIO)?;
             if state.value_buf.is_none() {
                 dev_err!(self.dev, "Value buf not set");
                 return Err(EIO);
@@ -307,10 +308,10 @@ impl PmpData {
                 dev_err!(self.dev, "Unable to find value buffer");
                 return Err(EIO);
             };
-            if tunables.property_present(name_str) {
-                let len = tunables.property_count_elem::<u8>(name_str)?;
-                let data = tunables
-                    .property_read_array_vec::<u8>(name_str, len)?
+            if node.property_present(&name_str) {
+                let len = node.property_count_elem::<u8>(&name_str)?;
+                let data = node
+                    .property_read_array_vec::<u8>(&name_str, len)?
                     .required_by(&self.dev)?;
                 unsafe {
                     slice::from_raw_parts_mut(val_buf.start_ptr_mut(), len).copy_from_slice(&data);
