@@ -546,6 +546,7 @@ static u8 dcpep_cb_prop_chunk(struct apple_dcp *dcp,
 static bool dcpep_process_chunks(struct apple_dcp *dcp,
 				 struct dcp_set_dcpav_prop_end_req *req)
 {
+	struct apple_connector *connector = dcp->connector;
 	struct dcp_parse_ctx ctx;
 	int ret;
 
@@ -565,7 +566,8 @@ static bool dcpep_process_chunks(struct apple_dcp *dcp,
 	}
 
 	if (!strcmp(req->key, "TimingElements")) {
-		dcp->modes = enumerate_modes(&ctx, &dcp->nr_modes,
+		bool vrr_capable = false;
+		dcp->modes = enumerate_modes(&ctx, &dcp->nr_modes, &vrr_capable,
 					     dcp->width_mm, dcp->height_mm,
 					     dcp->notch_height);
 
@@ -577,6 +579,9 @@ static bool dcpep_process_chunks(struct apple_dcp *dcp,
 		}
 		if (dcp->nr_modes == 0)
 			dev_warn(dcp->dev, "TimingElements without valid modes!\n");
+		if (connector)
+			drm_connector_set_vrr_capable_property(&connector->base,
+							       vrr_capable);
 	} else if (!strcmp(req->key, "DisplayAttributes")) {
 		ret = parse_display_attributes(&ctx, &dcp->width_mm,
 					&dcp->height_mm);
@@ -1190,6 +1195,31 @@ static void complete_set_digital_out_mode(struct apple_dcp *dcp, void *data,
 	}
 }
 
+static void dcp_on_digital_out_mode(struct apple_dcp *dcp, void *out, void *cookie)
+{
+	dcp_set_digital_out_mode(dcp, false, &dcp->mode,
+				 complete_set_digital_out_mode, cookie);
+}
+
+static void iomfb_do_modeset(struct apple_dcp *dcp, bool is_vrr, u32 rate, void *cookie)
+{
+	if (is_vrr) {
+		struct dcp_set_parameter_dcp param = {
+			.param = IOMFBPARAM_ADAPTIVE_SYNC,
+			.value = {
+				rate,              /* minRR */
+				0,                 /* mediaTargetRate */
+				0,                 /* Fractional Rate (?) */
+			},
+			.count = (DCP_FW_VER >= DCP_FW_VERSION(13, 2, 0)) ? 3 : 1,
+		};
+
+		dcp_set_parameter_dcp(dcp, false, &param, dcp_on_digital_out_mode, cookie);
+	} else {
+		dcp_on_digital_out_mode(dcp, NULL, cookie);
+	}
+}
+
 int DCP_FW_NAME(iomfb_modeset)(struct apple_dcp *dcp,
 			       struct drm_crtc_state *crtc_state)
 {
@@ -1229,8 +1259,8 @@ int DCP_FW_NAME(iomfb_modeset)(struct apple_dcp *dcp,
 		.timing_mode_id = mode->timing_mode_id
 	};
 
-	/* Keep track of suspected vrr modes */
-	dcp->use_timestamps = mode->vrr;
+	/* Use DCP swap timestamps on MacBook Pros with VRR */
+	dcp->use_timestamps = mode->vrr && dcp->main_display;
 
 	cookie = kzalloc(sizeof(*cookie), GFP_KERNEL);
 	if (!cookie) {
@@ -1244,9 +1274,7 @@ int DCP_FW_NAME(iomfb_modeset)(struct apple_dcp *dcp,
 
 	dcp->during_modeset = true;
 
-	dcp_set_digital_out_mode(dcp, false, &dcp->mode,
-				 complete_set_digital_out_mode, cookie);
-
+	iomfb_do_modeset(dcp, mode->vrr, crtc_state->vrr_enabled ? mode->min_vrr : 0, cookie);
 	/*
 	 * The DCP firmware has an internal timeout of ~8 seconds for
 	 * modesets. Add an extra 500ms to safe side that the modeset
@@ -1273,8 +1301,18 @@ int DCP_FW_NAME(iomfb_modeset)(struct apple_dcp *dcp,
 			jiffies_to_msecs(ret));
 	}
 	dcp->valid_mode = true;
+	dcp->vrr_enabled = crtc_state->vrr_enabled;
 
 	return 0;
+}
+
+/*
+ * DCP timestamps are expressed in system timer ticks. Approximate
+ * this by converting from ktime nanoseconds to 24 MHz ticks.
+ */
+static u64 ns_to_mach(u64 ns)
+{
+	return ns * 3 / 125;
 }
 
 void DCP_FW_NAME(iomfb_flush)(struct apple_dcp *dcp, struct drm_crtc *crtc, struct drm_atomic_state *state)
@@ -1391,14 +1429,16 @@ void DCP_FW_NAME(iomfb_flush)(struct apple_dcp *dcp, struct drm_crtc *crtc, stru
 		req->clear = 1;
 	}
 
-	if (has_surface && dcp->use_timestamps) {
+	if (has_surface && (dcp->use_timestamps || dcp->vrr_enabled)) {
 		/*
-		 * Fake timstamps to get 120hz refresh rate. It looks
-		 * like the actual value does not matter, as long  as it is non zero.
+		 * TODO: ascertain with certainty what these timestamps
+		 * are. They are something to do with presentation timing,
+		 * but that is all we know for sure. These values seem to
+		 * work well with VRR.
 		 */
-		req->swap.ts1 = 120;
-		req->swap.ts2 = 120;
-		req->swap.ts3 = 120;
+		req->swap.unk_pres_ts1 = ns_to_mach(ktime_get_ns());
+		req->swap.unk_pres_ts2 = ns_to_mach(ktime_to_ns(dcp->swap_start));
+		req->swap.unk_pres_ts3 = req->swap.unk_pres_ts1;
 	}
 
 	/* These fields should be set together */
