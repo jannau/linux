@@ -58,6 +58,10 @@ static bool unstable_edid = true;
 module_param(unstable_edid, bool, 0644);
 MODULE_PARM_DESC(unstable_edid, "Enable unstable EDID retrival support");
 
+bool force_vrr;
+module_param(force_vrr, bool, 0644);
+MODULE_PARM_DESC(force_vrr, "Always enable Adaptive Sync/ProMotion on supported displays");
+
 /* copied and simplified from drm_vblank.c */
 static void send_vblank_event(struct drm_device *dev,
 		struct drm_pending_vblank_event *e,
@@ -369,7 +373,7 @@ int dcp_crtc_atomic_check(struct drm_crtc *crtc, struct drm_atomic_state *state)
 	 * HDMI specification. AMD and Intel hardware require a modeset for HDMI
 	 * outputs as well.
 	 */
-	if (dcp->vrr_enabled != crtc_state->vrr_enabled) {
+	if (!force_vrr && (dcp->vrr_enabled != crtc_state->vrr_enabled)) {
 		crtc_state->mode_changed = true;
 	}
 

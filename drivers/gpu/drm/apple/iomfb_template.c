@@ -34,6 +34,8 @@
 /* Register defines used in bandwidth setup structure */
 #define REG_DOORBELL_BIT(idx) (2 + (idx))
 
+extern bool force_vrr;
+
 struct dcp_wait_cookie {
 	struct kref refcount;
 	struct completion done;
@@ -1203,7 +1205,7 @@ static void dcp_on_digital_out_mode(struct apple_dcp *dcp, void *out, void *cook
 
 static void iomfb_do_modeset(struct apple_dcp *dcp, bool is_vrr, u32 rate, void *cookie)
 {
-	if (is_vrr) {
+	if (is_vrr || force_vrr) {
 		struct dcp_set_parameter_dcp param = {
 			.param = IOMFBPARAM_ADAPTIVE_SYNC,
 			.value = {
@@ -1274,7 +1276,7 @@ int DCP_FW_NAME(iomfb_modeset)(struct apple_dcp *dcp,
 
 	dcp->during_modeset = true;
 
-	iomfb_do_modeset(dcp, mode->vrr, crtc_state->vrr_enabled ? mode->min_vrr : 0, cookie);
+	iomfb_do_modeset(dcp, mode->vrr, (force_vrr || crtc_state->vrr_enabled) ? mode->min_vrr : 0, cookie);
 	/*
 	 * The DCP firmware has an internal timeout of ~8 seconds for
 	 * modesets. Add an extra 500ms to safe side that the modeset
@@ -1301,7 +1303,7 @@ int DCP_FW_NAME(iomfb_modeset)(struct apple_dcp *dcp,
 			jiffies_to_msecs(ret));
 	}
 	dcp->valid_mode = true;
-	dcp->vrr_enabled = crtc_state->vrr_enabled;
+	dcp->vrr_enabled = mode->vrr && force_vrr;
 
 	return 0;
 }
