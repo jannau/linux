@@ -101,6 +101,27 @@
 	};
 };
 
+&aop_mbox {
+	status = "okay";
+};
+
+&aop_dart {
+	status = "okay";
+};
+
+&aop_admac {
+	status = "okay";
+};
+
+&aop {
+	status = "okay";
+};
+
+&aop_audio {
+	apple,chassis-name = "J504";
+	apple,machine-kind = "MacBook Pro";
+};
+
 / {
 	speaker_sdz: fixed-regulator-sn012776-sdz {
 		compatible = "regulator-fixed";
