@@ -66,6 +66,11 @@
 	interrupts-extended = <&pinctrl_ap 100 IRQ_TYPE_LEVEL_LOW>;
 };
 
+&aop_audio {
+	apple,chassis-name = "J514";
+	apple,machine-kind = "MacBook Pro";
+};
+
 &sound {
 	compatible = "apple,j514-macaudio", "apple,j314-macaudio", "apple,macaudio";
 	model = "MacBook Pro J514";
