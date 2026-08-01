@@ -24,7 +24,6 @@ properties:
   compatible:
     oneOf:
       - items:
-          - const: apple,t8122-admac
           - const: apple,t6020-admac
           - const: apple,t8103-admac
       - items:
@@ -39,6 +38,7 @@ properties:
               - apple,t6030-admac
               - apple,t6031-admac
           - const: apple,t8122-admac
+      - const: apple,t8122-admac
 
   reg:
     maxItems: 1
