@@ -19,6 +19,11 @@
 		usb4-1-nhi = &usb4_1_nhi;
 		serial0 = &serial0;
 		serial2 = &serial2;
+
+		usb4_0_rc = &usb4_0_acio;
+		usb4_0_nhi = &usb4_0_nhi;
+		usb4_1_rc = &usb4_1_acio;
+		usb4_1_nhi = &usb4_1_nhi;
 	};
 
 	chosen {
