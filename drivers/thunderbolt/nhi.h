@@ -151,6 +151,7 @@ struct tb_nhi_ops {
 /* Host interface quirks */
 #define QUIRK_AUTO_CLEAR_INT	BIT(0)
 #define QUIRK_E2E		BIT(1)
+#define QUIRK_NO_DMA_PORT	BIT(2)
 
 /*
  * Minimal number of vectors when we use MSI-X. Two for control channel
