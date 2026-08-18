@@ -25,4 +25,8 @@ properties:
     description: Possible handler of SuperSpeed signals retiming
     type: boolean
 
+  thunderbolt-switch:
+    description: Possible handler of USB4/Thunderbolt mode switching
+    type: boolean
+
 additionalProperties: true
