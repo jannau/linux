@@ -3,6 +3,10 @@
  * Apple RTKit IPC library
  * Copyright (C) The Asahi Linux Contributors
  */
+
+#define DEBUG
+
+
 #include "rtkit-internal.h"
 
 #define FOURCC(a, b, c, d) \

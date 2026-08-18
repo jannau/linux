@@ -4,6 +4,9 @@
  * Copyright (C) The Asahi Linux Contributors
  */
 
+#define DEBUG
+
+
 #include "rtkit-internal.h"
 
 enum {

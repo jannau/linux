@@ -9,6 +9,8 @@
  * Copyright (C) 2018, Intel Corporation
  */
 
+#define DEBUG
+
 #include <linux/pm_runtime.h>
 #include <linux/slab.h>
 #include <linux/errno.h>

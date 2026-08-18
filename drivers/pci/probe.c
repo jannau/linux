@@ -3,6 +3,7 @@
  * PCI detection and setup code
  */
 
+#define DEBUG
 #include <linux/array_size.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
