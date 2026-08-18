@@ -627,6 +627,7 @@ int tb_port_unlock(struct tb_port *port)
 		return usb4_port_unlock(port);
 	return 0;
 }
+EXPORT_SYMBOL_NS_GPL(tb_port_unlock, "USB4");
 
 static int __tb_port_enable(struct tb_port *port, bool enable)
 {
