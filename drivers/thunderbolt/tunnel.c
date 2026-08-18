@@ -2488,6 +2488,15 @@ void tb_tunnel_deactivate(struct tb_tunnel *tunnel)
 }
 
 /**
+ * tb_tunnel_cancel_dprx() - Cancel the DPRX capabilities read work
+ * @tunnel: tunnel to cancel the DPRX capabilities read work for
+ */
+void tb_tunnel_cancel_dprx(struct tb_tunnel *tunnel)
+{
+	tb_dp_dprx_stop(tunnel);
+}
+
+/**
  * tb_tunnel_port_on_path() - Does the tunnel go through port
  * @tunnel: Tunnel to check
  * @port: Port to check
