@@ -424,6 +424,8 @@ static int apple_nhi_probe(struct platform_device *pdev)
 		goto err;
 	}
 
+	dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(42));
+
 	anhi->pdev = pdev;
 	anhi->dev = &pdev->dev;
 	anhi->np = pdev->dev.of_node;
